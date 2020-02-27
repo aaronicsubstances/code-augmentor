@@ -1,0 +1,18 @@
+plugins {
+	id 'java'
+	id 'application'
+}
+
+mainClassName = "demo.Main"
+
+dependencies {
+	implementation 'org.slf4j:slf4j-api:1.7.25'
+    runtimeOnly 'org.slf4j:slf4j-simple:1.7.25'
+	implementation project(':common')
+
+	testImplementation 'org.testng:testng:6.8.1'
+}
+
+test {
+	useTestNG()
+}
