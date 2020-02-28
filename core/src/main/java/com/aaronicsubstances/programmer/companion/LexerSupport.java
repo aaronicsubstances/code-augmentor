@@ -1,9 +1,40 @@
 package com.aaronicsubstances.programmer.companion;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * Contains various utility methods that a hand-crafted lexer might need.
  */
 public class LexerSupport {
+    public static final int EOF = -1;
+    public static final Pattern NEW_LINE_REGEX = Pattern.compile("\r\n|\r|\n");    
+    
+    /**
+     * Calculates line and column numbers given a position in a string.
+     * 
+     * @param s source code text.
+     * @param position position in s.
+     * 
+     * @return array of two elements: line number and column number.
+     */
+    public static int[] calculateLineAndColumnNumbers(String s, int position) {
+        int lineNumber = 1; // NB: line number starts from 1.
+        Matcher newLineMatcher = NEW_LINE_REGEX.matcher(s);
+        int lastNewLineEnd = 0;
+        while (newLineMatcher.find(lastNewLineEnd)) {
+            if (newLineMatcher.end() > position) {
+                break;
+            }
+            lastNewLineEnd = newLineMatcher.end();
+            lineNumber++;
+        }
+
+        // use last match to calculate column number position.
+        // NB: column number starts from 1.
+        int columnNumber = position - lastNewLineEnd + 1;
+        return new int[]{ lineNumber, columnNumber };
+    }
     
     /**
      * Determines whether ch is a whitespace as defined in C89.

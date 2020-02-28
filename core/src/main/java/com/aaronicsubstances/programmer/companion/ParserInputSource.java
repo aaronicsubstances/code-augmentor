@@ -5,8 +5,6 @@ package com.aaronicsubstances.programmer.companion;
  * and to also raise errors embedded with such position information.
  */
 public class ParserInputSource {
-    public static final int EOF = -1;
-
     private final String input;
 
     private int position;
@@ -88,7 +86,7 @@ public class ParserInputSource {
     public ParserException createAbortException(String message, Token token) {
         int errorPosition = position, errorLineNumber = lineNumber, 
             errorColumnNumber = columnNumber;
-        if (token != null && token.type != EOF) {
+        if (token != null && token.type != LexerSupport.EOF) {
             errorPosition = token.startPos;
             errorLineNumber = token.lineNumber;
             errorColumnNumber = token.columnNumber;
@@ -104,7 +102,7 @@ public class ParserInputSource {
         errorColumnNumber = dest[2];
 
         // visually identify error location in input.
-        String[] inputLines = originalInput.split("\r\n|\r|\n", -1);
+        String[] inputLines = LexerSupport.NEW_LINE_REGEX.split(originalInput, -1);
         StringBuilder snippet = new StringBuilder(inputLines[errorLineNumber - 1]);
         snippet.append("\n");
         for (int i = 0; i < errorColumnNumber; i++) {
@@ -126,7 +124,7 @@ public class ParserInputSource {
         if (effectivePosition < input.length()) {
             return input.charAt(effectivePosition);
         }
-        return EOF;
+        return -1;
     }
 
     /**
