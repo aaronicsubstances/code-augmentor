@@ -22,6 +22,12 @@ public class Token {
 	public final int endPos;
 	public final int lineNumber;
 	public final int columnNumber;
+    
+    /**
+     * The value of this token parsed from its text. E.g. an integer,
+     * unquoted string, etc. Can also be used to store map of attributes.
+     */
+    public transient Object value;
 	
 	/**
 	 * Creates an end-of-line token.
@@ -63,25 +69,20 @@ public class Token {
 			this.startPos == other.startPos &&
 			this.endPos == other.endPos &&
 			this.lineNumber == other.lineNumber &&
-			this.columnNumber == other.columnNumber;
+			this.columnNumber == other.columnNumber &&
+			Objects.equals(this.value, other.value);
 	}
 	
 	@Override 
 	public int hashCode() {
-		int hash = 57;
-		hash = hash * 423 + type;
-		hash = hash * 423 + Objects.hashCode(text);
-		hash = hash * 423 + startPos;
-		hash = hash * 423 + endPos;
-		hash = hash * 423 + lineNumber;
-		hash = hash * 423 + columnNumber;
-		return hash;
+		return Objects.hash(type, text, 
+			startPos, endPos, lineNumber, columnNumber, value);
 	}
 	
 	@Override
 	public String toString() {
 		return String.format("Token{type=%s, text=%s, startPos=%s, endPos=%s, " +
-			"lineNumber=%s, columnNumber=%s}",
-			type, text, startPos, endPos, lineNumber, columnNumber);
+			"lineNumber=%s, columnNumber=%s, value=%s}",
+			type, text, startPos, endPos, lineNumber, columnNumber, value);
 	}
 }
