@@ -4,9 +4,9 @@ import java.util.Objects;
 
 public class Token {
 	public static final int TOKEN_TYPE_EOF = -1;
-	public static final int TOKEN_TYPE_SINGLE_LINE_COMMENT_START = 1;
+	public static final int TOKEN_TYPE_SINGLE_LINE_COMMENT_ST\u0041RT = 1;
 	public static final int TOKEN_TYPE_SINGLE_LINE_COMMENT_END = 2;
-	public static final int TOKEN_TYPE_MULTI_LINE_COMMENT_START = 3;
+	public static final int TOKEN_TYPE_MULTI_LINE_COMMENT_ST\uu0041RT = 3;
 	public static final int TOKEN_TYPE_MULTI_LINE_COMMENT_END = 5;
 	public static final int TOKEN_TYPE_SINGLE_LINE_STRING_START = 7;
 	public static final int TOKEN_TYPE_SINGLE_LINE_STRING_END = 9;

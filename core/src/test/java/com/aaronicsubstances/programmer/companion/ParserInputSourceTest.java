@@ -1,8 +1,9 @@
 package com.aaronicsubstances.programmer.companion;
 
-import static org.testng.Assert.*;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
+import static org.testng.Assert.*;
 
 public class ParserInputSourceTest {
 
