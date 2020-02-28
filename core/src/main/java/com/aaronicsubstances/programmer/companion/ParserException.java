@@ -1,7 +1,7 @@
 package com.aaronicsubstances.programmer.companion;
 
 /**
- * ParserException
+ * Exception thrown during course of parsing operations.
  */
 public class ParserException extends RuntimeException {
     private static final long serialVersionUID = 3489428574490L;
@@ -9,6 +9,20 @@ public class ParserException extends RuntimeException {
     private final int lineNumber;
     private final int columnNumber;
     private final String snippet;
+
+    public ParserException(String message) {
+        super(message);
+        this.lineNumber = 0;
+        this.columnNumber = 0;
+        this.snippet = null;
+    }
+
+    public ParserException(String message, Throwable cause) {
+        super(message, cause);
+        this.lineNumber = 0;
+        this.columnNumber = 0;
+        this.snippet = null;
+    }
 
     public ParserException(String message, int lineNumber, int columnNumber, String snippet) {
         this(message, null, lineNumber, columnNumber, snippet);
@@ -32,5 +46,5 @@ public class ParserException extends RuntimeException {
 
     public String getSnippet() {
         return snippet;
-    }    
+    }
 }
