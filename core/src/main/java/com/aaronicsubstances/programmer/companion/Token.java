@@ -2,20 +2,10 @@ package com.aaronicsubstances.programmer.companion;
 
 import java.util.Objects;
 
-public class Token {
-	public static final int TOKEN_TYPE_EOF = -1;
-	public static final int TOKEN_TYPE_SINGLE_LINE_COMMENT_ST\u0041RT = 1;
-	public static final int TOKEN_TYPE_SINGLE_LINE_COMMENT_END = 2;
-	public static final int TOKEN_TYPE_MULTI_LINE_COMMENT_ST\uu0041RT = 3;
-	public static final int TOKEN_TYPE_MULTI_LINE_COMMENT_END = 5;
-	public static final int TOKEN_TYPE_SINGLE_LINE_STRING_START = 7;
-	public static final int TOKEN_TYPE_SINGLE_LINE_STRING_END = 9;
-	public static final int TOKEN_TYPE_MULTI_LINE_STRING_START = 11;
-	public static final int TOKEN_TYPE_MULTI_LINE_STRING_END = 15;
-	public static final int TOKEN_TYPE_NEWLINE = 20;
-	public static final int TOKEN_TYPE_NON_NEWLINE_WHITE_SPACE = 25;
-	public static final int TOKEN_TYPE_OTHER = 50;
-	
+/**
+ * Represents result of lexing/scanning some source code prior to parsing.
+ */
+public class Token {	
 	public final int type;
 	public final String text;
 	public final int startPos;
@@ -33,7 +23,7 @@ public class Token {
 	 * Creates an end-of-line token.
 	 */
 	public Token() {
-		this(TOKEN_TYPE_EOF, null, 0, 0, 0, 0);
+		this(-1, null, 0, 0, 0, 0);
 	}
 	
 	/**

@@ -5,12 +5,12 @@ package com.aaronicsubstances.programmer.companion;
  * and to also raise errors embedded with such position information.
  */
 public class ParserInputSource {
-    private final String input;
+    private String input;
 
     private int position;
     private int lineNumber;
     private int columnNumber;
-     
+
     /**
      * Creates a new ParserInputSource instance with initial position set to 0, and
      * line and column numbers set to 1.
@@ -23,8 +23,19 @@ public class ParserInputSource {
         columnNumber = 1;
     }
 
+    /**
+     * Default constructor meant for use by subclasses.
+     */
+    protected ParserInputSource() {
+        this(null);
+    }
+
     public String getInput() {
         return input;
+    }
+
+    protected final void setInput(String input) {
+        this.input = input;
     }
 
     public int getPosition() {

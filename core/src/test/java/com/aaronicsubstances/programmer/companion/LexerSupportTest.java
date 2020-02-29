@@ -6,6 +6,36 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 public class LexerSupportTest {
+    public static final int TOKEN_TEST_TYPE_1 = 2;
+    public static final String TOKEN_ERROR_1_TEST_TYPE_1 = "2cz0";
+
+    @Test(dataProvider = "createTestGetTokenNameData")
+    public void testGetTokenName(int type, Class<?> cls, String typePrefix, String defName,
+            String expectedName) {
+        String actual = LexerSupport.getTokenName(type, cls, typePrefix, defName);
+        assertEquals(actual, expectedName);
+    }
+
+    @DataProvider
+    public Object[][] createTestGetTokenNameData() {
+        return new Object[][]{
+            new Object[]{ 2, LexerSupportTest.class, "TOKEN_TEST_TYPE_", null, "1" },
+            new Object[]{ 2, LexerSupportTest.class, "TOKEN_T", null, "EST_TYPE_1" },
+        };
+    }
+
+    @Test(dataProvider = "createTestGetTokenNameErrorData", 
+        expectedExceptions = RuntimeException.class)
+    public void testGetTokenNameWithError(Class<?> cls, String typePrefix) {
+        LexerSupport.getTokenName(1, cls, typePrefix, null);
+    }
+
+    @DataProvider
+    public Object[][] createTestGetTokenNameErrorData() {
+        return new Object[][]{
+            new Object[]{ LexerSupportTest.class, "TOKEN_ERROR_1_" },
+        };
+    }
     
     @Test(dataProvider = "createTestCalculateLineAndColumnNumbersData")
     public void testCalculateLineAndColumnNumbers(String s, int pos,

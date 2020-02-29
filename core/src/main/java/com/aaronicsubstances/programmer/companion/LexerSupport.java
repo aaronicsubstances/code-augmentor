@@ -1,5 +1,6 @@
 package com.aaronicsubstances.programmer.companion;
 
+import java.lang.reflect.Field;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,6 +35,39 @@ public class LexerSupport {
         // NB: column number starts from 1.
         int columnNumber = position - lastNewLineEnd + 1;
         return new int[]{ lineNumber, columnNumber };
+    }
+
+    /**
+     * Helper method for getting the names of token types declared as static integer constants in a class.
+     * 
+     * @param type token type.
+     * @param cls declaring class
+     * @param typePrefix common prefix of all constants for token types. NB: this value is 
+     * stripped of the start of the field name to obtain the final token name.
+     * @param defName default name to use if a token type is not found.
+     * @return name of token or defName is no corresponding field is found.
+     */
+    public static String getTokenName(int type, Class<?> cls, String typePrefix, String defName) {
+        Field[] fields = cls.getFields();
+        if (fields != null) {
+            for (Field f : fields) {
+                if (!f.getName().startsWith(typePrefix)) {
+                    continue;
+                }
+                int fType; 
+                try {
+                    fType = f.getInt(null);
+                }
+                catch (IllegalAccessException ex) {
+                    throw new RuntimeException(ex);
+                }
+                if (fType == type) {
+                    String tokenName = f.getName().substring(typePrefix.length());
+                    return tokenName;
+                }
+            }
+        }
+        return defName;
     }
     
     /**
