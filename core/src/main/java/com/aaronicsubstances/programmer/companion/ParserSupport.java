@@ -55,12 +55,17 @@ public class ParserSupport {
      * @return consumed token if match is successful; else null.
      */
     public Token match(int expectedTokenType) {
-        Token token = lookAhead(0);
+        return match(expectedTokenType, null);
+    }
+    
+    public Token match(int expectedTokenType, 
+            Function<ParserInputSource, List<Token>> lexerFunction) {
+        Token token = lookAhead(0, lexerFunction);
         if (token.type != expectedTokenType) {
             return null;
         }
 
-        return consume();
+        return consume(lexerFunction);
     }
 
     /**
@@ -71,7 +76,12 @@ public class ParserSupport {
      * @return consumed token.
      */
     public Token consume(int expectedTokenType) {
-        Token token = lookAhead(0);
+        return consume(expectedTokenType, null);
+    }
+
+    public Token consume(int expectedTokenType, 
+            Function<ParserInputSource, List<Token>> lexerFunction) {
+        Token token = lookAhead(0, lexerFunction);
         if (token.type != expectedTokenType) {
             String expectedTokenName = String.valueOf(expectedTokenType);
             if (lexer != null) {
@@ -81,15 +91,23 @@ public class ParserSupport {
                     + " and found " + lexer.describeToken(token), token);
         }
 
-        return consume();
+        return consume(lexerFunction);
     }
 
     /**
      * Consumes current lookahead and returns it.
      */
     public Token consume() {
+        return consume(null);
+    }
+
+
+    /**
+     * Consumes current lookahead and returns it.
+     */
+    public Token consume(Function<ParserInputSource, List<Token>> lexerFunction) {
         // Make sure we've read the token.
-        Token token = lookAhead(0);
+        Token token = lookAhead(0, lexerFunction);
 
         if (!readTokens.isEmpty()) {
             readTokens.remove(0);

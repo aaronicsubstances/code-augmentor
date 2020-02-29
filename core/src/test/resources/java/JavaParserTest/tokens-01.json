@@ -1,0 +1,282 @@
+[
+    {
+        "type": 50,
+        "text": "package com.aaronicsubstances.programmer.companion;",
+        "startPos": 0,
+        "endPos": 51,
+        "lineNumber": 1,
+        "columnNumber": 1
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 51,
+        "endPos": 53,
+        "lineNumber": 1,
+        "columnNumber": 52
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 53,
+        "endPos": 55,
+        "lineNumber": 2,
+        "columnNumber": 1
+    },
+    {
+        "type": 3,
+        "text": "/*",
+        "startPos": 55,
+        "endPos": 57,
+        "lineNumber": 3,
+        "columnNumber": 1
+    },
+    {
+        "type": 16,
+        "text": "*",
+        "startPos": 57,
+        "endPos": 58,
+        "lineNumber": 3,
+        "columnNumber": 3
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 58,
+        "endPos": 60,
+        "lineNumber": 3,
+        "columnNumber": 4
+    },
+    {
+        "type": 16,
+        "text": " * test",
+        "startPos": 60,
+        "endPos": 67,
+        "lineNumber": 4,
+        "columnNumber": 1
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 67,
+        "endPos": 69,
+        "lineNumber": 4,
+        "columnNumber": 8
+    },
+    {
+        "type": 16,
+        "text": " ",
+        "startPos": 69,
+        "endPos": 70,
+        "lineNumber": 5,
+        "columnNumber": 1
+    },
+    {
+        "type": 5,
+        "text": "*/",
+        "startPos": 70,
+        "endPos": 72,
+        "lineNumber": 5,
+        "columnNumber": 2
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 72,
+        "endPos": 74,
+        "lineNumber": 5,
+        "columnNumber": 4
+    },
+    {
+        "type": 50,
+        "text": "public class test {",
+        "startPos": 74,
+        "endPos": 93,
+        "lineNumber": 6,
+        "columnNumber": 1
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 93,
+        "endPos": 95,
+        "lineNumber": 6,
+        "columnNumber": 20
+    },
+    {
+        "type": 50,
+        "text": "    private String name = ",
+        "startPos": 95,
+        "endPos": 121,
+        "lineNumber": 7,
+        "columnNumber": 1
+    },
+    {
+        "type": 7,
+        "text": "\"",
+        "startPos": 121,
+        "endPos": 122,
+        "lineNumber": 7,
+        "columnNumber": 27
+    },
+    {
+        "type": 20,
+        "text": "around \\\"Nana\\\" place",
+        "startPos": 122,
+        "endPos": 143,
+        "lineNumber": 7,
+        "columnNumber": 28
+    },
+    {
+        "type": 7,
+        "text": "\"",
+        "startPos": 143,
+        "endPos": 144,
+        "lineNumber": 7,
+        "columnNumber": 49
+    },
+    {
+        "type": 50,
+        "text": ";",
+        "startPos": 144,
+        "endPos": 145,
+        "lineNumber": 7,
+        "columnNumber": 50
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 145,
+        "endPos": 147,
+        "lineNumber": 7,
+        "columnNumber": 51
+    },
+    {
+        "type": 50,
+        "text": "    ",
+        "startPos": 147,
+        "endPos": 151,
+        "lineNumber": 8,
+        "columnNumber": 1
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 151,
+        "endPos": 153,
+        "lineNumber": 8,
+        "columnNumber": 5
+    },
+    {
+        "type": 50,
+        "text": "    ",
+        "startPos": 153,
+        "endPos": 157,
+        "lineNumber": 9,
+        "columnNumber": 1
+    },
+    {
+        "type": 1,
+        "text": "//",
+        "startPos": 157,
+        "endPos": 159,
+        "lineNumber": 9,
+        "columnNumber": 5
+    },
+    {
+        "type": 16,
+        "text": " test2",
+        "startPos": 159,
+        "endPos": 165,
+        "lineNumber": 9,
+        "columnNumber": 7
+    },
+    {
+        "type": 2,
+        "text": null,
+        "startPos": 165,
+        "endPos": 165,
+        "lineNumber": 9,
+        "columnNumber": 13
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 165,
+        "endPos": 167,
+        "lineNumber": 9,
+        "columnNumber": 13
+    },
+    {
+        "type": 50,
+        "text": "    public static class test2 {",
+        "startPos": 167,
+        "endPos": 198,
+        "lineNumber": 10,
+        "columnNumber": 1
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 198,
+        "endPos": 200,
+        "lineNumber": 10,
+        "columnNumber": 32
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 200,
+        "endPos": 202,
+        "lineNumber": 11,
+        "columnNumber": 1
+    },
+    {
+        "type": 50,
+        "text": "        ",
+        "startPos": 202,
+        "endPos": 210,
+        "lineNumber": 12,
+        "columnNumber": 1
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 210,
+        "endPos": 212,
+        "lineNumber": 12,
+        "columnNumber": 9
+    },
+    {
+        "type": 50,
+        "text": "    }",
+        "startPos": 212,
+        "endPos": 217,
+        "lineNumber": 13,
+        "columnNumber": 1
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 217,
+        "endPos": 219,
+        "lineNumber": 13,
+        "columnNumber": 6
+    },
+    {
+        "type": 50,
+        "text": "}",
+        "startPos": 219,
+        "endPos": 220,
+        "lineNumber": 14,
+        "columnNumber": 1
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 220,
+        "endPos": 222,
+        "lineNumber": 14,
+        "columnNumber": 2
+    }
+]

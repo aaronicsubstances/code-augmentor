@@ -20,7 +20,6 @@ public class JavaLexer implements Lexer {
 	public static final int TOKEN_TYPE_MULTI_LINE_COMMENT_END = 5;
     public static final int TOKEN_TYPE_SINGLE_LINE_STRING_DELIMITER = 7;
 	public static final int TOKEN_TYPE_NEWLINE = 10;
-	public static final int TOKEN_TYPE_NON_NEWLINE_WHITE_SPACE = 12;
 	public static final int TOKEN_TYPE_COMMENT_CONTENT = 16;
     public static final int TOKEN_TYPE_STRING_CONTENT = 20;
     public static final int TOKEN_TYPE_OTHER = 50;
@@ -62,10 +61,6 @@ public class JavaLexer implements Lexer {
 			case '\r':
 			case '\n':
 				return consumeNewLineToken(inputSource);
-			case ' ':
-			case '\f':
-			case '\t':
-				return consumeNonNewLineWhiteSpaceToken(inputSource);
 		}
 		
 		// getting here means skip tokens involved.
@@ -80,16 +75,13 @@ public class JavaLexer implements Lexer {
 				case '"':
 				case '\r':
 				case '\n':
-				case ' ':
-				case '\f':
-				case '\t':
 					relevantTokenFound = true;
 					break;
 			}
 			if (relevantTokenFound) {
 				break;
 			}
-            otherTokenText.append((int)lookup);
+            otherTokenText.appendCodePoint(lookup);
             inputSource.consume(1);
 		}
 		assert otherTokenText.length() > 0;
@@ -113,7 +105,7 @@ public class JavaLexer implements Lexer {
 	protected Token consumeNewLineToken(ParserInputSource inputSource) {
 		int lookup = inputSource.lookahead(0);
 		int nextChar = inputSource.lookahead(1);
-		assert lookup == '\r' || lookup == '\n';
+		assert LexerSupport.isNewLine(lookup);
 		Token token;
 		if (lookup == '\r' && nextChar == '\n') {
 			token = consumeToken(inputSource, TOKEN_TYPE_NEWLINE, "\r\n", 2);
@@ -123,33 +115,6 @@ public class JavaLexer implements Lexer {
 		}
 		return token;
 	}
-	
-	protected Token consumeNonNewLineWhiteSpaceToken(ParserInputSource inputSource) {
-        StringBuilder tokenText = new StringBuilder();
-        int startPos = inputSource.getPosition();
-		int lineNumber = inputSource.getLineNumber();
-        int columnNumber = inputSource.getColumnNumber();
-        int ch;
-		while ((ch = inputSource.lookahead(0)) != LexerSupport.EOF) {
-			boolean isWhitespace = false;
-			switch (ch) {				
-				case ' ':
-				case '\f':
-				case '\t':
-					isWhitespace = true;
-			}
-			if (!isWhitespace) {
-				break;
-			}
-            tokenText.append((char)ch);
-            inputSource.consume(1);
-        }
-        int endPos = inputSource.getPosition();
-        assert tokenText.length() > 0;
-        Token token = new Token(TOKEN_TYPE_NON_NEWLINE_WHITE_SPACE, tokenText.toString(), 
-            startPos, endPos, lineNumber, columnNumber);
-        return token;
-    }
     
     public List<Token> consumeSingleLineComment(ParserInputSource inputSource) {
         StringBuilder tokenText = new StringBuilder();
@@ -158,10 +123,10 @@ public class JavaLexer implements Lexer {
         int columnNumber = inputSource.getColumnNumber();
 		int ch;
 		while ((ch = inputSource.lookahead(0)) != LexerSupport.EOF) {
-			if (ch == '\r' || ch == '\n') {
+			if (LexerSupport.isNewLine(ch)) {
 				break;
 			}
-            tokenText.append((char)ch);
+            tokenText.appendCodePoint(ch);
             inputSource.consume(1);
 		}
         List<Token> tokens = new ArrayList<>();
@@ -188,7 +153,7 @@ public class JavaLexer implements Lexer {
         }
 
         // return newlines as separate tokens.
-        if (ch == '\r' || ch == '\n') {
+        if (LexerSupport.isNewLine(ch)) {
             Token eolToken = consumeNewLineToken(inputSource);
             return eolToken;
         }
@@ -203,10 +168,10 @@ public class JavaLexer implements Lexer {
                 break;
             }
             // check for new line.
-			if (ch == '\r' || ch == '\n') {
+			if (LexerSupport.isNewLine(ch)) {
 				break;
 			}
-            tokenText.append((char)ch);
+            tokenText.appendCodePoint(ch);
             inputSource.consume(1);
         }
         if (ch == LexerSupport.EOF) {
@@ -229,12 +194,12 @@ public class JavaLexer implements Lexer {
 
         if (ch == '"') {
             Token endOfString = consumeToken(inputSource, TOKEN_TYPE_SINGLE_LINE_STRING_DELIMITER, 
-                "\"", 2);
+                "\"", 1);
             return endOfString;
         }
 
         // return newlines as separate tokens.
-        if (ch == '\r' || ch == '\n') {
+        if (LexerSupport.isNewLine(ch)) {
             Token eolToken = consumeNewLineToken(inputSource);
             return eolToken;
         }
@@ -246,14 +211,14 @@ public class JavaLexer implements Lexer {
 		boolean escaped = false;
 		while ((ch = inputSource.lookahead(0)) != LexerSupport.EOF) {
             // check for new line.
-			if (ch == '\r' || ch == '\n') {
+			if (LexerSupport.isNewLine(ch)) {
 				break;
 			}
             // check for end of string.
             if (ch == '"' && !escaped) {
                 break;
             }
-            tokenText.append((char)ch);
+            tokenText.appendCodePoint(ch);
             inputSource.consume(1);
             
 			if (escaped) {

@@ -6,16 +6,13 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.IOUtils;
 
-/**
- * TestResourceLoader
- */
 public class TestResourceLoader {
 
     public static String loadResource(String path, Class<?> cls) {
         String pathPrefix = "";;
         if (cls != null) {
             int pkgNameLength = TestResourceLoader.class.getPackage().getName().length();
-            pathPrefix = cls.getName().substring(pkgNameLength + 1) + "/";
+            pathPrefix = cls.getName().substring(pkgNameLength + 1).replace(".", "/") + "/";
         }
         if (path.startsWith("/")) {
             path = path.substring(1);

@@ -118,6 +118,27 @@ public class LexerSupportTest {
         };
     }
 
+    @Test(dataProvider = "createTestIsNewLineData")
+    public void testIsNewLine(int ch, boolean expResult) {
+        boolean result = LexerSupport.isNewLine(ch);
+        assertEquals(result, expResult);
+    }
+    
+    @DataProvider
+    public Object[][] createTestIsNewLineData() {
+        return new Object[][]{
+            new Object[]{ (int)'a', false },
+            new Object[]{ (int)' ', false },
+            new Object[]{ (int)'\t', false },
+            new Object[]{ (int)'\n', true },
+            new Object[]{ (int)'\r', true },
+            new Object[]{ (int)'\f', false },
+            new Object[]{ (int)'\u000b', false },
+            new Object[]{ (int)'0', false },
+            new Object[]{ (int)'_', false }
+        };
+    }
+
     @Test(dataProvider = "createTestIsDigitData")
     public void testIsDigit(int ch, boolean expResult) {
         boolean result = LexerSupport.isDigit(ch);

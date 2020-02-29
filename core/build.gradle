@@ -11,6 +11,7 @@ dependencies {
 	testImplementation 'org.testng:testng:7.1.0'
     testImplementation 'org.hamcrest:hamcrest:2.2'
 	testImplementation 'commons-io:commons-io:2.6'
+	testImplementation 'com.google.code.gson:gson:2.8.6'
 }
 
 test {

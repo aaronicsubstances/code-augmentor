@@ -77,6 +77,10 @@ public class LexerSupport {
         return ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r' ||
                 ch == '\f' || ch == '\u000B'; // last ch is C's '\v'.
     }
+
+	public static boolean isNewLine(int ch) {
+		return ch == '\r' || ch == '\n';
+	}
     
     /**
      * Determines whether ch is a digit (0-9).
