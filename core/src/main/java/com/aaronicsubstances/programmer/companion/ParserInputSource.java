@@ -116,9 +116,10 @@ public class ParserInputSource {
         String[] inputLines = LexerSupport.NEW_LINE_REGEX.split(originalInput, -1);
         StringBuilder snippet = new StringBuilder(inputLines[errorLineNumber - 1]);
         snippet.append("\n");
-        for (int i = 0; i < errorColumnNumber; i++) {
-            snippet.append('^');
+        for (int i = 0; i < errorColumnNumber-1; i++) {
+            snippet.append(' ');
         }
+        snippet.append('^');
         
         String errorMessage = String.format("%s:%s %s\n\n%s", errorLineNumber,
             errorColumnNumber, message, snippet);

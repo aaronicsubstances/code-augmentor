@@ -95,6 +95,8 @@ public class ParserSupportTest {
     @Test(dataProvider = "createTestConsumeData", 
         dependsOnMethods = {"testLookAhead", "testLookAheadWithoutLexer"})
     public void testConsume(ParserSupport instance, Integer optionalParam, Token expected) {
+        // Mandatory read before consume.
+        instance.lookAhead(0);
         if (optionalParam == null) {
             instance.consume();
         }
@@ -125,6 +127,8 @@ public class ParserSupportTest {
         dependsOnMethods = {"testLookAhead", "testLookAheadWithoutLexer"},
         expectedExceptions = ParserException.class)
     public void testConsumeForMismatch(ParserSupport instance, int tokenType) {
+        // Mandatory read before consume.
+        instance.lookAhead(0);
         instance.consume(tokenType);
     }
 
@@ -140,6 +144,8 @@ public class ParserSupportTest {
     @Test(dataProvider = "createTestMatchData",
         dependsOnMethods = { "testConsume", "testConsumeForMismatch" })
     public void testMatch(ParserSupport instance, int tokenType, Token expected) {
+        // Mandatory lookahead before match.
+        instance.lookAhead(0);
         Token actual = instance.match(tokenType);
         assertEquals(actual, expected);
     }
@@ -170,6 +176,8 @@ public class ParserSupportTest {
         ParserInputSource inputSource = new ParserInputSource("abcdefg");
         ParserSupport instance = new ParserSupport(inputSource, new TestLexer());
         for (int i = 0; i < consumptionCount; i++) {
+            // Mandatory lookahead before consume.
+            instance.lookAhead(0);
             instance.consume();
         }
         instance.rewindTo(position);

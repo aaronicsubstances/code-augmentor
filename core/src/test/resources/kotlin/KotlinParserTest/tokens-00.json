@@ -1,0 +1,138 @@
+[
+    {
+        "type": 50,
+        "text": "package com.aaronicsubstances.programmer.companion;",
+        "startPos": 0,
+        "endPos": 51,
+        "lineNumber": 1,
+        "columnNumber": 1
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 51,
+        "endPos": 53,
+        "lineNumber": 1,
+        "columnNumber": 52
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 53,
+        "endPos": 55,
+        "lineNumber": 2,
+        "columnNumber": 1
+    },
+    {
+        "type": 3,
+        "text": "/*",
+        "startPos": 55,
+        "endPos": 57,
+        "lineNumber": 3,
+        "columnNumber": 1
+    },
+    {
+        "type": 16,
+        "text": "*",
+        "startPos": 57,
+        "endPos": 58,
+        "lineNumber": 3,
+        "columnNumber": 3
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 58,
+        "endPos": 60,
+        "lineNumber": 3,
+        "columnNumber": 4
+    },
+    {
+        "type": 16,
+        "text": " * test",
+        "startPos": 60,
+        "endPos": 67,
+        "lineNumber": 4,
+        "columnNumber": 1
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 67,
+        "endPos": 69,
+        "lineNumber": 4,
+        "columnNumber": 8
+    },
+    {
+        "type": 16,
+        "text": " ",
+        "startPos": 69,
+        "endPos": 70,
+        "lineNumber": 5,
+        "columnNumber": 1
+    },
+    {
+        "type": 5,
+        "text": "*/",
+        "startPos": 70,
+        "endPos": 72,
+        "lineNumber": 5,
+        "columnNumber": 2
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 72,
+        "endPos": 74,
+        "lineNumber": 5,
+        "columnNumber": 4
+    },
+    {
+        "type": 50,
+        "text": "public class test {",
+        "startPos": 74,
+        "endPos": 93,
+        "lineNumber": 6,
+        "columnNumber": 1
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 93,
+        "endPos": 95,
+        "lineNumber": 6,
+        "columnNumber": 20
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 95,
+        "endPos": 97,
+        "lineNumber": 7,
+        "columnNumber": 1
+    },
+    {
+        "type": 50,
+        "text": "    ",
+        "startPos": 97,
+        "endPos": 101,
+        "lineNumber": 8,
+        "columnNumber": 1
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 101,
+        "endPos": 103,
+        "lineNumber": 8,
+        "columnNumber": 5
+    },
+    {
+        "type": 50,
+        "text": "}",
+        "startPos": 103,
+        "endPos": 104,
+        "lineNumber": 9,
+        "columnNumber": 1
+    }
+]

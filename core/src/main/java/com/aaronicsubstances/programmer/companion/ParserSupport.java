@@ -12,6 +12,7 @@ public class ParserSupport {
     private final ParserInputSource inputSource;
     private Lexer lexer;
     private final List<Token> readTokens;
+    private boolean isCurrentLookaheadEOF = false;
     
     public ParserSupport(ParserInputSource inputSource, Lexer lexer) {
         this.inputSource = inputSource;
@@ -40,6 +41,7 @@ public class ParserSupport {
      */
     public void rewindTo(int position) {
         readTokens.clear();
+        isCurrentLookaheadEOF = false;
         int[] lineAndColumnNumbers = LexerSupport.calculateLineAndColumnNumbers(
             inputSource.getInput(), position);
         inputSource.setPosition(position);
@@ -55,17 +57,21 @@ public class ParserSupport {
      * @return consumed token if match is successful; else null.
      */
     public Token match(int expectedTokenType) {
-        return match(expectedTokenType, null);
-    }
-    
-    public Token match(int expectedTokenType, 
-            Function<ParserInputSource, List<Token>> lexerFunction) {
-        Token token = lookAhead(0, lexerFunction);
+        Token token;
+        if (isCurrentLookaheadEOF) {
+            token = new Token();
+        }
+        else {
+            if (readTokens.isEmpty()) {
+                throw inputSource.createAbortException("No lookahead token fetched.", null);
+            }
+            token = readTokens.get(0);
+        }
         if (token.type != expectedTokenType) {
             return null;
         }
 
-        return consume(lexerFunction);
+        return consume();
     }
 
     /**
@@ -76,12 +82,16 @@ public class ParserSupport {
      * @return consumed token.
      */
     public Token consume(int expectedTokenType) {
-        return consume(expectedTokenType, null);
-    }
-
-    public Token consume(int expectedTokenType, 
-            Function<ParserInputSource, List<Token>> lexerFunction) {
-        Token token = lookAhead(0, lexerFunction);
+        Token token;
+        if (isCurrentLookaheadEOF) {
+            token = new Token();
+        }
+        else {
+            if (readTokens.isEmpty()) {
+                throw inputSource.createAbortException("No lookahead token fetched.", null);
+            }
+            token = readTokens.get(0);
+        }
         if (token.type != expectedTokenType) {
             String expectedTokenName = String.valueOf(expectedTokenType);
             if (lexer != null) {
@@ -91,27 +101,23 @@ public class ParserSupport {
                     + " and found " + lexer.describeToken(token), token);
         }
 
-        return consume(lexerFunction);
+        return consume();
     }
 
     /**
      * Consumes current lookahead and returns it.
      */
     public Token consume() {
-        return consume(null);
-    }
-
-
-    /**
-     * Consumes current lookahead and returns it.
-     */
-    public Token consume(Function<ParserInputSource, List<Token>> lexerFunction) {
-        // Make sure we've read the token.
-        Token token = lookAhead(0, lexerFunction);
-
-        if (!readTokens.isEmpty()) {
-            readTokens.remove(0);
+        if (isCurrentLookaheadEOF) {
+            return new Token();
         }
+        if (readTokens.isEmpty()) {
+            throw inputSource.createAbortException("No lookahead token fetched.", null);
+        }
+        Token token = readTokens.remove(0);
+        // reset to signal new lookahead request required 
+        // before another consume.
+        isCurrentLookaheadEOF = false;
         return token;
     }
 
@@ -156,7 +162,11 @@ public class ParserSupport {
         if (distance < readTokens.size()) {
             return readTokens.get(distance);
         }
-        // create EOF token.
+        // return EOF token.
+        if (distance == 0) {
+            // signal EOF to match() and consume().
+            isCurrentLookaheadEOF = true;
+        }
         return new Token();
     }
 }

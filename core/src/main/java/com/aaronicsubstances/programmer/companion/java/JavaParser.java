@@ -23,11 +23,7 @@ public class JavaParser {
         this.parserSupport = new ParserSupport(inputSource, lexer);
     }
 
-    public List<Token> start() {
-        return parse();
-    }
-
-    private List<Token> parse() {
+    public List<Token> parse() {
         List<Token> parseResults = new ArrayList<>();
         while (true) {
             Token token = parserSupport.lookAhead(0);
@@ -53,10 +49,9 @@ public class JavaParser {
     }
 
     private void parseSingleLineComment(List<Token> parseResults) {
-        Function<ParserInputSource, List<Token>> lexerFunction = lexer::consumeSingleLineComment;
-        Token commentStart = parserSupport.match(JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT_START,
-            lexerFunction);
+        Token commentStart = parserSupport.consume(JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT_START);
         parseResults.add(commentStart);
+        Function<ParserInputSource, List<Token>> lexerFunction = lexer::consumeSingleLineComment;
         while (true) {
             Token token = parserSupport.lookAhead(0, lexerFunction);
             if (token.type == LexerSupport.EOF) {
@@ -65,21 +60,18 @@ public class JavaParser {
             if (token.type == JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT_END) {
                 break;
             }
-            Token contentToken = parserSupport.match(JavaLexer.TOKEN_TYPE_COMMENT_CONTENT, 
-                lexerFunction);
+            Token contentToken = parserSupport.consume(JavaLexer.TOKEN_TYPE_COMMENT_CONTENT);
             parseResults.add(contentToken);
         }
-        Token commentEnd = parserSupport.match(JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT_END,
-            lexerFunction);
+        Token commentEnd = parserSupport.consume(JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT_END);
         parseResults.add(commentEnd);
     }
 
     private void parseMultiLineComment(List<Token> parseResults) {
+        Token commentStart = parserSupport.consume(JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT_START);
+        parseResults.add(commentStart);
         Function<ParserInputSource, List<Token>> lexerFunction = 
             inputSource -> Arrays.asList(lexer.consumeMultiLineComment(inputSource));
-        Token commentStart = parserSupport.match(JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT_START,
-            lexerFunction);
-        parseResults.add(commentStart);
         while (true) {
             Token token = parserSupport.lookAhead(0, lexerFunction);
             if (token.type == LexerSupport.EOF) {
@@ -88,19 +80,17 @@ public class JavaParser {
             if (token.type == JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT_END) {
                 break;
             }
-            parseResults.add(parserSupport.consume(lexerFunction));
+            parseResults.add(parserSupport.consume());
         }
-        Token commentEnd = parserSupport.match(JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT_END,
-            lexerFunction);
+        Token commentEnd = parserSupport.consume(JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT_END);
         parseResults.add(commentEnd);
     }
 
     private void parseSingleLineString(List<Token> parseResults) {
+        Token delimiterToken = parserSupport.consume(JavaLexer.TOKEN_TYPE_SINGLE_LINE_STRING_DELIMITER);
+        parseResults.add(delimiterToken);
         Function<ParserInputSource, List<Token>> lexerFunction = 
             inputSource -> Arrays.asList(lexer.consumeSingleLineString(inputSource));
-        Token delimiterToken = parserSupport.match(JavaLexer.TOKEN_TYPE_SINGLE_LINE_STRING_DELIMITER,
-            lexerFunction);
-        parseResults.add(delimiterToken);
         while (true) {
             Token token = parserSupport.lookAhead(0, lexerFunction);
             if (token.type == LexerSupport.EOF) {
@@ -109,12 +99,10 @@ public class JavaParser {
             if (token.type == JavaLexer.TOKEN_TYPE_SINGLE_LINE_STRING_DELIMITER) {
                 break;
             }
-            Token contentToken = parserSupport.match(JavaLexer.TOKEN_TYPE_STRING_CONTENT,
-                lexerFunction);
+            Token contentToken = parserSupport.consume(JavaLexer.TOKEN_TYPE_STRING_CONTENT);
             parseResults.add(contentToken);
         }
-        delimiterToken = parserSupport.match(JavaLexer.TOKEN_TYPE_SINGLE_LINE_STRING_DELIMITER,
-            lexerFunction);
+        delimiterToken = parserSupport.consume(JavaLexer.TOKEN_TYPE_SINGLE_LINE_STRING_DELIMITER);
         parseResults.add(delimiterToken);
     }
 }

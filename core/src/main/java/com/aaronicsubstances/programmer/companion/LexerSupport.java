@@ -9,7 +9,8 @@ import java.util.regex.Pattern;
  */
 public class LexerSupport {
     public static final int EOF = -1;
-    public static final Pattern NEW_LINE_REGEX = Pattern.compile("\r\n|\r|\n");    
+    public static final Pattern NEW_LINE_REGEX = Pattern.compile("\r\n|\r|\n");
+    public static final Pattern TAB_REGEX = Pattern.compile("\t");
     
     /**
      * Calculates line and column numbers given a position in a string.

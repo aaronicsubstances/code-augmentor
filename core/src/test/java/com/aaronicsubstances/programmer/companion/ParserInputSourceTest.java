@@ -11,8 +11,10 @@ public class ParserInputSourceTest {
     public void testCreateAbortException(
             String inputPath, int position, int lineNumber, int columnNumber, Token token, 
             int expectedLineNumber, int expectedColumnNumber, String expectedSnippetPath) {
-        String input = TestResourceLoader.loadResource(inputPath, getClass());
-        String expectedSnippet = TestResourceLoader.loadResource(expectedSnippetPath, getClass());
+        String input = loadInput(inputPath, getClass());
+        String expectedSnippet = TestResourceLoader.loadResourceNewlinesNormalized(
+            expectedSnippetPath, getClass(), "\n");
+
         ParserInputSource instance = new ParserInputSource(input);
         instance.setPosition(position);
         instance.setLineNumber(lineNumber);
@@ -25,7 +27,20 @@ public class ParserInputSourceTest {
             parseException.getMessage());
     }
 
-    @DataProvider
+    private static String loadInput(String path, Class<?> class1) {		
+        if (path.contains("mac")) {
+            return TestResourceLoader.loadResourceNewlinesNormalized(path, class1, "\r");
+        }
+        else if (path.contains("win32")) {
+            return TestResourceLoader.loadResourceNewlinesNormalized(path, class1, "\r\n");
+        }
+        else {
+            // assume unix.
+            return TestResourceLoader.loadResourceNewlinesNormalized(path, class1, "\n");
+        }
+	}
+
+	@DataProvider
     public Object[][] createTestCreateAbortExceptionData() {
         Token eofToken = new Token();
         Token macToken = new Token(1, null, 26, 31, 3, 1);
@@ -67,7 +82,7 @@ public class ParserInputSourceTest {
     
     @DataProvider
 	public Object[][] createTestConsumeDataWin32() {
-        String input = TestResourceLoader.loadResource("testConsume-win32.txt", 
+        String input = loadInput("testConsume-win32.txt", 
             ParserInputSourceTest.class);
         ParserInputSource instance = new ParserInputSource(input);
         return new Object[][] {
@@ -120,7 +135,7 @@ public class ParserInputSourceTest {
     
     @DataProvider
 	public Object[][] createTestConsumeDataUnix() {
-        String input = TestResourceLoader.loadResource("testConsume-unix.txt", 
+        String input = loadInput("testConsume-unix.txt", 
             ParserInputSourceTest.class);
         ParserInputSource instance = new ParserInputSource(input);
         return new Object[][] {
@@ -171,7 +186,7 @@ public class ParserInputSourceTest {
     
     @DataProvider
 	public Object[][] createTestConsumeDataMac() {
-        String input = TestResourceLoader.loadResource("testConsume-mac.txt", 
+        String input = loadInput("testConsume-mac.txt", 
             ParserInputSourceTest.class);
         ParserInputSource instance = new ParserInputSource(input);
         return new Object[][] {

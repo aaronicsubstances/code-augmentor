@@ -1,8 +1,0 @@
-core/src/test/resources/ParserInputSourceTest/testConsume-unix.txt eol=lf
-core/src/test/resources/ParserInputSourceTest/testConsume-mac.txt eol=cr
-core/src/test/resources/ParserInputSourceTest/testConsume-win32.txt eol=crlf
-core/src/test/resources/ParserInputSourceTest/testAbortSnippet-01.txt eol=lf
-core/src/test/resources/ParserInputSourceTest/testAbortSnippet-02.txt eol=lf
-core/src/test/resources/ParserInputSourceTest/testAbortSnippet-03.txt eol=lf
-core/src/test/resources/java/JavaParserTest/input-00.txt eol=crlf
-core/src/test/resources/java/JavaParserTest/input-01.txt eol=crlf

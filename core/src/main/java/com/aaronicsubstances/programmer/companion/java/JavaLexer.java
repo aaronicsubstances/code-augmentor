@@ -177,16 +177,11 @@ public class JavaLexer implements Lexer {
         if (ch == LexerSupport.EOF) {
             throw inputSource.createAbortException("Unterminated multiline comment", null);
         }
-		if (tokenText.length() > 0) {
-            int endPos = inputSource.getPosition();
-            Token contentToken = new Token(TOKEN_TYPE_COMMENT_CONTENT, 
-                tokenText.toString(), startPos, endPos, lineNumber, columnNumber);
-                return contentToken;
-        }
-        else {
-            assert ch == '*' && inputSource.lookahead(1) == '/';
-            return consumeMultiLineComment(inputSource);
-        }
+        assert tokenText.length() > 0;
+        int endPos = inputSource.getPosition();
+        Token contentToken = new Token(TOKEN_TYPE_COMMENT_CONTENT, 
+            tokenText.toString(), startPos, endPos, lineNumber, columnNumber);
+        return contentToken;
     }
 	
 	public Token consumeSingleLineString(ParserInputSource inputSource) {
@@ -231,15 +226,10 @@ public class JavaLexer implements Lexer {
         if (ch == LexerSupport.EOF) {
             throw inputSource.createAbortException("Unterminated string", null);
         }
-		if (tokenText.length() > 0) {
-            int endPos = inputSource.getPosition();
-            Token contentToken = new Token(TOKEN_TYPE_STRING_CONTENT, 
-                tokenText.toString(), startPos, endPos, lineNumber, columnNumber);
-                return contentToken;
-        }
-        else {
-            assert ch == '"';
-            return consumeSingleLineString(inputSource);
-        }
+		assert tokenText.length() > 0;
+        int endPos = inputSource.getPosition();
+        Token contentToken = new Token(TOKEN_TYPE_STRING_CONTENT, 
+            tokenText.toString(), startPos, endPos, lineNumber, columnNumber);
+        return contentToken;
 	}
 }
