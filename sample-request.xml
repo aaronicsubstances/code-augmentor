@@ -1,0 +1,34 @@
+<request>
+	<!-- comment indicator for augmenting code is one of //AS, //AC, //AE or /*AS -->
+	<!-- comment indicator for generated code are one of //GS, //GE, /*GS*/, /*GE*/ -->
+	<config codeSnippetBlockStartDoubleSlash=""
+		codeSnippetBlockEndDoubleSlash=""
+		codeSnippetBlockStartSlashStar=""
+		codeSnippetBlockEndSlashStar="" />
+	
+	<files>
+		<file dir="", rel_path="">
+
+			<augmenting_code_descriptor index="" index_in_file="" startPos="", endPos="", indent="" is_slash_star="true|false" />
+				
+			<!-- may be missing to indicate absence of generated code-->
+			<generated_code_descriptor startPos="", endPos="" />
+		</file>
+		
+		<file ...>
+		</file>
+	</files>
+	
+	<code_blocks>
+		<augmenting_code rel_path="" index_in_file="" index="">
+			<block escape="true|false">
+			
+			</block>
+			<block ...>
+			</block>
+		</augmenting_code>
+		
+		<augmenting_code ...>
+		</augmenting_code>
+	</code_blocks>
+</request>

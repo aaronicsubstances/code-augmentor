@@ -29,17 +29,37 @@ import org.apache.tools.ant.util.FileUtils;
 /**
  * 
  */
-public class ProgrammerSnippetPlugin extends Task {
+public class PreCodeAugmentationTask extends Task {
     private String encoding;
     private boolean verbose = false;
     private boolean failonerror = true;
     private String errorProperty;
-    private boolean listfiles = false;
-    private File tempdir;
-    private String updatedProperty;
-    private File destdir;
-    private boolean overwrite = false;
+    private boolean listfiles;
+    private File parseResultXml;
     private final List<FileSet> srcDirs = new ArrayList<>();
+
+    /*
+     * Comment markers for augmenting code and generated code snippets need not match.
+     * The few restrictions are:
+     *  - if raw code is to be included in augmenting code, then // must be used.
+     * Upon return, we choose code snippet markers based on the following:
+     *  1. if augmenting code is single line, then prefer /* to //, unless generated code
+     * snippet is multiline AND does not contain multiline strings.
+     *  2. else, prefer // to /*, unless code snippet contains multiline strings, in which
+     * case /* must be used.
+     * NB: only // tries to indent generated code and start on its own new line; /*
+     * continues right after augmenting code, and just dumps verbatim.
+     */ 
+    private List<String> augmentingCodeBlockStartDoubleSlash;
+    private List<String> augmentingCodeBlockEndDoubleSlash;
+    private List<String> augmentingCodeBlockContinuationDoubleSlash;
+    private List<String> augmentingCodeBlockStartSlashStar;
+
+    // for these prefer the very first one during code generation.
+    private List<String> codeSnippetBlockStartDoubleSlash;
+    private List<String> codeSnippetBlockEndDoubleSlash;
+    private List<String> codeSnippetBlockStartSlashStar;
+    private List<String> codeSnippetBlockEndSlashStar;
 
     // validation results
     private Charset charset;
@@ -63,32 +83,13 @@ public class ProgrammerSnippetPlugin extends Task {
     public void setListfiles(boolean listfiles) {
         this.listfiles = listfiles;
     }
-
-    public void setTempdir(File tempdir) {
-        this.tempdir = tempdir;
-    }
-
-    public void setUpdatedProperty(String updatedProperty) {
-        this.updatedProperty = updatedProperty;
-    }
-
-    public void setDestdir(File destdir) {
-        this.destdir = destdir;
-    }
-
-    public void setOverwrite(boolean overwrite) {
-        this.overwrite = overwrite;
+    
+    public void setParseResultXml(File parseResultXml) {
+        this.parseResultXml = parseResultXml;
     }
 
     public void addSrc(FileSet srcdir) {
         srcDirs.add(srcdir);
-    }
-
-    public void execute() {
-        boolean valid = validate();
-        if (valid) {
-            executeAfterValidate();
-        }
     }
 
     private boolean validate() {
@@ -101,25 +102,29 @@ public class ProgrammerSnippetPlugin extends Task {
                     encoding, ex);
             }
         }
-
-        if (!overwrite && destdir == null) {
-            return failBuild("destdir property must be set if overwrite property is false", null);
-        }
         if (srcDirs.isEmpty()) {
             return failBuild("at least 1 nested src element is required", null);
+        }
+        if (parseResultXml == null) {
+            return failBuild("parseResultXml property is required", null);
         }
 
         // set defaults.
         if (encoding == null) {
             charset = Charset.defaultCharset();
         }
-        if (tempdir == null) {
-            tempdir = new File(System.getProperty("java.io.tmpdir"));
-        }
         return true;
     }
 
-    private boolean executeAfterValidate() {
+    public void execute() {
+        boolean valid = validate();
+        if (!valid) {
+            return;
+        }
+        _execute();
+    }
+
+    private boolean _execute() {
         List<String> uniqueFilePaths = new ArrayList<>();
         List<String> sourceFilenames = new ArrayList<>();
         List<File> baseDirs = new ArrayList<>();
@@ -138,7 +143,7 @@ public class ProgrammerSnippetPlugin extends Task {
             }
         }
 
-        log(String.format("Preprocessing %s file(s)", uniqueFilePaths.size()));
+        log(String.format("Found %s file(s)", uniqueFilePaths.size()));
 
         // List files if requested.
         if (listfiles) {
@@ -149,7 +154,7 @@ public class ProgrammerSnippetPlugin extends Task {
 
         for (int i = 0; i < uniqueFilePaths.size(); i++) {
             String srcPath = uniqueFilePaths.get(i);
-            logVerbose("Preprocessing %s", srcPath);
+            logVerbose("Preparing %s", srcPath);
             Instant startInstant = Instant.now();
             String input;
             try (Reader rdr = new InputStreamReader(new FileInputStream(srcPath),
@@ -163,35 +168,24 @@ public class ProgrammerSnippetPlugin extends Task {
             List<Token> tokens = instance.parse();
             // write to dest, skipping comments.
 
-            String destPath = getDestFilename(sourceFilenames.get(i), baseDirs.get(i));
-            File destFile = new File(destPath);
-            try (PrintWriter writer = new PrintWriter(destFile, charset.name())) {
-                for (Token token : tokens) {
-                    switch (token.type) {
-                        case JavaLexer.TOKEN_TYPE_COMMENT_CONTENT:
-                        case JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT_START:
-                        case JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT_END:
-                        case JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT_START:
-                        case JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT_END:
-                            break;
-                        default:
-                            if (token.text != null) {
-                                writer.print(token.text);
-                            }
-                            break;
-                    }
+            for (Token token : tokens) {
+                switch (token.type) {
+                    case JavaLexer.TOKEN_TYPE_COMMENT_CONTENT:
+                    case JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT_START:
+                    case JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT_END:
+                    case JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT_START:
+                    case JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT_END:
+                        break;
+                    default:
+                        if (token.text != null) {
+                            
+                        }
+                        break;
                 }
-            }
-            catch (IOException ex) {
-                return failBuild("Failed to write to " + destPath, ex);
             }
             Instant endInstant = Instant.now();
             long timeElapsed = Duration.between(startInstant, endInstant).toMillis();
             logVerbose("done in %s ms", timeElapsed);
-        }
-
-        if (updatedProperty != null && !updatedProperty.isEmpty()) {
-            getProject().setNewProperty(updatedProperty, "" + true);
         }
         return true;
     }
@@ -207,14 +201,6 @@ public class ProgrammerSnippetPlugin extends Task {
             log(message, cause, LogLevel.WARN.getLevel());
             return false;
         }
-    }
-
-    private String getDestFilename(String srcFilename, File baseDir) {
-        if (destdir != null) {
-            baseDir = destdir;
-        }
-        String destFilename = new File(baseDir, srcFilename).getAbsolutePath();
-        return destFilename;
     }
 
     private void logVerbose(String message, Object... args) {
