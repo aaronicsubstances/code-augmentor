@@ -10,4 +10,11 @@ java {
 dependencies {
 	implementation project(':core')
 	implementation 'org.apache.ant:ant:1.10.7'
+	
+	testImplementation 'org.testng:testng:7.1.0'
+    testImplementation 'org.hamcrest:hamcrest:2.2'
+}
+
+test {
+	useTestNG()
 }
