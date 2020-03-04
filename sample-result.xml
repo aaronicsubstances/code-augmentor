@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<result code_snippet_block_start_double_slash="xxxxxxxxxx xxx x xx   xxx xx  xxxx     x" code_snippet_block_end_double_slash=" xxxx xxxx xx xxxx  xxxxxxxxx xxxxx" code_snippet_block_start_slash_star="xxxxxxxxxx xxxxxx" code_snippet_block_end_slash_star="xxx xxxxxxxxxx xxxxxxxxxxxxx xxx xxx">
+   <file_list>
+      <file dir="xx   xx x xxxx xx xxxxx xx" rel_path=" xxxxx x xxxxxx xxx xx x xxxxxxxxxxxxxxxxxxxxxx">
+         <header_snippet>
+            <generated_code_descriptor start_pos="916" end_pos="463" />
+            <augmenting_code_descriptor index="3" index_in_file="984" start_pos="863" end_pos="48" indent="xxxxxxx xx" is_slash_star="true" />
+         </header_snippet>
+         <snippet_list />
+      </file>
+      <file dir="xxxxxxx  xxxx xx xxxxxxxxx" rel_path=" xxx x xxxxxxxxxxx xxx    xxxxxxxxx xxxxxxx xxx">
+         <header_snippet>
+            <augmenting_code_descriptor index="179" index_in_file="475" start_pos="488" end_pos="782" indent=" x xxxxx xxx  xxxxx  x" is_slash_star="true" />
+         </header_snippet>
+         <snippet_list>
+            <snippet>
+               <augmenting_code_descriptor index="55" index_in_file="539" start_pos="915" end_pos="884" indent="xxx  xxxxx x xxxxxxxxx xx xxxxxx xx xx xxxxxx  xx" is_slash_star="true" />
+            </snippet>
+            <snippet>
+               <generated_code_descriptor start_pos="130" end_pos="0" />
+               <augmenting_code_descriptor index="98" index_in_file="395" start_pos="864" end_pos="350" indent="xx x x  xx  xxx" is_slash_star="true" />
+            </snippet>
+            <snippet>
+               <generated_code_descriptor start_pos="60" end_pos="708" />
+               <augmenting_code_descriptor index="163" index_in_file="885" start_pos="312" end_pos="202" indent=" x x  xxxxx" is_slash_star="true" />
+            </snippet>
+            <snippet>
+               <generated_code_descriptor start_pos="484" end_pos="375" />
+               <augmenting_code_descriptor index="181" index_in_file="652" start_pos="719" end_pos="380" indent="xx xx xx  xxxx xxxx xxxx xxxxxx x xxx" is_slash_star="false" />
+            </snippet>
+         </snippet_list>
+      </file>
+   </file_list>
+</result>
