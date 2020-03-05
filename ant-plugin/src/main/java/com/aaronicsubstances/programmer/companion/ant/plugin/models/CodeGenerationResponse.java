@@ -9,18 +9,29 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamWriter;
 
+import com.aaronicsubstances.programmer.companion.ant.plugin.persistence.ModifiedCsvReader;
+import com.aaronicsubstances.programmer.companion.ant.plugin.persistence.ModifiedCsvWriter;
 import com.aaronicsubstances.programmer.companion.ant.plugin.persistence.XmlEventReaderWrapper;
 
 /**
  * 
  */
 public class CodeGenerationResponse {
+    private static final boolean USE_XML = false;
+    private static final String[] csvFields;
+
+    static {
+        csvFields =new String[]{ "rel_path", "index", "index_in_file", 
+            "header", "body" };
+    }
+
     private List<GeneratedCode> generatedCodeSnippets;
 
     public CodeGenerationResponse() {
@@ -38,24 +49,34 @@ public class CodeGenerationResponse {
         this.generatedCodeSnippets = generatedCodeSnippets;
     }
 
-    public Object beginSerialize(File file) throws Exception {        
+    public Object beginSerialize(File file) throws Exception {
         OutputStreamWriter stream = new OutputStreamWriter(
             new FileOutputStream(file), StandardCharsets.UTF_8);
         Object serializer = beginSerialize(stream);
         return serializer;
     }
 
-    Object beginSerialize(Writer stream) throws Exception {    
-        XMLOutputFactory f = XMLOutputFactory.newInstance();
-        XMLStreamWriter xmlWriter = f.createXMLStreamWriter(stream);
-        xmlWriter.writeStartDocument("UTF-8", "1.0");
-        xmlWriter.writeStartElement("response");
-        xmlWriter.writeStartElement("generated_code_list");
-        return xmlWriter;
+    public Object beginSerialize(Writer stream) throws Exception {
+        if (USE_XML) {
+            XMLOutputFactory f = XMLOutputFactory.newInstance();
+            XMLStreamWriter xmlWriter = f.createXMLStreamWriter(stream);
+            xmlWriter.writeStartDocument("UTF-8", "1.0");
+            xmlWriter.writeStartElement("response");
+            xmlWriter.writeStartElement("generated_code_list");
+            return xmlWriter;
+        }
+        else {
+            ModifiedCsvWriter qCsvWriter = new ModifiedCsvWriter(stream);
+            qCsvWriter.writeFields(csvFields);
+            return qCsvWriter;
+        }
     }
 
     public void endSerialize(Object serializer) throws Exception {
-        if (serializer != null) {
+        if (serializer == null) {
+            return;
+        }
+        if (serializer instanceof XMLStreamWriter) {
             XMLStreamWriter xmlWriter = (XMLStreamWriter) serializer;
             try {
                 xmlWriter.writeEndElement(); // generated_code_list
@@ -66,6 +87,10 @@ public class CodeGenerationResponse {
                 xmlWriter.close();
             }
         }
+        else {
+            ModifiedCsvWriter quasiCsvWriter = (ModifiedCsvWriter) serializer;
+            quasiCsvWriter.close();
+        }
     }
 
     public Object beginDeserializer(File file) throws Exception {    
@@ -75,20 +100,37 @@ public class CodeGenerationResponse {
         return serializer;
     }
 
-    Object beginDeserialize(Reader stream) throws Exception {
-        XMLInputFactory inputFactory = XMLInputFactory.newInstance();
-        XmlEventReaderWrapper xmlReader = new XmlEventReaderWrapper(inputFactory.createXMLEventReader(stream));
-        xmlReader.requireDocOpener("response");        
-        xmlReader.requireStartElement("generated_code_list");
-
+    public Object beginDeserialize(Reader stream) throws Exception {
         generatedCodeSnippets = new ArrayList<>();
-        return xmlReader;
+        if (USE_XML) {
+            XMLInputFactory inputFactory = XMLInputFactory.newInstance();
+            XmlEventReaderWrapper xmlReader = new XmlEventReaderWrapper(inputFactory.createXMLEventReader(stream));
+            xmlReader.requireDocOpener("response");        
+            xmlReader.requireStartElement("generated_code_list");
+            return xmlReader;
+        }
+        else {
+            ModifiedCsvReader qCsvReader = new ModifiedCsvReader(stream);
+            List<String> fields = qCsvReader.requireFieldsOpener();
+            if (!fields.containsAll(Arrays.asList(csvFields))) {
+                throw qCsvReader.createAbortException("At least one expected field is absent: " +
+                    "expected " + Arrays.toString(csvFields) + " but found " + fields);
+            }
+            return qCsvReader;
+        }
     }
 
     public void endDeserialize(Object deserializer) throws Exception {
-        if (deserializer != null) {
+        if (deserializer == null) {
+            return;
+        }
+        if (deserializer instanceof XmlEventReaderWrapper) {
             XmlEventReaderWrapper xmlReader = (XmlEventReaderWrapper) deserializer;
             xmlReader.close();
+        }
+        else {
+            ModifiedCsvReader qCsvReader = (ModifiedCsvReader) deserializer;
+            qCsvReader.close();
         }
     }
 

@@ -82,7 +82,7 @@ public class PreCodeAugmentationResult {
         return serializer;
     }
 
-    Object beginSerialize(Writer stream) throws Exception {    
+    public Object beginSerialize(Writer stream) throws Exception {    
         XMLOutputFactory f = XMLOutputFactory.newInstance();
         XMLStreamWriter xmlWriter = f.createXMLStreamWriter(stream);
         xmlWriter.writeStartDocument("utf-8", "1.0");
@@ -121,7 +121,7 @@ public class PreCodeAugmentationResult {
         return serializer;
     }
 
-    Object beginDeserialize(Reader stream) throws Exception {
+    public Object beginDeserialize(Reader stream) throws Exception {
         XMLInputFactory inputFactory = XMLInputFactory.newInstance();
         XmlEventReaderWrapper xmlReader = new XmlEventReaderWrapper(inputFactory.createXMLEventReader(stream));
 

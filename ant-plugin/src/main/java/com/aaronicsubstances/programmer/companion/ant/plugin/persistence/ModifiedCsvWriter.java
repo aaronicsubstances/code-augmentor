@@ -41,12 +41,8 @@ public class ModifiedCsvWriter implements AutoCloseable {
             StandardCharsets.UTF_8);
     }
 
-    ModifiedCsvWriter(Writer writer) {
+    public ModifiedCsvWriter(Writer writer) {
         this.writer = writer;
-    }
-
-    public void flush() throws IOException {
-        writer.flush();
     }
     
     @Override

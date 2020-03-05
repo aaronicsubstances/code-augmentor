@@ -1,5 +1,6 @@
 package com.aaronicsubstances.programmer.companion.ant.plugin.models;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.stream.XMLStreamWriter;
@@ -90,7 +91,7 @@ public class SourceFileDescriptor {
             xmlReader.requireEndElement("header_snippet");
             startElement = xmlReader.requireStartElement("snippet_list");
         }
-
+        bodySnippets = new ArrayList<>();
         return true;
     }
 

@@ -1,4 +1,4 @@
-package com.aaronicsubstances.programmer.companion.ant.plugin.models;
+package com.aaronicsubstances.programmer.companion.ant.plugin.persistence;
 
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -12,6 +12,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
+import com.aaronicsubstances.programmer.companion.ant.plugin.models.AugmentingCode;
+import com.aaronicsubstances.programmer.companion.ant.plugin.models.CodeGenerationRequest;
+import com.aaronicsubstances.programmer.companion.ant.plugin.models.CodeGenerationResponse;
+import com.aaronicsubstances.programmer.companion.ant.plugin.models.CodeSnippetDescriptor;
+import com.aaronicsubstances.programmer.companion.ant.plugin.models.GeneratedCode;
+import com.aaronicsubstances.programmer.companion.ant.plugin.models.PreCodeAugmentationResult;
+import com.aaronicsubstances.programmer.companion.ant.plugin.models.SourceFileDescriptor;
 import com.aaronicsubstances.programmer.companion.ant.plugin.models.AugmentingCode.Block;
 import com.aaronicsubstances.programmer.companion.ant.plugin.models.CodeSnippetDescriptor.AugmentingCodeDescriptor;
 import com.aaronicsubstances.programmer.companion.ant.plugin.models.CodeSnippetDescriptor.GeneratedCodeDescriptor;
@@ -38,12 +45,11 @@ public class PersistenceTest {
         System.out.println(serialized);
 
         // next, deserialize 
-        PreCodeAugmentationResult actual = new PreCodeAugmentationResult(new ArrayList<>());
+        PreCodeAugmentationResult actual = new PreCodeAugmentationResult();
         Object deserializer = actual.beginDeserialize(new StringReader(serialized));
         SourceFileDescriptor s = new SourceFileDescriptor();
         while (s.beginDeserialize(deserializer)) {
             actual.getFileDescriptors().add(s);
-            s.setBodySnippets(new ArrayList<>());
 
             CodeSnippetDescriptor codeSnippetDescriptor = new CodeSnippetDescriptor();
             while (codeSnippetDescriptor.deserialize(deserializer)) {
@@ -110,31 +116,18 @@ public class PersistenceTest {
         StringWriter writer = new StringWriter();
         Object serializer = expected.beginSerialize(writer);
         for (AugmentingCode augCodeSnippet : expected.getAugmentingCodeSnippets()) {
-            augCodeSnippet.beginSerialize(serializer);
-            for (Block block : augCodeSnippet.getBlocks()) {
-                block.serialize(serializer);
-            }
-            augCodeSnippet.endSerialize(serializer);
+            augCodeSnippet.serialize(serializer);
         }
         expected.endSerialize(serializer);
         String serialized = writer.toString();
         System.out.println(serialized);
 
         // next, deserialize 
-        CodeGenerationRequest actual = new CodeGenerationRequest(new ArrayList<>());
+        CodeGenerationRequest actual = new CodeGenerationRequest();
         Object deserializer = actual.beginDeserialize(new StringReader(serialized));
         AugmentingCode augCodeSnippet = new AugmentingCode();
-        while (augCodeSnippet.beginDeserialize(deserializer)) {
+        while (augCodeSnippet.deserialize(deserializer)) {
             actual.getAugmentingCodeSnippets().add(augCodeSnippet);
-            augCodeSnippet.setBlocks(new ArrayList<>());
-
-            Block block = new Block();
-            while (block.deserialize(deserializer)) {
-                augCodeSnippet.getBlocks().add(block);
-                block = new Block();
-            }
-
-            augCodeSnippet.endDeserialize(deserializer);
             augCodeSnippet = new AugmentingCode();
         }
         actual.endDeserialize(deserializer);
@@ -168,7 +161,8 @@ public class PersistenceTest {
                         codeSnippet.setIndexInFile(randGen.nextInt(30));
                         codeSnippet.setRelativePath(generateRandomString(randGen, false));
                         
-                        int blockCount = randGen.nextInt(5);
+                        // ensure at least 1 block.
+                        int blockCount = randGen.nextInt(5) + 1;
                         for (int j = 0; j < blockCount; j++) {
                             Block block = new Block();
                             codeSnippet.getBlocks().add(block);
@@ -197,7 +191,7 @@ public class PersistenceTest {
         System.out.println(serialized);
 
         // next, deserialize 
-        CodeGenerationResponse actual = new CodeGenerationResponse(new ArrayList<>());
+        CodeGenerationResponse actual = new CodeGenerationResponse();
         Object deserializer = actual.beginDeserialize(new StringReader(serialized));
         GeneratedCode generatedCode = new GeneratedCode();
         while (generatedCode.deserialize(deserializer)) {
@@ -266,7 +260,9 @@ public class PersistenceTest {
 	}
 
     static String generateRandomString(Random randGen, boolean includeNewLine) {
-        // ensure at least one string char.
+        // ensure at least one string char,
+        // since null is indistinguishable from empty string
+        // in modified CSV format.
         int length = randGen.nextInt(50) + 1;
         StringBuilder s = new StringBuilder();
         String chars = "x x x x x x  xxxxxxxxxxxxxxxxxx" + (includeNewLine ? "\n\n\n" : "");

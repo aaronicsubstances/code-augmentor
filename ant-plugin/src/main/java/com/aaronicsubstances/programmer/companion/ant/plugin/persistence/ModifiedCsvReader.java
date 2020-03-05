@@ -5,8 +5,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -15,11 +19,6 @@ import java.util.regex.Pattern;
  * 
  */
 public class ModifiedCsvReader implements AutoCloseable {
-    public static final int LINE_TYPE_FIELD = 0;
-    public static final int LINE_TYPE_SEPARATOR = 1;
-    public static final int LINE_TYPE_COMMENT = 2;
-    public static final int LINE_TYPE_RECORD = 3;
-
     private static final Pattern ESCAPES;
 
     static  {
@@ -39,8 +38,13 @@ public class ModifiedCsvReader implements AutoCloseable {
             new FileInputStream(file), StandardCharsets.UTF_8));
     }
 
-    ModifiedCsvReader(BufferedReader reader) {
-        this.reader = reader;
+    public ModifiedCsvReader(Reader reader) {
+        if (reader instanceof BufferedReader) {
+            this.reader = (BufferedReader) reader;
+        }
+        else {
+            this.reader = new BufferedReader(reader);
+        }
     }
 
     public int getLineNumber() {
@@ -52,42 +56,35 @@ public class ModifiedCsvReader implements AutoCloseable {
         reader.close();
     }
 
-    public int read(Object[] receiver) throws IOException {
-        String line;
-        while ((line = reader.readLine()) != null) {
-            lineNumber++;
-            if (line.startsWith(ModifiedCsvWriter.COMMENT_PREFIX)) {
-                if (line.startsWith(ModifiedCsvWriter.FIELDS_SPEC_PREFIX)) {
-                    if (fields != null) {
-                        throw createAbortException("fields have already been read");
-                    }
-                    String recordString = line.substring(
-                        ModifiedCsvWriter.FIELDS_SPEC_PREFIX.length());
-                    fields = retrieveRecord(recordString);
-                    receiver[0] = fields;
-                    return LINE_TYPE_FIELD;
-                }
-                else {
-                    receiver[0] = line.substring(1);
-                    return LINE_TYPE_COMMENT;
-                }
-            }
-            else if (line.trim().isEmpty()) {
-                receiver[0] = "";
-                return LINE_TYPE_SEPARATOR;
-            }
-            else {
-                String[] record = retrieveRecord(line);
-                if (fields != null && record.length != fields.length) {
-                    throw createAbortException(String.format("Expected %s record entries, " +
-                        "but received %s", fields.length, record.length));
-                }
-                receiver[0] = record;
-                return LINE_TYPE_RECORD;
-            }
+    public Object read() throws IOException {
+        String line = reader.readLine();
+        if (line == null) {
+            return null;
         }
-        receiver[0] = null;
-        return -1;
+
+        lineNumber++;
+        if (line.startsWith(ModifiedCsvWriter.COMMENT_PREFIX)) {
+            if (line.startsWith(ModifiedCsvWriter.FIELDS_SPEC_PREFIX)) {
+                if (fields != null) {
+                    throw createAbortException("fields have already been read");
+                }
+                String recordString = line.substring(
+                    ModifiedCsvWriter.FIELDS_SPEC_PREFIX.length());
+                fields = retrieveRecord(recordString);
+            }
+            return line;
+        }
+        else if (line.trim().isEmpty()) {
+            return "";
+        }
+        else {
+            String[] record = retrieveRecord(line);
+            if (fields != null && record.length != fields.length) {
+                throw createAbortException(String.format("Expected %s record entries, " +
+                    "but received %s", fields.length, record.length));
+            }
+            return record;
+        }
     }
 
     private String[] retrieveRecord(String recordString) {
@@ -139,7 +136,25 @@ public class ModifiedCsvReader implements AutoCloseable {
         return dict;
     }
 
-    private RuntimeException createAbortException(String msg) {
+    public RuntimeException createAbortException(String msg) {
         return new RuntimeException(String.format("Ln %s: %s", lineNumber, msg));
     }
+
+	public List<String> requireFieldsOpener() throws IOException {
+        // read until we get field list, or EOF
+        Object result = null;
+        while (fields == null && (result = read()) != null) {
+            if (result instanceof String[]) {
+                // getting a record will be an error.
+                break;
+            }
+        }
+        if (fields != null) {
+            return new ArrayList<>(Arrays.asList(fields));
+        }
+        if (result != null) {
+            throw createAbortException("field list not set beford records");
+        }
+        return null;
+	}
 }

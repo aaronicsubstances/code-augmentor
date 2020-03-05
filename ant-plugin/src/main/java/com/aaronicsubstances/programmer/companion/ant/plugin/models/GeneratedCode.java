@@ -1,8 +1,12 @@
 package com.aaronicsubstances.programmer.companion.ant.plugin.models;
 
+import java.util.Map;
+
 import javax.xml.stream.XMLStreamWriter;
 import javax.xml.stream.events.StartElement;
 
+import com.aaronicsubstances.programmer.companion.ant.plugin.persistence.ModifiedCsvReader;
+import com.aaronicsubstances.programmer.companion.ant.plugin.persistence.ModifiedCsvWriter;
 import com.aaronicsubstances.programmer.companion.ant.plugin.persistence.XmlEventReaderWrapper;
 
 /**
@@ -56,48 +60,91 @@ public class GeneratedCode {
     }
 
 	public void serialize(Object serializer) throws Exception {
-        XMLStreamWriter xmlWriter = (XMLStreamWriter) serializer;
-        xmlWriter.writeStartElement("generated_code");
-        xmlWriter.writeAttribute("rel_path", relativePath);
-        xmlWriter.writeAttribute("index_in_file", "" + indexInFile);
-        xmlWriter.writeAttribute("index", ""+ index);
+        if (serializer instanceof XMLStreamWriter) {
+            XMLStreamWriter xmlWriter = (XMLStreamWriter) serializer;
+            xmlWriter.writeStartElement("generated_code");
+            xmlWriter.writeAttribute("rel_path", relativePath);
+            xmlWriter.writeAttribute("index_in_file", "" + indexInFile);
+            xmlWriter.writeAttribute("index", ""+ index);
 
-        if (headerContent != null) {
-            xmlWriter.writeStartElement("header");
-            xmlWriter.writeCharacters(headerContent);
+            if (headerContent != null) {
+                xmlWriter.writeStartElement("header");
+                xmlWriter.writeCharacters(headerContent);
+                xmlWriter.writeEndElement();
+            }
+
+            xmlWriter.writeStartElement("body");
+            xmlWriter.writeCharacters(bodyContent);
             xmlWriter.writeEndElement();
+            
+            xmlWriter.writeEndElement();
+            xmlWriter.flush();
         }
-
-        xmlWriter.writeStartElement("body");
-        xmlWriter.writeCharacters(bodyContent);
-        xmlWriter.writeEndElement();
-        
-        xmlWriter.writeEndElement();
-        xmlWriter.flush();
+        else {
+            ModifiedCsvWriter qCsvWriter = (ModifiedCsvWriter) serializer;
+            Object[] record = { relativePath, index, indexInFile, headerContent, bodyContent};
+            qCsvWriter.writeRecord(record);
+        }
     }
 
 	public boolean deserialize(Object deserializer) throws Exception {
-        XmlEventReaderWrapper xmlReader = (XmlEventReaderWrapper) deserializer;
-        StartElement startElement = xmlReader.locateStartElement("generated_code");
-        if (startElement == null) {
-            return false;
+        if (deserializer instanceof XmlEventReaderWrapper) {
+            XmlEventReaderWrapper xmlReader = (XmlEventReaderWrapper) deserializer;
+            StartElement startElement = xmlReader.locateStartElement("generated_code");
+            if (startElement == null) {
+                return false;
+            }
+            relativePath = XmlEventReaderWrapper.requireAttributeValue(startElement, "rel_path");
+            indexInFile = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "index_in_file");
+            index = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "index");
+
+            startElement = xmlReader.requireStartElement(new String[]{ "header", "body" });
+            if ("header".equals(startElement.getName().getLocalPart())) {
+                headerContent = xmlReader.readElementValue();
+                xmlReader.requireEndElement("header");
+                startElement = xmlReader.requireStartElement("body");
+            }
+
+            bodyContent = xmlReader.readElementValue();
+            xmlReader.requireEndElement("body");
+
+            xmlReader.requireEndElement("generated_code");
+            return true;
         }
-        relativePath = XmlEventReaderWrapper.requireAttributeValue(startElement, "rel_path");
-        indexInFile = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "index_in_file");
-        index = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "index");
+        else {
+            ModifiedCsvReader qCsvReader = (ModifiedCsvReader) deserializer;
+            Object result;
+            while ((result = qCsvReader.read()) != null) {
+                if (result instanceof String[]) {
+                    break;
+                }
+            }
+            if (result == null) {
+                return false;
+            }
+            String[] record = (String[]) result;
+            Map<String, String> recordDict = qCsvReader.convertRecordToDict(record);
+            relativePath = recordDict.get("rel_path");
+            headerContent = recordDict.get("header");
+            if ("".equals(headerContent)) {
+                headerContent = null;
+            }
+            bodyContent = recordDict.get("body");
+            try {
+                index = Integer.parseInt(recordDict.get("index"));
+            }
+            catch (NumberFormatException ex) {
+                throw qCsvReader.createAbortException("invalid index");
+            }
+            try {
+                indexInFile = Integer.parseInt(recordDict.get("index_in_file"));
+            }
+            catch (NumberFormatException ex) {
+                throw qCsvReader.createAbortException("invalid index_in_file");
+            }
 
-        startElement = xmlReader.requireStartElement(new String[]{ "header", "body" });
-        if ("header".equals(startElement.getName().getLocalPart())) {
-            headerContent = xmlReader.readElementValue();
-            xmlReader.requireEndElement("header");
-            startElement = xmlReader.requireStartElement("body");
+            return true;
         }
-
-        bodyContent = xmlReader.readElementValue();
-        xmlReader.requireEndElement("body");
-
-        xmlReader.requireEndElement("generated_code");
-        return true;
     }
 
     @Override

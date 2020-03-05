@@ -1,12 +1,16 @@
 package com.aaronicsubstances.programmer.companion.ant.plugin.models;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamWriter;
 import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.StartElement;
 
+import com.aaronicsubstances.programmer.companion.ant.plugin.persistence.ModifiedCsvReader;
+import com.aaronicsubstances.programmer.companion.ant.plugin.persistence.ModifiedCsvWriter;
 import com.aaronicsubstances.programmer.companion.ant.plugin.persistence.XmlEventReaderWrapper;
 
 /**
@@ -32,30 +36,6 @@ public class AugmentingCode {
 
         public void setStringify(boolean stringify) {
             this.stringify = stringify;
-        }
-
-        public void serialize(Object serializer) throws Exception {    
-            XMLStreamWriter xmlWriter = (XMLStreamWriter) serializer;
-            xmlWriter.writeStartElement("block");
-            xmlWriter.writeAttribute("stringify", "" + stringify);
-            xmlWriter.writeCharacters(content);            
-            xmlWriter.writeEndElement();
-            xmlWriter.flush();
-        }
-
-        public boolean deserialize(Object deserializer) throws Exception {    
-            XmlEventReaderWrapper xmlReader = (XmlEventReaderWrapper) deserializer;
-            StartElement startElement = xmlReader.locateStartElement("block");
-            if (startElement == null) {
-                return false;
-            }
-            Attribute stringifyAtt = startElement.getAttributeByName(QName.valueOf("stringify"));
-            if (stringifyAtt != null) {
-                stringify = Boolean.parseBoolean(stringifyAtt.getValue());
-            }
-            content = xmlReader.readElementValue();
-            xmlReader.requireEndElement("block");
-            return true;
         }
 
         @Override
@@ -136,42 +116,140 @@ public class AugmentingCode {
         this.blocks = blocks;
     }
 
-    public void beginSerialize(Object serializer) throws Exception {    
-        XMLStreamWriter xmlWriter = (XMLStreamWriter) serializer;
-        xmlWriter.writeStartElement("augmenting_code");
-        xmlWriter.writeAttribute("rel_path", relativePath);
-        xmlWriter.writeAttribute("index_in_file", "" + indexInFile);
-        xmlWriter.writeAttribute("index", "" + index);
+    public void serialize(Object serializer) throws Exception {
+        if (serializer instanceof XMLStreamWriter) {
+            XMLStreamWriter xmlWriter = (XMLStreamWriter) serializer;
+            xmlWriter.writeStartElement("augmenting_code");
+            xmlWriter.writeAttribute("rel_path", relativePath);
+            xmlWriter.writeAttribute("index_in_file", "" + indexInFile);
+            xmlWriter.writeAttribute("index", "" + index);
 
-        xmlWriter.writeStartElement("block_list");
-    }
+            xmlWriter.writeStartElement("block_list");
 
-    public void endSerialize(Object serializer) throws Exception {        
-        XMLStreamWriter xmlWriter = (XMLStreamWriter) serializer;
-        xmlWriter.writeEndElement(); // block_list
-        xmlWriter.writeEndElement(); // augmenting_code
-        xmlWriter.flush();
-    }
+            for (Block block : blocks) {
+                xmlWriter.writeStartElement("block");
+                xmlWriter.writeAttribute("stringify", "" + block.stringify);
+                xmlWriter.writeCharacters(block.content);            
+                xmlWriter.writeEndElement();
+            }
 
-    public boolean beginDeserialize(Object deserializer) throws Exception {
-        XmlEventReaderWrapper xmlReader = (XmlEventReaderWrapper) deserializer;
-        StartElement startElement = xmlReader.locateStartElement("augmenting_code");
-        if (startElement == null) {
-            return false;
+            xmlWriter.writeEndElement(); // block_list
+            xmlWriter.writeEndElement(); // augmenting_code
         }
-        index = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "index");
-        indexInFile = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "index_in_file");
-        relativePath = XmlEventReaderWrapper.requireAttributeValue(startElement, "rel_path");
-        
-        startElement = xmlReader.requireStartElement("block_list");
-
-        return true;
+        else {
+            ModifiedCsvWriter qCsvWriter = (ModifiedCsvWriter) serializer;
+            for (Block block : blocks) {
+                Object[] record = new Object[]{
+                    relativePath, index, indexInFile, block.stringify, block.content  
+                };
+                qCsvWriter.writeRecord(record);
+            }
+            qCsvWriter.writeSeparatorLine();
+        }
     }
 
-    public void endDeserialize(Object deserializer) throws Exception {        
-        XmlEventReaderWrapper xmlReader = (XmlEventReaderWrapper) deserializer;
-        xmlReader.requireEndElement("block_list");
-        xmlReader.requireEndElement("augmenting_code");
+    public boolean deserialize(Object deserializer) throws Exception {
+        blocks = new ArrayList<>();
+        if (deserializer instanceof XmlEventReaderWrapper) {
+            XmlEventReaderWrapper xmlReader = (XmlEventReaderWrapper) deserializer;
+            StartElement startElement = xmlReader.locateStartElement("augmenting_code");
+            if (startElement == null) {
+                return false;
+            }
+            index = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "index");
+            indexInFile = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "index_in_file");
+            relativePath = XmlEventReaderWrapper.requireAttributeValue(startElement, "rel_path");
+            
+            startElement = xmlReader.requireStartElement("block_list");
+
+            while ((startElement = xmlReader.locateStartElement("block")) != null) {
+                Block block = new Block();
+                Attribute stringifyAtt = startElement.getAttributeByName(QName.valueOf("stringify"));
+                if (stringifyAtt != null) {
+                    block.stringify = Boolean.parseBoolean(stringifyAtt.getValue());
+                }
+                block.content = xmlReader.readElementValue();
+                xmlReader.requireEndElement("block");
+
+                blocks.add(block);
+            }
+            
+            xmlReader.requireEndElement("block_list");
+            xmlReader.requireEndElement("augmenting_code");
+
+            return true;
+        }
+        else {
+            Object[] readState = (Object[]) deserializer;
+            ModifiedCsvReader qCsvReader = (ModifiedCsvReader) readState[0];
+
+            // attempt to make use of last result.
+            Object result = readState[1];
+            if (result == null) {
+                // Do a first search to locate first of blocks.
+                while ((result = qCsvReader.read()) != null) {
+                    if (result instanceof String[]) {
+                        break;
+                    }
+                }
+            }
+
+            if (result == null) {
+                return false;
+            }
+
+            // clear read state of last result.
+            readState[1] = null;
+
+            // Read until there's a change in any of augmenting code properties
+            // after it is set.
+            do {
+                if (!(result instanceof String[])) {
+                    continue;
+                }
+                String[] record = (String[]) result;
+                Map<String, String> recordDict = qCsvReader.convertRecordToDict(record);
+                String newRelativePath = recordDict.get("rel_path");
+                if (relativePath != null && !relativePath.equals(newRelativePath)) {
+                    readState[1] = result;
+                    break;
+                }
+                relativePath = newRelativePath;
+
+                try {
+                    int newIndex = Integer.parseInt(recordDict.get("index"));
+                    if (index != 0 && index != newIndex) {
+                        readState[1] = result;
+                        break;
+                    }
+                    index = newIndex;
+                 }
+                catch (NumberFormatException ex) {
+                    throw qCsvReader.createAbortException("invalid index");
+                }
+                try {
+                    int newIndexInFile = Integer.parseInt(recordDict.get("index_in_file"));
+                    if (indexInFile != 0 && indexInFile != newIndexInFile) {
+                        readState[1] = result;
+                        break;
+                    }
+                    indexInFile = newIndexInFile;
+                }
+                catch (NumberFormatException ex) {
+                    throw qCsvReader.createAbortException("invalid index_in_file");
+                }
+                
+                boolean stringify = Boolean.parseBoolean(recordDict.get("stringify"));
+                String blockContent = recordDict.get("block");
+                Block block = new Block();
+                block.stringify = stringify;
+                block.content = blockContent;
+                blocks.add(block);
+
+            } while ((result = qCsvReader.read()) != null);
+
+            return true;
+        }
     }
 
     @Override
