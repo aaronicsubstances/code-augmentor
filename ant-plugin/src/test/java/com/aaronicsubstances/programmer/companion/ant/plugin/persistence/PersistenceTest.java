@@ -227,6 +227,7 @@ public class PersistenceTest {
 
                         generatedCode.setIndex(randGen.nextInt(30));
                         generatedCode.setIndexInFile(randGen.nextInt(30));
+                        generatedCode.setError(randGen.nextBoolean());
                         
                         generatedCode.setRelativePath(generateRandomString(randGen, false));
                         if (randGen.nextBoolean()) {

@@ -28,7 +28,7 @@ public class CodeGenerationResponse {
     private static final String[] csvFields;
 
     static {
-        csvFields =new String[]{ "rel_path", "index", "index_in_file", 
+        csvFields =new String[]{ "rel_path", "index", "index_in_file", "is_error",
             "header", "body" };
     }
 

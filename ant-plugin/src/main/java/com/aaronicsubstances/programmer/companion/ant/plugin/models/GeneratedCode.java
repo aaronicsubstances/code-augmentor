@@ -16,6 +16,7 @@ public class GeneratedCode {
     private String relativePath;
     private int index;
     private int indexInFile;
+    private boolean error;
     private String headerContent;
     private String bodyContent;
 
@@ -43,6 +44,14 @@ public class GeneratedCode {
         this.indexInFile = indexInFile;
     }
 
+    public boolean isError() {
+        return error;
+    }
+
+    public void setError(boolean error) {
+        this.error = error;
+    }
+
     public String getHeaderContent() {
         return headerContent;
     }
@@ -66,6 +75,7 @@ public class GeneratedCode {
             xmlWriter.writeAttribute("rel_path", relativePath);
             xmlWriter.writeAttribute("index_in_file", "" + indexInFile);
             xmlWriter.writeAttribute("index", ""+ index);
+            xmlWriter.writeAttribute("error", ""+ error);
 
             if (headerContent != null) {
                 xmlWriter.writeStartElement("header");
@@ -82,7 +92,7 @@ public class GeneratedCode {
         }
         else {
             ModifiedCsvWriter qCsvWriter = (ModifiedCsvWriter) serializer;
-            Object[] record = { relativePath, index, indexInFile, headerContent, bodyContent};
+            Object[] record = { relativePath, index, indexInFile, error, headerContent, bodyContent};
             qCsvWriter.writeRecord(record);
         }
     }
@@ -97,6 +107,7 @@ public class GeneratedCode {
             relativePath = XmlEventReaderWrapper.requireAttributeValue(startElement, "rel_path");
             indexInFile = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "index_in_file");
             index = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "index");
+            error = XmlEventReaderWrapper.requireAttributeValueAsBoolean(startElement, "error");
 
             startElement = xmlReader.requireStartElement(new String[]{ "header", "body" });
             if ("header".equals(startElement.getName().getLocalPart())) {
@@ -130,6 +141,8 @@ public class GeneratedCode {
                 headerContent = null;
             }
             bodyContent = recordDict.get("body");
+
+            error = Boolean.parseBoolean(recordDict.get("is_error"));
             try {
                 index = Integer.parseInt(recordDict.get("index"));
             }
