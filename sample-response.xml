@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+#Fields: rel_path, index_in_file, index, header, body
+-->
 <response>
    <generated_code_list>
       <generated_code rel_path="x xx xxxxx x xx xxxx xxxxxx " index_in_file="14" index="8">

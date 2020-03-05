@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+#Fields: rel_path, index_in_file, index, stringify, body
+-->
 <request>
    <augmenting_code_list>
       <augmenting_code rel_path="x x xxxxxx xxxxxx   xx xxxxx xxxx xxxx x    x" index_in_file="25" index="3">

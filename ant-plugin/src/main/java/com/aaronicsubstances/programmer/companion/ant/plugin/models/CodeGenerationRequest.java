@@ -15,6 +15,8 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamWriter;
 
+import com.aaronicsubstances.programmer.companion.ant.plugin.persistence.XmlEventReaderWrapper;
+
 /**
  * 
  */

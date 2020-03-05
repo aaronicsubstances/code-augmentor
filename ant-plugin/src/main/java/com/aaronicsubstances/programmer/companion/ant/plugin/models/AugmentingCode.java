@@ -7,6 +7,8 @@ import javax.xml.stream.XMLStreamWriter;
 import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.StartElement;
 
+import com.aaronicsubstances.programmer.companion.ant.plugin.persistence.XmlEventReaderWrapper;
+
 /**
  * 
  */

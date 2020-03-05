@@ -1,4 +1,4 @@
-package com.aaronicsubstances.programmer.companion.ant.plugin.models;
+package com.aaronicsubstances.programmer.companion.ant.plugin.persistence;
 
 import java.util.ArrayList;
 
