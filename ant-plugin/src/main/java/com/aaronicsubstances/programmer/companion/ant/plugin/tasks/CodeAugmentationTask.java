@@ -1,9 +1,11 @@
-package com.aaronicsubstances.programmer.companion.ant.plugin;
+package com.aaronicsubstances.programmer.companion.ant.plugin.tasks;
 
 import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Task;
@@ -17,10 +19,11 @@ public class CodeAugmentationTask extends Task {
     private boolean verbose = false;
     private boolean failonerror = true;
     private String errorProperty;
-    private File parseResultXml;
-    private File codeGenXml;
+    private File prepfile;
     private File destdir;
     private boolean overwrite = false;
+
+    private final List<File> generatedCodeFiles = new ArrayList<>();
     
     // validation results
 	private Charset charset;
@@ -49,12 +52,12 @@ public class CodeAugmentationTask extends Task {
         this.overwrite = overwrite;
     }
 
-    public void setParseResultXml(File parseResultXml) {
-        this.parseResultXml = parseResultXml;
+    public void setPrepfile(File prepfile) {
+        this.prepfile = prepfile;
     }
 
-    public void setCodeGenXml(File codeGenXml) {
-        this.codeGenXml = codeGenXml;
+    public void addGen_code_file(File genCodeFile) {
+        generatedCodeFiles.add(genCodeFile);
     }
     
     public void execute() {
@@ -71,19 +74,19 @@ public class CodeAugmentationTask extends Task {
                 charset = Charset.forName(encoding);
             }
             catch (IllegalCharsetNameException | UnsupportedCharsetException ex) {
-                return failBuild("Invalid value for encoding property: " +
+                return failBuild("Invalid value for encoding attribute: " +
                     encoding, ex);
             }
         }
 
         if (!overwrite && destdir == null) {
-            return failBuild("destdir property must be set if overwrite property is false", null);
+            return failBuild("destdir attribute must be set if overwrite property is false", null);
         }
-        if (parseResultXml == null) {
-            return failBuild("parseResultXml property is required", null);
+        if (prepfile == null) {
+            return failBuild("prepfile attribute is required", null);
         }
-        if (codeGenXml == null) {
-            return failBuild("codeGenXml property is required", null);
+        if (generatedCodeFiles.isEmpty()) {
+            return failBuild("at least one gen_code_file nested element is required", null);
         }
 
         // set defaults.

@@ -1,4 +1,4 @@
-package com.aaronicsubstances.programmer.companion.ant.plugin;
+package com.aaronicsubstances.programmer.companion.ant.plugin.tasks;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -34,7 +34,6 @@ public class PreCodeAugmentationTask extends Task {
     private boolean failonerror = true;
     private String errorProperty;
     private boolean listfiles;
-    private File parseResultXml;
     private final List<FileSet> srcDirs = new ArrayList<>();
 
     /*
@@ -47,16 +46,15 @@ public class PreCodeAugmentationTask extends Task {
      *  - only // tries to indent generated code and start on its own new line
      *  - however // ignores indent if generated code has multiline strings.
      */ 
-    private List<String> augmentingCodeBlockStartDoubleSlash;
-    private List<String> augmentingCodeBlockEndDoubleSlash;
-    private List<String> augmentingCodeBlockContinuationDoubleSlash;
-    private List<String> augmentingCodeBlockStartSlashStar;
+    private final List<CodeGenerationRequestSpecification> requestSpecList = new ArrayList<>();
 
     // for these prefer the very first one during code generation.
-    private List<String> codeSnippetBlockStartDoubleSlash;
-    private List<String> codeSnippetBlockEndDoubleSlash;
-    private List<String> codeSnippetBlockStartSlashStar;
-    private List<String> codeSnippetBlockEndSlashStar;
+    private final List<String> genCodeStartDoubleSlashSuffixes = new ArrayList<>();
+    private final List<String> genCodeEndDoubleSlashSuffixes = new ArrayList<>();
+    private final List<String> genCodeStartSlashStarSuffixes = new ArrayList<>();
+    private final List<String> genCodeEndSlashStarSuffixes = new ArrayList<>();
+    
+    private File prepfile;
 
     // validation results
     private Charset charset;
@@ -80,13 +78,38 @@ public class PreCodeAugmentationTask extends Task {
     public void setListfiles(boolean listfiles) {
         this.listfiles = listfiles;
     }
-    
-    public void setParseResultXml(File parseResultXml) {
-        this.parseResultXml = parseResultXml;
+
+    public File getPrepfile() {
+        return prepfile;
+    }
+
+    public void setPrepfile(File prepfile) {
+        this.prepfile = prepfile;
     }
 
     public void addSrc(FileSet srcdir) {
         srcDirs.add(srcdir);
+    }
+
+    public void addConfiguredSpec(CodeGenerationRequestSpecification spec) {
+        // TODO: validate
+        requestSpecList.add(spec);
+    }
+
+    public void addGen_code_start_dslash_suffix(String suffix) {
+        genCodeStartDoubleSlashSuffixes.add(suffix);
+    }
+
+    public void addGen_code_end_dslash_suffix(String suffix) {
+        genCodeEndDoubleSlashSuffixes.add(suffix);
+    }
+
+    public void addGen_code_start_sstar_suffix(String suffix) {
+        genCodeStartSlashStarSuffixes.add(suffix);
+    }
+
+    public void addGen_code_end_sstar_suffix(String suffix) {
+        genCodeEndSlashStarSuffixes.add(suffix);
     }
 
     private boolean validate() {
@@ -95,15 +118,18 @@ public class PreCodeAugmentationTask extends Task {
                 charset = Charset.forName(encoding);
             }
             catch (IllegalCharsetNameException | UnsupportedCharsetException ex) {
-                return failBuild("Invalid value for encoding property: " +
+                return failBuild("Invalid value for encoding attribute: " +
                     encoding, ex);
             }
         }
         if (srcDirs.isEmpty()) {
             return failBuild("at least 1 nested src element is required", null);
         }
-        if (parseResultXml == null) {
-            return failBuild("parseResultXml property is required", null);
+        if (requestSpecList.isEmpty()) {
+            return failBuild("at least 1 nested request element is required", null);
+        }
+        if (prepfile == null) {
+            return failBuild("prepfile attribute is required", null);
         }
 
         // set defaults.
