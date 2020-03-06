@@ -1,0 +1,618 @@
+[
+    {
+        "type": 30,
+        "text": "import",
+        "startPos": 0,
+        "endPos": 6,
+        "lineNumber": 1,
+        "columnNumber": 1
+    },
+    {
+        "type": 12,
+        "text": " ",
+        "startPos": 6,
+        "endPos": 7,
+        "lineNumber": 1,
+        "columnNumber": 7
+    },
+    {
+        "type": 32,
+        "text": "org.example.Message",
+        "startPos": 7,
+        "endPos": 26,
+        "lineNumber": 1,
+        "columnNumber": 8
+    },
+    {
+        "type": 12,
+        "text": " ",
+        "startPos": 26,
+        "endPos": 27,
+        "lineNumber": 1,
+        "columnNumber": 27
+    },
+    {
+        "type": 1,
+        "text": "// Message is accessible",
+        "startPos": 27,
+        "endPos": 51,
+        "lineNumber": 1,
+        "columnNumber": 28
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 51,
+        "endPos": 53,
+        "lineNumber": 1,
+        "columnNumber": 52
+    },
+    {
+        "type": 30,
+        "text": "import",
+        "startPos": 53,
+        "endPos": 59,
+        "lineNumber": 2,
+        "columnNumber": 1
+    },
+    {
+        "type": 12,
+        "text": " ",
+        "startPos": 59,
+        "endPos": 60,
+        "lineNumber": 2,
+        "columnNumber": 7
+    },
+    {
+        "type": 32,
+        "text": "org.test.Message",
+        "startPos": 60,
+        "endPos": 76,
+        "lineNumber": 2,
+        "columnNumber": 8
+    },
+    {
+        "type": 12,
+        "text": " ",
+        "startPos": 76,
+        "endPos": 77,
+        "lineNumber": 2,
+        "columnNumber": 24
+    },
+    {
+        "type": 32,
+        "text": "as",
+        "startPos": 77,
+        "endPos": 79,
+        "lineNumber": 2,
+        "columnNumber": 25
+    },
+    {
+        "type": 12,
+        "text": " ",
+        "startPos": 79,
+        "endPos": 80,
+        "lineNumber": 2,
+        "columnNumber": 27
+    },
+    {
+        "type": 32,
+        "text": "testMessage",
+        "startPos": 80,
+        "endPos": 91,
+        "lineNumber": 2,
+        "columnNumber": 28
+    },
+    {
+        "type": 12,
+        "text": " ",
+        "startPos": 91,
+        "endPos": 92,
+        "lineNumber": 2,
+        "columnNumber": 39
+    },
+    {
+        "type": 1,
+        "text": "// testMessage stands for 'org.test.Message'",
+        "startPos": 92,
+        "endPos": 136,
+        "lineNumber": 2,
+        "columnNumber": 40
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 136,
+        "endPos": 138,
+        "lineNumber": 2,
+        "columnNumber": 84
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 138,
+        "endPos": 140,
+        "lineNumber": 3,
+        "columnNumber": 1
+    },
+    {
+        "type": 50,
+        "text": "class",
+        "startPos": 140,
+        "endPos": 145,
+        "lineNumber": 4,
+        "columnNumber": 1
+    },
+    {
+        "type": 12,
+        "text": " ",
+        "startPos": 145,
+        "endPos": 146,
+        "lineNumber": 4,
+        "columnNumber": 6
+    },
+    {
+        "type": 50,
+        "text": "User",
+        "startPos": 146,
+        "endPos": 150,
+        "lineNumber": 4,
+        "columnNumber": 7
+    },
+    {
+        "type": 50,
+        "text": "(",
+        "startPos": 150,
+        "endPos": 151,
+        "lineNumber": 4,
+        "columnNumber": 11
+    },
+    {
+        "type": 50,
+        "text": "val",
+        "startPos": 151,
+        "endPos": 154,
+        "lineNumber": 4,
+        "columnNumber": 12
+    },
+    {
+        "type": 12,
+        "text": " ",
+        "startPos": 154,
+        "endPos": 155,
+        "lineNumber": 4,
+        "columnNumber": 15
+    },
+    {
+        "type": 50,
+        "text": "name",
+        "startPos": 155,
+        "endPos": 159,
+        "lineNumber": 4,
+        "columnNumber": 16
+    },
+    {
+        "type": 50,
+        "text": ":",
+        "startPos": 159,
+        "endPos": 160,
+        "lineNumber": 4,
+        "columnNumber": 20
+    },
+    {
+        "type": 12,
+        "text": " ",
+        "startPos": 160,
+        "endPos": 161,
+        "lineNumber": 4,
+        "columnNumber": 21
+    },
+    {
+        "type": 50,
+        "text": "String",
+        "startPos": 161,
+        "endPos": 167,
+        "lineNumber": 4,
+        "columnNumber": 22
+    },
+    {
+        "type": 50,
+        "text": ")",
+        "startPos": 167,
+        "endPos": 168,
+        "lineNumber": 4,
+        "columnNumber": 28
+    },
+    {
+        "type": 12,
+        "text": " ",
+        "startPos": 168,
+        "endPos": 169,
+        "lineNumber": 4,
+        "columnNumber": 29
+    },
+    {
+        "type": 50,
+        "text": "{",
+        "startPos": 169,
+        "endPos": 170,
+        "lineNumber": 4,
+        "columnNumber": 30
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 170,
+        "endPos": 172,
+        "lineNumber": 4,
+        "columnNumber": 31
+    },
+    {
+        "type": 12,
+        "text": "    ",
+        "startPos": 172,
+        "endPos": 176,
+        "lineNumber": 5,
+        "columnNumber": 1
+    },
+    {
+        "type": 50,
+        "text": "var",
+        "startPos": 176,
+        "endPos": 179,
+        "lineNumber": 5,
+        "columnNumber": 5
+    },
+    {
+        "type": 12,
+        "text": " ",
+        "startPos": 179,
+        "endPos": 180,
+        "lineNumber": 5,
+        "columnNumber": 8
+    },
+    {
+        "type": 50,
+        "text": "address",
+        "startPos": 180,
+        "endPos": 187,
+        "lineNumber": 5,
+        "columnNumber": 9
+    },
+    {
+        "type": 50,
+        "text": ":",
+        "startPos": 187,
+        "endPos": 188,
+        "lineNumber": 5,
+        "columnNumber": 16
+    },
+    {
+        "type": 12,
+        "text": " ",
+        "startPos": 188,
+        "endPos": 189,
+        "lineNumber": 5,
+        "columnNumber": 17
+    },
+    {
+        "type": 50,
+        "text": "String",
+        "startPos": 189,
+        "endPos": 195,
+        "lineNumber": 5,
+        "columnNumber": 18
+    },
+    {
+        "type": 12,
+        "text": " ",
+        "startPos": 195,
+        "endPos": 196,
+        "lineNumber": 5,
+        "columnNumber": 24
+    },
+    {
+        "type": 50,
+        "text": "=",
+        "startPos": 196,
+        "endPos": 197,
+        "lineNumber": 5,
+        "columnNumber": 25
+    },
+    {
+        "type": 12,
+        "text": " ",
+        "startPos": 197,
+        "endPos": 198,
+        "lineNumber": 5,
+        "columnNumber": 26
+    },
+    {
+        "type": 7,
+        "text": "\"",
+        "startPos": 198,
+        "endPos": 199,
+        "lineNumber": 5,
+        "columnNumber": 27
+    },
+    {
+        "type": 20,
+        "text": "unspecified",
+        "startPos": 199,
+        "endPos": 210,
+        "lineNumber": 5,
+        "columnNumber": 28
+    },
+    {
+        "type": 7,
+        "text": "\"",
+        "startPos": 210,
+        "endPos": 211,
+        "lineNumber": 5,
+        "columnNumber": 39
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 211,
+        "endPos": 213,
+        "lineNumber": 5,
+        "columnNumber": 40
+    },
+    {
+        "type": 12,
+        "text": "        ",
+        "startPos": 213,
+        "endPos": 221,
+        "lineNumber": 6,
+        "columnNumber": 1
+    },
+    {
+        "type": 50,
+        "text": "set",
+        "startPos": 221,
+        "endPos": 224,
+        "lineNumber": 6,
+        "columnNumber": 9
+    },
+    {
+        "type": 50,
+        "text": "(",
+        "startPos": 224,
+        "endPos": 225,
+        "lineNumber": 6,
+        "columnNumber": 12
+    },
+    {
+        "type": 50,
+        "text": "value",
+        "startPos": 225,
+        "endPos": 230,
+        "lineNumber": 6,
+        "columnNumber": 13
+    },
+    {
+        "type": 50,
+        "text": ":",
+        "startPos": 230,
+        "endPos": 231,
+        "lineNumber": 6,
+        "columnNumber": 18
+    },
+    {
+        "type": 12,
+        "text": " ",
+        "startPos": 231,
+        "endPos": 232,
+        "lineNumber": 6,
+        "columnNumber": 19
+    },
+    {
+        "type": 50,
+        "text": "String",
+        "startPos": 232,
+        "endPos": 238,
+        "lineNumber": 6,
+        "columnNumber": 20
+    },
+    {
+        "type": 50,
+        "text": ")",
+        "startPos": 238,
+        "endPos": 239,
+        "lineNumber": 6,
+        "columnNumber": 26
+    },
+    {
+        "type": 12,
+        "text": " ",
+        "startPos": 239,
+        "endPos": 240,
+        "lineNumber": 6,
+        "columnNumber": 27
+    },
+    {
+        "type": 50,
+        "text": "{",
+        "startPos": 240,
+        "endPos": 241,
+        "lineNumber": 6,
+        "columnNumber": 28
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 241,
+        "endPos": 243,
+        "lineNumber": 6,
+        "columnNumber": 29
+    },
+    {
+        "type": 12,
+        "text": "            ",
+        "startPos": 243,
+        "endPos": 255,
+        "lineNumber": 7,
+        "columnNumber": 1
+    },
+    {
+        "type": 50,
+        "text": "println",
+        "startPos": 255,
+        "endPos": 262,
+        "lineNumber": 7,
+        "columnNumber": 13
+    },
+    {
+        "type": 50,
+        "text": "(",
+        "startPos": 262,
+        "endPos": 263,
+        "lineNumber": 7,
+        "columnNumber": 20
+    },
+    {
+        "type": 57,
+        "text": "\"\"\"",
+        "startPos": 263,
+        "endPos": 266,
+        "lineNumber": 7,
+        "columnNumber": 21
+    },
+    {
+        "type": 20,
+        "text": "\r\n                Address was changed for $name:\r\n                \"$field\" -> \"$value\".",
+        "startPos": 266,
+        "endPos": 353,
+        "lineNumber": 7,
+        "columnNumber": 24
+    },
+    {
+        "type": 57,
+        "text": "\"\"\"",
+        "startPos": 353,
+        "endPos": 356,
+        "lineNumber": 9,
+        "columnNumber": 38
+    },
+    {
+        "type": 50,
+        "text": ".",
+        "startPos": 356,
+        "endPos": 357,
+        "lineNumber": 9,
+        "columnNumber": 41
+    },
+    {
+        "type": 50,
+        "text": "trimIndent",
+        "startPos": 357,
+        "endPos": 367,
+        "lineNumber": 9,
+        "columnNumber": 42
+    },
+    {
+        "type": 50,
+        "text": "())",
+        "startPos": 367,
+        "endPos": 370,
+        "lineNumber": 9,
+        "columnNumber": 52
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 370,
+        "endPos": 372,
+        "lineNumber": 9,
+        "columnNumber": 55
+    },
+    {
+        "type": 12,
+        "text": "            ",
+        "startPos": 372,
+        "endPos": 384,
+        "lineNumber": 10,
+        "columnNumber": 1
+    },
+    {
+        "type": 50,
+        "text": "field",
+        "startPos": 384,
+        "endPos": 389,
+        "lineNumber": 10,
+        "columnNumber": 13
+    },
+    {
+        "type": 12,
+        "text": " ",
+        "startPos": 389,
+        "endPos": 390,
+        "lineNumber": 10,
+        "columnNumber": 18
+    },
+    {
+        "type": 50,
+        "text": "=",
+        "startPos": 390,
+        "endPos": 391,
+        "lineNumber": 10,
+        "columnNumber": 19
+    },
+    {
+        "type": 12,
+        "text": " ",
+        "startPos": 391,
+        "endPos": 392,
+        "lineNumber": 10,
+        "columnNumber": 20
+    },
+    {
+        "type": 50,
+        "text": "value",
+        "startPos": 392,
+        "endPos": 397,
+        "lineNumber": 10,
+        "columnNumber": 21
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 397,
+        "endPos": 399,
+        "lineNumber": 10,
+        "columnNumber": 26
+    },
+    {
+        "type": 12,
+        "text": "        ",
+        "startPos": 399,
+        "endPos": 407,
+        "lineNumber": 11,
+        "columnNumber": 1
+    },
+    {
+        "type": 50,
+        "text": "}",
+        "startPos": 407,
+        "endPos": 408,
+        "lineNumber": 11,
+        "columnNumber": 9
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 408,
+        "endPos": 410,
+        "lineNumber": 11,
+        "columnNumber": 10
+    },
+    {
+        "type": 50,
+        "text": "}",
+        "startPos": 410,
+        "endPos": 411,
+        "lineNumber": 12,
+        "columnNumber": 1
+    }
+]

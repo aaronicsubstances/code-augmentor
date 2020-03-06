@@ -9,6 +9,7 @@ import com.aaronicsubstances.programmer.companion.LexerSupport;
 import com.aaronicsubstances.programmer.companion.ParserInputSource;
 import com.aaronicsubstances.programmer.companion.ParserSupport;
 import com.aaronicsubstances.programmer.companion.Token;
+import com.aaronicsubstances.programmer.companion.java.JavaLexer;
 
 /**
  * Parses Kotlin source code into a limited set of tokens from which new lines and comments
@@ -39,17 +40,14 @@ public class KotlinParser {
             Function<ParserInputSource, List<Token>> startLexerFunction) {
         Token token = parserSupport.lookAhead(0, startLexerFunction);
         switch (token.type) {
-            case KotlinLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT_START:
-                parseSingleLineComment(parseResults);
-                break;
-            case KotlinLexer.TOKEN_TYPE_MULTI_LINE_COMMENT_START:
-                parseMultiLineComment(parseResults);
-                break;
             case KotlinLexer.TOKEN_TYPE_SINGLE_LINE_STRING_DELIMITER:
                 parseSingleLineString(parseResults);
                 break;
             case KotlinLexer.TOKEN_TYPE_MULTI_LINE_STRING_DELIMITER:
                 parseMultiLineString(parseResults);
+                break;
+            case KotlinLexer.TOKEN_TYPE_IMPORT_KEYWORD:
+                parseImport(parseResults);
                 break;
             default:
                 parseResults.add(parserSupport.consume());
@@ -57,51 +55,13 @@ public class KotlinParser {
         }
     }
 
-    private void parseSingleLineComment(List<Token> parseResults) {
-        Token commentStart = parserSupport.consume(KotlinLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT_START);
-        parseResults.add(commentStart);
-        Function<ParserInputSource, List<Token>> lexerFunction = lexer::consumeSingleLineComment;
-        while (true) {
-            Token token = parserSupport.lookAhead(0, lexerFunction);
-            if (token.type == LexerSupport.EOF) {
-                throw new RuntimeException("Unexpected EOF");
-            }
-            if (token.type == KotlinLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT_END) {
-                break;
-            }
-            Token contentToken = parserSupport.consume(KotlinLexer.TOKEN_TYPE_COMMENT_CONTENT);
-            parseResults.add(contentToken);
-        }
-        Token commentEnd = parserSupport.consume(KotlinLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT_END);
-        parseResults.add(commentEnd);
-    }
-
-    private void parseMultiLineComment(List<Token> parseResults) {
-        Token commentStart = parserSupport.consume(KotlinLexer.TOKEN_TYPE_MULTI_LINE_COMMENT_START);
-        parseResults.add(commentStart);
-        Function<ParserInputSource, List<Token>> lexerFunction = 
-            inputSource -> Arrays.asList(lexer.consumeMultiLineComment(inputSource));
-        while (true) {
-            Token token = parserSupport.lookAhead(0, lexerFunction);
-            if (token.type == LexerSupport.EOF) {
-                throw new RuntimeException("Unexpected EOF");
-            }
-            if (token.type == KotlinLexer.TOKEN_TYPE_MULTI_LINE_COMMENT_END) {
-                break;
-            }
-            parseResults.add(parserSupport.consume());
-        }
-        Token commentEnd = parserSupport.consume(KotlinLexer.TOKEN_TYPE_MULTI_LINE_COMMENT_END);
-        parseResults.add(commentEnd);
-    }
-
     private void parseSingleLineString(List<Token> parseResults) {
-        Token delimiterToken = parserSupport.consume(KotlinLexer.TOKEN_TYPE_SINGLE_LINE_STRING_DELIMITER);
-        parseResults.add(delimiterToken);
+        Token token = parserSupport.consume(KotlinLexer.TOKEN_TYPE_SINGLE_LINE_STRING_DELIMITER);
+        parseResults.add(token);
         Function<ParserInputSource, List<Token>> lexerFunction = 
             inputSource -> Arrays.asList(lexer.consumeSingleLineString(inputSource));
         while (true) {
-            Token token = parserSupport.lookAhead(0, lexerFunction);
+            token = parserSupport.lookAhead(0, lexerFunction);
             if (token.type == LexerSupport.EOF) {
                 throw new RuntimeException("Unexpected EOF");
             }
@@ -112,20 +72,20 @@ public class KotlinParser {
                 parseStringTemplate(parseResults);
                 continue;
             }
-            Token contentToken = parserSupport.consume(KotlinLexer.TOKEN_TYPE_STRING_CONTENT);
-            parseResults.add(contentToken);
+            parseResults.add(token);
+            parserSupport.consume(KotlinLexer.TOKEN_TYPE_LITERAL_STRING_CONTENT);            
         }
-        delimiterToken = parserSupport.consume(KotlinLexer.TOKEN_TYPE_SINGLE_LINE_STRING_DELIMITER);
-        parseResults.add(delimiterToken);
+        parseResults.add(token);
+        parserSupport.consume(KotlinLexer.TOKEN_TYPE_SINGLE_LINE_STRING_DELIMITER);        
     }
 
 	private void parseMultiLineString(List<Token> parseResults) {
-        Token delimiterToken = parserSupport.consume(KotlinLexer.TOKEN_TYPE_MULTI_LINE_STRING_DELIMITER);
-        parseResults.add(delimiterToken);
+        Token token = parserSupport.consume(KotlinLexer.TOKEN_TYPE_MULTI_LINE_STRING_DELIMITER);
+        parseResults.add(token);
         Function<ParserInputSource, List<Token>> lexerFunction = 
-            inputSource -> Arrays.asList(lexer.consumeSingleLineString(inputSource));
+            inputSource -> Arrays.asList(lexer.consumeMultiLineString(inputSource));
         while (true) {
-            Token token = parserSupport.lookAhead(0, lexerFunction);
+            token = parserSupport.lookAhead(0, lexerFunction);
             if (token.type == LexerSupport.EOF) {
                 throw new RuntimeException("Unexpected EOF");
             }
@@ -136,20 +96,20 @@ public class KotlinParser {
                 parseStringTemplate(parseResults);
                 continue;
             }
-            Token contentToken = parserSupport.consume(KotlinLexer.TOKEN_TYPE_STRING_CONTENT);
-            parseResults.add(contentToken);
+            parseResults.add(token);
+            parserSupport.consume(KotlinLexer.TOKEN_TYPE_LITERAL_STRING_CONTENT);            
         }
-        delimiterToken = parserSupport.consume(KotlinLexer.TOKEN_TYPE_MULTI_LINE_STRING_DELIMITER);
-        parseResults.add(delimiterToken);
+        parseResults.add(token);
+        parserSupport.consume(KotlinLexer.TOKEN_TYPE_MULTI_LINE_STRING_DELIMITER);
     }
 
     private void parseStringTemplate(List<Token> parseResults) {
-        Token startToken = parserSupport.consume(KotlinLexer.TOKEN_TYPE_STRING_TEMPLATE_START);
-        parseResults.add(startToken);
+        Token token = parserSupport.consume(KotlinLexer.TOKEN_TYPE_STRING_TEMPLATE_START);
+        parseResults.add(token);
         Function<ParserInputSource, List<Token>> lexerFunction = 
             inputSource -> Arrays.asList(lexer.consumeTemplateContent(inputSource));
         while (true) {
-            Token token = parserSupport.lookAhead(0, lexerFunction);
+            token = parserSupport.lookAhead(0, lexerFunction);
             if (token.type == LexerSupport.EOF) {
                 throw new RuntimeException("Unexpected EOF");
             }
@@ -158,7 +118,53 @@ public class KotlinParser {
             }
             parse(parseResults, lexerFunction);
         }
-        Token endToken = parserSupport.consume(KotlinLexer.TOKEN_TYPE_STRING_TEMPLATE_END);
-        parseResults.add(endToken);
+        parserSupport.consume(KotlinLexer.TOKEN_TYPE_STRING_TEMPLATE_END);        
+        parseResults.add(token);
+	}
+
+    private void parseImport(List<Token> parseResults) {
+        Token token = parserSupport.consume(JavaLexer.TOKEN_TYPE_IMPORT_KEYWORD);
+        parseResults.add(token);
+        Function<ParserInputSource, List<Token>> lexerFunction = 
+            inputSource -> Arrays.asList(lexer.consumeImport(inputSource));
+        boolean importContentSeen = false;
+        while (true) {
+            token = parserSupport.lookAhead(0, lexerFunction);
+            if (token.type == LexerSupport.EOF) {
+                break;
+            }
+            if (token.type == JavaLexer.TOKEN_TYPE_SEMI_COLON ||
+                    token.type == JavaLexer.TOKEN_TYPE_NEWLINE) {
+                break;
+            }
+            switch (token.type) {
+                case JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT:
+                case JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT:
+                case JavaLexer.TOKEN_TYPE_NON_NEWLINE_WHITESPACE:
+                    break;
+                case JavaLexer.TOKEN_TYPE_IMPORT_CONTENT:
+                    importContentSeen = true;
+                    break;
+                default:
+                    throw parserSupport.getParserInputSource().
+                        createAbortException("Unexpected token in import statement", 
+                        token);
+            }
+            parseResults.add(token);
+            parserSupport.consume();
+        }
+        
+        if (!importContentSeen) {
+            throw parserSupport.getParserInputSource().
+                createAbortException("Expecting imported item(s)", token);
+        }
+
+        if (token.type != LexerSupport.EOF) {
+            parseResults.add(token);
+            token = parserSupport.match(JavaLexer.TOKEN_TYPE_NEWLINE);
+            if (token == null) {
+                parserSupport.consume(JavaLexer.TOKEN_TYPE_SEMI_COLON);
+            }
+        }
 	}
 }

@@ -43,12 +43,6 @@ public class KotlinLexer extends JavaLexer {
     public Token consumeSingleLineString(ParserInputSource inputSource) {        
 		int ch = inputSource.lookahead(0);
 
-        // return newlines as separate tokens.
-        if (LexerSupport.isNewLine(ch)) {
-            Token eolToken = consumeNewLineToken(inputSource);
-            return eolToken;
-        }
-
         if (ch == '"') {
             Token endOfString = consumeToken(inputSource, TOKEN_TYPE_SINGLE_LINE_STRING_DELIMITER, 
                 "\"", 1);
@@ -69,7 +63,7 @@ public class KotlinLexer extends JavaLexer {
 		while ((ch = inputSource.lookahead(0)) != LexerSupport.EOF) {
             // check for new line.
 			if (LexerSupport.isNewLine(ch)) {
-				break;
+				throw inputSource.createAbortException("Unexpected newline in string", null);
             }
             
             if (!escaped) {
@@ -96,19 +90,13 @@ public class KotlinLexer extends JavaLexer {
         }
 		assert tokenText.length() > 0;
         int endPos = inputSource.getPosition();
-        Token contentToken = new Token(TOKEN_TYPE_STRING_CONTENT, 
+        Token contentToken = new Token(TOKEN_TYPE_LITERAL_STRING_CONTENT, 
             tokenText.toString(), startPos, endPos, lineNumber, columnNumber);
         return contentToken;
     }
 
     public Token consumeMultiLineString(ParserInputSource inputSource) {
 		int ch = inputSource.lookahead(0);
-
-        // return newlines as separate tokens.
-        if (LexerSupport.isNewLine(ch)) {
-            Token eolToken = consumeNewLineToken(inputSource);
-            return eolToken;
-        }
 
         int ch2 = inputSource.lookahead(1);
         if (ch == '"' && ch2 == '"' && inputSource.lookahead(2) == '"') {
@@ -128,10 +116,6 @@ public class KotlinLexer extends JavaLexer {
 		int lineNumber = inputSource.getLineNumber();
         int columnNumber = inputSource.getColumnNumber();
 		while ((ch = inputSource.lookahead(0)) != LexerSupport.EOF) {
-            // check for new line.
-			if (LexerSupport.isNewLine(ch)) {
-				break;
-            }
             ch2 = inputSource.lookahead(1);
             if (ch == '"' && ch2 == '"' && inputSource.lookahead(2) == '"') {
                 break;
@@ -147,7 +131,7 @@ public class KotlinLexer extends JavaLexer {
         }
 		assert tokenText.length() > 0;
         int endPos = inputSource.getPosition();
-        Token contentToken = new Token(TOKEN_TYPE_STRING_CONTENT, 
+        Token contentToken = new Token(TOKEN_TYPE_LITERAL_STRING_CONTENT, 
             tokenText.toString(), startPos, endPos, lineNumber, columnNumber);
         return contentToken;
     }
@@ -163,7 +147,7 @@ public class KotlinLexer extends JavaLexer {
             return endTemplateToken;
         }
         else {
-            // start as if from very beginning.
+            // recursively start from very beginning.
             return fetchNextToken(inputSource);
         }
     }

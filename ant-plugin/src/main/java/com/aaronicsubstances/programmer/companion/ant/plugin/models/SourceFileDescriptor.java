@@ -14,13 +14,16 @@ import com.aaronicsubstances.programmer.companion.ant.plugin.persistence.XmlEven
 public class SourceFileDescriptor {
     private String dir;
     private String relativePath;
+    private List<String> importStatements;
     private CodeSnippetDescriptor headerSnippet;
     private List<CodeSnippetDescriptor> bodySnippets;
 
     public SourceFileDescriptor() {
     }
 
-    public SourceFileDescriptor(List<CodeSnippetDescriptor> bodySnippets) {
+    public SourceFileDescriptor(List<String> importStatements, 
+            List<CodeSnippetDescriptor> bodySnippets) {
+        this.importStatements = importStatements;
         this.bodySnippets = bodySnippets;
     }
 
@@ -38,6 +41,14 @@ public class SourceFileDescriptor {
 
     public void setRelativePath(String relativePath) {
         this.relativePath = relativePath;
+    }
+
+    public List<String> getImportStatements() {
+        return importStatements;
+    }
+
+    public void setImportStatements(List<String> importStatements) {
+        this.importStatements = importStatements;
     }
 
     public CodeSnippetDescriptor getHeaderSnippet() {
@@ -62,6 +73,14 @@ public class SourceFileDescriptor {
         xmlWriter.writeAttribute("dir", dir);
         xmlWriter.writeAttribute("rel_path", relativePath);
 
+        xmlWriter.writeStartElement("import_list");
+        for (String importStatement : importStatements) {
+            xmlWriter.writeStartElement("import");
+            xmlWriter.writeCharacters(importStatement);            
+            xmlWriter.writeEndElement();
+        }
+        xmlWriter.writeEndElement(); // import_list
+
         if (headerSnippet != null) {
             headerSnippet.serialize(xmlWriter, "header_snippet");
         }
@@ -83,6 +102,16 @@ public class SourceFileDescriptor {
         }
         dir = XmlEventReaderWrapper.requireAttributeValue(startElement, "dir");
         relativePath = XmlEventReaderWrapper.requireAttributeValue(startElement, "rel_path");
+        
+        importStatements = new ArrayList<>();
+        startElement = xmlReader.requireStartElement("import_list");
+        while ((startElement = xmlReader.locateStartElement("import")) != null) {
+            String importStatement = xmlReader.readElementValue();
+            xmlReader.requireEndElement("import");
+
+            importStatements.add(importStatement);
+        }
+        xmlReader.requireEndElement("import_list");
 
         startElement = xmlReader.requireStartElement(new String[]{ "header_snippet", "snippet_list" });
         if ("header_snippet".equals(startElement.getName().getLocalPart())) {

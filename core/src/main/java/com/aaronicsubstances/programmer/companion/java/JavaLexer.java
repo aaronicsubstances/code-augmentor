@@ -1,6 +1,5 @@
 package com.aaronicsubstances.programmer.companion.java;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -14,14 +13,16 @@ import com.aaronicsubstances.programmer.companion.Token;
  */
 public class JavaLexer implements Lexer {
 	public static final int TOKEN_TYPE_EOF = -1;
-	public static final int TOKEN_TYPE_SINGLE_LINE_COMMENT_START = 1;
-	public static final int TOKEN_TYPE_SINGLE_LINE_COMMENT_END = 2;
-	public static final int TOKEN_TYPE_MULTI_LINE_COMMENT_START = 3;
-	public static final int TOKEN_TYPE_MULTI_LINE_COMMENT_END = 5;
+	public static final int TOKEN_TYPE_SINGLE_LINE_COMMENT = 1;
+	public static final int TOKEN_TYPE_MULTI_LINE_COMMENT = 3;
     public static final int TOKEN_TYPE_SINGLE_LINE_STRING_DELIMITER = 7;
-	public static final int TOKEN_TYPE_NEWLINE = 10;
-	public static final int TOKEN_TYPE_COMMENT_CONTENT = 16;
-    public static final int TOKEN_TYPE_STRING_CONTENT = 20;
+    public static final int TOKEN_TYPE_NEWLINE = 10;
+    public static final int TOKEN_TYPE_NON_NEWLINE_WHITESPACE = 12;
+    public static final int TOKEN_TYPE_LITERAL_STRING_CONTENT = 20;
+    public static final int TOKEN_TYPE_IMPORT_KEYWORD = 30;
+    public static final int TOKEN_TYPE_STATIC_KEYWORD = 31;
+    public static final int TOKEN_TYPE_IMPORT_CONTENT = 32;
+    public static final int TOKEN_TYPE_SEMI_COLON = 36;
     public static final int TOKEN_TYPE_OTHER = 50;
 
     @Override
@@ -50,18 +51,32 @@ public class JavaLexer implements Lexer {
 		switch (lookup) {
 			case '/':
 				if (nextChar == '/') {
-					return consumeToken(inputSource, TOKEN_TYPE_SINGLE_LINE_COMMENT_START, "//", 2);
+					return consumeSingleLineComment(inputSource);
 				}
 				else if (nextChar == '*') {
-					return consumeToken(inputSource, TOKEN_TYPE_MULTI_LINE_COMMENT_START, "/*", 2);
+					return consumeMultiLineComment(inputSource);
                 }
+                // due to use of '/' to signal non "other" tokens, rather than
+                // let "other" code handle this, just return here.
                 return consumeToken(inputSource, TOKEN_TYPE_OTHER, "/", 1);
 			case '"':
 				return consumeToken(inputSource, TOKEN_TYPE_SINGLE_LINE_STRING_DELIMITER, "\"", 1);
 			case '\r':
 			case '\n':
 				return consumeNewLineToken(inputSource);
-		}
+            case ';':
+                return consumeToken(inputSource, TOKEN_TYPE_SEMI_COLON, ";", 1);
+        }
+        
+        // check for whitespace other than newlines.
+        if (Character.isWhitespace(lookup)) {
+            return consumeNonNewLineWhitespace(inputSource);
+        }
+
+        // check for import statements by reading identifiers.
+        if (Character.isJavaIdentifierPart(lookup)) {
+            return consumeJavaIdentifierOrNumber(inputSource);
+        }
 		
 		// getting here means skip tokens involved.
 		StringBuilder otherTokenText = new StringBuilder();
@@ -69,16 +84,24 @@ public class JavaLexer implements Lexer {
         int lineNumber = inputSource.getLineNumber();
         int columnNumber = inputSource.getColumnNumber();
 		while ((lookup = inputSource.lookahead(0)) != LexerSupport.EOF) {
-			boolean relevantTokenFound = false;
+            boolean possibleRelevantTokenFound = false;
+            // consider any character which can begin above conditional tests
+            // (switch statement, whitespace and import if branches)
+            // as a possible relevant token.
 			switch (lookup) {
 				case '/':
 				case '"':
 				case '\r':
-				case '\n':
-					relevantTokenFound = true;
+                case '\n':
+                case ';':
+					possibleRelevantTokenFound = true;
 					break;
-			}
-			if (relevantTokenFound) {
+            }
+            if (!possibleRelevantTokenFound) {
+                possibleRelevantTokenFound = Character.isWhitespace(lookup) ||
+                    Character.isJavaIdentifierPart(lookup);
+            }
+			if (possibleRelevantTokenFound) {
 				break;
 			}
             otherTokenText.appendCodePoint(lookup);
@@ -87,6 +110,58 @@ public class JavaLexer implements Lexer {
 		assert otherTokenText.length() > 0;
         Token token = new Token(TOKEN_TYPE_OTHER, otherTokenText.toString(), startPos,
             inputSource.getPosition(), lineNumber, columnNumber);
+        return token;
+    }
+
+    private Token consumeNonNewLineWhitespace(ParserInputSource inputSource) {
+        StringBuilder tokenText = new StringBuilder();
+        int startPos = inputSource.getPosition();
+		int lineNumber = inputSource.getLineNumber();
+        int columnNumber = inputSource.getColumnNumber();
+		int ch;
+		while ((ch = inputSource.lookahead(0)) != LexerSupport.EOF) {
+            if (!Character.isWhitespace(ch)) {
+                break;
+            }
+			if (LexerSupport.isNewLine(ch)) {
+				break;
+            }
+            tokenText.appendCodePoint(ch);
+            inputSource.consume(1);
+		}
+		assert tokenText.length() > 0;
+        int endPos = inputSource.getPosition();
+        Token token = new Token(TOKEN_TYPE_NON_NEWLINE_WHITESPACE, 
+            tokenText.toString(), startPos, endPos, lineNumber, columnNumber);
+        return token;
+    }
+
+    private Token consumeJavaIdentifierOrNumber(ParserInputSource inputSource) {
+        StringBuilder tokenText = new StringBuilder();
+        int startPos = inputSource.getPosition();
+		int lineNumber = inputSource.getLineNumber();
+        int columnNumber = inputSource.getColumnNumber();
+		int ch;
+		while ((ch = inputSource.lookahead(0)) != LexerSupport.EOF) {
+            if (!Character.isJavaIdentifierPart(ch)) {
+                break;
+            }
+            tokenText.appendCodePoint(ch);
+            inputSource.consume(1);
+		}
+        assert tokenText.length() > 0;
+        int endPos = inputSource.getPosition();
+        // at this stage check if we have an import statement or not.
+        String tokenTextAsStr = tokenText.toString();
+        int tokenType = TOKEN_TYPE_OTHER;
+        if (tokenTextAsStr.equals("import")) {
+            tokenType = TOKEN_TYPE_IMPORT_KEYWORD;
+        }
+        else if (tokenTextAsStr.equals("static")) {
+            tokenType = TOKEN_TYPE_STATIC_KEYWORD;
+        }
+        Token token = new Token(tokenType, 
+            tokenTextAsStr, startPos, endPos, lineNumber, columnNumber);
         return token;
     }
 
@@ -116,11 +191,15 @@ public class JavaLexer implements Lexer {
 		return token;
 	}
     
-    public List<Token> consumeSingleLineComment(ParserInputSource inputSource) {
+    private Token consumeSingleLineComment(ParserInputSource inputSource) {
         StringBuilder tokenText = new StringBuilder();
         int startPos = inputSource.getPosition();
 		int lineNumber = inputSource.getLineNumber();
         int columnNumber = inputSource.getColumnNumber();
+        
+        inputSource.consume(2);
+        tokenText.append("//");
+
 		int ch;
 		while ((ch = inputSource.lookahead(0)) != LexerSupport.EOF) {
 			if (LexerSupport.isNewLine(ch)) {
@@ -129,57 +208,37 @@ public class JavaLexer implements Lexer {
             tokenText.appendCodePoint(ch);
             inputSource.consume(1);
 		}
-        List<Token> tokens = new ArrayList<>();
         int endPos = inputSource.getPosition();
-		if (tokenText.length() > 0) {
-            Token contentToken = new Token(TOKEN_TYPE_COMMENT_CONTENT, 
-                tokenText.toString(), startPos, endPos, lineNumber, columnNumber);
-            tokens.add(contentToken);
-        }
-        // create "virtual" token for end of single line comment.
-        Token endOfCommentToken = new Token(TOKEN_TYPE_SINGLE_LINE_COMMENT_END, 
-            null, endPos, endPos, lineNumber, inputSource.getColumnNumber());
-        tokens.add(endOfCommentToken);
-		return tokens;
+        Token token = new Token(TOKEN_TYPE_SINGLE_LINE_COMMENT, 
+            tokenText.toString(), startPos, endPos, lineNumber, columnNumber);
+        return token;
     }
     
-    public Token consumeMultiLineComment(ParserInputSource inputSource) {
-        int ch = inputSource.lookahead(0);
-
-        if (ch == '*' && inputSource.lookahead(1) == '/') {
-            Token endOfComment = consumeToken(inputSource, TOKEN_TYPE_MULTI_LINE_COMMENT_END, 
-                "*/", 2);
-            return endOfComment;
-        }
-
-        // return newlines as separate tokens.
-        if (LexerSupport.isNewLine(ch)) {
-            Token eolToken = consumeNewLineToken(inputSource);
-            return eolToken;
-        }
-
+    private Token consumeMultiLineComment(ParserInputSource inputSource) {
         StringBuilder tokenText = new StringBuilder();
         int startPos = inputSource.getPosition();
 		int lineNumber = inputSource.getLineNumber();
         int columnNumber = inputSource.getColumnNumber();
+        
+        inputSource.consume(2);
+        tokenText.append("/*");
+
+        int ch;
 		while ((ch = inputSource.lookahead(0)) != LexerSupport.EOF) {
             // check for end of comment.
             if (ch == '*' && inputSource.lookahead(1) == '/') {
+                tokenText.append("*/");
+                inputSource.consume(2);
                 break;
             }
-            // check for new line.
-			if (LexerSupport.isNewLine(ch)) {
-				break;
-			}
             tokenText.appendCodePoint(ch);
             inputSource.consume(1);
         }
         if (ch == LexerSupport.EOF) {
             throw inputSource.createAbortException("Unterminated multiline comment", null);
         }
-        assert tokenText.length() > 0;
         int endPos = inputSource.getPosition();
-        Token contentToken = new Token(TOKEN_TYPE_COMMENT_CONTENT, 
+        Token contentToken = new Token(TOKEN_TYPE_MULTI_LINE_COMMENT, 
             tokenText.toString(), startPos, endPos, lineNumber, columnNumber);
         return contentToken;
     }
@@ -193,12 +252,6 @@ public class JavaLexer implements Lexer {
             return endOfString;
         }
 
-        // return newlines as separate tokens.
-        if (LexerSupport.isNewLine(ch)) {
-            Token eolToken = consumeNewLineToken(inputSource);
-            return eolToken;
-        }
-
         StringBuilder tokenText = new StringBuilder();
         int startPos = inputSource.getPosition();
 		int lineNumber = inputSource.getLineNumber();
@@ -207,7 +260,7 @@ public class JavaLexer implements Lexer {
 		while ((ch = inputSource.lookahead(0)) != LexerSupport.EOF) {
             // check for new line.
 			if (LexerSupport.isNewLine(ch)) {
-				break;
+                throw inputSource.createAbortException("Unexpected newline in string", null);
 			}
             // check for end of string.
             if (ch == '"' && !escaped) {
@@ -228,8 +281,69 @@ public class JavaLexer implements Lexer {
         }
 		assert tokenText.length() > 0;
         int endPos = inputSource.getPosition();
-        Token contentToken = new Token(TOKEN_TYPE_STRING_CONTENT, 
+        Token token = new Token(TOKEN_TYPE_LITERAL_STRING_CONTENT, 
             tokenText.toString(), startPos, endPos, lineNumber, columnNumber);
-        return contentToken;
+        return token;
+	}
+	
+	public Token consumeImport(ParserInputSource inputSource) {
+        int ch = inputSource.lookahead(0);
+        if (Character.isWhitespace(ch)) {
+            // read away whitespace, newlines included.
+            return fetchNextToken(inputSource);
+        }
+        if (ch == '/') {
+            int nextCh = inputSource.lookahead(1);
+            if (nextCh == '/' || nextCh == '*') {
+                // read away comments.
+                return fetchNextToken(inputSource);
+            }
+        }
+        if (ch == ';') {
+            return fetchNextToken(inputSource);
+        }
+
+        // at this stage, ch must be a java identifier start
+        if (!Character.isJavaIdentifierStart(ch)) {
+            throw inputSource.createAbortException("Expected valid identifier start character", null);
+        }
+
+		StringBuilder tokenText = new StringBuilder();
+        int startPos = inputSource.getPosition();
+		int lineNumber = inputSource.getLineNumber();
+        int columnNumber = inputSource.getColumnNumber();
+		while ((ch = inputSource.lookahead(0)) != LexerSupport.EOF) {
+            if (!Character.isJavaIdentifierPart(ch)) {
+                // since we are checking for java imports, include '.' and '*'
+                // in search.
+                if (ch != '.' && ch != '*') {
+                    break;
+                }
+                // make exception for static keyword.
+                if (tokenText.length() == 6 && tokenText.charAt(0) == 's' &&
+                    tokenText.charAt(1) == 't' && tokenText.charAt(2) == 'a' &&
+                    tokenText.charAt(3) == 't' && tokenText.charAt(4) == 'i' &&
+                    tokenText.charAt(5) == 'c') {
+                    break;
+                }
+            }
+            tokenText.appendCodePoint(ch);
+            inputSource.consume(1);
+        }
+        if (ch == LexerSupport.EOF) {
+            // instead of raising error, return null to give
+            // Kotlin subclass different means of handling EOF here.
+            return null;
+        }
+		assert tokenText.length() > 0;
+        int endPos = inputSource.getPosition();
+        String tokenTextAsString = tokenText.toString();
+        int tokenType = TOKEN_TYPE_IMPORT_CONTENT;
+        if (tokenTextAsString.equals("static")) {
+            tokenType = TOKEN_TYPE_STATIC_KEYWORD;
+        }
+        Token token = new Token(tokenType,
+            tokenTextAsString, startPos, endPos, lineNumber, columnNumber);
+        return token;
 	}
 }

@@ -87,11 +87,19 @@ public class PersistenceTest {
                 if (count > 0) {
                     int fileDescriptorListSize = randGen.nextInt(5);
                     for (int i = 0; i < fileDescriptorListSize; i++) {
-                        SourceFileDescriptor s = new SourceFileDescriptor(new ArrayList<>());
+                        SourceFileDescriptor s = new SourceFileDescriptor(new ArrayList<>(), 
+                            new ArrayList<>());
                         instance.getFileDescriptors().add(s);
 
                         s.setRelativePath(generateRandomString(randGen, false));
                         s.setDir(generateRandomString(randGen, false));
+
+                        int importStatementListSize = randGen.nextInt(5);
+                        for (int j = 0; j < importStatementListSize; j++) {
+                            String imp = generateRandomString(randGen, true);
+                            s.getImportStatements().add(imp);
+                        }
+
                         if (randGen.nextBoolean()) {
                             s.setHeaderSnippet(generateRandomCodeSnippetDescriptor(randGen));
                         }

@@ -38,16 +38,14 @@ public class PreCodeAugmentationTask extends Task {
     private final List<FileSet> srcDirs = new ArrayList<>();
 
     /*
-     * Comment markers for augmenting code and generated code snippets need not match.
+     * Comment markers for augmenting code and generated code snippets generally match.
      * The few restrictions are:
      *  - if raw code is to be included in augmenting code, then // must be used.
-     * Upon return, we choose code snippet markers based on the following:
-     *  1. if augmenting code is single line, then prefer /* to //, unless generated code
-     * snippet is multiline AND does not contain multiline strings.
-     *  2. else, prefer // to /*, unless code snippet contains multiline strings, in which
-     * case /* must be used.
-     * NB: only // tries to indent generated code and start on its own new line; /*
-     * continues right after augmenting code, and just dumps verbatim.
+     *  - upon return, if generated code is multiline, then  // must be used.
+     * About indentation,
+     *  - /* continues right after augmenting code, and just dumps verbatim.
+     *  - only // tries to indent generated code and start on its own new line
+     *  - however // ignores indent if generated code has multiline strings.
      */ 
     private List<String> augmentingCodeBlockStartDoubleSlash;
     private List<String> augmentingCodeBlockEndDoubleSlash;
@@ -163,25 +161,11 @@ public class PreCodeAugmentationTask extends Task {
             catch (IOException ex) {
                 return failBuild("Failed to read from " + srcPath, ex);
             }
+
+            // use file extension to parse as Java/Kotlin code.
             JavaParser instance = new JavaParser(new JavaSourceCodeWrapper(input));
             List<Token> tokens = instance.parse();
-            // write to dest, skipping comments.
-
-            for (Token token : tokens) {
-                switch (token.type) {
-                    case JavaLexer.TOKEN_TYPE_COMMENT_CONTENT:
-                    case JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT_START:
-                    case JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT_END:
-                    case JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT_START:
-                    case JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT_END:
-                        break;
-                    default:
-                        if (token.text != null) {
-                            
-                        }
-                        break;
-                }
-            }
+            
             Instant endInstant = Instant.now();
             long timeElapsed = Duration.between(startInstant, endInstant).toMillis();
             logVerbose("done in %s ms", timeElapsed);

@@ -39,6 +39,7 @@ public class KotlinParserTest {
             new Object[]{ 0, 0 },
             new Object[]{ 1, 1 },
             new Object[]{ 2, 2 },
+            new Object[]{ 3, 3 },
         };
     }
     

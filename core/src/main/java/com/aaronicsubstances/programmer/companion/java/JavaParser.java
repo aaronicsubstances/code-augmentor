@@ -31,14 +31,11 @@ public class JavaParser {
                 break;
             }
             switch (token.type) {
-                case JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT_START:
-                    parseSingleLineComment(parseResults);
-                    break;
-                case JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT_START:
-                    parseMultiLineComment(parseResults);
-                    break;
                 case JavaLexer.TOKEN_TYPE_SINGLE_LINE_STRING_DELIMITER:
                     parseSingleLineString(parseResults);
+                    break;
+                case JavaLexer.TOKEN_TYPE_IMPORT_KEYWORD:
+                    parseImportStatement(parseResults);
                     break;
                 default:
                     parseResults.add(parserSupport.consume());
@@ -48,61 +45,79 @@ public class JavaParser {
         return parseResults;
     }
 
-    private void parseSingleLineComment(List<Token> parseResults) {
-        Token commentStart = parserSupport.consume(JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT_START);
-        parseResults.add(commentStart);
-        Function<ParserInputSource, List<Token>> lexerFunction = lexer::consumeSingleLineComment;
-        while (true) {
-            Token token = parserSupport.lookAhead(0, lexerFunction);
-            if (token.type == LexerSupport.EOF) {
-                throw new RuntimeException("Unexpected EOF");
-            }
-            if (token.type == JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT_END) {
-                break;
-            }
-            Token contentToken = parserSupport.consume(JavaLexer.TOKEN_TYPE_COMMENT_CONTENT);
-            parseResults.add(contentToken);
-        }
-        Token commentEnd = parserSupport.consume(JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT_END);
-        parseResults.add(commentEnd);
-    }
-
-    private void parseMultiLineComment(List<Token> parseResults) {
-        Token commentStart = parserSupport.consume(JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT_START);
-        parseResults.add(commentStart);
+    private void parseImportStatement(List<Token> parseResults) {
+        Token token = parserSupport.consume(JavaLexer.TOKEN_TYPE_IMPORT_KEYWORD);
+        parseResults.add(token);
         Function<ParserInputSource, List<Token>> lexerFunction = 
-            inputSource -> Arrays.asList(lexer.consumeMultiLineComment(inputSource));
+            inputSource -> Arrays.asList(lexer.consumeImport(inputSource));
+        boolean staticKeywordSeen = false;
+        boolean importContentSeen = false;
         while (true) {
-            Token token = parserSupport.lookAhead(0, lexerFunction);
+            token = parserSupport.lookAhead(0, lexerFunction);
             if (token.type == LexerSupport.EOF) {
-                throw new RuntimeException("Unexpected EOF");
+                throw parserSupport.getParserInputSource().createAbortException(
+                    "Unterminated import statement", token);
             }
-            if (token.type == JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT_END) {
+            if (token.type == JavaLexer.TOKEN_TYPE_SEMI_COLON) {
                 break;
             }
-            parseResults.add(parserSupport.consume());
+            switch (token.type) {
+                case JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT:
+                case JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT:
+                case JavaLexer.TOKEN_TYPE_NON_NEWLINE_WHITESPACE:
+                    break;
+                case JavaLexer.TOKEN_TYPE_IMPORT_CONTENT:
+                case JavaLexer.TOKEN_TYPE_STATIC_KEYWORD:
+                    if (importContentSeen) {
+                        throw parserSupport.getParserInputSource().
+                            createAbortException("Expecting end of import", token);
+                    }
+                    if (token.type == JavaLexer.TOKEN_TYPE_IMPORT_CONTENT) {
+                        importContentSeen = true;
+                    }
+                    else {
+                        if (staticKeywordSeen) {
+                            throw parserSupport.getParserInputSource().
+                                createAbortException("Expecting imported item(s)", token);
+                        }
+                        staticKeywordSeen = true;
+                    }
+                    break;
+                default:
+                    throw parserSupport.getParserInputSource().
+                        createAbortException("Unexpected token in import statement", 
+                        token);
+            }
+            parseResults.add(token);
+            parserSupport.consume();
         }
-        Token commentEnd = parserSupport.consume(JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT_END);
-        parseResults.add(commentEnd);
-    }
+        
+        if (!importContentSeen) {
+            throw parserSupport.getParserInputSource().
+                createAbortException("Expecting imported item(s)", token);
+        }
 
-    private void parseSingleLineString(List<Token> parseResults) {
-        Token delimiterToken = parserSupport.consume(JavaLexer.TOKEN_TYPE_SINGLE_LINE_STRING_DELIMITER);
-        parseResults.add(delimiterToken);
+        parseResults.add(token);
+        parserSupport.consume(JavaLexer.TOKEN_TYPE_SEMI_COLON);
+	}
+
+	private void parseSingleLineString(List<Token> parseResults) {
+        Token token = parserSupport.consume(JavaLexer.TOKEN_TYPE_SINGLE_LINE_STRING_DELIMITER);
+        parseResults.add(token);
         Function<ParserInputSource, List<Token>> lexerFunction = 
             inputSource -> Arrays.asList(lexer.consumeSingleLineString(inputSource));
         while (true) {
-            Token token = parserSupport.lookAhead(0, lexerFunction);
+            token = parserSupport.lookAhead(0, lexerFunction);
             if (token.type == LexerSupport.EOF) {
                 throw new RuntimeException("Unexpected EOF");
             }
             if (token.type == JavaLexer.TOKEN_TYPE_SINGLE_LINE_STRING_DELIMITER) {
                 break;
             }
-            Token contentToken = parserSupport.consume(JavaLexer.TOKEN_TYPE_STRING_CONTENT);
-            parseResults.add(contentToken);
+            parseResults.add(token);
+            parserSupport.consume(JavaLexer.TOKEN_TYPE_LITERAL_STRING_CONTENT);
         }
-        delimiterToken = parserSupport.consume(JavaLexer.TOKEN_TYPE_SINGLE_LINE_STRING_DELIMITER);
-        parseResults.add(delimiterToken);
+        parseResults.add(token);
+        parserSupport.consume(JavaLexer.TOKEN_TYPE_SINGLE_LINE_STRING_DELIMITER);
     }
 }
