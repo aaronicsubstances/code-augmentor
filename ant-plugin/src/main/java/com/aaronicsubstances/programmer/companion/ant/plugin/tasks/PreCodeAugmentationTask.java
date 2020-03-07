@@ -11,7 +11,9 @@ import java.nio.charset.UnsupportedCharsetException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.aaronicsubstances.programmer.companion.Token;
 import com.aaronicsubstances.programmer.companion.java.JavaParser;
@@ -80,27 +82,21 @@ public class PreCodeAugmentationTask extends Task {
     }
 
     public void addHeader_dslash_suffix(String suffix) {
-        if (suffix.isEmpty()) {
-
-        }
+        suffix = CodeGenerationRequestSpecification.validateCommentMarkerSuffix(suffix);
         if (!headerDoubleSlashSuffixes.contains(suffix)) {
             headerDoubleSlashSuffixes.add(suffix);
         }
     }
 
     public void addGen_code_start_suffix(String suffix) {
-        if (suffix.isEmpty()) {
-            
-        }
+        suffix = CodeGenerationRequestSpecification.validateCommentMarkerSuffix(suffix);
         if (!genCodeStartSuffixes.contains(suffix)) {
             genCodeStartSuffixes.add(suffix);
         }
     }
 
     public void addGen_code_end_suffix(String suffix) {
-        if (suffix.isEmpty()) {
-            
-        }
+        suffix = CodeGenerationRequestSpecification.validateCommentMarkerSuffix(suffix);
         if (!genCodeEndSuffixes.contains(suffix)) {
             genCodeEndSuffixes.add(suffix);
         }
@@ -120,23 +116,42 @@ public class PreCodeAugmentationTask extends Task {
             throw new BuildException("at least 1 nested src element is required");
         }
         if (requestSpecList.isEmpty()) {
-            throw new BuildException("at least 1 nested request element is required");
+            throw new BuildException("at least 1 nested spec element is required");
         }
         if (parseResultsFile == null) {
             throw new BuildException("prepfile attribute is required");
         }
         if (headerDoubleSlashSuffixes.isEmpty()) {
-
+            throw new BuildException("at least 1 nested header_dslash_suffix element is required");
         }
         if (genCodeStartSuffixes.isEmpty()) {
-
+            throw new BuildException("at least 1 nested gen_code_start_suffix element is required");
         }
         if (genCodeEndSuffixes.isEmpty()) {
-
+            throw new BuildException("at least 1 nested gen_code_end_suffix element is required");
         }
 
         // Ensure uniqueness across comment suffixes.
-
+        Set<String> allSuffixes = new HashSet<>();
+        int totalSuffixCount = 0;        
+        allSuffixes.addAll(headerDoubleSlashSuffixes);
+        totalSuffixCount += headerDoubleSlashSuffixes.size();
+        allSuffixes.addAll(genCodeStartSuffixes);
+        totalSuffixCount += genCodeStartSuffixes.size();
+        allSuffixes.addAll(genCodeEndSuffixes);
+        totalSuffixCount += genCodeEndSuffixes.size();
+        for (CodeGenerationRequestSpecification spec : requestSpecList) {
+            allSuffixes.addAll(spec.getStartSuffixes());
+            totalSuffixCount += spec.getStartSuffixes().size();
+            allSuffixes.addAll(spec.getContinuationDoubleSlashSuffixes());
+            totalSuffixCount += spec.getContinuationDoubleSlashSuffixes().size();
+            allSuffixes.addAll(spec.getClosingDoubleSlashSuffixes());
+            totalSuffixCount += spec.getClosingDoubleSlashSuffixes().size();
+        }
+        if (totalSuffixCount != allSuffixes.size()) {
+            throw new BuildException("Duplicates detected across comment marker suffixes");
+        }
+        
         // set defaults.
         if (encoding == null) {
             charset = Charset.defaultCharset();
