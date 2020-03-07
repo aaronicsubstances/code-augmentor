@@ -9,59 +9,44 @@ import java.util.List;
  */
 public class CodeGenerationRequestSpecification {
     // use extension to determine which of XML or qCSV formats to use.
-    private File aug_code_file; 
+    private File augmentingCodeDestFile; 
 
-    private final List<String> headerDoubleSlashSuffixes = new ArrayList<>();
-    private final List<String> bodyStartSlashStarSuffixes = new ArrayList<>();
-    private final List<String> bodyStartDoubleSlashSuffixes = new ArrayList<>();
-    private final List<String> bodyContinuationDoubleSlashSuffixes = new ArrayList<>();
-    private final List<String> bodyEndDoubleSlashSuffixes = new ArrayList<>();
+    private final List<String> startSuffixes = new ArrayList<>();
+    private final List<String> continuationDoubleSlashSuffixes = new ArrayList<>();
+    private final List<String> closingDoubleSlashSuffixes = new ArrayList<>();
 
-    public File getAug_code_file() {
-        return aug_code_file;
+    public File getAugmentingCodeDestFile() {
+        return augmentingCodeDestFile;
     }
 
-    public void setAug_code_file(File aug_code_file) {
-        this.aug_code_file = aug_code_file;
+    public void setAug_code_file(File f) {
+        this.augmentingCodeDestFile = f;
     }
 
-    public void addBody_end_dslash_suffix(final String suffix) {
-        bodyEndDoubleSlashSuffixes.add(suffix);
+    public List<String> getStartSuffixes() {
+        return startSuffixes;
     }
 
-    public List<String> getHeaderDoubleSlashSuffixes() {
-        return headerDoubleSlashSuffixes;
+    public List<String> getContinuationDoubleSlashSuffixes() {
+        return continuationDoubleSlashSuffixes;
     }
 
-    public List<String> getBodyStartSlashStarSuffixes() {
-        return bodyStartSlashStarSuffixes;
+    public List<String> getClosingDoubleSlashSuffixes() {
+        return closingDoubleSlashSuffixes;
     }
 
-    public List<String> getBodyStartDoubleSlashSuffixes() {
-        return bodyStartDoubleSlashSuffixes;
+    public void addStart_suffix(String suffix) {
+        startSuffixes.add(suffix);
     }
 
-    public List<String> getBodyContinuationDoubleSlashSuffixes() {
-        return bodyContinuationDoubleSlashSuffixes;
+    public void addContinuation_dslash_suffix(String suffix) {
+        continuationDoubleSlashSuffixes.add(suffix);
     }
 
-    public List<String> getBodyEndDoubleSlashSuffixes() {
-        return bodyEndDoubleSlashSuffixes;
+    public void addClosing_dslash_suffix(String suffix) {
+        closingDoubleSlashSuffixes.add(suffix);
     }
 
-    public void addHeader_dslash_suffix(final String suffix) {
-        headerDoubleSlashSuffixes.add(suffix);
-    }
-
-    public void addBody_start_sstar_suffix(final String suffix) {
-        bodyStartSlashStarSuffixes.add(suffix);
-    }
-
-    public void addBody_start_dslash_suffix(final String suffix) {
-        bodyStartDoubleSlashSuffixes.add(suffix);
-    }
-
-    public void addBody_cont_dslash_suffix(final String suffix) {
-        bodyContinuationDoubleSlashSuffixes.add(suffix);
-    }
+	public void validate() {
+	}
 }

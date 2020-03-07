@@ -116,13 +116,13 @@ public class PersistenceTest {
     }
 
 	@Test(dataProvider = "createTestCodeGenerationRequestPersistenceData")
-    public void testCodeGenerationRequestPersistence(int index, CodeGenerationRequest expected)
-            throws Exception {
+    public void testCodeGenerationRequestPersistence(int index, CodeGenerationRequest expected,
+            boolean useXml) throws Exception {
         assertNotNull(expected);
         
         // first, serialize
         StringWriter writer = new StringWriter();
-        Object serializer = expected.beginSerialize(writer);
+        Object serializer = expected.beginSerialize(writer, useXml);
         for (AugmentingCode augCodeSnippet : expected.getAugmentingCodeSnippets()) {
             augCodeSnippet.serialize(serializer);
         }
@@ -132,7 +132,7 @@ public class PersistenceTest {
 
         // next, deserialize 
         CodeGenerationRequest actual = new CodeGenerationRequest();
-        Object deserializer = actual.beginDeserialize(new StringReader(serialized));
+        Object deserializer = actual.beginDeserialize(new StringReader(serialized), useXml);
         AugmentingCode augCodeSnippet = new AugmentingCode();
         while (augCodeSnippet.deserialize(deserializer)) {
             actual.getAugmentingCodeSnippets().add(augCodeSnippet);
@@ -164,10 +164,12 @@ public class PersistenceTest {
                     for (int i = 0; i < codeSnippetListSize; i++) {
                         AugmentingCode codeSnippet = new AugmentingCode(new ArrayList<>());
                         codeSnippets.add(codeSnippet);
-
-                        codeSnippet.setIndex(randGen.nextInt(30));
+                        
+                        // ensure uniqueness of augmenting code index to avoid flaky tests.
+                        codeSnippet.setIndex(i);
                         codeSnippet.setIndexInFile(randGen.nextInt(30));
                         codeSnippet.setRelativePath(generateRandomString(randGen, false));
+                        codeSnippet.setCommentSuffix(generateRandomString(randGen, false));
                         
                         // ensure at least 1 block.
                         int blockCount = randGen.nextInt(5) + 1;
@@ -179,18 +181,19 @@ public class PersistenceTest {
                         }
                     }
                 }
-                return new Object[]{ count++, instance };
+                return new Object[]{ count++, instance, randGen.nextBoolean() };
             }
         };
     }
 
     @Test(dataProvider = "createTestCodeGenerationResponsePersistenceData")
-    public void testCodeGenerationResponsePersistence(int index, CodeGenerationResponse expected) throws Exception {
+    public void testCodeGenerationResponsePersistence(int index, CodeGenerationResponse expected,
+            boolean useXml) throws Exception {
         assertNotNull(expected);
         
         // first, serialize
         StringWriter writer = new StringWriter();
-        Object serializer = expected.beginSerialize(writer);
+        Object serializer = expected.beginSerialize(writer, useXml);
         for (GeneratedCode generatedCode : expected.getGeneratedCodeSnippets()) {
             generatedCode.serialize(serializer);
         }
@@ -200,7 +203,7 @@ public class PersistenceTest {
 
         // next, deserialize 
         CodeGenerationResponse actual = new CodeGenerationResponse();
-        Object deserializer = actual.beginDeserialize(new StringReader(serialized));
+        Object deserializer = actual.beginDeserialize(new StringReader(serialized), useXml);
         GeneratedCode generatedCode = new GeneratedCode();
         while (generatedCode.deserialize(deserializer)) {
             actual.getGeneratedCodeSnippets().add(generatedCode);
@@ -244,7 +247,7 @@ public class PersistenceTest {
                         generatedCode.setBodyContent(generateRandomString(randGen, true));
                     }
                 }
-                return new Object[]{ count++, instance };
+                return new Object[]{ count++, instance, randGen.nextBoolean() };
             }
         };
     }

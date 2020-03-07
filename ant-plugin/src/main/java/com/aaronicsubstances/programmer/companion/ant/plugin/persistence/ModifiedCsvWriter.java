@@ -68,15 +68,15 @@ public class ModifiedCsvWriter implements AutoCloseable {
         writer.write(FIELDS_SPEC_PREFIX + recordString + System.lineSeparator());
     }
 
-    public void writeRecord(Map<String, String> record) throws IOException {
+    public void writeRecord(Map<String, String> recordMap) throws IOException {
         if (fields == null) {
             throw new RuntimeException("fields are yet to be written");
         }
         String[] values = new String[fields.length];
         for (int i = 0; i < fields.length; i++) {
             String field = fields[i];
-            if (record.containsKey(field)) {
-                values[i] = record.get(field);
+            if (recordMap.containsKey(field)) {
+                values[i] = recordMap.get(field);
             }
             if (values[i] == null) {
                 values[i] = "";

@@ -127,13 +127,13 @@ public class ModifiedCsvReader implements AutoCloseable {
             throw createAbortException(String.format("Expected %s record entries, " +
                 "but received %s", fields.length, record.length));
         }
-        Map<String, String> dict = new HashMap<>();
+        Map<String, String> recordMap = new HashMap<>();
         for (int i = 0; i < fields.length; i++) {
             String field = fields[i];
             String value = record[i];
-            dict.put(field, value);
+            recordMap.put(field, value);
         }
-        return dict;
+        return recordMap;
     }
 
     public RuntimeException createAbortException(String msg) {
@@ -156,5 +156,25 @@ public class ModifiedCsvReader implements AutoCloseable {
             throw createAbortException("field list not set beford records");
         }
         return null;
+    }
+    
+    public String requireField(Map<String, String> recordMap, String field, boolean canBeEmpty) {
+        String value = recordMap.get(field);
+        if (value == null) {
+            throw createAbortException("Missing value for field " + field);
+        }
+        if (!canBeEmpty && value.isEmpty()) {
+            throw createAbortException("Empty value for field " + field);
+        }
+        return value;
+    }
+
+	public int requireIntField(Map<String, String> recordDict, String field) {
+        try {
+            return Integer.parseInt(requireField(recordDict, field, false));
+        }
+        catch (NumberFormatException ex) {
+            throw createAbortException("Invalid signed 32-bit integer for field " + field);
+        }
 	}
 }

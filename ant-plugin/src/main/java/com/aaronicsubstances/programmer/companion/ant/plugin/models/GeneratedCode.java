@@ -135,26 +135,16 @@ public class GeneratedCode {
             }
             String[] record = (String[]) result;
             Map<String, String> recordDict = qCsvReader.convertRecordToDict(record);
-            relativePath = recordDict.get("rel_path");
+            relativePath = qCsvReader.requireField(recordDict, "rel_path", false);
             headerContent = recordDict.get("header");
             if ("".equals(headerContent)) {
                 headerContent = null;
             }
-            bodyContent = recordDict.get("body");
+            bodyContent = qCsvReader.requireField(recordDict, "body", true);
 
             error = Boolean.parseBoolean(recordDict.get("is_error"));
-            try {
-                index = Integer.parseInt(recordDict.get("index"));
-            }
-            catch (NumberFormatException ex) {
-                throw qCsvReader.createAbortException("invalid index");
-            }
-            try {
-                indexInFile = Integer.parseInt(recordDict.get("index_in_file"));
-            }
-            catch (NumberFormatException ex) {
-                throw qCsvReader.createAbortException("invalid index_in_file");
-            }
+            index = qCsvReader.requireIntField(recordDict, "index");
+            indexInFile = qCsvReader.requireIntField(recordDict, "index_in_file");
 
             return true;
         }
@@ -165,6 +155,7 @@ public class GeneratedCode {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((bodyContent == null) ? 0 : bodyContent.hashCode());
+        result = prime * result + (error ? 1231 : 1237);
         result = prime * result + ((headerContent == null) ? 0 : headerContent.hashCode());
         result = prime * result + index;
         result = prime * result + indexInFile;
@@ -186,6 +177,8 @@ public class GeneratedCode {
                 return false;
         } else if (!bodyContent.equals(other.bodyContent))
             return false;
+        if (error != other.error)
+            return false;
         if (headerContent == null) {
             if (other.headerContent != null)
                 return false;
@@ -205,7 +198,7 @@ public class GeneratedCode {
 
     @Override
     public String toString() {
-        return "GeneratedCode{bodyContent=" + bodyContent + ", headerContent=" + headerContent + ", index=" + index
-                + ", indexInFile=" + indexInFile + ", relativePath=" + relativePath + "}";
+        return "GeneratedCode{bodyContent=" + bodyContent + ", error=" + error + ", headerContent=" + headerContent
+                + ", index=" + index + ", indexInFile=" + indexInFile + ", relativePath=" + relativePath + "}";
     }
 }

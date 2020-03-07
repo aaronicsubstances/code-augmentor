@@ -76,6 +76,7 @@ public class AugmentingCode {
     private int index;
     private int indexInFile;
     private List<Block> blocks;
+    private String commentSuffix;
 
     public AugmentingCode() {
     }
@@ -116,6 +117,14 @@ public class AugmentingCode {
         this.blocks = blocks;
     }
 
+    public String getCommentSuffix() {
+        return commentSuffix;
+    }
+
+    public void setCommentSuffix(String commentSuffix) {
+        this.commentSuffix = commentSuffix;
+    }
+
     public void serialize(Object serializer) throws Exception {
         if (serializer instanceof XMLStreamWriter) {
             XMLStreamWriter xmlWriter = (XMLStreamWriter) serializer;
@@ -123,6 +132,7 @@ public class AugmentingCode {
             xmlWriter.writeAttribute("rel_path", relativePath);
             xmlWriter.writeAttribute("index_in_file", "" + indexInFile);
             xmlWriter.writeAttribute("index", "" + index);
+            xmlWriter.writeAttribute("comment_suffix", commentSuffix);
 
             xmlWriter.writeStartElement("block_list");
 
@@ -138,11 +148,19 @@ public class AugmentingCode {
         }
         else {
             ModifiedCsvWriter qCsvWriter = (ModifiedCsvWriter) serializer;
+
+            // Copy augmenting code properties once.
+            String dupRelPath = relativePath;
+            String dupIndexInFile = String.valueOf(indexInFile);
+            String dupCommentSuffix = commentSuffix;
             for (Block block : blocks) {
                 Object[] record = new Object[]{
-                    relativePath, index, indexInFile, block.stringify, block.content  
+                    index, dupRelPath, dupIndexInFile, dupCommentSuffix, block.stringify, block.content  
                 };
                 qCsvWriter.writeRecord(record);
+                dupRelPath = "";
+                dupIndexInFile = "";
+                dupCommentSuffix = "";
             }
             qCsvWriter.writeSeparatorLine();
         }
@@ -159,6 +177,7 @@ public class AugmentingCode {
             index = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "index");
             indexInFile = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "index_in_file");
             relativePath = XmlEventReaderWrapper.requireAttributeValue(startElement, "rel_path");
+            commentSuffix = XmlEventReaderWrapper.requireAttributeValue(startElement, "comment_suffix");
             
             startElement = xmlReader.requireStartElement("block_list");
 
@@ -201,46 +220,33 @@ public class AugmentingCode {
             // clear read state of last result.
             readState[1] = null;
 
-            // Read until there's a change in any of augmenting code properties
+            // Read until there's a change in index property of augmenting code
             // after it is set.
+            boolean augmentingCodePropertieSet = false;
             do {
                 if (!(result instanceof String[])) {
                     continue;
                 }
+
                 String[] record = (String[]) result;
                 Map<String, String> recordDict = qCsvReader.convertRecordToDict(record);
-                String newRelativePath = recordDict.get("rel_path");
-                if (relativePath != null && !relativePath.equals(newRelativePath)) {
+                
+                int newIndex = qCsvReader.requireIntField(recordDict, "index");
+                if (augmentingCodePropertieSet && index != newIndex) {
                     readState[1] = result;
                     break;
                 }
-                relativePath = newRelativePath;
+                index = newIndex;
 
-                try {
-                    int newIndex = Integer.parseInt(recordDict.get("index"));
-                    if (index != 0 && index != newIndex) {
-                        readState[1] = result;
-                        break;
-                    }
-                    index = newIndex;
-                 }
-                catch (NumberFormatException ex) {
-                    throw qCsvReader.createAbortException("invalid index");
-                }
-                try {
-                    int newIndexInFile = Integer.parseInt(recordDict.get("index_in_file"));
-                    if (indexInFile != 0 && indexInFile != newIndexInFile) {
-                        readState[1] = result;
-                        break;
-                    }
-                    indexInFile = newIndexInFile;
-                }
-                catch (NumberFormatException ex) {
-                    throw qCsvReader.createAbortException("invalid index_in_file");
+                if (!augmentingCodePropertieSet) {
+                    relativePath = qCsvReader.requireField(recordDict, "rel_path", false);
+                    commentSuffix = qCsvReader.requireField(recordDict, "comment_suffix", false);
+                    indexInFile = qCsvReader.requireIntField(recordDict, "index_in_file");
+                    augmentingCodePropertieSet = true;
                 }
                 
                 boolean stringify = Boolean.parseBoolean(recordDict.get("stringify"));
-                String blockContent = recordDict.get("block");
+                String blockContent = qCsvReader.requireField(recordDict, "block", true);
                 Block block = new Block();
                 block.stringify = stringify;
                 block.content = blockContent;
@@ -257,6 +263,7 @@ public class AugmentingCode {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((blocks == null) ? 0 : blocks.hashCode());
+        result = prime * result + ((commentSuffix == null) ? 0 : commentSuffix.hashCode());
         result = prime * result + index;
         result = prime * result + indexInFile;
         result = prime * result + ((relativePath == null) ? 0 : relativePath.hashCode());
@@ -277,6 +284,11 @@ public class AugmentingCode {
                 return false;
         } else if (!blocks.equals(other.blocks))
             return false;
+        if (commentSuffix == null) {
+            if (other.commentSuffix != null)
+                return false;
+        } else if (!commentSuffix.equals(other.commentSuffix))
+            return false;
         if (index != other.index)
             return false;
         if (indexInFile != other.indexInFile)
@@ -291,7 +303,7 @@ public class AugmentingCode {
 
     @Override
     public String toString() {
-        return "AugmentingCode{blocks=" + blocks + ", index=" + index + ", indexInFile=" + indexInFile
-                + ", relativePath=" + relativePath + "}";
+        return "AugmentingCode{blocks=" + blocks + ", commentSuffix=" + commentSuffix + ", index=" + index
+                + ", indexInFile=" + indexInFile + ", relativePath=" + relativePath + "}";
     }
 }

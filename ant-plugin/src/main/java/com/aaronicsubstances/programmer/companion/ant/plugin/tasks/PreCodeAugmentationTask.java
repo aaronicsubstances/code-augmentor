@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.aaronicsubstances.programmer.companion.Token;
-import com.aaronicsubstances.programmer.companion.java.JavaLexer;
 import com.aaronicsubstances.programmer.companion.java.JavaParser;
 import com.aaronicsubstances.programmer.companion.java.JavaSourceCodeWrapper;
 
@@ -22,7 +21,6 @@ import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.DirectoryScanner;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.types.FileSet;
-import org.apache.tools.ant.types.LogLevel;
 import org.apache.tools.ant.util.FileUtils;
 
 /**
@@ -31,8 +29,6 @@ import org.apache.tools.ant.util.FileUtils;
 public class PreCodeAugmentationTask extends Task {
     private String encoding;
     private boolean verbose = false;
-    private boolean failonerror = true;
-    private String errorProperty;
     private boolean listfiles;
     private final List<FileSet> srcDirs = new ArrayList<>();
 
@@ -45,16 +41,15 @@ public class PreCodeAugmentationTask extends Task {
      *  - /* continues right after augmenting code, and just dumps verbatim.
      *  - only // tries to indent generated code and start on its own new line
      *  - however // ignores indent if generated code has multiline strings.
-     */ 
+     */
     private final List<CodeGenerationRequestSpecification> requestSpecList = new ArrayList<>();
+    private final List<String> headerDoubleSlashSuffixes = new ArrayList<>();
 
     // for these prefer the very first one during code generation.
-    private final List<String> genCodeStartDoubleSlashSuffixes = new ArrayList<>();
-    private final List<String> genCodeEndDoubleSlashSuffixes = new ArrayList<>();
-    private final List<String> genCodeStartSlashStarSuffixes = new ArrayList<>();
-    private final List<String> genCodeEndSlashStarSuffixes = new ArrayList<>();
+    private final List<String> genCodeStartSuffixes = new ArrayList<>();
+    private final List<String> genCodeEndSuffixes = new ArrayList<>();
     
-    private File prepfile;
+    private File parseResultsFile;
 
     // validation results
     private Charset charset;
@@ -67,87 +62,90 @@ public class PreCodeAugmentationTask extends Task {
         this.verbose = verbose;
     }
 
-    public void setFailonerror(boolean failonerror) {
-        this.failonerror = failonerror;
-    }
-
-    public void setErrorProperty(String errorProperty) {
-        this.errorProperty = errorProperty;
-    }
-
     public void setListfiles(boolean listfiles) {
         this.listfiles = listfiles;
     }
 
-    public File getPrepfile() {
-        return prepfile;
+    public void setPrepfile(File f) {
+        this.parseResultsFile = f;
     }
 
-    public void setPrepfile(File prepfile) {
-        this.prepfile = prepfile;
-    }
-
-    public void addSrc(FileSet srcdir) {
-        srcDirs.add(srcdir);
+    public void addSrc(FileSet d) {
+        srcDirs.add(d);
     }
 
     public void addConfiguredSpec(CodeGenerationRequestSpecification spec) {
-        // TODO: validate
+        spec.validate();
         requestSpecList.add(spec);
     }
 
-    public void addGen_code_start_dslash_suffix(String suffix) {
-        genCodeStartDoubleSlashSuffixes.add(suffix);
+    public void addHeader_dslash_suffix(String suffix) {
+        if (suffix.isEmpty()) {
+
+        }
+        if (!headerDoubleSlashSuffixes.contains(suffix)) {
+            headerDoubleSlashSuffixes.add(suffix);
+        }
     }
 
-    public void addGen_code_end_dslash_suffix(String suffix) {
-        genCodeEndDoubleSlashSuffixes.add(suffix);
+    public void addGen_code_start_suffix(String suffix) {
+        if (suffix.isEmpty()) {
+            
+        }
+        if (!genCodeStartSuffixes.contains(suffix)) {
+            genCodeStartSuffixes.add(suffix);
+        }
     }
 
-    public void addGen_code_start_sstar_suffix(String suffix) {
-        genCodeStartSlashStarSuffixes.add(suffix);
+    public void addGen_code_end_suffix(String suffix) {
+        if (suffix.isEmpty()) {
+            
+        }
+        if (!genCodeEndSuffixes.contains(suffix)) {
+            genCodeEndSuffixes.add(suffix);
+        }
     }
 
-    public void addGen_code_end_sstar_suffix(String suffix) {
-        genCodeEndSlashStarSuffixes.add(suffix);
-    }
-
-    private boolean validate() {
+    private void validate() {
         if (encoding != null) {
             try {
                 charset = Charset.forName(encoding);
             }
             catch (IllegalCharsetNameException | UnsupportedCharsetException ex) {
-                return failBuild("Invalid value for encoding attribute: " +
+                throw new BuildException("Invalid value for encoding attribute: " +
                     encoding, ex);
             }
         }
         if (srcDirs.isEmpty()) {
-            return failBuild("at least 1 nested src element is required", null);
+            throw new BuildException("at least 1 nested src element is required");
         }
         if (requestSpecList.isEmpty()) {
-            return failBuild("at least 1 nested request element is required", null);
+            throw new BuildException("at least 1 nested request element is required");
         }
-        if (prepfile == null) {
-            return failBuild("prepfile attribute is required", null);
+        if (parseResultsFile == null) {
+            throw new BuildException("prepfile attribute is required");
         }
+        if (headerDoubleSlashSuffixes.isEmpty()) {
+
+        }
+        if (genCodeStartSuffixes.isEmpty()) {
+
+        }
+        if (genCodeEndSuffixes.isEmpty()) {
+
+        }
+
+        // Ensure uniqueness across comment suffixes.
 
         // set defaults.
         if (encoding == null) {
             charset = Charset.defaultCharset();
         }
-        return true;
     }
 
     public void execute() {
-        boolean valid = validate();
-        if (!valid) {
-            return;
-        }
-        _execute();
-    }
-
-    private boolean _execute() {
+        validate();
+        
         List<String> uniqueFilePaths = new ArrayList<>();
         List<String> sourceFilenames = new ArrayList<>();
         List<File> baseDirs = new ArrayList<>();
@@ -185,7 +183,7 @@ public class PreCodeAugmentationTask extends Task {
                 input = FileUtils.readFully(rdr);
             }
             catch (IOException ex) {
-                return failBuild("Failed to read from " + srcPath, ex);
+                throw new BuildException("Failed to read from " + srcPath, ex);
             }
 
             // use file extension to parse as Java/Kotlin code.
@@ -195,20 +193,6 @@ public class PreCodeAugmentationTask extends Task {
             Instant endInstant = Instant.now();
             long timeElapsed = Duration.between(startInstant, endInstant).toMillis();
             logVerbose("done in %s ms", timeElapsed);
-        }
-        return true;
-    }
-
-    private boolean failBuild(String message, Throwable cause) {
-        if (errorProperty != null && !errorProperty.isEmpty()) {
-            getProject().setNewProperty(errorProperty, "" + true);
-        }
-        if (failonerror) {
-            throw new BuildException(message, cause);
-        }
-        else {
-            log(message, cause, LogLevel.WARN.getLevel());
-            return false;
         }
     }
 

@@ -24,7 +24,6 @@ import com.aaronicsubstances.programmer.companion.ant.plugin.persistence.XmlEven
  * 
  */
 public class CodeGenerationResponse {
-    private static final boolean USE_XML = false;
     private static final String[] csvFields;
 
     static {
@@ -49,15 +48,15 @@ public class CodeGenerationResponse {
         this.generatedCodeSnippets = generatedCodeSnippets;
     }
 
-    public Object beginSerialize(File file) throws Exception {
+    public Object beginSerialize(File file, boolean useXml) throws Exception {
         OutputStreamWriter stream = new OutputStreamWriter(
             new FileOutputStream(file), StandardCharsets.UTF_8);
-        Object serializer = beginSerialize(stream);
+        Object serializer = beginSerialize(stream, useXml);
         return serializer;
     }
 
-    public Object beginSerialize(Writer stream) throws Exception {
-        if (USE_XML) {
+    public Object beginSerialize(Writer stream, boolean useXml) throws Exception {
+        if (useXml) {
             XMLOutputFactory f = XMLOutputFactory.newInstance();
             XMLStreamWriter xmlWriter = f.createXMLStreamWriter(stream);
             xmlWriter.writeStartDocument("UTF-8", "1.0");
@@ -93,16 +92,16 @@ public class CodeGenerationResponse {
         }
     }
 
-    public Object beginDeserializer(File file) throws Exception {    
+    public Object beginDeserializer(File file, boolean useXml) throws Exception {    
         InputStreamReader stream = new InputStreamReader(
             new FileInputStream(file), StandardCharsets.UTF_8);
-        Object serializer = beginDeserialize(stream);
+        Object serializer = beginDeserialize(stream, useXml);
         return serializer;
     }
 
-    public Object beginDeserialize(Reader stream) throws Exception {
+    public Object beginDeserialize(Reader stream, boolean useXml) throws Exception {
         generatedCodeSnippets = new ArrayList<>();
-        if (USE_XML) {
+        if (useXml) {
             XMLInputFactory inputFactory = XMLInputFactory.newInstance();
             XmlEventReaderWrapper xmlReader = new XmlEventReaderWrapper(inputFactory.createXMLEventReader(stream));
             xmlReader.requireDocOpener("response");        
