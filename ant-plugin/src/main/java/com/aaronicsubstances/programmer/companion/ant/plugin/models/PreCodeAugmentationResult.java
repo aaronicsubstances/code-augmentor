@@ -22,10 +22,8 @@ import com.aaronicsubstances.programmer.companion.ant.plugin.persistence.XmlEven
  * 
  */
 public class PreCodeAugmentationResult {
-    private String codeSnippetBlockStartDoubleSlash;
-    private String codeSnippetBlockEndDoubleSlash;
-    private String codeSnippetBlockStartSlashStar;
-    private String codeSnippetBlockEndSlashStar;
+    private String genCodeStartSuffix;
+    private String genCodeEndSuffix;
     private List<SourceFileDescriptor> fileDescriptors;
 
     public PreCodeAugmentationResult() {
@@ -43,36 +41,20 @@ public class PreCodeAugmentationResult {
         this.fileDescriptors = fileDescriptors;
     }
 
-    public String getCodeSnippetBlockStartDoubleSlash() {
-        return codeSnippetBlockStartDoubleSlash;
+    public String getGenCodeStartSuffix() {
+        return genCodeStartSuffix;
     }
 
-    public void setCodeSnippetBlockStartDoubleSlash(String codeSnippetBlockStartDoubleSlash) {
-        this.codeSnippetBlockStartDoubleSlash = codeSnippetBlockStartDoubleSlash;
+    public void setGenCodeStartSuffix(String genCodeStartSuffix) {
+        this.genCodeStartSuffix = genCodeStartSuffix;
     }
 
-    public String getCodeSnippetBlockEndDoubleSlash() {
-        return codeSnippetBlockEndDoubleSlash;
+    public String getGenCodeEndSuffix() {
+        return genCodeEndSuffix;
     }
 
-    public void setCodeSnippetBlockEndDoubleSlash(String codeSnippetBlockEndDoubleSlash) {
-        this.codeSnippetBlockEndDoubleSlash = codeSnippetBlockEndDoubleSlash;
-    }
-
-    public String getCodeSnippetBlockStartSlashStar() {
-        return codeSnippetBlockStartSlashStar;
-    }
-
-    public void setCodeSnippetBlockStartSlashStar(String codeSnippetBlockStartSlashStar) {
-        this.codeSnippetBlockStartSlashStar = codeSnippetBlockStartSlashStar;
-    }
-
-    public String getCodeSnippetBlockEndSlashStar() {
-        return codeSnippetBlockEndSlashStar;
-    }
-
-    public void setCodeSnippetBlockEndSlashStar(String codeSnippetBlockEndSlashStar) {
-        this.codeSnippetBlockEndSlashStar = codeSnippetBlockEndSlashStar;
+    public void setGenCodeEndSuffix(String genCodeEndSuffix) {
+        this.genCodeEndSuffix = genCodeEndSuffix;
     }
 
     public Object beginSerialize(File file) throws Exception {        
@@ -87,14 +69,10 @@ public class PreCodeAugmentationResult {
         XMLStreamWriter xmlWriter = f.createXMLStreamWriter(stream);
         xmlWriter.writeStartDocument("utf-8", "1.0");
         xmlWriter.writeStartElement("result");
-        xmlWriter.writeAttribute("code_snippet_block_start_double_slash", 
-            codeSnippetBlockStartDoubleSlash);
-        xmlWriter.writeAttribute("code_snippet_block_end_double_slash", 
-            codeSnippetBlockEndDoubleSlash);
-        xmlWriter.writeAttribute("code_snippet_block_start_slash_star", 
-            codeSnippetBlockStartSlashStar);
-        xmlWriter.writeAttribute("code_snippet_block_end_slash_star", 
-            codeSnippetBlockEndSlashStar);
+        xmlWriter.writeAttribute("gen_code_start_suffix", 
+            genCodeStartSuffix);
+        xmlWriter.writeAttribute("gen_code_end_suffix", 
+            genCodeEndSuffix);
 
         xmlWriter.writeStartElement("file_list");
         return xmlWriter;
@@ -126,14 +104,10 @@ public class PreCodeAugmentationResult {
         XmlEventReaderWrapper xmlReader = new XmlEventReaderWrapper(inputFactory.createXMLEventReader(stream));
 
         StartElement rootElement = xmlReader.requireDocOpener("result");
-        codeSnippetBlockStartDoubleSlash = XmlEventReaderWrapper.requireAttributeValue(rootElement,
-            "code_snippet_block_start_double_slash");
-        codeSnippetBlockEndDoubleSlash = XmlEventReaderWrapper.requireAttributeValue(rootElement,
-            "code_snippet_block_end_double_slash");
-        codeSnippetBlockStartSlashStar = XmlEventReaderWrapper.requireAttributeValue(rootElement,
-            "code_snippet_block_start_slash_star");
-        codeSnippetBlockEndSlashStar = XmlEventReaderWrapper.requireAttributeValue(rootElement, 
-            "code_snippet_block_end_slash_star");
+        genCodeStartSuffix = XmlEventReaderWrapper.requireAttributeValue(rootElement,
+            "gen_code_start_suffix");
+        genCodeEndSuffix = XmlEventReaderWrapper.requireAttributeValue(rootElement,
+            "gen_code_end_suffix");
 
         xmlReader.requireStartElement("file_list");
 
@@ -152,15 +126,9 @@ public class PreCodeAugmentationResult {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result
-                + ((codeSnippetBlockEndDoubleSlash == null) ? 0 : codeSnippetBlockEndDoubleSlash.hashCode());
-        result = prime * result
-                + ((codeSnippetBlockEndSlashStar == null) ? 0 : codeSnippetBlockEndSlashStar.hashCode());
-        result = prime * result
-                + ((codeSnippetBlockStartDoubleSlash == null) ? 0 : codeSnippetBlockStartDoubleSlash.hashCode());
-        result = prime * result
-                + ((codeSnippetBlockStartSlashStar == null) ? 0 : codeSnippetBlockStartSlashStar.hashCode());
         result = prime * result + ((fileDescriptors == null) ? 0 : fileDescriptors.hashCode());
+        result = prime * result + ((genCodeEndSuffix == null) ? 0 : genCodeEndSuffix.hashCode());
+        result = prime * result + ((genCodeStartSuffix == null) ? 0 : genCodeStartSuffix.hashCode());
         return result;
     }
 
@@ -173,40 +141,27 @@ public class PreCodeAugmentationResult {
         if (getClass() != obj.getClass())
             return false;
         PreCodeAugmentationResult other = (PreCodeAugmentationResult) obj;
-        if (codeSnippetBlockEndDoubleSlash == null) {
-            if (other.codeSnippetBlockEndDoubleSlash != null)
-                return false;
-        } else if (!codeSnippetBlockEndDoubleSlash.equals(other.codeSnippetBlockEndDoubleSlash))
-            return false;
-        if (codeSnippetBlockEndSlashStar == null) {
-            if (other.codeSnippetBlockEndSlashStar != null)
-                return false;
-        } else if (!codeSnippetBlockEndSlashStar.equals(other.codeSnippetBlockEndSlashStar))
-            return false;
-        if (codeSnippetBlockStartDoubleSlash == null) {
-            if (other.codeSnippetBlockStartDoubleSlash != null)
-                return false;
-        } else if (!codeSnippetBlockStartDoubleSlash.equals(other.codeSnippetBlockStartDoubleSlash))
-            return false;
-        if (codeSnippetBlockStartSlashStar == null) {
-            if (other.codeSnippetBlockStartSlashStar != null)
-                return false;
-        } else if (!codeSnippetBlockStartSlashStar.equals(other.codeSnippetBlockStartSlashStar))
-            return false;
         if (fileDescriptors == null) {
             if (other.fileDescriptors != null)
                 return false;
         } else if (!fileDescriptors.equals(other.fileDescriptors))
+            return false;
+        if (genCodeEndSuffix == null) {
+            if (other.genCodeEndSuffix != null)
+                return false;
+        } else if (!genCodeEndSuffix.equals(other.genCodeEndSuffix))
+            return false;
+        if (genCodeStartSuffix == null) {
+            if (other.genCodeStartSuffix != null)
+                return false;
+        } else if (!genCodeStartSuffix.equals(other.genCodeStartSuffix))
             return false;
         return true;
     }
 
     @Override
     public String toString() {
-        return "PreCodeAugmentationResult{codeSnippetBlockEndDoubleSlash=" + codeSnippetBlockEndDoubleSlash
-                + ", codeSnippetBlockEndSlashStar=" + codeSnippetBlockEndSlashStar
-                + ", codeSnippetBlockStartDoubleSlash=" + codeSnippetBlockStartDoubleSlash
-                + ", codeSnippetBlockStartSlashStar=" + codeSnippetBlockStartSlashStar + ", fileDescriptors="
-                + fileDescriptors + "}";
+        return "PreCodeAugmentationResult{fileDescriptors=" + fileDescriptors + ", genCodeEndSuffix="
+                + genCodeEndSuffix + ", genCodeStartSuffix=" + genCodeStartSuffix + "}";
     }
 }

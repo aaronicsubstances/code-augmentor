@@ -46,6 +46,7 @@ public class PreCodeAugmentationTask extends Task {
      */
     private final List<CodeGenerationRequestSpecification> requestSpecList = new ArrayList<>();
     private final List<String> headerDoubleSlashSuffixes = new ArrayList<>();
+    private final List<String> embeddedCodeDoubleSlashSuffixes = new ArrayList<>();
 
     // for these prefer the very first one during code generation.
     private final List<String> genCodeStartSuffixes = new ArrayList<>();
@@ -88,6 +89,13 @@ public class PreCodeAugmentationTask extends Task {
         }
     }
 
+    public void addEmbedded_code_dslash_suffix(String suffix) {
+        suffix = CodeGenerationRequestSpecification.validateCommentMarkerSuffix(suffix);
+        if (!embeddedCodeDoubleSlashSuffixes.contains(suffix)) {
+            embeddedCodeDoubleSlashSuffixes.add(suffix);
+        }
+    }
+
     public void addGen_code_start_suffix(String suffix) {
         suffix = CodeGenerationRequestSpecification.validateCommentMarkerSuffix(suffix);
         if (!genCodeStartSuffixes.contains(suffix)) {
@@ -124,6 +132,9 @@ public class PreCodeAugmentationTask extends Task {
         if (headerDoubleSlashSuffixes.isEmpty()) {
             throw new BuildException("at least 1 nested header_dslash_suffix element is required");
         }
+        if (embeddedCodeDoubleSlashSuffixes.isEmpty()) {
+            throw new BuildException("at least 1 nested embedded_code_dslash_suffix element is required");
+        }
         if (genCodeStartSuffixes.isEmpty()) {
             throw new BuildException("at least 1 nested gen_code_start_suffix element is required");
         }
@@ -133,20 +144,18 @@ public class PreCodeAugmentationTask extends Task {
 
         // Ensure uniqueness across comment suffixes.
         Set<String> allSuffixes = new HashSet<>();
-        int totalSuffixCount = 0;        
+        int totalSuffixCount = 0;
         allSuffixes.addAll(headerDoubleSlashSuffixes);
         totalSuffixCount += headerDoubleSlashSuffixes.size();
+        allSuffixes.addAll(embeddedCodeDoubleSlashSuffixes);
+        totalSuffixCount += embeddedCodeDoubleSlashSuffixes.size();
         allSuffixes.addAll(genCodeStartSuffixes);
         totalSuffixCount += genCodeStartSuffixes.size();
         allSuffixes.addAll(genCodeEndSuffixes);
         totalSuffixCount += genCodeEndSuffixes.size();
         for (CodeGenerationRequestSpecification spec : requestSpecList) {
-            allSuffixes.addAll(spec.getStartSuffixes());
-            totalSuffixCount += spec.getStartSuffixes().size();
-            allSuffixes.addAll(spec.getContinuationDoubleSlashSuffixes());
-            totalSuffixCount += spec.getContinuationDoubleSlashSuffixes().size();
-            allSuffixes.addAll(spec.getClosingDoubleSlashSuffixes());
-            totalSuffixCount += spec.getClosingDoubleSlashSuffixes().size();
+            allSuffixes.addAll(spec.getAugCodeSuffixes());
+            totalSuffixCount += spec.getAugCodeSuffixes().size();
         }
         if (totalSuffixCount != allSuffixes.size()) {
             throw new BuildException("Duplicates detected across comment marker suffixes");

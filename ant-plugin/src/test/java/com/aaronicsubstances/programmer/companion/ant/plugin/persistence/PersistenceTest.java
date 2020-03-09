@@ -80,10 +80,8 @@ public class PersistenceTest {
             @Override
             public Object[] next() {
                 PreCodeAugmentationResult instance = new PreCodeAugmentationResult(new ArrayList<>());
-                instance.setCodeSnippetBlockEndDoubleSlash(generateRandomString(randGen, false));
-                instance.setCodeSnippetBlockEndSlashStar(generateRandomString(randGen, false));
-                instance.setCodeSnippetBlockStartDoubleSlash(generateRandomString(randGen, false));
-                instance.setCodeSnippetBlockStartSlashStar(generateRandomString(randGen, false));
+                instance.setGenCodeStartSuffix(generateRandomString(randGen, false));
+                instance.setGenCodeEndSuffix(generateRandomString(randGen, false));
                 if (count > 0) {
                     int fileDescriptorListSize = randGen.nextInt(5);
                     for (int i = 0; i < fileDescriptorListSize; i++) {

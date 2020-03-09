@@ -14,11 +14,9 @@ public class CodeGenerationRequestSpecification {
     private static final Pattern WS_REGEX = Pattern.compile("(?s)\\s");
 
     // use extension to determine which of XML or qCSV formats to use.
-    private File augmentingCodeDestFile; 
+    private File augCodeDestFile; 
 
-    private final List<String> startSuffixes = new ArrayList<>();
-    private final List<String> continuationDoubleSlashSuffixes = new ArrayList<>();
-    private final List<String> closingDoubleSlashSuffixes = new ArrayList<>();
+    private final List<String> augCodeSuffixes = new ArrayList<>();
 
     public static String validateCommentMarkerSuffix(String suffix) {
         // Ensure suffix is neither empty nor contains whitespace.
@@ -32,59 +30,31 @@ public class CodeGenerationRequestSpecification {
         return suffix;
     }
     
-    public File getAugmentingCodeDestFile() {
-        return augmentingCodeDestFile;
+    public File getAugCodeDestFile() {
+        return augCodeDestFile;
     }
 
     public void setAug_code_file(File f) {
-        this.augmentingCodeDestFile = f;
+        this.augCodeDestFile = f;
     }
 
-    public List<String> getStartSuffixes() {
-        return startSuffixes;
+    public List<String> getAugCodeSuffixes() {
+        return augCodeSuffixes;
     }
 
-    public List<String> getContinuationDoubleSlashSuffixes() {
-        return continuationDoubleSlashSuffixes;
-    }
-
-    public List<String> getClosingDoubleSlashSuffixes() {
-        return closingDoubleSlashSuffixes;
-    }
-
-    public void addStart_suffix(String suffix) {
+    public void addAug_code_suffix(String suffix) {
         suffix = validateCommentMarkerSuffix(suffix);
-        if (!startSuffixes.contains(suffix)) {
-            startSuffixes.add(suffix);
-        }
-    }
-
-    public void addContinuation_dslash_suffix(String suffix) {
-        suffix = validateCommentMarkerSuffix(suffix);
-        if (!continuationDoubleSlashSuffixes.contains(suffix)) {
-            continuationDoubleSlashSuffixes.add(suffix);
-        }
-    }
-
-    public void addClosing_dslash_suffix(String suffix) {
-        suffix = validateCommentMarkerSuffix(suffix);
-        if (!closingDoubleSlashSuffixes.contains(suffix)) {
-            closingDoubleSlashSuffixes.add(suffix);
+        if (!augCodeSuffixes.contains(suffix)) {
+            augCodeSuffixes.add(suffix);
         }
     }
 
 	public void validate() {
-        if (augmentingCodeDestFile == null) {
+        if (augCodeDestFile == null) {
             throw new BuildException("spec[@aug_code_file] attribute is required");
         }
-        if (startSuffixes.isEmpty()) {
-            throw new BuildException("at least 1 nested spec/start_suffix element is required");
-        }
-        if (continuationDoubleSlashSuffixes.isEmpty()) {
-            throw new BuildException("at least 1 nested spec/continuation_dslash_suffix element is required");
-        }
-        if (closingDoubleSlashSuffixes.isEmpty()) {
-            throw new BuildException("at least 1 nested spec/closing_dslash_suffix element is required");
+        if (augCodeSuffixes.isEmpty()) {
+            throw new BuildException("at least 1 nested spec/aug_code_suffix element is required");
         }
 	}
 }
