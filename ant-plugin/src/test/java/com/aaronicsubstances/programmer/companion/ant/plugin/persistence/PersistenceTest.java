@@ -265,7 +265,9 @@ public class PersistenceTest {
         d.setIndexInFile(randGen.nextInt(1000));
         d.setAnnotatedWithSlashStar(randGen.nextBoolean());
         d.setIndex(randGen.nextInt(200));
-        d.setIndent(generateRandomString(randGen, false));
+        if (randGen.nextBoolean()) {
+            d.setIndent(generateRandomString(randGen, false));
+        }
         return c;
 	}
 

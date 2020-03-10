@@ -1,6 +1,8 @@
 package com.aaronicsubstances.programmer.companion.ant.plugin.models;
 
+import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamWriter;
+import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.StartElement;
 
 import com.aaronicsubstances.programmer.companion.ant.plugin.persistence.XmlEventReaderWrapper;
@@ -209,7 +211,9 @@ public class CodeSnippetDescriptor {
             "" + augmentingCodeDescriptor.getStartPos());
         xmlWriter.writeAttribute("end_pos", 
             "" + augmentingCodeDescriptor.getEndPos());
-        xmlWriter.writeAttribute("indent", augmentingCodeDescriptor.getIndent());
+        if (augmentingCodeDescriptor.getIndent() != null) {
+            xmlWriter.writeAttribute("indent", augmentingCodeDescriptor.getIndent());
+        }
         xmlWriter.writeAttribute("is_slash_star", 
             "" + augmentingCodeDescriptor.isAnnotatedWithSlashStar());
         xmlWriter.writeEndElement();
@@ -260,10 +264,11 @@ public class CodeSnippetDescriptor {
         augmentingCodeDescriptor.setStartPos(startPos);
         endPos = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement,
             "end_pos");
-        augmentingCodeDescriptor.setEndPos(endPos);        
-        String indent = XmlEventReaderWrapper.requireAttributeValue(startElement, 
-            "indent");
-        augmentingCodeDescriptor.setIndent(indent);
+        augmentingCodeDescriptor.setEndPos(endPos);
+        Attribute att = startElement.getAttributeByName(QName.valueOf("indent"));
+        if (att != null) {
+            augmentingCodeDescriptor.setIndent(att.getValue());
+        }
         boolean isSlashStar = XmlEventReaderWrapper.requireAttributeValueAsBoolean(startElement,
             "is_slash_star");
         augmentingCodeDescriptor.setAnnotatedWithSlashStar(isSlashStar);

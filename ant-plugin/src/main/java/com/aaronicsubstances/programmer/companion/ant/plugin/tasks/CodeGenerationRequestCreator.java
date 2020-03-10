@@ -1,19 +1,24 @@
 package com.aaronicsubstances.programmer.companion.ant.plugin.tasks;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.aaronicsubstances.programmer.companion.ParserException;
+import com.aaronicsubstances.programmer.companion.ParserInputSource;
 import com.aaronicsubstances.programmer.companion.Token;
 import com.aaronicsubstances.programmer.companion.ant.plugin.models.AugmentingCode;
 import com.aaronicsubstances.programmer.companion.ant.plugin.models.CodeSnippetDescriptor;
 import com.aaronicsubstances.programmer.companion.ant.plugin.models.SourceFileDescriptor;
 import com.aaronicsubstances.programmer.companion.ant.plugin.models.AugmentingCode.Block;
 import com.aaronicsubstances.programmer.companion.ant.plugin.models.CodeSnippetDescriptor.AugmentingCodeDescriptor;
+import com.aaronicsubstances.programmer.companion.ant.plugin.models.CodeSnippetDescriptor.GeneratedCodeDescriptor;
 import com.aaronicsubstances.programmer.companion.java.JavaLexer;
 
 /**
@@ -54,7 +59,7 @@ public class CodeGenerationRequestCreator {
     private final Pattern DOUBLE_SLASH_PATTERN;
     private final Pattern SLASH_STAR_PATTERN;
 
-    private int runningIndex, runningIndexInFile;
+    private int runningIndex;
 
     public CodeGenerationRequestCreator(
             List<String> headerDoubleSlashSuffixes,
@@ -127,26 +132,64 @@ public class CodeGenerationRequestCreator {
         SLASH_STAR_PATTERN = Pattern.compile(slashStartRegex.toString());
     }
 
-    public SourceFileDescriptor processSourceFile(List<Token> source,
-            List<List<AugmentingCode>> specAugCodesList, List<String> errors) {
-        runningIndexInFile = 0;
-        SourceFileDescriptor sourceDescriptor = new SourceFileDescriptor(new ArrayList<>(),
-            new ArrayList<>());
+    SuffixDescriptor getSuffixDescriptor(Token t) {
+        Matcher regexMatcher;
+        if (t.type == JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT) {
+            regexMatcher = DOUBLE_SLASH_PATTERN.matcher(t.text.substring("//".length()));
+        }
+        else if (t.type == JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT) {
+            regexMatcher = SLASH_STAR_PATTERN.matcher(
+                t.text.substring("/*".length(), t.text.length() - "*/".length()));
+        }
+        else {
+            return null;
+        }
+        if (regexMatcher.find()) {
+            int idx = Collections.binarySearch(suffixDescriptors, new SuffixDescriptor(
+                regexMatcher.group(1)));
+            assert idx >= 0;
+            SuffixDescriptor suffixDesc = suffixDescriptors.get(idx);
+            return suffixDesc;
+        }
+        else {
+            return null;
+        }
+    }
 
+    public SourceFileDescriptor processSourceFile(
+            ParserInputSource inputSource, List<Token> sourceTokens,
+            List<List<AugmentingCode>> specAugCodesList, List<ParserException> errors) {
         // 1. first get all slash star comments relevant as aug code.
-        List<Token> slashStarRelevantTokens = getSlashStarRelevantTokens(source);
+        List<Token> slashStarRelevantTokens = getSlashStarRelevantTokens(sourceTokens);
 
         // 2. next, get all double slash comments relevant as aug code, emb code or header.
-        List<Token> doubleSlashRelevantTokens = getDoubleSlashReleventTokens(source);
+        List<Token> doubleSlashRelevantTokens = getDoubleSlashReleventTokens(sourceTokens);
         
         // 3. group and validate double slash relevant tokens. slash star relevant tokens
         //    are valid already.
         List<List<Token>> doubleSlashRelevantTokenGroups = groupDoubleSlashReleventTokens(
             doubleSlashRelevantTokens);
         for (List<Token> relevantTokenGroup : doubleSlashRelevantTokenGroups) {
-            String error = validateDoubleSlashRelevantTokenGroup(relevantTokenGroup);
+            ParserException error = validateDoubleSlashRelevantTokenGroup(relevantTokenGroup, inputSource);
             if (error != null) {
                 errors.add(error);
+            }
+        }
+        if (errors.isEmpty()) {
+            // assert at most 1 header section.
+            boolean headerBlockSeen = false;
+            for (List<Token> relevantTokenGroup : doubleSlashRelevantTokenGroups) {
+                Token t = relevantTokenGroup.get(0);
+                SuffixDescriptor suffixDescriptor = getTokenAttributeSuffixDescriptor(t.value);
+                if (suffixDescriptor.suffixType == SUFFIX_TYPE_HEADER) {
+                    if (!headerBlockSeen) {
+                        headerBlockSeen = true;
+                    }
+                    else {
+                        ParserException error = inputSource.createAbortException("Duplicate header section", t);
+                        errors.add(error);
+                    }
+                }
             }
         }
 
@@ -155,57 +198,108 @@ public class CodeGenerationRequestCreator {
         if (!errors.isEmpty()) {
             return null;
         }
+        List<Object> combined = combineAndSortRelevantTokens(slashStarRelevantTokens, 
+            doubleSlashRelevantTokenGroups);
 
-        // 5. locate gen code section for each aug code.
+        // 5. generate aug code blocks and associated descriptors
+        List<CodeSnippetDescriptor> bodySnippets = new ArrayList<>();
+        CodeSnippetDescriptor headerSnippet = null;
+        int runningIndexInFile = 0;
+        for (Object o : combined) {
+            AugmentingCodeDescriptor augCodeDescriptor;
+            GeneratedCodeDescriptor genCodeDescriptor;
+            AugmentingCode augmentingCode;
+            int augCodeSpecIndex;
+            if (o instanceof List<?>) {
+                List<Token> doubleSlashGroup = (List<Token>)o;
+                Token firstToken = doubleSlashGroup.get(0);
+                Token lastToken = doubleSlashGroup.get(doubleSlashGroup.size() - 1);
+                
+                // a. create aug code descriptor.
+                augCodeDescriptor = new AugmentingCodeDescriptor();
+                augCodeDescriptor.setStartPos(firstToken.startPos);
+                augCodeDescriptor.setEndPos(lastToken.endPos);
 
+                // b. create gen code descriptor.
+                Map<String, Object> tokenAttributes = (Map<String, Object>)lastToken.value;
+                int tokenIndex = (int)tokenAttributes.get(TOKEN_ATTRIBUTE_INDEX_IN_SOURCE);
+                genCodeDescriptor = createGeneratedCodeDescriptor(sourceTokens, tokenIndex,
+                    false);
 
-        // 6. finally get all imports and normalize them.
-        List<String> normalizedImports = getNormalizedImportStatements(source);
-        sourceDescriptor.setImportStatements(normalizedImports);
+                tokenAttributes = (Map<String, Object>)firstToken.value;
+                SuffixDescriptor suffixDescriptor = (SuffixDescriptor)tokenAttributes.get(TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR);
+                if (suffixDescriptor.suffixType == SUFFIX_TYPE_HEADER) {
+                    assert headerSnippet == null;
+
+                    headerSnippet = new CodeSnippetDescriptor();
+                    headerSnippet.setAugmentingCodeDescriptor(augCodeDescriptor);
+                    headerSnippet.setGeneratedCodeDescriptor(genCodeDescriptor);
+                    
+                    continue;
+                }
+                else {
+                    assert suffixDescriptor.suffixType == SUFFIX_TYPE_AUG_CODE;
+
+                    // c. create aug code.
+                    augmentingCode = createDoubleSlashAugCode(sourceTokens, doubleSlashGroup,
+                        augCodeDescriptor);
+                    augCodeSpecIndex = suffixDescriptor.augCodeSpecIndex;
+                }
+            }
+            else {
+                Token starSlashSingle = (Token)o;
+
+                // a. create aug code descriptor.
+                augCodeDescriptor = new AugmentingCodeDescriptor();
+                augCodeDescriptor.setAnnotatedWithSlashStar(true);
+                augCodeDescriptor.setStartPos(starSlashSingle.startPos);
+                augCodeDescriptor.setEndPos(starSlashSingle.endPos);
+
+                // b. create gen code descriptor.
+                Map<String, Object> tokenAttributes = (Map<String, Object>)starSlashSingle.value;
+                int tokenIndex = (int)tokenAttributes.get(TOKEN_ATTRIBUTE_INDEX_IN_SOURCE);
+                genCodeDescriptor = createGeneratedCodeDescriptor(sourceTokens, tokenIndex,
+                    true);
+
+                // c. create aug code.
+                SuffixDescriptor suffixDescriptor = (SuffixDescriptor)tokenAttributes.get(TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR);
+                Block blockSingle = new Block();
+                String content = getCommentContentWithoutSuffix(starSlashSingle, 
+                    suffixDescriptor.suffix);
+                blockSingle.setContent(content);
+                augmentingCode = new AugmentingCode(Arrays.asList(blockSingle));
+                augmentingCode.setCommentSuffix(suffixDescriptor.suffix);
+                augCodeSpecIndex = suffixDescriptor.augCodeSpecIndex;
+            }
+
+            augCodeDescriptor.setIndex(runningIndex);
+            augCodeDescriptor.setIndexInFile(runningIndexInFile);
+            CodeSnippetDescriptor bodySnippet = new CodeSnippetDescriptor();
+            bodySnippet.setAugmentingCodeDescriptor(augCodeDescriptor);
+            bodySnippet.setGeneratedCodeDescriptor(genCodeDescriptor);
+            bodySnippets.add(bodySnippet);
+            
+            augmentingCode.setIndex(runningIndex);
+            augmentingCode.setIndexInFile(runningIndexInFile);
+            List<AugmentingCode> applicableAugCodeList = specAugCodesList.get(augCodeSpecIndex);
+            applicableAugCodeList.add(augmentingCode);
+
+            runningIndex++;
+            runningIndexInFile++;
+        }
+
+        // 5. finally get all imports and normalize them.
+        List<String> normalizedImports = getNormalizedImportStatements(sourceTokens);
+        SourceFileDescriptor sourceDescriptor = new SourceFileDescriptor(
+            normalizedImports, bodySnippets);
+        sourceDescriptor.setHeaderSnippet(headerSnippet);
         return sourceDescriptor;
     }
 
-    private String validateDoubleSlashRelevantTokenGroup(List<Token> relevantTokenGroup) {
-        return null;
-    }
-
-    private List<String> getNormalizedImportStatements(List<Token> source) {
-        List<String> normalizedImports = new ArrayList<>();
-        int i = 0;
-        while (i < source.size()) {
-            Token t = source.get(i);
-            if (t.type == JavaLexer.TOKEN_TYPE_IMPORT_KEYWORD) {
-                StringBuilder importStatement = new StringBuilder(t.text);
-                i++;
-                while (i < source.size()) {
-                    t = source.get(i);
-                    if (t.type == JavaLexer.TOKEN_TYPE_SEMI_COLON || 
-                            t.type == JavaLexer.TOKEN_TYPE_NEWLINE) {
-                        break;
-                    }
-                    // skip comments.
-                    if (t.type != JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT &&
-                            t.type != JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT) {
-                        importStatement.append(t.text);
-                    }
-                    i++;
-                }
-
-                // normalize import by using a common whitespace separator.
-                String normaizedImport = importStatement.toString().trim().replaceAll("\\s+", " ");
-                normalizedImports.add(normaizedImport);
-            }
-            else {
-                i++;
-            }
-        }
-        return normalizedImports;
-    }
-
-    private List<Token> getSlashStarRelevantTokens(List<Token> source) {
+    List<Token> getSlashStarRelevantTokens(List<Token> sourceTokens) {
         List<Token> tokens = new ArrayList<>();
-        for (int i = 0; i < source.size(); i++) {
-            Token t = source.get(i);
+        for (int i = 0; i < sourceTokens.size(); i++) {
+            Token t = sourceTokens.get(i);
             if (t.type == JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT) {
                 SuffixDescriptor suffixDescriptor = getSuffixDescriptor(t);
                 if (suffixDescriptor != null && suffixDescriptor.suffixType == SUFFIX_TYPE_AUG_CODE) {
@@ -220,12 +314,12 @@ public class CodeGenerationRequestCreator {
         return tokens;
     }
 
-    private List<Token> getDoubleSlashReleventTokens(List<Token> source) {
+    List<Token> getDoubleSlashReleventTokens(List<Token> sourceTokens) {
         List<Token> tokens = new ArrayList<>();
         boolean skipDslashSearch = false;
         StringBuilder indentBuilder = new StringBuilder();
-        for (int i = 0; i < source.size(); i++) {            
-            Token t = source.get(i);
+        for (int i = 0; i < sourceTokens.size(); i++) {            
+            Token t = sourceTokens.get(i);
             if (t.type == JavaLexer.TOKEN_TYPE_NEWLINE) {
                 skipDslashSearch = false;
                 indentBuilder.setLength(0);
@@ -260,7 +354,159 @@ public class CodeGenerationRequestCreator {
         return tokens;
     }
 
-    private List<List<Token>> groupDoubleSlashReleventTokens(List<Token> tokens) {
+    GeneratedCodeDescriptor createGeneratedCodeDescriptor(List<Token> sourceTokens, 
+            int startIndex, boolean isSlashStar) {
+        // search for gen code start.
+        boolean found = false;
+        int i = startIndex + 1;
+        for (; i < sourceTokens.size(); i++) {
+            Token t = sourceTokens.get(i);
+            // only tolerate whitespace as the only different token to expect,
+            // not even gen code end.
+            if (t.type == JavaLexer.TOKEN_TYPE_NON_NEWLINE_WHITESPACE ||
+                    t.type == JavaLexer.TOKEN_TYPE_NEWLINE) {
+                continue;
+            }
+            // don't bother checking if relevant tokens other than gen code start or 
+            // end are encountered.
+            if (t.value == null) {
+                SuffixDescriptor suffixDescriptor = getSuffixDescriptor(t);
+                if (suffixDescriptor != null && 
+                        suffixDescriptor.suffixType == SUFFIX_TYPE_GEN_CODE_START) {
+                    found = true;
+                }
+            }
+            break;
+        }
+
+        if (found) {
+            // search for gen code end.
+            i++;
+            for (; i < sourceTokens.size(); i++) {
+                Token t = sourceTokens.get(i);
+                if (t.value != null) {
+                    // relevant tokens other than gen code end 
+                    // are encountered. conclude not found.
+                    break;
+                }
+                SuffixDescriptor suffixDescriptor = getSuffixDescriptor(t);
+                if (suffixDescriptor == null) {
+                    continue;
+                }
+                if (suffixDescriptor.suffixType == SUFFIX_TYPE_GEN_CODE_END) {
+                    GeneratedCodeDescriptor generatedCodeDescriptor = new GeneratedCodeDescriptor();
+                    generatedCodeDescriptor.setStartPos(sourceTokens.get(startIndex).startPos);
+                    generatedCodeDescriptor.setEndPos(t.endPos);
+                    // consume following new line if double slash comment.
+                    if (t.type == JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT && 
+                            i + 1 < sourceTokens.size()) {
+                        Token nextToken = sourceTokens.get(i + 1);
+                        assert nextToken.type == JavaLexer.TOKEN_TYPE_NEWLINE;
+                        generatedCodeDescriptor.setEndPos(nextToken.endPos);
+                    }
+                    return generatedCodeDescriptor;
+                }
+                else {
+                    // gen code start encountered, conclude not found.
+                }
+                break;
+            }
+        }
+
+        // Ensure terminating newline is removed for double slash comments
+        // by treating them like generated code.
+        // This enables us to always make sure to insert a new line before
+        // inserting generated code.
+        if (!isSlashStar && startIndex < sourceTokens.size()) {
+            Token t = sourceTokens.get(startIndex);
+            GeneratedCodeDescriptor generatedCodeDescriptor = new GeneratedCodeDescriptor();
+            generatedCodeDescriptor.setStartPos(t.startPos);
+            generatedCodeDescriptor.setEndPos(t.endPos);
+            return generatedCodeDescriptor;
+        }
+
+        return null;
+    }
+
+    static ParserException validateDoubleSlashRelevantTokenGroup(
+            List<Token> tokenGroup, 
+            ParserInputSource inputSource) {
+        Token token = tokenGroup.get(0);
+        SuffixDescriptor suffixDescriptor = getTokenAttributeSuffixDescriptor(token.value);
+        if (suffixDescriptor.suffixType == SUFFIX_TYPE_HEADER) {
+            for (int i = 1; i < tokenGroup.size(); i++) {
+                token = tokenGroup.get(i);
+                suffixDescriptor = getTokenAttributeSuffixDescriptor(token.value);
+                switch (suffixDescriptor.suffixType) {
+                    case SUFFIX_TYPE_HEADER:
+                        break;
+                    default:
+                        return inputSource.createAbortException("Expected header comment marker suffix", token);
+                }
+            }
+        }
+        else if (suffixDescriptor.suffixType == SUFFIX_TYPE_AUG_CODE) {
+            int expectedAugCodeSpecIndex = suffixDescriptor.augCodeSpecIndex;
+            for (int i = 1; i < tokenGroup.size(); i++) {
+                token = tokenGroup.get(i);
+                suffixDescriptor = getTokenAttributeSuffixDescriptor(token.value);
+                switch (suffixDescriptor.suffixType) {
+                    case SUFFIX_TYPE_HEADER:
+                        return inputSource.createAbortException("Unexpected header comment marker suffix", token);
+                    case SUFFIX_TYPE_EMB_CODE:
+                        break;
+                    default:
+                        assert suffixDescriptor.suffixType == SUFFIX_TYPE_AUG_CODE;
+                        if (expectedAugCodeSpecIndex != suffixDescriptor.augCodeSpecIndex) {
+                            return inputSource.createAbortException("Different augmenting comment marker suffixes in same section not allowed", token);
+                        }
+                }
+            }
+        }
+        else {
+            assert suffixDescriptor.suffixType == SUFFIX_TYPE_EMB_CODE;
+            return inputSource.createAbortException("Embedded code string comment marker suffix cannot start an augmenting code section", token);
+        }
+        return null;
+    }
+
+    static List<Object> combineAndSortRelevantTokens(List<Token> slashStarRelevantTokens,
+            List<List<Token>> doubleSlashRelevantTokenGroups) {
+        List<Object> combined = new ArrayList<>();
+        combined.addAll(slashStarRelevantTokens);
+        combined.addAll(doubleSlashRelevantTokenGroups);
+        // sort by startPos rather than lineNumber,
+        // since multiple slash star tokens can occupy same line.
+        Collections.sort(combined, new Comparator<Object>() {
+
+            @Override
+            public int compare(Object o1, Object o2) {
+                Token t1, t2;
+                if (o1 instanceof List<?>) {
+                    t1 = ((List<Token>)o1).get(0);
+                }
+                else {
+                    t1 = (Token)o1;
+                }
+                if (o2 instanceof List<?>) {
+                    t2 = ((List<Token>)o2).get(0);
+                }
+                else {
+                    t2 = (Token)o2;
+                }
+                if (t1.startPos < t2.startPos) {
+                    return -1;
+                }
+                if (t1.startPos > t2.startPos) {
+                    return 1;
+                }
+                return 0;
+            }
+        });
+        return combined;
+    }
+
+    static List<List<Token>> groupDoubleSlashReleventTokens(List<Token> tokens) {
         List<List<Token>> groups = new ArrayList<>();
         // group tokens which strictly follow each other consecutively in line numbers.
         int expectedLineNumber = tokens.isEmpty() ? 0 : tokens.get(0).lineNumber;
@@ -280,31 +526,137 @@ public class CodeGenerationRequestCreator {
         return groups;
     }
 
-    private SuffixDescriptor getSuffixDescriptor(Token t) {
-        Matcher regexMatcher;
-        if (t.type == JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT) {
-            regexMatcher = DOUBLE_SLASH_PATTERN.matcher(t.text.substring("//".length()));
+    static AugmentingCode createDoubleSlashAugCode(List<Token> sourceTokens, 
+            List<Token> doubleSlashGroup, AugmentingCodeDescriptor augCodeDescriptor) {
+        AugmentingCode augCode = new AugmentingCode();
+
+        /*
+         * Set minimum indent, consolidate, add remaining new lines.
+         */
+
+        String[] contentLines = new String[doubleSlashGroup.size()];
+        boolean[] stringifyStatuses = new boolean[doubleSlashGroup.size()];
+        String[] terminatingNewLines = new String[doubleSlashGroup.size()];
+
+        for (int i = 0; i < doubleSlashGroup.size(); i++) {
+            Token t = doubleSlashGroup.get(i);
+            Map<String, Object> tokenAttributes = (Map<String, Object>)t.value;
+
+            // set minimum indent.
+            String indent = (String)tokenAttributes.get(TOKEN_ATTRIBUTE_INDENT);
+            String currentIndent = augCodeDescriptor.getIndent();
+            if (currentIndent == null || currentIndent.length() > indent.length()) {
+                augCodeDescriptor.setIndent(indent);
+            }
+
+            // set values intended ultimately for block properties
+            SuffixDescriptor suffixDescriptor = (SuffixDescriptor)tokenAttributes.get(
+                TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR);            
+            contentLines[i] = getCommentContentWithoutSuffix(t, suffixDescriptor.suffix);
+            if (suffixDescriptor.suffixType == SUFFIX_TYPE_EMB_CODE) {
+                stringifyStatuses[i] = true;
+            }
+            else {               
+                if (augCode.getCommentSuffix() == null) { 
+                    augCode.setCommentSuffix(suffixDescriptor.suffix);
+                }
+            }
+            
+            // Fetch new lines terminating comments for use in next step.
+            int tIndex = (int)tokenAttributes.get(TOKEN_ATTRIBUTE_INDEX_IN_SOURCE);
+            if (tIndex + 1 < sourceTokens.size()) {
+                t = sourceTokens.get(tIndex + 1);
+                assert t.type == JavaLexer.TOKEN_TYPE_NEWLINE;
+                terminatingNewLines[i] = t.text;
+            }
         }
-        else if (t.type == JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT) {
-            regexMatcher = SLASH_STAR_PATTERN.matcher(
-                t.text.substring("/*".length(), t.text.length() - "*/".length()));
+
+        // 2. consolidate
+        List<Block> blocks = new ArrayList<>();
+        StringBuilder sb = new StringBuilder();
+        Block lastBlock = new Block(); // first block definitely not stringified.
+        blocks.add(lastBlock);
+        boolean firstForBlock = true;
+        for (int i = 0; i < contentLines.length; i++) {
+            String contentLine = contentLines[i];
+            boolean stringify = stringifyStatuses[i];
+            
+            if (lastBlock.isStringify() == stringify) {
+                if (!firstForBlock) {
+                    sb.append(terminatingNewLines[i - 1]);
+                }
+                sb.append(contentLine);
+                firstForBlock = false;
+            }
+            else {
+                // Add new lines to content lines, with requirement that
+                // 1. first section should not have preceding new line.
+                // 2. last section should not have terminating new line.
+                // 3. sections to be stringified should neither have preceding or terminating new lines.
+                if (stringify) {
+                    sb.append(terminatingNewLines[i]);
+                }
+                lastBlock.setContent(sb.toString());
+
+                // reset for use with next block.
+                lastBlock = new Block();
+                lastBlock.setStringify(stringify);
+                blocks.add(lastBlock);
+                sb.setLength(0);
+                if (!stringify) {
+                    sb.append(terminatingNewLines[i]);
+                }
+                firstForBlock = true;
+            }
         }
-        else {
-            return null;
-        }
-        if (regexMatcher.find()) {
-            int idx = Collections.binarySearch(suffixDescriptors, new SuffixDescriptor(
-                regexMatcher.group(1)));
-            assert idx >= 0;
-            SuffixDescriptor suffixDesc = suffixDescriptors.get(idx);
-            return suffixDesc;
-        }
-        else {
-            return null;
-        }
+
+        // complete last block.
+        lastBlock.setContent(sb.toString());
+
+        augCode.setBlocks(blocks);
+        return augCode;
     }
 
-    private static String getCommentContentWithoutSuffix(Token t, String suffix) {
+    static List<String> getNormalizedImportStatements(List<Token> sourceTokens) {
+        List<String> normalizedImports = new ArrayList<>();
+        int i = 0;
+        while (i < sourceTokens.size()) {
+            Token t = sourceTokens.get(i);
+            if (t.type == JavaLexer.TOKEN_TYPE_IMPORT_KEYWORD) {
+                StringBuilder importStatement = new StringBuilder(t.text);
+                i++;
+                while (i < sourceTokens.size()) {
+                    t = sourceTokens.get(i);
+                    if (t.type == JavaLexer.TOKEN_TYPE_SEMI_COLON || 
+                            t.type == JavaLexer.TOKEN_TYPE_NEWLINE) {
+                        break;
+                    }
+                    // skip comments.
+                    if (t.type != JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT &&
+                            t.type != JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT) {
+                        importStatement.append(t.text);
+                    }
+                    i++;
+                }
+
+                // normalize import by using a common whitespace separator.
+                String normaizedImport = importStatement.toString().trim().replaceAll("\\s+", " ");
+                normalizedImports.add(normaizedImport);
+            }
+            else {
+                i++;
+            }
+        }
+        return normalizedImports;
+    }
+
+    static SuffixDescriptor getTokenAttributeSuffixDescriptor(Object tokenValue) {
+        Map<String, Object> tokenAttributes = (Map<String, Object>)tokenValue;
+        SuffixDescriptor suffixDescriptor = (SuffixDescriptor)tokenAttributes.get(TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR);
+        return suffixDescriptor;
+    }
+
+    static String getCommentContentWithoutSuffix(Token t, String suffix) {
         if (t.type == JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT) {
             return t.text.substring(("/*" + suffix).length(), "*/".length());
         }
