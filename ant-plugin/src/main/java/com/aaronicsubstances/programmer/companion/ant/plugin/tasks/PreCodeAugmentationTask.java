@@ -46,7 +46,7 @@ public class PreCodeAugmentationTask extends Task {
      */
     private final List<CodeGenerationRequestSpecification> requestSpecList = new ArrayList<>();
     private final List<String> headerDoubleSlashSuffixes = new ArrayList<>();
-    private final List<String> embeddedCodeDoubleSlashSuffixes = new ArrayList<>();
+    private final List<String> embeddedStringDoubleSlashSuffixes = new ArrayList<>();
 
     // for these prefer the very first one during code generation.
     private final List<String> genCodeStartSuffixes = new ArrayList<>();
@@ -89,10 +89,10 @@ public class PreCodeAugmentationTask extends Task {
         }
     }
 
-    public void addEmbedded_code_dslash_suffix(String suffix) {
+    public void addEmbedded_string_dslash_suffix(String suffix) {
         suffix = CodeGenerationRequestSpecification.validateCommentMarkerSuffix(suffix);
-        if (!embeddedCodeDoubleSlashSuffixes.contains(suffix)) {
-            embeddedCodeDoubleSlashSuffixes.add(suffix);
+        if (!embeddedStringDoubleSlashSuffixes.contains(suffix)) {
+            embeddedStringDoubleSlashSuffixes.add(suffix);
         }
     }
 
@@ -132,8 +132,8 @@ public class PreCodeAugmentationTask extends Task {
         if (headerDoubleSlashSuffixes.isEmpty()) {
             throw new BuildException("at least 1 nested header_dslash_suffix element is required");
         }
-        if (embeddedCodeDoubleSlashSuffixes.isEmpty()) {
-            throw new BuildException("at least 1 nested embedded_code_dslash_suffix element is required");
+        if (embeddedStringDoubleSlashSuffixes.isEmpty()) {
+            throw new BuildException("at least 1 nested embedded_string_dslash_suffix element is required");
         }
         if (genCodeStartSuffixes.isEmpty()) {
             throw new BuildException("at least 1 nested gen_code_start_suffix element is required");
@@ -147,8 +147,8 @@ public class PreCodeAugmentationTask extends Task {
         int totalSuffixCount = 0;
         allSuffixes.addAll(headerDoubleSlashSuffixes);
         totalSuffixCount += headerDoubleSlashSuffixes.size();
-        allSuffixes.addAll(embeddedCodeDoubleSlashSuffixes);
-        totalSuffixCount += embeddedCodeDoubleSlashSuffixes.size();
+        allSuffixes.addAll(embeddedStringDoubleSlashSuffixes);
+        totalSuffixCount += embeddedStringDoubleSlashSuffixes.size();
         allSuffixes.addAll(genCodeStartSuffixes);
         totalSuffixCount += genCodeStartSuffixes.size();
         allSuffixes.addAll(genCodeEndSuffixes);

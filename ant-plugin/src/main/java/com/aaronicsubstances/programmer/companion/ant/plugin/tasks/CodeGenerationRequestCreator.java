@@ -28,7 +28,7 @@ public class CodeGenerationRequestCreator {
     private static final int SUFFIX_TYPE_HEADER = 1;
     private static final int SUFFIX_TYPE_GEN_CODE_START = 10;
     private static final int SUFFIX_TYPE_GEN_CODE_END = 11;
-    private static final int SUFFIX_TYPE_EMB_CODE = 21;
+    private static final int SUFFIX_TYPE_EMB_STRING = 21;
     private static final int SUFFIX_TYPE_AUG_CODE = 31;
     private static final String TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR = "suffix_descriptor";
     private static final String TOKEN_ATTRIBUTE_INDEX_IN_SOURCE = "index_in_source";
@@ -65,7 +65,7 @@ public class CodeGenerationRequestCreator {
             List<String> headerDoubleSlashSuffixes,
             List<String> genCodeStartSuffixes,
             List<String> genCodeEndSuffixes,
-            List<String> embeddedCodeDoubleSlashSuffixes,
+            List<String> embeddedStringDoubleSlashSuffixes,
             List<CodeGenerationRequestSpecification> requestSpecList) {
         suffixDescriptors = new ArrayList<SuffixDescriptor>();
         StringBuilder doubleSlashRegex = new StringBuilder();
@@ -105,8 +105,8 @@ public class CodeGenerationRequestCreator {
         }
 
         // add suffixes for embedded code
-        for (String s : embeddedCodeDoubleSlashSuffixes) {
-            suffixDescriptors.add(new SuffixDescriptor(s, SUFFIX_TYPE_EMB_CODE, -1));
+        for (String s : embeddedStringDoubleSlashSuffixes) {
+            suffixDescriptors.add(new SuffixDescriptor(s, SUFFIX_TYPE_EMB_STRING, -1));
             doubleSlashRegex.append("|").append(Pattern.quote(s));
         }
 
@@ -162,7 +162,7 @@ public class CodeGenerationRequestCreator {
         // 1. first get all slash star comments relevant as aug code.
         List<Token> slashStarRelevantTokens = getSlashStarRelevantTokens(sourceTokens);
 
-        // 2. next, get all double slash comments relevant as aug code, emb code or header.
+        // 2. next, get all double slash comments relevant as aug code, emb string or header.
         List<Token> doubleSlashRelevantTokens = getDoubleSlashReleventTokens(sourceTokens);
         
         // 3. group and validate double slash relevant tokens. slash star relevant tokens
@@ -453,7 +453,7 @@ public class CodeGenerationRequestCreator {
                 switch (suffixDescriptor.suffixType) {
                     case SUFFIX_TYPE_HEADER:
                         return inputSource.createAbortException("Unexpected header comment marker suffix", token);
-                    case SUFFIX_TYPE_EMB_CODE:
+                    case SUFFIX_TYPE_EMB_STRING:
                         break;
                     default:
                         assert suffixDescriptor.suffixType == SUFFIX_TYPE_AUG_CODE;
@@ -464,8 +464,8 @@ public class CodeGenerationRequestCreator {
             }
         }
         else {
-            assert suffixDescriptor.suffixType == SUFFIX_TYPE_EMB_CODE;
-            return inputSource.createAbortException("Embedded code string comment marker suffix cannot start an augmenting code section", token);
+            assert suffixDescriptor.suffixType == SUFFIX_TYPE_EMB_STRING;
+            return inputSource.createAbortException("Embedded string comment marker suffix cannot start an augmenting code section", token);
         }
         return null;
     }
@@ -553,7 +553,7 @@ public class CodeGenerationRequestCreator {
             SuffixDescriptor suffixDescriptor = (SuffixDescriptor)tokenAttributes.get(
                 TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR);            
             contentLines[i] = getCommentContentWithoutSuffix(t, suffixDescriptor.suffix);
-            if (suffixDescriptor.suffixType == SUFFIX_TYPE_EMB_CODE) {
+            if (suffixDescriptor.suffixType == SUFFIX_TYPE_EMB_STRING) {
                 stringifyStatuses[i] = true;
             }
             else {               
@@ -592,8 +592,10 @@ public class CodeGenerationRequestCreator {
                 // Add new lines to content lines, with requirement that
                 // 1. first section should not have preceding new line.
                 // 2. last section should not have terminating new line.
-                // 3. sections to be stringified should neither have preceding or terminating new lines.
+                // 3. sections to be stringified should neither have preceding or trailing new lines.
                 if (stringify) {
+                    // let outgoing raw aug code section have
+                    // trailing newline.
                     sb.append(terminatingNewLines[i]);
                 }
                 lastBlock.setContent(sb.toString());
@@ -604,6 +606,8 @@ public class CodeGenerationRequestCreator {
                 blocks.add(lastBlock);
                 sb.setLength(0);
                 if (!stringify) {
+                    // let incoming raw aug code section have preceding
+                    // newline.
                     sb.append(terminatingNewLines[i]);
                 }
                 firstForBlock = true;
