@@ -18,7 +18,7 @@ public class CodeGenerationRequestSpecification {
     // use extension to determine which of XML or qCSV formats to use.
     private File augCodeDestFile; 
 
-    private final List<String> augCodeSuffixes = new ArrayList<>();
+    private final List<String> augCodeSuffixes;
 
     public static String validateCommentMarkerSuffix(String suffix) {
         // Ensure suffix does not contain newlines.
@@ -26,6 +26,14 @@ public class CodeGenerationRequestSpecification {
             throw new BuildException("Newline characters not acceptable in comment marker suffix");
         }
         return suffix;
+    }
+
+    public CodeGenerationRequestSpecification() {
+        augCodeSuffixes = new ArrayList<>();
+    }
+
+    CodeGenerationRequestSpecification(List<String> augCodeSuffixes) {
+        this.augCodeSuffixes = augCodeSuffixes;
     }
     
     public File getAugCodeDestFile() {

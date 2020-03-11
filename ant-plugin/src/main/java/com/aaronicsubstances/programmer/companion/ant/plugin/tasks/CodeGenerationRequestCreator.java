@@ -25,14 +25,14 @@ import com.aaronicsubstances.programmer.companion.java.JavaLexer;
  * CodeGenerationRequestCreator
  */
 public class CodeGenerationRequestCreator {    
-    private static final int SUFFIX_TYPE_HEADER = 1;
-    private static final int SUFFIX_TYPE_GEN_CODE_START = 10;
-    private static final int SUFFIX_TYPE_GEN_CODE_END = 11;
-    private static final int SUFFIX_TYPE_EMB_STRING = 21;
-    private static final int SUFFIX_TYPE_AUG_CODE = 31;
-    private static final String TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR = "suffix_descriptor";
-    private static final String TOKEN_ATTRIBUTE_INDEX_IN_SOURCE = "index_in_source";
-    private static final String TOKEN_ATTRIBUTE_INDENT = "indent";
+    static final int SUFFIX_TYPE_HEADER = 1;
+    static final int SUFFIX_TYPE_GEN_CODE_START = 10;
+    static final int SUFFIX_TYPE_GEN_CODE_END = 11;
+    static final int SUFFIX_TYPE_EMB_STRING = 21;
+    static final int SUFFIX_TYPE_AUG_CODE = 31;
+    static final String TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR = "suffix_descriptor";
+    static final String TOKEN_ATTRIBUTE_INDEX_IN_SOURCE = "index_in_source";
+    static final String TOKEN_ATTRIBUTE_INDENT = "indent";
 
     public static class SuffixDescriptor implements Comparable<SuffixDescriptor> {
         public final String suffix;
@@ -53,6 +53,43 @@ public class CodeGenerationRequestCreator {
         public int compareTo(SuffixDescriptor o) {
             return suffix.compareTo(o.suffix);
         }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + augCodeSpecIndex;
+            result = prime * result + ((suffix == null) ? 0 : suffix.hashCode());
+            result = prime * result + suffixType;
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            SuffixDescriptor other = (SuffixDescriptor) obj;
+            if (augCodeSpecIndex != other.augCodeSpecIndex)
+                return false;
+            if (suffix == null) {
+                if (other.suffix != null)
+                    return false;
+            } else if (!suffix.equals(other.suffix))
+                return false;
+            if (suffixType != other.suffixType)
+                return false;
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            return "SuffixDescriptor{augCodeSpecIndex=" + augCodeSpecIndex + ", suffix=" + suffix + ", suffixType="
+                    + suffixType + "}";
+        }
     }
 
     private final List<SuffixDescriptor> suffixDescriptors;
@@ -68,46 +105,33 @@ public class CodeGenerationRequestCreator {
             List<String> embeddedStringDoubleSlashSuffixes,
             List<CodeGenerationRequestSpecification> requestSpecList) {
         suffixDescriptors = new ArrayList<SuffixDescriptor>();
-        StringBuilder doubleSlashRegex = new StringBuilder();
-        StringBuilder slashStartRegex = new StringBuilder();
+        List<String> doubleSlashSuffixes = new ArrayList<>();
+        List<String> slashStarSuffixes = new ArrayList<>();
 
         // add suffixes for file header (ie import section)
         for (String s : headerDoubleSlashSuffixes) {
             suffixDescriptors.add(new SuffixDescriptor(s, SUFFIX_TYPE_HEADER, -1));
-            if (doubleSlashRegex.length() > 0) {
-                doubleSlashRegex.append("|");
-            }
-            doubleSlashRegex.append(Pattern.quote(s));
+            doubleSlashSuffixes.add(s);
         }
 
         // add suffixes for beginning of generated code.
         for (String s : genCodeStartSuffixes) {
-            suffixDescriptors.add(new SuffixDescriptor(s, SUFFIX_TYPE_GEN_CODE_START, -1));
-            if (doubleSlashRegex.length() > 0) {
-                doubleSlashRegex.append("|");
-            }
-            if (slashStartRegex.length() > 0) {
-                slashStartRegex.append("|");
-            }
-            s = Pattern.quote(s);
-            doubleSlashRegex.append(s);
-            slashStartRegex.append(s);
+            suffixDescriptors.add(new SuffixDescriptor(s, SUFFIX_TYPE_GEN_CODE_START, -1));            
+            doubleSlashSuffixes.add(s);
+            slashStarSuffixes.add(s);
         }
 
         // add suffixes for end of generated code.
-        // by now regex string builders will not be empty,
-        // so always prepend with '|'
         for (String s : genCodeEndSuffixes) {
             suffixDescriptors.add(new SuffixDescriptor(s, SUFFIX_TYPE_GEN_CODE_END, -1));
-            s = Pattern.quote(s);
-            doubleSlashRegex.append("|").append(s);
-            slashStartRegex.append("|").append(s);
+            doubleSlashSuffixes.add(s);
+            slashStarSuffixes.add(s);
         }
 
         // add suffixes for embedded code
         for (String s : embeddedStringDoubleSlashSuffixes) {
             suffixDescriptors.add(new SuffixDescriptor(s, SUFFIX_TYPE_EMB_STRING, -1));
-            doubleSlashRegex.append("|").append(Pattern.quote(s));
+            doubleSlashSuffixes.add(s);
         }
 
         // add suffixes for augmenting code.
@@ -115,18 +139,38 @@ public class CodeGenerationRequestCreator {
             CodeGenerationRequestSpecification spec = requestSpecList.get(i);
             for (String s : spec.getAugCodeSuffixes()) {
                 suffixDescriptors.add(new SuffixDescriptor(s, SUFFIX_TYPE_AUG_CODE, i));
-                s = Pattern.quote(s);
-                doubleSlashRegex.append("|").append(s);
-                slashStartRegex.append("|").append(s);
+                doubleSlashSuffixes.add(s);
+                slashStarSuffixes.add(s);
             }
         }
 
+        // sort so that binary search can be used.
         suffixDescriptors.sort(null);
 
+        // reverse sort prior to regex creation to ensure if
+        // there are clash of prefix matches, longer one always wins.
+        Comparator<String> reverseSorter = (s1, s2) -> s2.compareTo(s1);
+        doubleSlashSuffixes.sort(reverseSorter);
+        slashStarSuffixes.sort(reverseSorter);
+
+        StringBuilder doubleSlashRegex = new StringBuilder();
+        for (String s : doubleSlashSuffixes) {
+            if (doubleSlashRegex.length() > 0) {
+                doubleSlashRegex.append("|");
+            }
+            doubleSlashRegex.append(Pattern.quote(s));
+        }
         doubleSlashRegex.insert(0, "^(");
         doubleSlashRegex.append(")");
         DOUBLE_SLASH_PATTERN = Pattern.compile(doubleSlashRegex.toString());
         
+        StringBuilder slashStartRegex = new StringBuilder();
+        for (String s : slashStarSuffixes) {
+            if (slashStartRegex.length() > 0) {
+                slashStartRegex.append("|");
+            }
+            slashStartRegex.append(Pattern.quote(s));
+        }
         slashStartRegex.insert(0, "^(");
         slashStartRegex.append(")");
         SLASH_STAR_PATTERN = Pattern.compile(slashStartRegex.toString());
@@ -135,11 +179,10 @@ public class CodeGenerationRequestCreator {
     SuffixDescriptor getSuffixDescriptor(Token t) {
         Matcher regexMatcher;
         if (t.type == JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT) {
-            regexMatcher = DOUBLE_SLASH_PATTERN.matcher(t.text.substring("//".length()));
+            regexMatcher = DOUBLE_SLASH_PATTERN.matcher(getCommentContentWithoutSuffix(t, ""));
         }
         else if (t.type == JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT) {
-            regexMatcher = SLASH_STAR_PATTERN.matcher(
-                t.text.substring("/*".length(), t.text.length() - "*/".length()));
+            regexMatcher = SLASH_STAR_PATTERN.matcher(getCommentContentWithoutSuffix(t, ""));
         }
         else {
             return null;
@@ -662,7 +705,7 @@ public class CodeGenerationRequestCreator {
 
     static String getCommentContentWithoutSuffix(Token t, String suffix) {
         if (t.type == JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT) {
-            return t.text.substring(("/*" + suffix).length(), "*/".length());
+            return t.text.substring(("/*" + suffix).length(), t.text.length() - "*/".length());
         }
         else {
             assert t.type == JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT;
