@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import com.aaronicsubstances.programmer.companion.LexerSupport;
+
 import org.apache.tools.ant.BuildException;
 
 /**
@@ -19,13 +21,9 @@ public class CodeGenerationRequestSpecification {
     private final List<String> augCodeSuffixes = new ArrayList<>();
 
     public static String validateCommentMarkerSuffix(String suffix) {
-        // Ensure suffix is neither empty nor contains whitespace.
-        suffix = suffix.trim();
-        if (suffix.isEmpty()) {
-            throw new BuildException("Comment marker suffix cannot be empty");
-        }
-        if (WS_REGEX.matcher(suffix).find()) {
-            throw new BuildException("Whitespace characters not acceptable in comment marker suffix");
+        // Ensure suffix does not contain newlines.
+        if (LexerSupport.NEW_LINE_REGEX.matcher(suffix).find()) {
+            throw new BuildException("Newline characters not acceptable in comment marker suffix");
         }
         return suffix;
     }
