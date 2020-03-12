@@ -22,6 +22,14 @@ public class AugmentingCode {
         private String content;
         private boolean stringify;
 
+        public Block() {
+        }
+
+        public Block(String content, boolean stringify) {
+            this.content = content;
+            this.stringify = stringify;
+        }
+
         public String getContent() {
             return content;
         }

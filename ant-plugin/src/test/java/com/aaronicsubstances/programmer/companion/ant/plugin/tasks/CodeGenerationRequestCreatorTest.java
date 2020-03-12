@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
 import com.aaronicsubstances.programmer.companion.ParserException;
 import com.aaronicsubstances.programmer.companion.ParserInputSource;
 import com.aaronicsubstances.programmer.companion.Token;
+import com.aaronicsubstances.programmer.companion.ant.plugin.models.AugmentingCode;
+import com.aaronicsubstances.programmer.companion.ant.plugin.models.AugmentingCode.Block;
 import com.aaronicsubstances.programmer.companion.ant.plugin.tasks.CodeGenerationRequestCreator.SuffixDescriptor;
 import com.aaronicsubstances.programmer.companion.java.JavaLexer;
 
@@ -255,7 +257,7 @@ public class CodeGenerationRequestCreatorTest {
         };
     }
 
-    private static Token createTokenWithValue(int lineNumber, String suffixDescStr) {
+    private static SuffixDescriptor createSuffixDescriptor(String suffixDescStr) {
         int suffixType, augCodeSpecIndex = -1;
         if (suffixDescStr.equals("GE")) {
             suffixType = CodeGenerationRequestCreator.SUFFIX_TYPE_GEN_CODE_END;
@@ -269,17 +271,104 @@ public class CodeGenerationRequestCreatorTest {
         else if (suffixDescStr.equals("ES")) {
             suffixType = CodeGenerationRequestCreator.SUFFIX_TYPE_EMB_STRING;
         }
+        else if (suffixDescStr.equals("JS")) {
+            suffixType = CodeGenerationRequestCreator.SUFFIX_TYPE_AUG_CODE;
+            augCodeSpecIndex = 0;
+        }
         else {
             suffixType = CodeGenerationRequestCreator.SUFFIX_TYPE_AUG_CODE;
             augCodeSpecIndex = Integer.parseInt(suffixDescStr);
         }
         SuffixDescriptor suffixDescriptor = new SuffixDescriptor(
-            augCodeSpecIndex == -1 ? "JS" : suffixDescStr, suffixType, augCodeSpecIndex);
+            augCodeSpecIndex != -1 ? "JS" : suffixDescStr, suffixType, augCodeSpecIndex);
+        return suffixDescriptor;
+    }
+
+    private static Token createTokenWithValue(int lineNumber, String suffixDescStr) {        
+        SuffixDescriptor suffixDescriptor = createSuffixDescriptor(suffixDescStr);
         Map<String, Object> tokenAttributes = new HashMap<>();
         tokenAttributes.put(CodeGenerationRequestCreator.TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR,
             suffixDescriptor);
         int colNumber = (int)((Math.random() * 5)) + 1;
         Token t = new Token(0, null, 0, 0, lineNumber, colNumber);
+        t.value = tokenAttributes;
+        return t;
+    }
+
+    @Test(dataProvider = "createTestCreateDoubleSlashAugCodeData")
+    public void testCreateDoubleSlashAugCode(List<Token> tokenGroup, String expectedIndent,
+            AugmentingCode expected) {
+        StringBuilder actualIndent = new StringBuilder();
+        AugmentingCode actual = CodeGenerationRequestCreator.createDoubleSlashAugCode(tokenGroup, actualIndent);
+        assertEquals(actual, expected);
+        assertEquals(actualIndent.toString(), expectedIndent, "indents differ");
+    }
+
+    @DataProvider
+    public Object[][] createTestCreateDoubleSlashAugCodeData() {
+        List<Token> firstGroup = Arrays.asList(
+            createTokenWithValue(5, "JS", "  ", "//JS println(")
+        );
+        List<Token> secondGroup = Arrays.asList(
+            createTokenWithValue(5, "JS", "  ", "//JS println"),
+            createTokenWithValue(6, "JS", "  ", "//JS("),
+            createTokenWithValue(7, "ES", "", "//ES{'value': true}"),
+            createTokenWithValue(8, "JS", "  ", "//JS)")
+        );
+        List<Token> thirdGroup = Arrays.asList(
+            createTokenWithValue(5, "JS", "  ", "//JS println("),
+            createTokenWithValue(6, "ES", "  ", "//ES{"),
+            createTokenWithValue(7, "ES", "  ", "//ES'value': true}"),
+            createTokenWithValue(8, "JS", "  ", "//JS)")
+        );
+        List<Token> fourthGroup = Arrays.asList(
+            createTokenWithValue(5, "JS", "  ", "//JS println"),
+            createTokenWithValue(6, "JS", "  ", "//JS("),
+            createTokenWithValue(7, "ES", "  ", "//ES{'value': true"),
+            createTokenWithValue(8, "ES", " ", "//ES}")
+        );
+        List<Token> fifthGroup = Arrays.asList(
+            createTokenWithValue(5, "JS", "  ", "//JS println"),
+            createTokenWithValue(6, "JS", "  ", "//JS("),
+            createTokenWithValue(7, "ES", "  ", "//ES{"),
+            createTokenWithValue(8, "ES", "  ", "//ES'value': true"),
+            createTokenWithValue(9, "ES", " ", "//ES}"),
+            createTokenWithValue(10, "JS", " ", "//JS);"),
+            createTokenWithValue(11, "JS", "", "//JS println()")
+        );
+        return new Object[][]{
+            new Object[]{ firstGroup, "  ", createAugCode("JS", new Block(" println(", false)) },
+            new Object[]{ secondGroup, "", createAugCode("JS", new Block(" println\n(\n", false),
+                new Block("{'value': true}", true), new Block("\n)", false)), },
+            new Object[]{ thirdGroup, "  ", createAugCode("JS", new Block(" println(\n", false),
+                new Block("{\n'value': true}", true), new Block("\n)", false))
+            },
+            new Object[]{ fourthGroup, " ", createAugCode("JS", new Block(" println\n(\n", false),
+                new Block("{'value': true\n}", true)) },
+            
+            new Object[]{ fifthGroup, "", createAugCode("JS", new Block(" println\n(\n", false),
+                new Block("{\n'value': true\n}", true), new Block("\n);\n println()", false)), },
+        };
+    }
+
+    private static AugmentingCode createAugCode(String suffix, Block... blocks) {        
+        AugmentingCode augCode = new AugmentingCode(Arrays.asList(blocks));
+        augCode.setCommentSuffix(suffix);
+        return augCode;
+    }
+
+    private static Token createTokenWithValue(int lineNumber, String suffixDescStr, 
+            String indent, String comment) {
+        Map<String, Object> tokenAttributes = new HashMap<>();
+        SuffixDescriptor suffixDescriptor = createSuffixDescriptor(suffixDescStr);
+        tokenAttributes.put(CodeGenerationRequestCreator.TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR,
+            suffixDescriptor);
+        tokenAttributes.put(CodeGenerationRequestCreator.TOKEN_ATTRIBUTE_INDENT,
+            indent);
+        tokenAttributes.put(CodeGenerationRequestCreator.TOKEN_ATTRIBUTE_FF_NEWLINE,
+            new Token(JavaLexer.TOKEN_TYPE_NEWLINE, "\n", 0, 0, lineNumber, 1));
+        Token t = new Token(JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT, comment, 0, 0, 
+            lineNumber, 1);
         t.value = tokenAttributes;
         return t;
     }

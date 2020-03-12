@@ -33,6 +33,7 @@ public class CodeGenerationRequestCreator {
     static final String TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR = "suffix_descriptor";
     static final String TOKEN_ATTRIBUTE_INDEX_IN_SOURCE = "index_in_source";
     static final String TOKEN_ATTRIBUTE_INDENT = "indent";
+    static final String TOKEN_ATTRIBUTE_FF_NEWLINE = "ff_newline";
 
     public static class SuffixDescriptor implements Comparable<SuffixDescriptor> {
         public final String suffix;
@@ -266,7 +267,7 @@ public class CodeGenerationRequestCreator {
                 // b. create gen code descriptor.
                 Map<String, Object> tokenAttributes = (Map<String, Object>)lastToken.value;
                 int tokenIndex = (int)tokenAttributes.get(TOKEN_ATTRIBUTE_INDEX_IN_SOURCE);
-                genCodeDescriptor = createGeneratedCodeDescriptor(sourceTokens, tokenIndex,
+                genCodeDescriptor = createGeneratedCodeDescriptor(sourceTokens, tokenIndex + 1,
                     false);
 
                 tokenAttributes = (Map<String, Object>)firstToken.value;
@@ -284,8 +285,10 @@ public class CodeGenerationRequestCreator {
                     assert suffixDescriptor.suffixType == SUFFIX_TYPE_AUG_CODE;
 
                     // c. create aug code.
-                    augmentingCode = createDoubleSlashAugCode(sourceTokens, doubleSlashGroup,
-                        augCodeDescriptor);
+                    StringBuilder indentBuilder = new StringBuilder();
+                    augmentingCode = createDoubleSlashAugCode(doubleSlashGroup,
+                        indentBuilder);
+                    augCodeDescriptor.setIndent(indentBuilder.toString());
                     augCodeSpecIndex = suffixDescriptor.augCodeSpecIndex;
                 }
             }
@@ -301,7 +304,7 @@ public class CodeGenerationRequestCreator {
                 // b. create gen code descriptor.
                 Map<String, Object> tokenAttributes = (Map<String, Object>)starSlashSingle.value;
                 int tokenIndex = (int)tokenAttributes.get(TOKEN_ATTRIBUTE_INDEX_IN_SOURCE);
-                genCodeDescriptor = createGeneratedCodeDescriptor(sourceTokens, tokenIndex,
+                genCodeDescriptor = createGeneratedCodeDescriptor(sourceTokens, tokenIndex + 1,
                     true);
 
                 // c. create aug code.
@@ -383,6 +386,11 @@ public class CodeGenerationRequestCreator {
                     tokenAttributes.put(TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR, suffixDescriptor);
                     tokenAttributes.put(TOKEN_ATTRIBUTE_INDEX_IN_SOURCE, i);
                     tokenAttributes.put(TOKEN_ATTRIBUTE_INDENT, indentBuilder.toString());
+                    if (i + 1 < sourceTokens.size()) {
+                        Token ffNewline = sourceTokens.get(i + 1);
+                        assert ffNewline.type == JavaLexer.TOKEN_TYPE_NEWLINE;
+                        tokenAttributes.put(TOKEN_ATTRIBUTE_FF_NEWLINE, ffNewline);
+                    }
                     t.value = tokenAttributes;
                     tokens.add(t);
                 }
@@ -400,8 +408,8 @@ public class CodeGenerationRequestCreator {
     GeneratedCodeDescriptor createGeneratedCodeDescriptor(List<Token> sourceTokens, 
             int startIndex, boolean isSlashStar) {
         // search for gen code start.
-        boolean found = false;
-        int i = startIndex + 1;
+        int found = -1;
+        int i = startIndex;
         for (; i < sourceTokens.size(); i++) {
             Token t = sourceTokens.get(i);
             // only tolerate whitespace as the only different token to expect,
@@ -416,13 +424,13 @@ public class CodeGenerationRequestCreator {
                 SuffixDescriptor suffixDescriptor = getSuffixDescriptor(t);
                 if (suffixDescriptor != null && 
                         suffixDescriptor.suffixType == SUFFIX_TYPE_GEN_CODE_START) {
-                    found = true;
+                    found = t.type;
                 }
             }
             break;
         }
 
-        if (found) {
+        if (found != -1) {
             // search for gen code end.
             i++;
             for (; i < sourceTokens.size(); i++) {
@@ -436,7 +444,7 @@ public class CodeGenerationRequestCreator {
                 if (suffixDescriptor == null) {
                     continue;
                 }
-                if (suffixDescriptor.suffixType == SUFFIX_TYPE_GEN_CODE_END) {
+                if (suffixDescriptor.suffixType == SUFFIX_TYPE_GEN_CODE_END && t.type == found) {
                     GeneratedCodeDescriptor generatedCodeDescriptor = new GeneratedCodeDescriptor();
                     generatedCodeDescriptor.setStartPos(sourceTokens.get(startIndex).startPos);
                     generatedCodeDescriptor.setEndPos(t.endPos);
@@ -450,7 +458,8 @@ public class CodeGenerationRequestCreator {
                     return generatedCodeDescriptor;
                 }
                 else {
-                    // gen code start encountered, conclude not found.
+                    // either gen code start encountered, or gen code end encountered but of a 
+                    // different commment style: conclude not found.
                 }
                 break;
             }
@@ -569,8 +578,8 @@ public class CodeGenerationRequestCreator {
         return groups;
     }
 
-    static AugmentingCode createDoubleSlashAugCode(List<Token> sourceTokens, 
-            List<Token> doubleSlashGroup, AugmentingCodeDescriptor augCodeDescriptor) {
+    static AugmentingCode createDoubleSlashAugCode(
+            List<Token> doubleSlashGroup, StringBuilder indentReceiver) {
         AugmentingCode augCode = new AugmentingCode();
 
         /*
@@ -587,9 +596,9 @@ public class CodeGenerationRequestCreator {
 
             // set minimum indent.
             String indent = (String)tokenAttributes.get(TOKEN_ATTRIBUTE_INDENT);
-            String currentIndent = augCodeDescriptor.getIndent();
-            if (currentIndent == null || currentIndent.length() > indent.length()) {
-                augCodeDescriptor.setIndent(indent);
+            if (i == 0 || indent.length() < indentReceiver.length()) {
+                indentReceiver.setLength(0);
+                indentReceiver.append(indent);
             }
 
             // set values intended ultimately for block properties
@@ -599,18 +608,16 @@ public class CodeGenerationRequestCreator {
             if (suffixDescriptor.suffixType == SUFFIX_TYPE_EMB_STRING) {
                 stringifyStatuses[i] = true;
             }
-            else {               
+            else {
                 if (augCode.getCommentSuffix() == null) { 
                     augCode.setCommentSuffix(suffixDescriptor.suffix);
                 }
             }
             
             // Fetch new lines terminating comments for use in next step.
-            int tIndex = (int)tokenAttributes.get(TOKEN_ATTRIBUTE_INDEX_IN_SOURCE);
-            if (tIndex + 1 < sourceTokens.size()) {
-                t = sourceTokens.get(tIndex + 1);
-                assert t.type == JavaLexer.TOKEN_TYPE_NEWLINE;
-                terminatingNewLines[i] = t.text;
+            Token ffNewline = (Token)tokenAttributes.get(TOKEN_ATTRIBUTE_FF_NEWLINE);
+            if (ffNewline != null) {
+                terminatingNewLines[i] = ffNewline.text;
             }
         }
 
@@ -619,17 +626,15 @@ public class CodeGenerationRequestCreator {
         StringBuilder sb = new StringBuilder();
         Block lastBlock = new Block(); // first block definitely not stringified.
         blocks.add(lastBlock);
-        boolean firstForBlock = true;
         for (int i = 0; i < contentLines.length; i++) {
             String contentLine = contentLines[i];
             boolean stringify = stringifyStatuses[i];
             
             if (lastBlock.isStringify() == stringify) {
-                if (!firstForBlock) {
+                if (i > 0) {
                     sb.append(terminatingNewLines[i - 1]);
                 }
                 sb.append(contentLine);
-                firstForBlock = false;
             }
             else {
                 // Add new lines to content lines, with requirement that
@@ -653,7 +658,7 @@ public class CodeGenerationRequestCreator {
                     // newline.
                     sb.append(terminatingNewLines[i]);
                 }
-                firstForBlock = true;
+                sb.append(contentLine);
             }
         }
 
