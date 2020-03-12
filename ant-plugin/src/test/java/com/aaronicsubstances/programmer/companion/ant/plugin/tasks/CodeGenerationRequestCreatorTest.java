@@ -5,6 +5,7 @@ import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -14,10 +15,12 @@ import java.util.stream.Collectors;
 import com.aaronicsubstances.programmer.companion.ParserException;
 import com.aaronicsubstances.programmer.companion.ParserInputSource;
 import com.aaronicsubstances.programmer.companion.Token;
+import com.aaronicsubstances.programmer.companion.ant.plugin.TestResourceLoader;
 import com.aaronicsubstances.programmer.companion.ant.plugin.models.AugmentingCode;
 import com.aaronicsubstances.programmer.companion.ant.plugin.models.AugmentingCode.Block;
 import com.aaronicsubstances.programmer.companion.ant.plugin.tasks.CodeGenerationRequestCreator.SuffixDescriptor;
 import com.aaronicsubstances.programmer.companion.java.JavaLexer;
+import com.google.gson.Gson;
 
 public class CodeGenerationRequestCreatorTest {
 
@@ -310,6 +313,16 @@ public class CodeGenerationRequestCreatorTest {
         };
     }
 
+    @Test
+    public void testGetNormalizedImportStatements() {
+        String s = TestResourceLoader.loadResource("tokens-for-import.json", getClass());
+        List<Token> sourceTokens = fetchTokens(s);
+        List<String> expected = Arrays.asList("import org.springframework.boot.SpringApplication",
+            "import org.springframework.boot.autoconfigure.SpringBootApplication");
+        List<String> actual = CodeGenerationRequestCreator.getNormalizedImportStatements(sourceTokens);
+        assertEquals(actual, expected);
+    }
+
     private static SuffixDescriptor createSuffixDescriptor(String suffixDescStr) {
         int suffixType, augCodeSpecIndex = -1;
         if (suffixDescStr.equals("GE")) {
@@ -369,12 +382,29 @@ public class CodeGenerationRequestCreatorTest {
         return t;
     }
 
+    private static List<Token> fetchTokens(String s) {
+        TokenLite[] ts = new Gson().fromJson(s, TokenLite[].class);
+        List<Token> tokens = new ArrayList<>();
+        int startPos = 0;
+        for (TokenLite t : ts) {
+            Token token = newToken(t.lineNumber, t.text, startPos);
+            tokens.add(token);
+            startPos = token.endPos;
+        }
+        return tokens;
+    }
+
     private static Token newTokenWithLnNum(int lineNumber) {
         return new Token(0, null, 0, 0, lineNumber, 0);
     }
 
     private static Token newTokenWithStartPos(int startPos) {
         return new Token(0, null, startPos, 0, 0, 0);
+    }
+
+    static class TokenLite {
+        int lineNumber;
+        String text;
     }
 
     private static Token newToken(int lineNumber, String text, int startPos) {

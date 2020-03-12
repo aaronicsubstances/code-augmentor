@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.aaronicsubstances.programmer.companion.ParserInputSource;
 import com.aaronicsubstances.programmer.companion.Token;
 import com.aaronicsubstances.programmer.companion.java.JavaParser;
 import com.aaronicsubstances.programmer.companion.java.JavaSourceCodeWrapper;
@@ -211,8 +212,13 @@ public class PreCodeAugmentationTask extends Task {
             }
 
             // use file extension to parse as Java/Kotlin code.
-            JavaParser instance = new JavaParser(new JavaSourceCodeWrapper(input));
-            List<Token> tokens = instance.parse();
+            ParserInputSource inputSource;
+            List<Token> tokens;
+            if (true) {
+                inputSource = new JavaSourceCodeWrapper(input);
+                JavaParser instance = new JavaParser((JavaSourceCodeWrapper)inputSource);
+                tokens = instance.parse();
+            }
             
             Instant endInstant = Instant.now();
             long timeElapsed = Duration.between(startInstant, endInstant).toMillis();

@@ -3,7 +3,6 @@ package com.aaronicsubstances.programmer.companion.ant.plugin.tasks;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import com.aaronicsubstances.programmer.companion.LexerSupport;
 
@@ -13,7 +12,6 @@ import org.apache.tools.ant.BuildException;
  * 
  */
 public class CodeGenerationRequestSpecification {
-    private static final Pattern WS_REGEX = Pattern.compile("(?s)\\s");
 
     // use extension to determine which of XML or qCSV formats to use.
     private File augCodeDestFile; 

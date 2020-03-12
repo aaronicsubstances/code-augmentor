@@ -330,7 +330,13 @@ public class CodeGenerationRequestCreator {
         }
 
         // 5. finally get all imports and normalize them.
-        List<String> normalizedImports = getNormalizedImportStatements(sourceTokens);
+        List<String> normalizedImports;
+        if (headerSnippet != null) {
+            normalizedImports = getNormalizedImportStatements(sourceTokens);
+        }
+        else {
+            normalizedImports = Arrays.asList();
+        }
         SourceFileDescriptor sourceDescriptor = new SourceFileDescriptor(
             normalizedImports, bodySnippets);
         sourceDescriptor.setHeaderSnippet(headerSnippet);
