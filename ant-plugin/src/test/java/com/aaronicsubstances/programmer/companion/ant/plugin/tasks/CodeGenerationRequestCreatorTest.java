@@ -336,6 +336,11 @@ public class CodeGenerationRequestCreatorTest {
             createTokenWithValue(10, "JS", " ", "//JS);"),
             createTokenWithValue(11, "JS", "", "//JS println()")
         );
+        List<Token> sixthGroup = Arrays.asList(
+            createTokenWithValue(5, "H", "    ", "//H"),
+            createTokenWithValue(6, "H", "    ", "//Here!"),
+            createTokenWithValue(7, "H", "    ", "//Here!!")
+        );
         return new Object[][]{
             new Object[]{ firstGroup, "  ", createAugCode("JS", new Block(" println(", false)) },
             new Object[]{ secondGroup, "", createAugCode("JS", new Block(" println\n(\n", false),
@@ -344,10 +349,10 @@ public class CodeGenerationRequestCreatorTest {
                 new Block("{\n'value': true}", true), new Block("\n)", false))
             },
             new Object[]{ fourthGroup, " ", createAugCode("JS", new Block(" println\n(\n", false),
-                new Block("{'value': true\n}", true)) },
-            
+                new Block("{'value': true\n}", true)) },            
             new Object[]{ fifthGroup, "", createAugCode("JS", new Block(" println\n(\n", false),
                 new Block("{\n'value': true\n}", true), new Block("\n);\n println()", false)), },
+            new Object[]{ sixthGroup, "    ", createAugCode("H", new Block("\nere!\nere!!", false)) }
         };
     }
 

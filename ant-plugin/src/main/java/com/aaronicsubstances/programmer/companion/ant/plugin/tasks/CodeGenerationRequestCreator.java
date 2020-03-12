@@ -269,8 +269,13 @@ public class CodeGenerationRequestCreator {
                 genCodeDescriptor = createGeneratedCodeDescriptor(sourceTokens, tokenIndex + 1,
                     false);
 
+                // c. create aug code and set indent.
                 tokenAttributes = (Map<String, Object>)firstToken.value;
                 SuffixDescriptor suffixDescriptor = (SuffixDescriptor)tokenAttributes.get(TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR);
+                StringBuilder indentBuilder = new StringBuilder();
+                augmentingCode = createDoubleSlashAugCode(doubleSlashGroup, indentBuilder);
+                augCodeDescriptor.setIndent(indentBuilder.toString());
+
                 if (suffixDescriptor.suffixType == SUFFIX_TYPE_HEADER) {
                     assert headerSnippet == null;
 
@@ -281,13 +286,7 @@ public class CodeGenerationRequestCreator {
                     continue;
                 }
                 else {
-                    assert suffixDescriptor.suffixType == SUFFIX_TYPE_AUG_CODE;
-
-                    // c. create aug code.
-                    StringBuilder indentBuilder = new StringBuilder();
-                    augmentingCode = createDoubleSlashAugCode(doubleSlashGroup,
-                        indentBuilder);
-                    augCodeDescriptor.setIndent(indentBuilder.toString());
+                    assert suffixDescriptor.suffixType == SUFFIX_TYPE_AUG_CODE;                    
                     augCodeSpecIndex = suffixDescriptor.augCodeSpecIndex;
                 }
             }
@@ -579,7 +578,8 @@ public class CodeGenerationRequestCreator {
         AugmentingCode augCode = new AugmentingCode();
 
         /*
-         * Set minimum indent, consolidate, add remaining new lines.
+         * Set minimum indent and consolidate with new lines.
+         * Cater for both header and real aug code.
          */
 
         String[] contentLines = new String[doubleSlashGroup.size()];
