@@ -248,7 +248,6 @@ public class CodeGenerationRequestCreator {
         // 5. generate aug code blocks and associated descriptors
         List<CodeSnippetDescriptor> bodySnippets = new ArrayList<>();
         CodeSnippetDescriptor headerSnippet = null;
-        int runningIndexInFile = 0;
         for (Object o : combined) {
             AugmentingCodeDescriptor augCodeDescriptor;
             GeneratedCodeDescriptor genCodeDescriptor;
@@ -319,19 +318,16 @@ public class CodeGenerationRequestCreator {
             }
 
             augCodeDescriptor.setIndex(runningIndex);
-            augCodeDescriptor.setIndexInFile(runningIndexInFile);
             CodeSnippetDescriptor bodySnippet = new CodeSnippetDescriptor();
             bodySnippet.setAugmentingCodeDescriptor(augCodeDescriptor);
             bodySnippet.setGeneratedCodeDescriptor(genCodeDescriptor);
             bodySnippets.add(bodySnippet);
             
             augmentingCode.setIndex(runningIndex);
-            augmentingCode.setIndexInFile(runningIndexInFile);
             List<AugmentingCode> applicableAugCodeList = specAugCodesList.get(augCodeSpecIndex);
             applicableAugCodeList.add(augmentingCode);
 
             runningIndex++;
-            runningIndexInFile++;
         }
 
         // 5. finally get all imports and normalize them.

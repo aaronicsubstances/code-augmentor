@@ -14,7 +14,6 @@ public class CodeSnippetDescriptor {
 
     public static class AugmentingCodeDescriptor {
         private int index = 0;
-        private int indexInFile = 0;
         private int startPos = 0;
         private int endPos = 0;
         private String indent;
@@ -26,14 +25,6 @@ public class CodeSnippetDescriptor {
 
         public void setIndex(int index) {
             this.index = index;
-        }
-
-        public int getIndexInFile() {
-            return indexInFile;
-        }
-
-        public void setIndexInFile(int indexInFile) {
-            this.indexInFile = indexInFile;
         }
 
         public int getStartPos() {
@@ -76,7 +67,6 @@ public class CodeSnippetDescriptor {
             result = prime * result + endPos;
             result = prime * result + ((indent == null) ? 0 : indent.hashCode());
             result = prime * result + index;
-            result = prime * result + indexInFile;
             result = prime * result + startPos;
             return result;
         }
@@ -101,8 +91,6 @@ public class CodeSnippetDescriptor {
                 return false;
             if (index != other.index)
                 return false;
-            if (indexInFile != other.indexInFile)
-                return false;
             if (startPos != other.startPos)
                 return false;
             return true;
@@ -111,7 +99,7 @@ public class CodeSnippetDescriptor {
         @Override
         public String toString() {
             return "AugmentingCodeDescriptor{annotatedWithSlashStar=" + annotatedWithSlashStar + ", endPos=" + endPos
-                    + ", indent=" + indent + ", index=" + index + ", indexInFile=" + indexInFile + ", startPos="
+                    + ", indent=" + indent + ", index=" + index + ", startPos="
                     + startPos + "}";
         }
     }
@@ -205,8 +193,6 @@ public class CodeSnippetDescriptor {
         xmlWriter.writeStartElement("augmenting_code_descriptor");
         xmlWriter.writeAttribute("index", 
             "" + augmentingCodeDescriptor.getIndex());
-        xmlWriter.writeAttribute("index_in_file", 
-            "" + augmentingCodeDescriptor.getIndexInFile());
         xmlWriter.writeAttribute("start_pos", 
             "" + augmentingCodeDescriptor.getStartPos());
         xmlWriter.writeAttribute("end_pos", 
@@ -256,9 +242,6 @@ public class CodeSnippetDescriptor {
         int index = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, 
             "index");
         augmentingCodeDescriptor.setIndex(index);
-        int indexInFile = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement,
-            "index_in_file");
-        augmentingCodeDescriptor.setIndexInFile(indexInFile);
         startPos = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, 
             "start_pos");
         augmentingCodeDescriptor.setStartPos(startPos);

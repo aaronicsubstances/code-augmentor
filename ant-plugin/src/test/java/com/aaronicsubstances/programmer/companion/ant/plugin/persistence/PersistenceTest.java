@@ -165,7 +165,6 @@ public class PersistenceTest {
                         
                         // ensure uniqueness of augmenting code index to avoid flaky tests.
                         codeSnippet.setIndex(i);
-                        codeSnippet.setIndexInFile(randGen.nextInt(30));
                         codeSnippet.setRelativePath(generateRandomString(randGen, false));
                         codeSnippet.setCommentSuffix(generateRandomString(randGen, false));
                         
@@ -235,7 +234,6 @@ public class PersistenceTest {
                         generatedCodeList.add(generatedCode);
 
                         generatedCode.setIndex(randGen.nextInt(30));
-                        generatedCode.setIndexInFile(randGen.nextInt(30));
                         generatedCode.setError(randGen.nextBoolean());
                         
                         generatedCode.setRelativePath(generateRandomString(randGen, false));
@@ -262,7 +260,6 @@ public class PersistenceTest {
         c.setAugmentingCodeDescriptor(d);
         d.setStartPos(randGen.nextInt(1000));
         d.setEndPos(randGen.nextInt(1000));
-        d.setIndexInFile(randGen.nextInt(1000));
         d.setAnnotatedWithSlashStar(randGen.nextBoolean());
         d.setIndex(randGen.nextInt(200));
         if (randGen.nextBoolean()) {

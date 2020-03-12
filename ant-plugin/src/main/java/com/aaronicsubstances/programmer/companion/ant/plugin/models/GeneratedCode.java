@@ -15,7 +15,6 @@ import com.aaronicsubstances.programmer.companion.ant.plugin.persistence.XmlEven
 public class GeneratedCode {
     private String relativePath;
     private int index;
-    private int indexInFile;
     private boolean error;
     private String headerContent;
     private String bodyContent;
@@ -34,14 +33,6 @@ public class GeneratedCode {
 
     public void setIndex(int index) {
         this.index = index;
-    }
-
-    public int getIndexInFile() {
-        return indexInFile;
-    }
-
-    public void setIndexInFile(int indexInFile) {
-        this.indexInFile = indexInFile;
     }
 
     public boolean isError() {
@@ -73,7 +64,6 @@ public class GeneratedCode {
             XMLStreamWriter xmlWriter = (XMLStreamWriter) serializer;
             xmlWriter.writeStartElement("generated_code");
             xmlWriter.writeAttribute("rel_path", relativePath);
-            xmlWriter.writeAttribute("index_in_file", "" + indexInFile);
             xmlWriter.writeAttribute("index", ""+ index);
             xmlWriter.writeAttribute("error", ""+ error);
 
@@ -92,7 +82,7 @@ public class GeneratedCode {
         }
         else {
             ModifiedCsvWriter qCsvWriter = (ModifiedCsvWriter) serializer;
-            Object[] record = { relativePath, index, indexInFile, error, headerContent, bodyContent};
+            Object[] record = { relativePath, index, error, headerContent, bodyContent};
             qCsvWriter.writeRecord(record);
         }
     }
@@ -105,7 +95,6 @@ public class GeneratedCode {
                 return false;
             }
             relativePath = XmlEventReaderWrapper.requireAttributeValue(startElement, "rel_path");
-            indexInFile = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "index_in_file");
             index = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "index");
             error = XmlEventReaderWrapper.requireAttributeValueAsBoolean(startElement, "error");
 
@@ -144,7 +133,6 @@ public class GeneratedCode {
 
             error = Boolean.parseBoolean(recordDict.get("is_error"));
             index = qCsvReader.requireIntField(recordDict, "index");
-            indexInFile = qCsvReader.requireIntField(recordDict, "index_in_file");
 
             return true;
         }
@@ -158,7 +146,6 @@ public class GeneratedCode {
         result = prime * result + (error ? 1231 : 1237);
         result = prime * result + ((headerContent == null) ? 0 : headerContent.hashCode());
         result = prime * result + index;
-        result = prime * result + indexInFile;
         result = prime * result + ((relativePath == null) ? 0 : relativePath.hashCode());
         return result;
     }
@@ -186,8 +173,6 @@ public class GeneratedCode {
             return false;
         if (index != other.index)
             return false;
-        if (indexInFile != other.indexInFile)
-            return false;
         if (relativePath == null) {
             if (other.relativePath != null)
                 return false;
@@ -199,6 +184,6 @@ public class GeneratedCode {
     @Override
     public String toString() {
         return "GeneratedCode{bodyContent=" + bodyContent + ", error=" + error + ", headerContent=" + headerContent
-                + ", index=" + index + ", indexInFile=" + indexInFile + ", relativePath=" + relativePath + "}";
+                + ", index=" + index + ", relativePath=" + relativePath + "}";
     }
 }

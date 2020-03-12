@@ -82,7 +82,6 @@ public class AugmentingCode {
 
     private String relativePath;
     private int index;
-    private int indexInFile;
     private List<Block> blocks;
     private String commentSuffix;
 
@@ -109,14 +108,6 @@ public class AugmentingCode {
         this.index = index;
     }
 
-    public int getIndexInFile() {
-        return indexInFile;
-    }
-
-    public void setIndexInFile(int indexInFile) {
-        this.indexInFile = indexInFile;
-    }
-
     public List<Block> getBlocks() {
         return blocks;
     }
@@ -138,7 +129,6 @@ public class AugmentingCode {
             XMLStreamWriter xmlWriter = (XMLStreamWriter) serializer;
             xmlWriter.writeStartElement("augmenting_code");
             xmlWriter.writeAttribute("rel_path", relativePath);
-            xmlWriter.writeAttribute("index_in_file", "" + indexInFile);
             xmlWriter.writeAttribute("index", "" + index);
             xmlWriter.writeAttribute("comment_suffix", commentSuffix);
 
@@ -159,15 +149,13 @@ public class AugmentingCode {
 
             // Copy augmenting code properties once.
             String dupRelPath = relativePath;
-            String dupIndexInFile = String.valueOf(indexInFile);
             String dupCommentSuffix = commentSuffix;
             for (Block block : blocks) {
                 Object[] record = new Object[]{
-                    index, dupRelPath, dupIndexInFile, dupCommentSuffix, block.stringify, block.content  
+                    index, dupRelPath, dupCommentSuffix, block.stringify, block.content  
                 };
                 qCsvWriter.writeRecord(record);
                 dupRelPath = "";
-                dupIndexInFile = "";
                 dupCommentSuffix = "";
             }
             qCsvWriter.writeSeparatorLine();
@@ -183,7 +171,6 @@ public class AugmentingCode {
                 return false;
             }
             index = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "index");
-            indexInFile = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "index_in_file");
             relativePath = XmlEventReaderWrapper.requireAttributeValue(startElement, "rel_path");
             commentSuffix = XmlEventReaderWrapper.requireAttributeValue(startElement, "comment_suffix");
             
@@ -249,7 +236,6 @@ public class AugmentingCode {
                 if (!augmentingCodePropertieSet) {
                     relativePath = qCsvReader.requireField(recordDict, "rel_path", false);
                     commentSuffix = qCsvReader.requireField(recordDict, "comment_suffix", false);
-                    indexInFile = qCsvReader.requireIntField(recordDict, "index_in_file");
                     augmentingCodePropertieSet = true;
                 }
                 
@@ -273,7 +259,6 @@ public class AugmentingCode {
         result = prime * result + ((blocks == null) ? 0 : blocks.hashCode());
         result = prime * result + ((commentSuffix == null) ? 0 : commentSuffix.hashCode());
         result = prime * result + index;
-        result = prime * result + indexInFile;
         result = prime * result + ((relativePath == null) ? 0 : relativePath.hashCode());
         return result;
     }
@@ -299,8 +284,6 @@ public class AugmentingCode {
             return false;
         if (index != other.index)
             return false;
-        if (indexInFile != other.indexInFile)
-            return false;
         if (relativePath == null) {
             if (other.relativePath != null)
                 return false;
@@ -312,6 +295,6 @@ public class AugmentingCode {
     @Override
     public String toString() {
         return "AugmentingCode{blocks=" + blocks + ", commentSuffix=" + commentSuffix + ", index=" + index
-                + ", indexInFile=" + indexInFile + ", relativePath=" + relativePath + "}";
+                + ", relativePath=" + relativePath + "}";
     }
 }
