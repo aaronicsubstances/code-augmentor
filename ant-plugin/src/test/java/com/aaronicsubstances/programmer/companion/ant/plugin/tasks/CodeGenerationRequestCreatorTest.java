@@ -109,14 +109,6 @@ public class CodeGenerationRequestCreatorTest {
         };
     }
 
-    private static Token newTokenWithLnNum(int lineNumber) {
-        return new Token(0, null, 0, 0, lineNumber, 0);
-    }
-
-    private static Token newTokenWithStartPos(int startPos) {
-        return new Token(0, null, startPos, 0, 0, 0);
-    }
-
     @Test(dataProvider = "createTestCombineAndSortRelevantTokensData")
     public void testCombineAndSortRelevantTokens(List<Token> tokens, List<List<Token>> groups,
             List<Object> expected) {
@@ -257,44 +249,6 @@ public class CodeGenerationRequestCreatorTest {
         };
     }
 
-    private static SuffixDescriptor createSuffixDescriptor(String suffixDescStr) {
-        int suffixType, augCodeSpecIndex = -1;
-        if (suffixDescStr.equals("GE")) {
-            suffixType = CodeGenerationRequestCreator.SUFFIX_TYPE_GEN_CODE_END;
-        }
-        else if (suffixDescStr.equals("GS")) {
-            suffixType = CodeGenerationRequestCreator.SUFFIX_TYPE_GEN_CODE_START;
-        }
-        else if (suffixDescStr.equals("H")) {
-            suffixType = CodeGenerationRequestCreator.SUFFIX_TYPE_HEADER;
-        }
-        else if (suffixDescStr.equals("ES")) {
-            suffixType = CodeGenerationRequestCreator.SUFFIX_TYPE_EMB_STRING;
-        }
-        else if (suffixDescStr.equals("JS")) {
-            suffixType = CodeGenerationRequestCreator.SUFFIX_TYPE_AUG_CODE;
-            augCodeSpecIndex = 0;
-        }
-        else {
-            suffixType = CodeGenerationRequestCreator.SUFFIX_TYPE_AUG_CODE;
-            augCodeSpecIndex = Integer.parseInt(suffixDescStr);
-        }
-        SuffixDescriptor suffixDescriptor = new SuffixDescriptor(
-            augCodeSpecIndex != -1 ? "JS" : suffixDescStr, suffixType, augCodeSpecIndex);
-        return suffixDescriptor;
-    }
-
-    private static Token createTokenWithValue(int lineNumber, String suffixDescStr) {        
-        SuffixDescriptor suffixDescriptor = createSuffixDescriptor(suffixDescStr);
-        Map<String, Object> tokenAttributes = new HashMap<>();
-        tokenAttributes.put(CodeGenerationRequestCreator.TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR,
-            suffixDescriptor);
-        int colNumber = (int)((Math.random() * 5)) + 1;
-        Token t = new Token(0, null, 0, 0, lineNumber, colNumber);
-        t.value = tokenAttributes;
-        return t;
-    }
-
     @Test(dataProvider = "createTestCreateDoubleSlashAugCodeData")
     public void testCreateDoubleSlashAugCode(List<Token> tokenGroup, String expectedIndent,
             AugmentingCode expected) {
@@ -356,6 +310,43 @@ public class CodeGenerationRequestCreatorTest {
         };
     }
 
+    private static SuffixDescriptor createSuffixDescriptor(String suffixDescStr) {
+        int suffixType, augCodeSpecIndex = -1;
+        if (suffixDescStr.equals("GE")) {
+            suffixType = CodeGenerationRequestCreator.SUFFIX_TYPE_GEN_CODE_END;
+        }
+        else if (suffixDescStr.equals("GS")) {
+            suffixType = CodeGenerationRequestCreator.SUFFIX_TYPE_GEN_CODE_START;
+        }
+        else if (suffixDescStr.equals("H")) {
+            suffixType = CodeGenerationRequestCreator.SUFFIX_TYPE_HEADER;
+        }
+        else if (suffixDescStr.equals("ES")) {
+            suffixType = CodeGenerationRequestCreator.SUFFIX_TYPE_EMB_STRING;
+        }
+        else if (suffixDescStr.equals("JS")) {
+            suffixType = CodeGenerationRequestCreator.SUFFIX_TYPE_AUG_CODE;
+            augCodeSpecIndex = 0;
+        }
+        else {
+            suffixType = CodeGenerationRequestCreator.SUFFIX_TYPE_AUG_CODE;
+            augCodeSpecIndex = Integer.parseInt(suffixDescStr);
+        }
+        SuffixDescriptor suffixDescriptor = new SuffixDescriptor(
+            augCodeSpecIndex != -1 ? "JS" : suffixDescStr, suffixType, augCodeSpecIndex);
+        return suffixDescriptor;
+    }
+
+    private static Token createTokenWithValue(int lineNumber, String suffixDescStr) {        
+        SuffixDescriptor suffixDescriptor = createSuffixDescriptor(suffixDescStr);
+        Map<String, Object> tokenAttributes = new HashMap<>();
+        tokenAttributes.put(CodeGenerationRequestCreator.TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR,
+            suffixDescriptor);
+        Token t = new Token(0, null, 0, 0, lineNumber, 0);
+        t.value = tokenAttributes;
+        return t;
+    }
+
     private static AugmentingCode createAugCode(String suffix, Block... blocks) {        
         AugmentingCode augCode = new AugmentingCode(Arrays.asList(blocks));
         augCode.setCommentSuffix(suffix);
@@ -371,10 +362,53 @@ public class CodeGenerationRequestCreatorTest {
         tokenAttributes.put(CodeGenerationRequestCreator.TOKEN_ATTRIBUTE_INDENT,
             indent);
         tokenAttributes.put(CodeGenerationRequestCreator.TOKEN_ATTRIBUTE_FF_NEWLINE,
-            new Token(JavaLexer.TOKEN_TYPE_NEWLINE, "\n", 0, 0, lineNumber, 1));
+            new Token(JavaLexer.TOKEN_TYPE_NEWLINE, "\n", 0, 0, lineNumber, 0));
         Token t = new Token(JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT, comment, 0, 0, 
-            lineNumber, 1);
+            lineNumber, 0);
         t.value = tokenAttributes;
         return t;
+    }
+
+    private static Token newTokenWithLnNum(int lineNumber) {
+        return new Token(0, null, 0, 0, lineNumber, 0);
+    }
+
+    private static Token newTokenWithStartPos(int startPos) {
+        return new Token(0, null, startPos, 0, 0, 0);
+    }
+
+    private static Token newToken(int lineNumber, String text, int startPos) {
+        int type;
+        switch (text) {
+            case "\n":
+                type = JavaLexer.TOKEN_TYPE_NEWLINE;
+                break;
+            case " ":
+                type = JavaLexer.TOKEN_TYPE_NON_NEWLINE_WHITESPACE;
+                break;
+            case ";":
+                type = JavaLexer.TOKEN_TYPE_SEMI_COLON;
+                break;
+            case "import":
+                type = JavaLexer.TOKEN_TYPE_IMPORT_KEYWORD;
+                break;
+            case "static":
+                type = JavaLexer.TOKEN_TYPE_STATIC_KEYWORD;
+                break;
+            default:
+                if (text.startsWith("//")) {
+                    type = JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT;
+                }
+                else if (text.startsWith("/*")) {
+                    type = JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT;
+                }
+                else {
+                    type = JavaLexer.TOKEN_TYPE_OTHER;
+                }
+                break;
+        }
+        int endPos = startPos + text.length();
+        Token token = new Token(type, text, startPos, endPos, lineNumber, 0);
+        return token;
     }
 }
