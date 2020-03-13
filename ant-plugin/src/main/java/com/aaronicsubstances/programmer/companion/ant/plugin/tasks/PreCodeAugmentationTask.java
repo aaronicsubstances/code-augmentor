@@ -34,6 +34,7 @@ public class PreCodeAugmentationTask extends Task {
     private boolean verbose = false;
     private boolean listfiles;
     private final List<FileSet> srcDirs = new ArrayList<>();
+    private File tempDir;
 
     /*
      * Comment markers for augmenting code and generated code snippets generally match.
@@ -72,6 +73,10 @@ public class PreCodeAugmentationTask extends Task {
 
     public void setPrepfile(File f) {
         this.parseResultsFile = f;
+    }
+
+    public void setTempdir(File f) {
+        this.tempDir = f;
     }
 
     public void addSrc(FileSet d) {
@@ -165,6 +170,9 @@ public class PreCodeAugmentationTask extends Task {
         // set defaults.
         if (encoding == null) {
             charset = Charset.defaultCharset();
+        }
+        if (tempDir == null) {
+            tempDir = new File(System.getProperty("java.io.tmpdir"));
         }
     }
 

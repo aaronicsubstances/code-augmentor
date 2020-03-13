@@ -18,7 +18,8 @@ public class CodeAugmentationTask extends Task {
     private boolean verbose = false;
     private File prepfile;
     private File destdir;
-    private boolean overwrite = false;
+    private boolean generate = false;
+    private boolean failIfRegenerationNeeded = true;
 
     private final List<File> generatedCodeFiles = new ArrayList<>();
     
@@ -37,12 +38,16 @@ public class CodeAugmentationTask extends Task {
         this.destdir = destdir;
     }
 
-    public void setOverwrite(boolean overwrite) {
-        this.overwrite = overwrite;
+    public void setGenerate(boolean generate) {
+        this.generate = generate;
     }
 
     public void setPrepfile(File f) {
         this.prepfile = f;
+    }
+
+    public void setFailIfRegenerationNeeded(boolean failIfRegenerationNeeded) {
+        this.failIfRegenerationNeeded = failIfRegenerationNeeded;
     }
 
     public void addGen_code_file(File f) {
@@ -66,8 +71,8 @@ public class CodeAugmentationTask extends Task {
             }
         }
 
-        if (!overwrite && destdir == null) {
-            throw new BuildException("destdir attribute must be set if overwrite property is false");
+        if (generate && destdir == null) {
+            throw new BuildException("destdir attribute must be set if generate property is true");
         }
         if (prepfile == null) {
             throw new BuildException("prepfile attribute is required");

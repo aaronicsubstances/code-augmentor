@@ -24,6 +24,7 @@ import com.aaronicsubstances.programmer.companion.ant.plugin.persistence.XmlEven
 public class PreCodeAugmentationResult {
     private String genCodeStartSuffix;
     private String genCodeEndSuffix;
+    private String tempDir;
     private List<SourceFileDescriptor> fileDescriptors;
 
     public PreCodeAugmentationResult() {
@@ -57,6 +58,14 @@ public class PreCodeAugmentationResult {
         this.genCodeEndSuffix = genCodeEndSuffix;
     }
 
+    public String getTempDir() {
+        return tempDir;
+    }
+
+    public void setTempDir(String tempDir) {
+        this.tempDir = tempDir;
+    }
+
     public Object beginSerialize(File file) throws Exception {        
         OutputStreamWriter stream = new OutputStreamWriter(
             new FileOutputStream(file), StandardCharsets.UTF_8);
@@ -73,6 +82,8 @@ public class PreCodeAugmentationResult {
             genCodeStartSuffix);
         xmlWriter.writeAttribute("gen_code_end_suffix", 
             genCodeEndSuffix);
+        xmlWriter.writeAttribute("temp_dir", 
+            tempDir);
 
         xmlWriter.writeStartElement("file_list");
         return xmlWriter;
@@ -108,6 +119,8 @@ public class PreCodeAugmentationResult {
             "gen_code_start_suffix");
         genCodeEndSuffix = XmlEventReaderWrapper.requireAttributeValue(rootElement,
             "gen_code_end_suffix");
+        tempDir = XmlEventReaderWrapper.requireAttributeValue(rootElement,
+            "temp_dir");
 
         xmlReader.requireStartElement("file_list");
 
@@ -129,6 +142,7 @@ public class PreCodeAugmentationResult {
         result = prime * result + ((fileDescriptors == null) ? 0 : fileDescriptors.hashCode());
         result = prime * result + ((genCodeEndSuffix == null) ? 0 : genCodeEndSuffix.hashCode());
         result = prime * result + ((genCodeStartSuffix == null) ? 0 : genCodeStartSuffix.hashCode());
+        result = prime * result + ((tempDir == null) ? 0 : tempDir.hashCode());
         return result;
     }
 
@@ -156,12 +170,17 @@ public class PreCodeAugmentationResult {
                 return false;
         } else if (!genCodeStartSuffix.equals(other.genCodeStartSuffix))
             return false;
+        if (tempDir == null) {
+            if (other.tempDir != null)
+                return false;
+        } else if (!tempDir.equals(other.tempDir))
+            return false;
         return true;
     }
 
     @Override
     public String toString() {
         return "PreCodeAugmentationResult{fileDescriptors=" + fileDescriptors + ", genCodeEndSuffix="
-                + genCodeEndSuffix + ", genCodeStartSuffix=" + genCodeStartSuffix + "}";
+                + genCodeEndSuffix + ", genCodeStartSuffix=" + genCodeStartSuffix + ", tempDir=" + tempDir + "}";
     }
 }
