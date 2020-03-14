@@ -18,6 +18,7 @@ import com.aaronicsubstances.programmer.companion.Token;
 import com.aaronicsubstances.programmer.companion.ant.plugin.TestResourceLoader;
 import com.aaronicsubstances.programmer.companion.ant.plugin.models.AugmentingCode;
 import com.aaronicsubstances.programmer.companion.ant.plugin.models.AugmentingCode.Block;
+import com.aaronicsubstances.programmer.companion.ant.plugin.models.CodeSnippetDescriptor.GeneratedCodeDescriptor;
 import com.aaronicsubstances.programmer.companion.ant.plugin.tasks.CodeGenerationRequestCreator.SuffixDescriptor;
 import com.aaronicsubstances.programmer.companion.java.JavaLexer;
 import com.google.gson.Gson;
@@ -339,6 +340,47 @@ public class CodeGenerationRequestCreatorTest {
         CodeGenerationRequestCreator instance = createInstance();
         List<Token> actual = instance.getDoubleSlashReleventTokens(sourceTokens);
         assertEquals(actual, expected);
+    }
+
+    @Test(dataProvider = "createTestCreateGeneratedCodeDescriptorData")
+    public void testCreateGeneratedCodeDescriptor(String sourceName, int startIndex, 
+            boolean isSlashStar, GeneratedCodeDescriptor expected) {
+        String s = TestResourceLoader.loadResource(sourceName, getClass());
+        List<Token> sourceTokens = fetchTokens(s);
+        CodeGenerationRequestCreator instance = createInstance();
+        GeneratedCodeDescriptor actual = instance.createGeneratedCodeDescriptor(sourceTokens,
+            startIndex, isSlashStar);
+        assertEquals(actual, expected);
+    }
+
+    @DataProvider
+    public Object[][] createTestCreateGeneratedCodeDescriptorData() {
+        final String sourceName1 = "tokens-for-relevance.json";
+        final String sourceName2 = "tokens-for-generated-code-descriptor.json";
+        return new Object[][]{
+            new Object[]{ sourceName1, 4, false, new GeneratedCodeDescriptor(15, 17) },
+            new Object[]{ sourceName1, 40, true, null },
+            new Object[]{ sourceName1, 166, false, new GeneratedCodeDescriptor(1068, 1070) },
+            new Object[]{ sourceName1, 167, false, null },
+            new Object[]{ sourceName2, 0, true, null },
+            new Object[]{ sourceName2, 3, true, null },
+            new Object[]{ sourceName2, 8, true, new GeneratedCodeDescriptor(61, 74) },
+            new Object[]{ sourceName2, 12, true, new GeneratedCodeDescriptor(89, 104) },
+            new Object[]{ sourceName2, 16, true, null },
+            new Object[]{ sourceName2, 17, true, new GeneratedCodeDescriptor(110, 140) },
+            new Object[]{ sourceName2, 34, true, null },
+            new Object[]{ sourceName2, 38, true, null },
+            new Object[]{ sourceName2, 80, true, null },
+            new Object[]{ sourceName2, 90, false, new GeneratedCodeDescriptor(549, 577) },
+            new Object[]{ sourceName2, 114, false, new GeneratedCodeDescriptor(672, 674) },
+            new Object[]{ sourceName2, 129, true, null },
+            new Object[]{ sourceName2, 160, true, new GeneratedCodeDescriptor(984, 997) },
+            new Object[]{ sourceName2, 164, true, null },
+            new Object[]{ sourceName2, 166, false, new GeneratedCodeDescriptor(1017, 1019) },
+            new Object[]{ sourceName2, 173, false, new GeneratedCodeDescriptor(1036, 1038) },
+            new Object[]{ sourceName2, 198, true, null },
+            new Object[]{ sourceName2, 224, false, new GeneratedCodeDescriptor(1305, 1307) }
+        };
     }
 
     private static CodeGenerationRequestCreator createInstance() {        

@@ -108,7 +108,15 @@ public class CodeSnippetDescriptor {
         private int startPos = 0;
         private int endPos = 0;
 
-        public int getStartPos() {
+        public GeneratedCodeDescriptor() {
+		}
+
+        public GeneratedCodeDescriptor(int startPos, int endPos) {
+            this.startPos = startPos;
+            this.endPos = endPos;
+		}
+
+		public int getStartPos() {
             return startPos;
         }
 

@@ -462,8 +462,8 @@ public class CodeGenerationRequestCreator {
                 else {
                     // either gen code start encountered, or gen code end encountered but of a 
                     // different commment style: conclude not found.
+                    break;
                 }
-                break;
             }
         }
 
