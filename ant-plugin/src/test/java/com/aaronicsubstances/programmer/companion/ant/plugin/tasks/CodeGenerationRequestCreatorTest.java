@@ -146,17 +146,7 @@ public class CodeGenerationRequestCreatorTest {
 
     @Test(dataProvider = "createTestGetSuffixDescriptorData")
     public void testGetSuffixDescriptor(Token t, SuffixDescriptor expected) {
-        List<String> headerDoubleSlashSuffixes = Arrays.asList("H", "I");
-        List<String> genCodeStartSuffixes = Arrays.asList("GS");
-        List<String> genCodeEndSuffixes = Arrays.asList("GE");
-        List<String> embeddedStringDoubleSlashSuffixes = Arrays.asList("ES");
-        List<CodeGenerationRequestSpecification> requestSpecList = Arrays.asList(
-            new CodeGenerationRequestSpecification(Arrays.asList("PY", "PY30")),
-            new CodeGenerationRequestSpecification(Arrays.asList("JS"))
-        );
-        CodeGenerationRequestCreator instance = new CodeGenerationRequestCreator(
-            headerDoubleSlashSuffixes, genCodeStartSuffixes, genCodeEndSuffixes,
-            embeddedStringDoubleSlashSuffixes, requestSpecList);
+        CodeGenerationRequestCreator instance = createInstance();
         SuffixDescriptor actual = instance.getSuffixDescriptor(t);
         assertEquals(actual, expected);
     }
@@ -179,18 +169,18 @@ public class CodeGenerationRequestCreatorTest {
                 CodeGenerationRequestCreator.SUFFIX_TYPE_HEADER, -1) },
             new Object[]{ new Token(JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT, "//I/", 0, 0, 0, 0),
                 new SuffixDescriptor("I", 
-                CodeGenerationRequestCreator.SUFFIX_TYPE_HEADER, -1) },
-            new Object[]{ new Token(JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT, "//PY30#", 0, 0, 0, 0),
-                new SuffixDescriptor("PY30", 
-                CodeGenerationRequestCreator.SUFFIX_TYPE_AUG_CODE, 0) },
-            new Object[]{ new Token(JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT, "/*PY3#*/", 0, 0, 0, 0),
-                new SuffixDescriptor("PY", 
-                CodeGenerationRequestCreator.SUFFIX_TYPE_AUG_CODE, 0) },
-            new Object[]{ new Token(JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT, "//PY30#", 0, 0, 0, 0),
-                new SuffixDescriptor("PY30", 
-                CodeGenerationRequestCreator.SUFFIX_TYPE_AUG_CODE, 0) },
+                CodeGenerationRequestCreator.SUFFIX_TYPE_HEADER, -1) },                
             new Object[]{ new Token(JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT, "/*JS6*/", 0, 0, 0, 0),
                 new SuffixDescriptor("JS", 
+                CodeGenerationRequestCreator.SUFFIX_TYPE_AUG_CODE, 0) },
+            new Object[]{ new Token(JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT, "//PY30#", 0, 0, 0, 0),
+                new SuffixDescriptor("PY30", 
+                CodeGenerationRequestCreator.SUFFIX_TYPE_AUG_CODE, 1) },
+            new Object[]{ new Token(JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT, "/*PY3#*/", 0, 0, 0, 0),
+                new SuffixDescriptor("PY", 
+                CodeGenerationRequestCreator.SUFFIX_TYPE_AUG_CODE, 1) },
+            new Object[]{ new Token(JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT, "//PY30#", 0, 0, 0, 0),
+                new SuffixDescriptor("PY30", 
                 CodeGenerationRequestCreator.SUFFIX_TYPE_AUG_CODE, 1) },
             new Object[]{ new Token(JavaLexer.TOKEN_TYPE_NEWLINE, "\n", 0, 0, 0, 0), null }
         };
@@ -227,19 +217,19 @@ public class CodeGenerationRequestCreatorTest {
 
     @DataProvider
     public Object[][] createTestValidateDoubleSlashRelevantTokenGroupData() {
-        List<Token> firstGroup = Arrays.asList(createTokenWithValue(2, "ES"));       
-        List<Token> secondGroup = Arrays.asList(createTokenWithValue(2, "1"));       
-        List<Token> thirdGroup = Arrays.asList(createTokenWithValue(2, "1"),
-            createTokenWithValue(3, "ES"));
-        List<Token> fourthGroup = Arrays.asList(createTokenWithValue(2, "1"),
-            createTokenWithValue(3, "ES"), createTokenWithValue(4, "10"));
-        List<Token> fifthGroup = Arrays.asList(createTokenWithValue(2, "H"),
-            createTokenWithValue(3, "H"), createTokenWithValue(4, "H"));
-        List<Token> sixthGroup = Arrays.asList(createTokenWithValue(2, "H"));
-        List<Token> seventhGroup = Arrays.asList(createTokenWithValue(12, "H"),
-            createTokenWithValue(13, "H"), createTokenWithValue(14, "0"));
-        List<Token> eighthGroup = Arrays.asList(createTokenWithValue(12, "H"),
-            createTokenWithValue(13, "ES"));
+        List<Token> firstGroup = Arrays.asList(newToken(2, "ES"));       
+        List<Token> secondGroup = Arrays.asList(newToken(2, "1"));       
+        List<Token> thirdGroup = Arrays.asList(newToken(2, "1"),
+            newToken(3, "ES"));
+        List<Token> fourthGroup = Arrays.asList(newToken(2, "1"),
+            newToken(3, "ES"), newToken(4, "10"));
+        List<Token> fifthGroup = Arrays.asList(newToken(2, "H"),
+            newToken(3, "H"), newToken(4, "H"));
+        List<Token> sixthGroup = Arrays.asList(newToken(2, "H"));
+        List<Token> seventhGroup = Arrays.asList(newToken(12, "H"),
+            newToken(13, "H"), newToken(14, "0"));
+        List<Token> eighthGroup = Arrays.asList(newToken(12, "H"),
+            newToken(13, "ES"));
         return new Object[][]{
             new Object[]{ 0, firstGroup, 2 },
             new Object[]{ 1, secondGroup, null },
@@ -264,39 +254,39 @@ public class CodeGenerationRequestCreatorTest {
     @DataProvider
     public Object[][] createTestCreateDoubleSlashAugCodeData() {
         List<Token> firstGroup = Arrays.asList(
-            createTokenWithValue(5, "JS", "  ", "//JS println(")
+            newToken(5, "JS", "  ", "//JS println(")
         );
         List<Token> secondGroup = Arrays.asList(
-            createTokenWithValue(5, "JS", "  ", "//JS println"),
-            createTokenWithValue(6, "JS", "  ", "//JS("),
-            createTokenWithValue(7, "ES", "", "//ES{'value': true}"),
-            createTokenWithValue(8, "JS", "  ", "//JS)")
+            newToken(5, "JS", "  ", "//JS println"),
+            newToken(6, "JS", "  ", "//JS("),
+            newToken(7, "ES", "", "//ES{'value': true}"),
+            newToken(8, "JS", "  ", "//JS)")
         );
         List<Token> thirdGroup = Arrays.asList(
-            createTokenWithValue(5, "JS", "  ", "//JS println("),
-            createTokenWithValue(6, "ES", "  ", "//ES{"),
-            createTokenWithValue(7, "ES", "  ", "//ES'value': true}"),
-            createTokenWithValue(8, "JS", "  ", "//JS)")
+            newToken(5, "JS", "  ", "//JS println("),
+            newToken(6, "ES", "  ", "//ES{"),
+            newToken(7, "ES", "  ", "//ES'value': true}"),
+            newToken(8, "JS", "  ", "//JS)")
         );
         List<Token> fourthGroup = Arrays.asList(
-            createTokenWithValue(5, "JS", "  ", "//JS println"),
-            createTokenWithValue(6, "JS", "  ", "//JS("),
-            createTokenWithValue(7, "ES", "  ", "//ES{'value': true"),
-            createTokenWithValue(8, "ES", " ", "//ES}")
+            newToken(5, "JS", "  ", "//JS println"),
+            newToken(6, "JS", "  ", "//JS("),
+            newToken(7, "ES", "  ", "//ES{'value': true"),
+            newToken(8, "ES", " ", "//ES}")
         );
         List<Token> fifthGroup = Arrays.asList(
-            createTokenWithValue(5, "JS", "  ", "//JS println"),
-            createTokenWithValue(6, "JS", "  ", "//JS("),
-            createTokenWithValue(7, "ES", "  ", "//ES{"),
-            createTokenWithValue(8, "ES", "  ", "//ES'value': true"),
-            createTokenWithValue(9, "ES", " ", "//ES}"),
-            createTokenWithValue(10, "JS", " ", "//JS);"),
-            createTokenWithValue(11, "JS", "", "//JS println()")
+            newToken(5, "JS", "  ", "//JS println"),
+            newToken(6, "JS", "  ", "//JS("),
+            newToken(7, "ES", "  ", "//ES{"),
+            newToken(8, "ES", "  ", "//ES'value': true"),
+            newToken(9, "ES", " ", "//ES}"),
+            newToken(10, "JS", " ", "//JS);"),
+            newToken(11, "JS", "", "//JS println()")
         );
         List<Token> sixthGroup = Arrays.asList(
-            createTokenWithValue(5, "H", "    ", "//H"),
-            createTokenWithValue(6, "H", "    ", "//Here!"),
-            createTokenWithValue(7, "H", "    ", "//Here!!")
+            newToken(5, "H", "    ", "//H"),
+            newToken(6, "H", "    ", "//Here!"),
+            newToken(7, "H", "    ", "//Here!!")
         );
         return new Object[][]{
             new Object[]{ firstGroup, "  ", createAugCode("JS", new Block(" println(", false)) },
@@ -315,12 +305,55 @@ public class CodeGenerationRequestCreatorTest {
 
     @Test
     public void testGetNormalizedImportStatements() {
-        String s = TestResourceLoader.loadResource("tokens-for-import.json", getClass());
-        List<Token> sourceTokens = fetchTokens(s);
         List<String> expected = Arrays.asList("import org.springframework.boot.SpringApplication",
             "import org.springframework.boot.autoconfigure.SpringBootApplication");
+        String s = TestResourceLoader.loadResource("tokens-for-import.json", getClass());
+        List<Token> sourceTokens = fetchTokens(s);
         List<String> actual = CodeGenerationRequestCreator.getNormalizedImportStatements(sourceTokens);
         assertEquals(actual, expected);
+    }
+
+    @Test
+    public void testGetSlashStarRelevantTokens() {
+        List<Token> expected = Arrays.asList(
+            newToken(5, "/*JS println(\"Hello World from JS-star\")\r\n" +
+                "var i = 3 + new Date(); \r\n" +
+                "...etc*/", 59, "0", 10, null, null)
+        );
+        String s = TestResourceLoader.loadResource("tokens-for-relevance.json", getClass());
+        List<Token> sourceTokens = fetchTokens(s);
+        CodeGenerationRequestCreator instance = createInstance();
+        List<Token> actual = instance.getSlashStarRelevantTokens(sourceTokens);
+        assertEquals(actual, expected);
+    }
+
+    @Test
+    public void testGetDoubleSlashReleventTokens() {
+        List<Token> expected = Arrays.asList(
+            newToken(2, "//H", 12, "H", 3, "", newToken(2, "\r\n", 15)),
+            newToken(24, "//JS println(\"World\")", 493, "0", 61, "", newToken(24, "\r\n", 514)),
+            newToken(26, "//JS println(\"Hello\")", 560, "0", 73, "        ", newToken(26, "\r\n", 581))
+        );
+        String s = TestResourceLoader.loadResource("tokens-for-relevance.json", getClass());
+        List<Token> sourceTokens = fetchTokens(s);
+        CodeGenerationRequestCreator instance = createInstance();
+        List<Token> actual = instance.getDoubleSlashReleventTokens(sourceTokens);
+        assertEquals(actual, expected);
+    }
+
+    private static CodeGenerationRequestCreator createInstance() {        
+        List<String> headerDoubleSlashSuffixes = Arrays.asList("H", "I");
+        List<String> genCodeStartSuffixes = Arrays.asList("GS");
+        List<String> genCodeEndSuffixes = Arrays.asList("GE");
+        List<String> embeddedStringDoubleSlashSuffixes = Arrays.asList("ES");
+        List<CodeGenerationRequestSpecification> requestSpecList = Arrays.asList(
+            new CodeGenerationRequestSpecification(Arrays.asList("JS")),
+            new CodeGenerationRequestSpecification(Arrays.asList("PY", "PY30"))
+        );
+        CodeGenerationRequestCreator instance = new CodeGenerationRequestCreator(
+            headerDoubleSlashSuffixes, genCodeStartSuffixes, genCodeEndSuffixes,
+            embeddedStringDoubleSlashSuffixes, requestSpecList);
+        return instance;
     }
 
     private static SuffixDescriptor createSuffixDescriptor(String suffixDescStr) {
@@ -350,7 +383,25 @@ public class CodeGenerationRequestCreatorTest {
         return suffixDescriptor;
     }
 
-    private static Token createTokenWithValue(int lineNumber, String suffixDescStr) {        
+    private static AugmentingCode createAugCode(String suffix, Block... blocks) {        
+        AugmentingCode augCode = new AugmentingCode(Arrays.asList(blocks));
+        augCode.setCommentSuffix(suffix);
+        return augCode;
+    }
+
+    private static List<Token> fetchTokens(String s) {
+        TokenLite[] ts = new Gson().fromJson(s, TokenLite[].class);
+        List<Token> tokens = new ArrayList<>();
+        int startPos = 0;
+        for (TokenLite t : ts) {
+            Token token = newToken(t.lineNumber, t.text, startPos);
+            tokens.add(token);
+            startPos = token.endPos;
+        }
+        return tokens;
+    }
+
+    private static Token newToken(int lineNumber, String suffixDescStr) {        
         SuffixDescriptor suffixDescriptor = createSuffixDescriptor(suffixDescStr);
         Map<String, Object> tokenAttributes = new HashMap<>();
         tokenAttributes.put(CodeGenerationRequestCreator.TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR,
@@ -360,13 +411,7 @@ public class CodeGenerationRequestCreatorTest {
         return t;
     }
 
-    private static AugmentingCode createAugCode(String suffix, Block... blocks) {        
-        AugmentingCode augCode = new AugmentingCode(Arrays.asList(blocks));
-        augCode.setCommentSuffix(suffix);
-        return augCode;
-    }
-
-    private static Token createTokenWithValue(int lineNumber, String suffixDescStr, 
+    private static Token newToken(int lineNumber, String suffixDescStr, 
             String indent, String comment) {
         Map<String, Object> tokenAttributes = new HashMap<>();
         SuffixDescriptor suffixDescriptor = createSuffixDescriptor(suffixDescStr);
@@ -382,16 +427,26 @@ public class CodeGenerationRequestCreatorTest {
         return t;
     }
 
-    private static List<Token> fetchTokens(String s) {
-        TokenLite[] ts = new Gson().fromJson(s, TokenLite[].class);
-        List<Token> tokens = new ArrayList<>();
-        int startPos = 0;
-        for (TokenLite t : ts) {
-            Token token = newToken(t.lineNumber, t.text, startPos);
-            tokens.add(token);
-            startPos = token.endPos;
+    private static Token newToken(int lineNumber, String text, int startPos,
+            String suffixDescStr, int tokenIndex,
+            String indent, Token ffNewline) {
+        Map<String, Object> tokenAttributes = new HashMap<>();
+        SuffixDescriptor suffixDescriptor = createSuffixDescriptor(suffixDescStr);
+        tokenAttributes.put(CodeGenerationRequestCreator.TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR,
+            suffixDescriptor);
+        tokenAttributes.put(CodeGenerationRequestCreator.TOKEN_ATTRIBUTE_INDEX_IN_SOURCE,
+            tokenIndex);
+        if (indent != null) {
+            tokenAttributes.put(CodeGenerationRequestCreator.TOKEN_ATTRIBUTE_INDENT,
+                indent);
         }
-        return tokens;
+        if (ffNewline != null) {
+            tokenAttributes.put(CodeGenerationRequestCreator.TOKEN_ATTRIBUTE_FF_NEWLINE,
+                ffNewline);
+        }
+        Token t = newToken(lineNumber, text, startPos);
+        t.value = tokenAttributes;
+        return t;
     }
 
     private static Token newTokenWithLnNum(int lineNumber) {
@@ -410,11 +465,9 @@ public class CodeGenerationRequestCreatorTest {
     private static Token newToken(int lineNumber, String text, int startPos) {
         int type;
         switch (text) {
+            case "\r\n":
             case "\n":
                 type = JavaLexer.TOKEN_TYPE_NEWLINE;
-                break;
-            case " ":
-                type = JavaLexer.TOKEN_TYPE_NON_NEWLINE_WHITESPACE;
                 break;
             case ";":
                 type = JavaLexer.TOKEN_TYPE_SEMI_COLON;
@@ -422,15 +475,15 @@ public class CodeGenerationRequestCreatorTest {
             case "import":
                 type = JavaLexer.TOKEN_TYPE_IMPORT_KEYWORD;
                 break;
-            case "static":
-                type = JavaLexer.TOKEN_TYPE_STATIC_KEYWORD;
-                break;
             default:
                 if (text.startsWith("//")) {
                     type = JavaLexer.TOKEN_TYPE_SINGLE_LINE_COMMENT;
                 }
                 else if (text.startsWith("/*")) {
                     type = JavaLexer.TOKEN_TYPE_MULTI_LINE_COMMENT;
+                }
+                else if (text.startsWith(" ")) {
+                    type = JavaLexer.TOKEN_TYPE_NON_NEWLINE_WHITESPACE;
                 }
                 else {
                     type = JavaLexer.TOKEN_TYPE_OTHER;

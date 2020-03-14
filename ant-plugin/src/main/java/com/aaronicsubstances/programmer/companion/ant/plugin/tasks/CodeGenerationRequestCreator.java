@@ -370,6 +370,7 @@ public class CodeGenerationRequestCreator {
             if (t.type == JavaLexer.TOKEN_TYPE_NEWLINE) {
                 skipDslashSearch = false;
                 indentBuilder.setLength(0);
+                continue;
             }
             else if (skipDslashSearch) {
                 continue;
