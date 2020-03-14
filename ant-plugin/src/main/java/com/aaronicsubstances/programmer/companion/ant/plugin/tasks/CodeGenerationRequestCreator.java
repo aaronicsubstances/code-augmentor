@@ -216,10 +216,13 @@ public class CodeGenerationRequestCreator {
         for (List<Token> relevantTokenGroup : doubleSlashRelevantTokenGroups) {
             ParserException error = validateDoubleSlashRelevantTokenGroup(relevantTokenGroup, inputSource);
             if (error != null) {
+                if (errors == null) {
+                    throw error;
+                }
                 errors.add(error);
             }
         }
-        if (errors.isEmpty()) {
+        if (errors != null && errors.isEmpty()) {
             // assert at most 1 header section.
             boolean headerBlockSeen = false;
             for (List<Token> relevantTokenGroup : doubleSlashRelevantTokenGroups) {
@@ -230,7 +233,10 @@ public class CodeGenerationRequestCreator {
                         headerBlockSeen = true;
                     }
                     else {
-                        ParserException error = inputSource.createAbortException("Duplicate header section", t);
+                        ParserException error = inputSource.createAbortException("Duplicate header section", t);                        
+                        if (errors == null) {
+                            throw error;
+                        }
                         errors.add(error);
                     }
                 }
@@ -239,7 +245,7 @@ public class CodeGenerationRequestCreator {
 
         // 4. If there are no validation errors,
         //    combine slash star and double slash aug codes, and sort them.
-        if (!errors.isEmpty()) {
+        if (errors != null && !errors.isEmpty()) {
             return null;
         }
         List<Object> combined = combineAndSortRelevantTokens(slashStarRelevantTokens, 

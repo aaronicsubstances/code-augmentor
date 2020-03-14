@@ -166,6 +166,16 @@ public class CodeSnippetDescriptor {
     private AugmentingCodeDescriptor augmentingCodeDescriptor;
     private GeneratedCodeDescriptor generatedCodeDescriptor;
 
+    public CodeSnippetDescriptor() {
+
+    }
+
+    public CodeSnippetDescriptor(AugmentingCodeDescriptor augmentingCodeDescriptor,
+            GeneratedCodeDescriptor generatedCodeDescriptor) {
+        this.augmentingCodeDescriptor = augmentingCodeDescriptor;
+        this.generatedCodeDescriptor = generatedCodeDescriptor;
+    }
+
     public AugmentingCodeDescriptor getAugmentingCodeDescriptor() {
         return augmentingCodeDescriptor;
     }

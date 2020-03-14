@@ -17,7 +17,10 @@ import com.aaronicsubstances.programmer.companion.ParserInputSource;
 import com.aaronicsubstances.programmer.companion.Token;
 import com.aaronicsubstances.programmer.companion.ant.plugin.TestResourceLoader;
 import com.aaronicsubstances.programmer.companion.ant.plugin.models.AugmentingCode;
+import com.aaronicsubstances.programmer.companion.ant.plugin.models.CodeSnippetDescriptor;
+import com.aaronicsubstances.programmer.companion.ant.plugin.models.SourceFileDescriptor;
 import com.aaronicsubstances.programmer.companion.ant.plugin.models.AugmentingCode.Block;
+import com.aaronicsubstances.programmer.companion.ant.plugin.models.CodeSnippetDescriptor.AugmentingCodeDescriptor;
 import com.aaronicsubstances.programmer.companion.ant.plugin.models.CodeSnippetDescriptor.GeneratedCodeDescriptor;
 import com.aaronicsubstances.programmer.companion.ant.plugin.tasks.CodeGenerationRequestCreator.SuffixDescriptor;
 import com.aaronicsubstances.programmer.companion.java.JavaLexer;
@@ -383,6 +386,88 @@ public class CodeGenerationRequestCreatorTest {
         };
     }
 
+    @Test(dataProvider = "createTestProcessSourceFileData")
+    public void testProcessSourceFile(String sourceName, SourceFileDescriptor expected,
+            List<AugmentingCode> expectedAug1,
+            List<AugmentingCode> expectedAug2) {
+        String s = TestResourceLoader.loadResource(sourceName, getClass());
+        List<Token> sourceTokens = fetchTokens(s);
+        StringBuilder input = new StringBuilder(); 
+        for (Token t : sourceTokens) {
+            input.append(t.text);
+        }
+        ParserInputSource inputSource = new ParserInputSource(input.toString());
+        List<List<AugmentingCode>> specAugCodesList = Arrays.asList(new ArrayList<>(),
+            new ArrayList<>());
+        CodeGenerationRequestCreator instance = createInstance();
+        SourceFileDescriptor actual = instance.processSourceFile(inputSource, sourceTokens, 
+            specAugCodesList, null);
+        assertEquals(actual, expected);
+        assertEquals(specAugCodesList.get(0), expectedAug1);
+        assertEquals(specAugCodesList.get(1), expectedAug2);
+    }
+
+    @DataProvider
+    public Object[][] createTestProcessSourceFileData() {
+        List<String> importStatements = Arrays.asList(
+            "import org.springframework.boot.SpringApplication", 
+            "import org.springframework.boot.autoconfigure.SpringBootApplication");
+        List<String> importStatements2and3 = Arrays.asList(
+            "import javax.ws.rs.GET", 
+            "import javax.ws.rs.Path",
+            "import javax.ws.rs.Produces",
+            "import javax.ws.rs.core.MediaType",
+            "import org.springframework.stereotype.Component");
+        List<CodeSnippetDescriptor> bodySnippets2 = Arrays.asList(
+            new CodeSnippetDescriptor(createAugCodeDescriptor(true, null, 728, 804, 0), null),
+            new CodeSnippetDescriptor(createAugCodeDescriptor(false, "    ", 1042, 1063, 1),
+                new GeneratedCodeDescriptor(1063, 1065))
+        );
+        SourceFileDescriptor second = new SourceFileDescriptor(importStatements2and3, bodySnippets2);
+        second.setHeaderSnippet(new CodeSnippetDescriptor(
+            createAugCodeDescriptor(false, "", 674, 677, 0), 
+            new GeneratedCodeDescriptor(677, 679)
+        ));
+        List<AugmentingCode> secondJs = Arrays.asList(
+            createAugCode(0, "JS", new Block(
+                " println(\"Hello World from JS-star\")\r\n" +
+            "var i = 3 + new Date(); \r\n" +
+            "...etc", false)),
+            createAugCode(1, "JS", new Block(" println(\"Hello\")", false))
+        );
+
+        // Data for 3rd test
+        List<CodeSnippetDescriptor> bodySnippets3 = Arrays.asList(
+            new CodeSnippetDescriptor(createAugCodeDescriptor(true, null, 59, 135, 0), null),
+            new CodeSnippetDescriptor(createAugCodeDescriptor(false, "", 493, 514, 1),
+                new GeneratedCodeDescriptor(514, 516)),
+            new CodeSnippetDescriptor(createAugCodeDescriptor(false, "        ", 560, 581, 2),
+                new GeneratedCodeDescriptor(581, 583))
+        );
+        SourceFileDescriptor third = new SourceFileDescriptor(importStatements2and3, bodySnippets3);
+        third.setHeaderSnippet(new CodeSnippetDescriptor(
+            createAugCodeDescriptor(false, "", 12, 15, 0), 
+            new GeneratedCodeDescriptor(15, 17)
+        ));
+        List<AugmentingCode> thirdJs = Arrays.asList(
+            createAugCode(0, "JS", new Block(
+                " println(\"Hello World from JS-star\")\r\n" +
+            "var i = 3 + new Date(); \r\n" +
+            "...etc", false)),
+            createAugCode(1, "JS", new Block(" println(\"World\")", false)),
+            createAugCode(2, "JS", new Block(" println(\"Hello\")", false))
+        );
+        return new Object[][]{
+            new Object[]{ "tokens-for-import.json", 
+                new SourceFileDescriptor(importStatements, Arrays.asList()), 
+                Arrays.asList(), Arrays.asList() },
+            new Object[]{ "tokens-for-generated-code-descriptor.json", 
+                second, secondJs, Arrays.asList() },
+            new Object[]{ "tokens-for-relevance.json", 
+                third, thirdJs, Arrays.asList() }
+        };
+    }
+
     private static CodeGenerationRequestCreator createInstance() {        
         List<String> headerDoubleSlashSuffixes = Arrays.asList("H", "I");
         List<String> genCodeStartSuffixes = Arrays.asList("GS");
@@ -426,9 +511,25 @@ public class CodeGenerationRequestCreatorTest {
     }
 
     private static AugmentingCode createAugCode(String suffix, Block... blocks) {        
+        return createAugCode(0, suffix, blocks);
+    }
+
+    private static AugmentingCode createAugCode(int index, String suffix, Block... blocks) {        
         AugmentingCode augCode = new AugmentingCode(Arrays.asList(blocks));
         augCode.setCommentSuffix(suffix);
+        augCode.setIndex(index);
         return augCode;
+    }
+
+    private static AugmentingCodeDescriptor createAugCodeDescriptor(
+            boolean isSlashStar, String indent, int startPos, int endPos, int index) {        
+        AugmentingCodeDescriptor augCodeDesc = new AugmentingCodeDescriptor();
+        augCodeDesc.setAnnotatedWithSlashStar(isSlashStar);
+        augCodeDesc.setIndent(indent);
+        augCodeDesc.setStartPos(startPos);
+        augCodeDesc.setEndPos(endPos);
+        augCodeDesc.setIndex(index);
+        return augCodeDesc;
     }
 
     private static List<Token> fetchTokens(String s) {
