@@ -34,11 +34,7 @@ public class PersistenceTest {
         StringWriter writer = new StringWriter();
         Object serializer = expected.beginSerialize(writer);
         for (SourceFileDescriptor fileDescriptor : expected.getFileDescriptors()) {
-            fileDescriptor.beginSerialize(serializer);
-            for (CodeSnippetDescriptor codeSnippetDescriptor : fileDescriptor.getBodySnippets()) {
-                codeSnippetDescriptor.serialize(serializer);
-            }
-            fileDescriptor.endSerialize(serializer);
+            fileDescriptor.serialize(serializer);
         }
         expected.endSerialize(serializer);
         String serialized = writer.toString();
@@ -48,16 +44,8 @@ public class PersistenceTest {
         PreCodeAugmentationResult actual = new PreCodeAugmentationResult();
         Object deserializer = actual.beginDeserialize(new StringReader(serialized));
         SourceFileDescriptor s = new SourceFileDescriptor();
-        while (s.beginDeserialize(deserializer)) {
+        while (s.deserialize(deserializer)) {
             actual.getFileDescriptors().add(s);
-
-            CodeSnippetDescriptor codeSnippetDescriptor = new CodeSnippetDescriptor();
-            while (codeSnippetDescriptor.deserialize(deserializer)) {
-                s.getBodySnippets().add(codeSnippetDescriptor);
-                codeSnippetDescriptor = new CodeSnippetDescriptor();
-            }
-
-            s.endDeserialize(deserializer);
             s = new SourceFileDescriptor();
         }
         actual.endDeserialize(deserializer);
@@ -92,6 +80,7 @@ public class PersistenceTest {
 
                         s.setRelativePath(generateRandomString(randGen, false));
                         s.setDir(generateRandomString(randGen, false));
+                        s.setContentHash(generateRandomString(randGen, false));
 
                         int importStatementListSize = randGen.nextInt(5);
                         for (int j = 0; j < importStatementListSize; j++) {

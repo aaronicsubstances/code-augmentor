@@ -3,20 +3,22 @@ package com.aaronicsubstances.programmer.companion.ant.plugin.models;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamWriter;
+import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.StartElement;
 
+import com.aaronicsubstances.programmer.companion.ant.plugin.models.CodeSnippetDescriptor.AugmentingCodeDescriptor;
+import com.aaronicsubstances.programmer.companion.ant.plugin.models.CodeSnippetDescriptor.GeneratedCodeDescriptor;
 import com.aaronicsubstances.programmer.companion.ant.plugin.persistence.XmlEventReaderWrapper;
 
-/**
- * 
- */
 public class SourceFileDescriptor {
     private String dir;
     private String relativePath;
     private List<String> importStatements;
     private CodeSnippetDescriptor headerSnippet;
     private List<CodeSnippetDescriptor> bodySnippets;
+    private String contentHash;
 
     public SourceFileDescriptor() {
     }
@@ -67,11 +69,20 @@ public class SourceFileDescriptor {
         this.bodySnippets = bodySnippets;
     }
 
-    public void beginSerialize(Object serializer) throws Exception {    
+	public String getContentHash() {
+        return contentHash;
+    }
+
+	public void setContentHash(String contentHash) {
+        this.contentHash = contentHash;
+    }
+
+    public void serialize(Object serializer) throws Exception {    
         XMLStreamWriter xmlWriter = (XMLStreamWriter) serializer;
         xmlWriter.writeStartElement("file");
         xmlWriter.writeAttribute("dir", dir);
         xmlWriter.writeAttribute("rel_path", relativePath);
+        xmlWriter.writeAttribute("hash", contentHash);
 
         xmlWriter.writeStartElement("import_list");
         for (String importStatement : importStatements) {
@@ -82,19 +93,52 @@ public class SourceFileDescriptor {
         xmlWriter.writeEndElement(); // import_list
 
         if (headerSnippet != null) {
-            headerSnippet.serialize(xmlWriter, "header_snippet");
+            serializeCodeSnippetDescriptor(xmlWriter, headerSnippet, "header_snippet");
         }
         xmlWriter.writeStartElement("snippet_list");
-    }
 
-    public void endSerialize(Object serializer) throws Exception {        
-        XMLStreamWriter xmlWriter = (XMLStreamWriter) serializer;
+        for (CodeSnippetDescriptor snippet : bodySnippets) {
+            serializeCodeSnippetDescriptor(xmlWriter, snippet, "snippet");
+        }
+               
         xmlWriter.writeEndElement(); // snippet_list
         xmlWriter.writeEndElement(); // file
         xmlWriter.flush();
     }
 
-    public boolean beginDeserialize(Object deserializer) throws Exception {
+    private void serializeCodeSnippetDescriptor(XMLStreamWriter xmlWriter, 
+            CodeSnippetDescriptor snippet, String elementName) throws Exception {
+        xmlWriter.writeStartElement(elementName);
+
+        GeneratedCodeDescriptor generatedCodeDescriptor = snippet.getGeneratedCodeDescriptor();
+        if (generatedCodeDescriptor != null) {
+            xmlWriter.writeStartElement("generated_code_descriptor");
+            xmlWriter.writeAttribute("start_pos", 
+                "" + generatedCodeDescriptor.getStartPos());
+            xmlWriter.writeAttribute("end_pos", 
+                "" + generatedCodeDescriptor.getEndPos());
+            xmlWriter.writeEndElement();
+        }
+
+        AugmentingCodeDescriptor augmentingCodeDescriptor = snippet.getAugmentingCodeDescriptor();
+        xmlWriter.writeStartElement("augmenting_code_descriptor");
+        xmlWriter.writeAttribute("index", 
+            "" + augmentingCodeDescriptor.getIndex());
+        xmlWriter.writeAttribute("start_pos", 
+            "" + augmentingCodeDescriptor.getStartPos());
+        xmlWriter.writeAttribute("end_pos", 
+            "" + augmentingCodeDescriptor.getEndPos());
+        if (augmentingCodeDescriptor.getIndent() != null) {
+            xmlWriter.writeAttribute("indent", augmentingCodeDescriptor.getIndent());
+        }
+        xmlWriter.writeAttribute("is_slash_star", 
+            "" + augmentingCodeDescriptor.isAnnotatedWithSlashStar());
+        xmlWriter.writeEndElement();
+
+        xmlWriter.writeEndElement();
+    }
+
+    public boolean deserialize(Object deserializer) throws Exception {
         XmlEventReaderWrapper xmlReader = (XmlEventReaderWrapper) deserializer;
         StartElement startElement = xmlReader.locateStartElement("file");
         if (startElement == null) {
@@ -102,6 +146,7 @@ public class SourceFileDescriptor {
         }
         dir = XmlEventReaderWrapper.requireAttributeValue(startElement, "dir");
         relativePath = XmlEventReaderWrapper.requireAttributeValue(startElement, "rel_path");
+        contentHash = XmlEventReaderWrapper.requireAttributeValue(startElement, "hash");
         
         importStatements = new ArrayList<>();
         startElement = xmlReader.requireStartElement("import_list");
@@ -115,28 +160,76 @@ public class SourceFileDescriptor {
 
         startElement = xmlReader.requireStartElement(new String[]{ "header_snippet", "snippet_list" });
         if ("header_snippet".equals(startElement.getName().getLocalPart())) {
-            headerSnippet = new CodeSnippetDescriptor();
-            headerSnippet.deserialize(xmlReader, startElement);
+            headerSnippet = deserialize(xmlReader, startElement);
             xmlReader.requireEndElement("header_snippet");
             startElement = xmlReader.requireStartElement("snippet_list");
         }
-        bodySnippets = new ArrayList<>();
-        return true;
-    }
 
-    public void endDeserialize(Object deserializer) throws Exception {        
-        XmlEventReaderWrapper xmlReader = (XmlEventReaderWrapper) deserializer;
+        bodySnippets = new ArrayList<>();
+        while ((startElement = xmlReader.locateStartElement("snippet")) != null) {
+            CodeSnippetDescriptor snippet = deserialize(xmlReader, startElement);
+            bodySnippets.add(snippet);
+            xmlReader.requireEndElement("snippet");
+        }
+            
         xmlReader.requireEndElement("snippet_list");
         xmlReader.requireEndElement("file");
+
+        return true;
     }
+    
+    private CodeSnippetDescriptor deserialize(XmlEventReaderWrapper xmlReader, StartElement startElement) 
+            throws Exception {
+        int startPos, endPos;
+        startElement = xmlReader.requireStartElement( 
+            new String[]{ "generated_code_descriptor", "augmenting_code_descriptor" });
+        GeneratedCodeDescriptor generatedCodeDescriptor = null;
+        if ("generated_code_descriptor".equals(startElement.getName().getLocalPart())) {
+            generatedCodeDescriptor = new GeneratedCodeDescriptor();            
+            startPos = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, 
+                "start_pos");
+            generatedCodeDescriptor.setStartPos(startPos);
+            endPos = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement,
+                "end_pos");
+            generatedCodeDescriptor.setEndPos(endPos);
+            xmlReader.requireEndElement("generated_code_descriptor");
+
+            startElement = xmlReader.requireStartElement( 
+                "augmenting_code_descriptor");
+        }
+
+        AugmentingCodeDescriptor augmentingCodeDescriptor = new AugmentingCodeDescriptor();
+        int index = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, 
+            "index");
+        augmentingCodeDescriptor.setIndex(index);
+        startPos = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, 
+            "start_pos");
+        augmentingCodeDescriptor.setStartPos(startPos);
+        endPos = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement,
+            "end_pos");
+        augmentingCodeDescriptor.setEndPos(endPos);
+        Attribute att = startElement.getAttributeByName(QName.valueOf("indent"));
+        if (att != null) {
+            augmentingCodeDescriptor.setIndent(att.getValue());
+        }
+        boolean isSlashStar = XmlEventReaderWrapper.requireAttributeValueAsBoolean(startElement,
+            "is_slash_star");
+        augmentingCodeDescriptor.setAnnotatedWithSlashStar(isSlashStar);
+        
+        xmlReader.requireEndElement("augmenting_code_descriptor");
+
+        return new CodeSnippetDescriptor(augmentingCodeDescriptor, generatedCodeDescriptor);
+	}
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((bodySnippets == null) ? 0 : bodySnippets.hashCode());
+        result = prime * result + ((contentHash == null) ? 0 : contentHash.hashCode());
         result = prime * result + ((dir == null) ? 0 : dir.hashCode());
         result = prime * result + ((headerSnippet == null) ? 0 : headerSnippet.hashCode());
+        result = prime * result + ((importStatements == null) ? 0 : importStatements.hashCode());
         result = prime * result + ((relativePath == null) ? 0 : relativePath.hashCode());
         return result;
     }
@@ -155,6 +248,11 @@ public class SourceFileDescriptor {
                 return false;
         } else if (!bodySnippets.equals(other.bodySnippets))
             return false;
+        if (contentHash == null) {
+            if (other.contentHash != null)
+                return false;
+        } else if (!contentHash.equals(other.contentHash))
+            return false;
         if (dir == null) {
             if (other.dir != null)
                 return false;
@@ -164,6 +262,11 @@ public class SourceFileDescriptor {
             if (other.headerSnippet != null)
                 return false;
         } else if (!headerSnippet.equals(other.headerSnippet))
+            return false;
+        if (importStatements == null) {
+            if (other.importStatements != null)
+                return false;
+        } else if (!importStatements.equals(other.importStatements))
             return false;
         if (relativePath == null) {
             if (other.relativePath != null)
@@ -175,7 +278,8 @@ public class SourceFileDescriptor {
 
     @Override
     public String toString() {
-        return "SourceFileDescriptor{bodySnippets=" + bodySnippets + ", dir=" + dir + ", headerSnippet="
-                + headerSnippet + ", relativePath=" + relativePath + "}";
+        return "SourceFileDescriptor{bodySnippets=" + bodySnippets + ", contentHash=" + contentHash + ", dir=" + dir
+                + ", headerSnippet=" + headerSnippet + ", importStatements=" + importStatements + ", relativePath="
+                + relativePath + "}";
     }
 }

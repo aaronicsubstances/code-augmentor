@@ -8,9 +8,6 @@ import com.aaronicsubstances.programmer.companion.LexerSupport;
 
 import org.apache.tools.ant.BuildException;
 
-/**
- * 
- */
 public class CodeGenerationRequestSpecification {
 
     // use extension to determine which of XML or qCSV formats to use.

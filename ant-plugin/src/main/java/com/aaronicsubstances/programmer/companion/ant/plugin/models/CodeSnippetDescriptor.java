@@ -1,15 +1,5 @@
 package com.aaronicsubstances.programmer.companion.ant.plugin.models;
 
-import javax.xml.namespace.QName;
-import javax.xml.stream.XMLStreamWriter;
-import javax.xml.stream.events.Attribute;
-import javax.xml.stream.events.StartElement;
-
-import com.aaronicsubstances.programmer.companion.ant.plugin.persistence.XmlEventReaderWrapper;
-
-/**
- * 
- */
 public class CodeSnippetDescriptor {
 
     public static class AugmentingCodeDescriptor {
@@ -191,91 +181,6 @@ public class CodeSnippetDescriptor {
     public void setGeneratedCodeDescriptor(GeneratedCodeDescriptor generatedCodeDescriptor) {
         this.generatedCodeDescriptor = generatedCodeDescriptor;
     }
-
-	public void serialize(Object serializer) throws Exception {    
-        serialize((XMLStreamWriter) serializer, "snippet");
-	}
-
-	void serialize(XMLStreamWriter xmlWriter, String elementName) throws Exception {
-        xmlWriter.writeStartElement(elementName);
-
-        if (generatedCodeDescriptor != null) {
-            xmlWriter.writeStartElement("generated_code_descriptor");
-            xmlWriter.writeAttribute("start_pos", 
-                "" + generatedCodeDescriptor.getStartPos());
-            xmlWriter.writeAttribute("end_pos", 
-                "" + generatedCodeDescriptor.getEndPos());
-            xmlWriter.writeEndElement();
-        }
-
-        xmlWriter.writeStartElement("augmenting_code_descriptor");
-        xmlWriter.writeAttribute("index", 
-            "" + augmentingCodeDescriptor.getIndex());
-        xmlWriter.writeAttribute("start_pos", 
-            "" + augmentingCodeDescriptor.getStartPos());
-        xmlWriter.writeAttribute("end_pos", 
-            "" + augmentingCodeDescriptor.getEndPos());
-        if (augmentingCodeDescriptor.getIndent() != null) {
-            xmlWriter.writeAttribute("indent", augmentingCodeDescriptor.getIndent());
-        }
-        xmlWriter.writeAttribute("is_slash_star", 
-            "" + augmentingCodeDescriptor.isAnnotatedWithSlashStar());
-        xmlWriter.writeEndElement();
-
-        xmlWriter.writeEndElement();
-        xmlWriter.flush();
-    }
-    
-    public boolean deserialize(Object deserializer) throws Exception {
-        XmlEventReaderWrapper xmlReader = (XmlEventReaderWrapper) deserializer;
-        StartElement startElement = xmlReader.locateStartElement("snippet");
-        if (startElement == null) {
-            return false;
-        }
-        deserialize(xmlReader, startElement);
-        xmlReader.requireEndElement("snippet");
-        return true;
-    }
-
-    void deserialize(XmlEventReaderWrapper xmlReader, StartElement startElement) 
-            throws Exception {
-        int startPos, endPos;
-        startElement = xmlReader.requireStartElement( 
-            new String[]{ "generated_code_descriptor", "augmenting_code_descriptor" });
-        if ("generated_code_descriptor".equals(startElement.getName().getLocalPart())) {
-            generatedCodeDescriptor = new GeneratedCodeDescriptor();            
-            startPos = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, 
-                "start_pos");
-            generatedCodeDescriptor.setStartPos(startPos);
-            endPos = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement,
-                "end_pos");
-            generatedCodeDescriptor.setEndPos(endPos);
-            xmlReader.requireEndElement("generated_code_descriptor");
-
-            startElement = xmlReader.requireStartElement( 
-                "augmenting_code_descriptor");
-        }
-
-        augmentingCodeDescriptor = new AugmentingCodeDescriptor();
-        int index = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, 
-            "index");
-        augmentingCodeDescriptor.setIndex(index);
-        startPos = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, 
-            "start_pos");
-        augmentingCodeDescriptor.setStartPos(startPos);
-        endPos = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement,
-            "end_pos");
-        augmentingCodeDescriptor.setEndPos(endPos);
-        Attribute att = startElement.getAttributeByName(QName.valueOf("indent"));
-        if (att != null) {
-            augmentingCodeDescriptor.setIndent(att.getValue());
-        }
-        boolean isSlashStar = XmlEventReaderWrapper.requireAttributeValueAsBoolean(startElement,
-            "is_slash_star");
-        augmentingCodeDescriptor.setAnnotatedWithSlashStar(isSlashStar);
-        
-        xmlReader.requireEndElement("augmenting_code_descriptor");
-	}
 
     @Override
     public int hashCode() {
