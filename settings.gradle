@@ -1,1 +1,1 @@
-include ':core', ':ant-plugin'
+include ':code-augmentor'
