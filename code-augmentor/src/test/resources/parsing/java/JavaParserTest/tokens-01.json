@@ -1,35 +1,14 @@
 [
     {
-        "type": 30,
-        "text": "import",
+        "type": 43,
+        "text": "import com.aaronicsubstances.programmer.companion.utils.*;",
         "startPos": 0,
-        "endPos": 6,
-        "lineNumber": 1,
-        "columnNumber": 1
-    },
-    {
-        "type": 12,
-        "text": " ",
-        "startPos": 6,
-        "endPos": 7,
-        "lineNumber": 1,
-        "columnNumber": 7
-    },
-    {
-        "type": 32,
-        "text": "com.aaronicsubstances.programmer.companion.utils.*",
-        "startPos": 7,
-        "endPos": 57,
-        "lineNumber": 1,
-        "columnNumber": 8
-    },
-    {
-        "type": 36,
-        "text": ";",
-        "startPos": 57,
         "endPos": 58,
         "lineNumber": 1,
-        "columnNumber": 58
+        "columnNumber": 1,
+        "value": {
+            "import": "import com.aaronicsubstances.programmer.companion.utils.*"
+        }
     },
     {
         "type": 10,
@@ -200,7 +179,7 @@
         "columnNumber": 26
     },
     {
-        "type": 7,
+        "type": 50,
         "text": "\"",
         "startPos": 128,
         "endPos": 129,
@@ -216,7 +195,7 @@
         "columnNumber": 28
     },
     {
-        "type": 7,
+        "type": 50,
         "text": "\"",
         "startPos": 150,
         "endPos": 151,
@@ -224,7 +203,7 @@
         "columnNumber": 49
     },
     {
-        "type": 36,
+        "type": 50,
         "text": ";",
         "startPos": 151,
         "endPos": 152,
@@ -304,7 +283,7 @@
         "columnNumber": 11
     },
     {
-        "type": 31,
+        "type": 50,
         "text": "static",
         "startPos": 185,
         "endPos": 191,

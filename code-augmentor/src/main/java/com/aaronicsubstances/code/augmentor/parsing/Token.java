@@ -64,12 +64,16 @@ public class Token {
 			return false;
 		}
 		final Token other = (Token) obj;
-		return this.type == other.type &&
+		boolean v = this.type == other.type &&
 			Objects.equals(this.text, other.text) &&
 			this.startPos == other.startPos &&
 			this.endPos == other.endPos &&
-			this.lineNumber == other.lineNumber &&
-			Objects.equals(this.value, other.value);
+			this.lineNumber == other.lineNumber;
+		if (!v) {
+			return false;
+		}
+		v =	Objects.equals(this.value, other.value);
+		return v;
 	}
 	
 	@Override 

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.aaronicsubstances.code.augmentor.parsing.LexerSupport;
+import com.aaronicsubstances.code.augmentor.parsing.ParserException;
 import com.aaronicsubstances.code.augmentor.parsing.ParserInputSource;
 import com.aaronicsubstances.code.augmentor.parsing.PegToken;
 import com.aaronicsubstances.code.augmentor.parsing.Token;
@@ -13,9 +14,10 @@ import com.aaronicsubstances.code.augmentor.parsing.TokenSupplier;
 
 import org.parboiled.Parboiled;
 import org.parboiled.Rule;
-import org.parboiled.errors.ParseError;
+import org.parboiled.errors.ErrorUtils;
 import org.parboiled.parserunners.ReportingParseRunner;
 import org.parboiled.support.IndexRange;
+//import org.parboiled.support.ParseTreeUtils;
 import org.parboiled.support.ParsingResult;
 
 /**
@@ -43,30 +45,34 @@ public class KotlinParser implements TokenSupplier {
         StringBuilder parserFriendlyInput = new StringBuilder();
         for (int i = 0; i < originalInput.length(); i++) {
             char ch = originalInput.charAt(i);
-            if (LexerSupport.isValidIdentifierChar(ch, false)) {
+            if (LexerSupport.isValidC89IdentifierChar(ch, false)) {
                 parserFriendlyInput.append(ch);
             }
-            else if (Character.isJavaIdentifierPart(ch)) {
-                if (Character.isJavaIdentifierStart(ch)) {
+            else {
+                // Kotlin's definition of valid identifiers is a subset of Java's own,
+                // and maps to Character.isLetter(), LETTER_NUMBER, underscore and Character.isDigit()
+                if (ch == '_' || Character.isLetter(ch) || 
+                        Character.getType(ch) == Character.LETTER_NUMBER) {
                     parserFriendlyInput.append('_');
                 }
-                else {
+                else if (Character.isDigit(ch)) {
                     parserFriendlyInput.append('0');
 
                 }
-            }
-            else {
-                parserFriendlyInput.append(ch);
+                else {
+                    parserFriendlyInput.append(ch);
+                }
             }
         }
 
         ParsingResult<PegToken> result = new ReportingParseRunner<PegToken>(startRule).run(
             parserFriendlyInput.toString());
         if (result.hasErrors()) {
-            ParseError error = result.parseErrors.get(0);
-            inputSource.setPosition(error.getStartIndex());
-            throw inputSource.createAbortException(error.getErrorMessage(), null);
+            String errorMsg = ErrorUtils.printParseErrors(result);
+            throw new ParserException(errorMsg);
         }
+        //System.out.println("\nParse Tree:\n" + ParseTreeUtils.printNodeTree(result) + '\n');
+
         List<PegToken> tokenList = new ArrayList<>();
         for (PegToken t : result.valueStack) {
             // reverse stack
@@ -76,7 +82,7 @@ public class KotlinParser implements TokenSupplier {
         // Convert tokens.
         List<Token> parseResults = new ArrayList<>();
         int prevEndPos = -1;
-        int prevLineNumber = 1;
+        int lineNumber = 1;
         for (PegToken t : tokenList) {
             int type;
             switch (t.type) {
@@ -124,8 +130,6 @@ public class KotlinParser implements TokenSupplier {
             int originalEndPos = t.endPos;
 
             String text = originalInput.substring(originalStartPos, originalEndPos);
-            int lineNumberInc = LexerSupport.calculateLineAndColumnNumbers(text, text.length())[0];
-            int lineNumber = prevLineNumber + lineNumberInc - 1;
             Map<String, Object> value = null;
             if (t.importStatement != null) {
                 value = new HashMap<>();
@@ -145,7 +149,7 @@ public class KotlinParser implements TokenSupplier {
                         importStatementStr.append(' ');
                     }
                 }
-                value.put(Token.VALUE_KEY_IMPORT_STATEMENT, importStatementStr);
+                value.put(Token.VALUE_KEY_IMPORT_STATEMENT, importStatementStr.toString());
             }
             Token retToken = new Token(type, text, originalStartPos, originalEndPos, lineNumber);
             retToken.value = value;
@@ -155,7 +159,9 @@ public class KotlinParser implements TokenSupplier {
                 assert prevEndPos == retToken.startPos;
             }
             prevEndPos = retToken.endPos;
-            prevLineNumber = lineNumber;
+
+            int lineNumberInc = LexerSupport.calculateLineAndColumnNumbers(text, text.length())[0];
+            lineNumber += lineNumberInc - 1;
         }
         return parseResults;
     }

@@ -1,27 +1,14 @@
 [
     {
-        "type": 30,
-        "text": "import",
+        "type": 43,
+        "text": "import  com.aaronicsubstances.programmer.companion.utils.*",
         "startPos": 0,
-        "endPos": 6,
-        "lineNumber": 1,
-        "columnNumber": 1
-    },
-    {
-        "type": 12,
-        "text": "  ",
-        "startPos": 6,
-        "endPos": 8,
-        "lineNumber": 1,
-        "columnNumber": 7
-    },
-    {
-        "type": 32,
-        "text": "com.aaronicsubstances.programmer.companion.utils.*",
-        "startPos": 8,
         "endPos": 58,
         "lineNumber": 1,
-        "columnNumber": 9
+        "columnNumber": 1,
+        "value": {
+            "import": "import com.aaronicsubstances.programmer.companion.utils.*"
+        }
     },
     {
         "type": 10,
@@ -41,7 +28,7 @@
     },
     {
         "type": 3,
-        "text": "/**\r\n * test\r\n */",
+        "text": "/**\r\n * /**/\r\n */",
         "startPos": 62,
         "endPos": 79,
         "lineNumber": 3,
@@ -192,7 +179,7 @@
         "columnNumber": 26
     },
     {
-        "type": 7,
+        "type": 50,
         "text": "\"",
         "startPos": 128,
         "endPos": 129,
@@ -201,14 +188,46 @@
     },
     {
         "type": 20,
-        "text": "around \\\"Nana\\\" place",
+        "text": "around ",
         "startPos": 129,
-        "endPos": 150,
+        "endPos": 136,
         "lineNumber": 7,
         "columnNumber": 28
     },
     {
-        "type": 7,
+        "type": 20,
+        "text": "\\\"",
+        "startPos": 136,
+        "endPos": 138,
+        "lineNumber": 7,
+        "columnNumber": 35
+    },
+    {
+        "type": 20,
+        "text": "Nana",
+        "startPos": 138,
+        "endPos": 142,
+        "lineNumber": 7,
+        "columnNumber": 37
+    },
+    {
+        "type": 20,
+        "text": "\\\"",
+        "startPos": 142,
+        "endPos": 144,
+        "lineNumber": 7,
+        "columnNumber": 41
+    },
+    {
+        "type": 20,
+        "text": " place",
+        "startPos": 144,
+        "endPos": 150,
+        "lineNumber": 7,
+        "columnNumber": 43
+    },
+    {
+        "type": 50,
         "text": "\"",
         "startPos": 150,
         "endPos": 151,
@@ -216,7 +235,7 @@
         "columnNumber": 49
     },
     {
-        "type": 36,
+        "type": 50,
         "text": ";",
         "startPos": 151,
         "endPos": 152,

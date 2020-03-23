@@ -47,20 +47,23 @@ public class JavaParser implements TokenSupplier {
         StringBuilder parserFriendlyInput = new StringBuilder();
         for (int i = 0; i < transformedInput.length(); i++) {
             char ch = transformedInput.charAt(i);
-            if (LexerSupport.isValidIdentifierChar(ch, false)) {
+            // Cater specially for dollar sign since it is valid Java identifier char, but
+            // invalid C89 identifier char. 
+            if (ch == '$' || LexerSupport.isValidC89IdentifierChar(ch, false)) {
                 parserFriendlyInput.append(ch);
             }
-            else if (Character.isJavaIdentifierPart(ch)) {
+            else {
+                // Use in-built Java's means of defining valid identifier
+                // characters.
                 if (Character.isJavaIdentifierStart(ch)) {
                     parserFriendlyInput.append('_');
                 }
-                else {
+                else if (Character.isJavaIdentifierPart(ch)) {
                     parserFriendlyInput.append('0');
-
                 }
-            }
-            else {
-                parserFriendlyInput.append(ch);
+                else {
+                    parserFriendlyInput.append(ch);
+                }
             }
         }
 
@@ -81,7 +84,7 @@ public class JavaParser implements TokenSupplier {
         String originalInput = inputSource.getEmbeddedInputSource().getInput();
         List<Token> parseResults = new ArrayList<>();
         int prevEndPos = -1;
-        int prevLineNumber = 1;
+        int lineNumber = 1;
         for (PegToken t : tokenList) {
             int type;
             switch (t.type) {
@@ -126,8 +129,6 @@ public class JavaParser implements TokenSupplier {
             int originalEndPos = temp[0];
 
             String text = originalInput.substring(originalStartPos, originalEndPos);
-            int lineNumberInc = LexerSupport.calculateLineAndColumnNumbers(text, text.length())[0];
-            int lineNumber = prevLineNumber + lineNumberInc - 1;
             Map<String, Object> value = null;
             if (t.importStatement != null) {
                 value = new HashMap<>();
@@ -140,7 +141,7 @@ public class JavaParser implements TokenSupplier {
                         importStatementStr.append(' ');
                     }
                 }
-                value.put(Token.VALUE_KEY_IMPORT_STATEMENT, importStatementStr);
+                value.put(Token.VALUE_KEY_IMPORT_STATEMENT, importStatementStr.toString());
             }
             Token retToken = new Token(type, text, originalStartPos, originalEndPos, lineNumber);
             retToken.value = value;
@@ -150,7 +151,8 @@ public class JavaParser implements TokenSupplier {
                 assert prevEndPos == retToken.startPos;
             }
             prevEndPos = retToken.endPos;
-            prevLineNumber = lineNumber;
+            int lineNumberInc = LexerSupport.calculateLineAndColumnNumbers(text, text.length())[0];
+            lineNumber += lineNumberInc - 1;
         }
         return parseResults;
     }

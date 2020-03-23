@@ -1,6 +1,6 @@
 [
     {
-        "type": 50,
+        "type": 40,
         "text": "#!kotlinc-jvm",
         "startPos": 0,
         "endPos": 13,
@@ -49,11 +49,19 @@
     },
     {
         "type": 50,
-        "text": "()",
+        "text": "(",
         "startPos": 25,
-        "endPos": 27,
+        "endPos": 26,
         "lineNumber": 3,
         "columnNumber": 9
+    },
+    {
+        "type": 50,
+        "text": ")",
+        "startPos": 26,
+        "endPos": 27,
+        "lineNumber": 3,
+        "columnNumber": 10
     },
     {
         "type": 12,
@@ -104,7 +112,7 @@
         "columnNumber": 9
     },
     {
-        "type": 7,
+        "type": 50,
         "text": "\"",
         "startPos": 40,
         "endPos": 41,
@@ -120,7 +128,7 @@
         "columnNumber": 11
     },
     {
-        "type": 7,
+        "type": 50,
         "text": "\"",
         "startPos": 53,
         "endPos": 54,

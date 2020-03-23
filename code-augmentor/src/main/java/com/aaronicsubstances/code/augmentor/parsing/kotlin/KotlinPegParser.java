@@ -87,21 +87,24 @@ public class KotlinPegParser extends BaseParser<PegToken> {
     @SuppressSubnodes
     Rule ImportStatement() {
         Var<List<IndexRange>> importStatement = new Var<>(new ArrayList<>());
+        Var<IndexRange> temp = new Var<>();
         return Sequence(
                 Sequence(Keyword("import"), addToList(importStatement, matchRange()),
                 Separators(), 
                 ImportContent(importStatement),
                 Optional( 
                     Separators(),
-                    Keyword("as"), addToList(importStatement, matchRange()),
+                    Keyword("as"), temp.set(matchRange()),
                     Separators(),
-                    IdOrNum(), addToList(importStatement, matchRange())),                
+                    IdOrNum(), 
+                    addToList(importStatement, temp.get()),
+                    addToList(importStatement, matchRange())),                
                 Optional(Separators(), ';')),
             push(new PegToken(PegToken.TYPE_IMPORT, matchRange(), importStatement.get())));
     }
 
-    boolean addToList(Var<List<IndexRange>> prev, IndexRange item) {
-        prev.get().add(item);
+    boolean addToList(Var<List<IndexRange>> importStatement, IndexRange item) {
+        importStatement.get().add(item);
         return true;
     }
 
@@ -113,7 +116,8 @@ public class KotlinPegParser extends BaseParser<PegToken> {
 
     @SuppressSubnodes
     Rule OtherToken() {
-        return Sequence(TestNot(Keywords(false)), TestNot(FirstOf("/*", '"', '}', '`')), ANY,
+        return Sequence(TestNot(Keywords(false)), 
+            TestNot(FirstOf("/*", "\"\"\"", '"', '`', '{', '}')), ANY,
             push(new PegToken(PegToken.TYPE_OTHER, matchRange())));
     }
 
@@ -126,24 +130,24 @@ public class KotlinPegParser extends BaseParser<PegToken> {
         return ZeroOrMore(
             FirstOf(EscapedStringContent(), 
                 StringContentTemplate(),
-                Sequence(TestNot('"'), TestNot("${"), LiteralStringContent(false))));
+                LiteralStringContent(false)));
     }
 
     Rule EscapedStringContent() {
-        return Sequence(Sequence("\\", NoneOf("\r\n")),
+        return Sequence(OneOrMore(Sequence("\\", NoneOf("\r\n"))),
             push(new PegToken(PegToken.TYPE_LITERAL_STRING_CONTENT, matchRange())));
     }
 
     Rule LiteralStringContent(boolean tripleQuoted) {
-        return Sequence(tripleQuoted ? ANY : NoneOf("\r\n"),
+        return Sequence(OneOrMore(Sequence(TestNot(FirstOf(tripleQuoted ? "\"\"\"" : '"', "${", "\\")), 
+                tripleQuoted ? ANY : NoneOf("\r\n"))),
             push(new PegToken(PegToken.TYPE_LITERAL_STRING_CONTENT, matchRange()))
         );
     }
 
     Rule TripleQuotedStringContent() {
         return ZeroOrMore(
-            FirstOf(StringContentTemplate(), 
-                Sequence(TestNot("\"\"\""), TestNot("${"), LiteralStringContent(true))));
+            FirstOf(StringContentTemplate(), LiteralStringContent(true)));
     }
 
     Rule StringContentTemplate() {
@@ -153,18 +157,23 @@ public class KotlinPegParser extends BaseParser<PegToken> {
     }
 
     Rule ImportContent(Var<List<IndexRange>> importStatement) {
+        Var<IndexRange> temp = new Var<>();
         return Sequence(
             IdOrNum(), addToList(importStatement, matchRange()),
             ZeroOrMore(Sequence(
                 Separators(), 
-                '.', addToList(importStatement, matchRange()),
+                '.', temp.set(matchRange()),
                 Separators(), 
-                IdOrNum(), addToList(importStatement, matchRange()))),
+                IdOrNum(), 
+                addToList(importStatement, temp.get()),
+                addToList(importStatement, matchRange()))),
             Optional(
                 Separators(), 
-                '.', addToList(importStatement, matchRange()),
+                '.', temp.set(matchRange()),
                 Separators(), 
-                '*', addToList(importStatement, matchRange())));
+                '*', 
+                addToList(importStatement, temp.get()),
+                addToList(importStatement, matchRange())));
     }
 
     Rule PackageContent() {
@@ -194,7 +203,7 @@ public class KotlinPegParser extends BaseParser<PegToken> {
     }
 
     Rule SimpleIdOrNumContent() {
-        return FirstOf(CharRange('A', 'Z'), CharRange('a', 'z'), '_');
+        return FirstOf(CharRange('A', 'Z'), CharRange('a', 'z'), '_', CharRange('0', '9'));
     }
 
     Rule Keywords(boolean validate) {

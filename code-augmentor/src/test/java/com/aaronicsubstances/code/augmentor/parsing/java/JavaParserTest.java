@@ -3,12 +3,10 @@ package com.aaronicsubstances.code.augmentor.parsing.java;
 import static org.testng.Assert.assertEquals;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.TestResourceLoader;
 import com.aaronicsubstances.code.augmentor.parsing.Token;
-import com.google.gson.Gson;
 
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -20,7 +18,8 @@ public class JavaParserTest {
         String input = loadInput(inputIndex);
         JavaParser instance = new JavaParser(input);
 
-        List<Token> expected = new ArrayList<>(deserializeTokens(expectedTokenListIndex));
+        List<Token> expected = new ArrayList<>(TestResourceLoader.deserializeTokens(
+            expectedTokenListIndex, getClass()));
         List<Token> actual = new ArrayList<>(instance.parse());
         // make list same in length to make error messages clearer.
         int maxLen = Math.max(expected.size(), actual.size());
@@ -37,14 +36,6 @@ public class JavaParserTest {
             new Object[]{ 0, 0 },
             new Object[]{ 1, 1 },
         };
-    }
-    
-    private static List<Token> deserializeTokens(int i) {
-        String path = String.format("tokens-%02d.json", i);
-        String text = TestResourceLoader.loadResource(path, JavaParserTest.class);
-        Gson gson = new Gson();
-        Token[] tokens = gson.fromJson(text, Token[].class);
-        return Arrays.asList(tokens);
     }
     
     private static String loadInput(int i) {

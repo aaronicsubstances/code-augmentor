@@ -1,7 +1,7 @@
 import  com.aaronicsubstances.programmer.companion.utils.*
 
 /**
- * test
+ * /**/
  */
 public class test {
     private val name    = "around \"Nana\" place";

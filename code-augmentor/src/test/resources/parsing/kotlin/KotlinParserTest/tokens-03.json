@@ -1,27 +1,14 @@
 [
     {
-        "type": 30,
-        "text": "import",
+        "type": 43,
+        "text": "import org.`xampl`.Message",
         "startPos": 0,
-        "endPos": 6,
-        "lineNumber": 1,
-        "columnNumber": 1
-    },
-    {
-        "type": 12,
-        "text": " ",
-        "startPos": 6,
-        "endPos": 7,
-        "lineNumber": 1,
-        "columnNumber": 7
-    },
-    {
-        "type": 32,
-        "text": "org.example.Message",
-        "startPos": 7,
         "endPos": 26,
         "lineNumber": 1,
-        "columnNumber": 8
+        "columnNumber": 1,
+        "value": {
+            "import": "import org.xampl.Message"
+        }
     },
     {
         "type": 12,
@@ -48,60 +35,15 @@
         "columnNumber": 52
     },
     {
-        "type": 30,
-        "text": "import",
+        "type": 43,
+        "text": "import org.test.Message as testMessage",
         "startPos": 53,
-        "endPos": 59,
-        "lineNumber": 2,
-        "columnNumber": 1
-    },
-    {
-        "type": 12,
-        "text": " ",
-        "startPos": 59,
-        "endPos": 60,
-        "lineNumber": 2,
-        "columnNumber": 7
-    },
-    {
-        "type": 32,
-        "text": "org.test.Message",
-        "startPos": 60,
-        "endPos": 76,
-        "lineNumber": 2,
-        "columnNumber": 8
-    },
-    {
-        "type": 12,
-        "text": " ",
-        "startPos": 76,
-        "endPos": 77,
-        "lineNumber": 2,
-        "columnNumber": 24
-    },
-    {
-        "type": 32,
-        "text": "as",
-        "startPos": 77,
-        "endPos": 79,
-        "lineNumber": 2,
-        "columnNumber": 25
-    },
-    {
-        "type": 12,
-        "text": " ",
-        "startPos": 79,
-        "endPos": 80,
-        "lineNumber": 2,
-        "columnNumber": 27
-    },
-    {
-        "type": 32,
-        "text": "testMessage",
-        "startPos": 80,
         "endPos": 91,
         "lineNumber": 2,
-        "columnNumber": 28
+        "columnNumber": 1,
+        "value": {
+            "import": "import org.test.Message as testMessage"
+        }
     },
     {
         "type": 12,
@@ -328,7 +270,7 @@
         "columnNumber": 26
     },
     {
-        "type": 7,
+        "type": 50,
         "text": "\"",
         "startPos": 198,
         "endPos": 199,
@@ -344,7 +286,7 @@
         "columnNumber": 28
     },
     {
-        "type": 7,
+        "type": 50,
         "text": "\"",
         "startPos": 210,
         "endPos": 211,
@@ -472,7 +414,7 @@
         "columnNumber": 20
     },
     {
-        "type": 57,
+        "type": 50,
         "text": "\"\"\"",
         "startPos": 263,
         "endPos": 266,
@@ -488,7 +430,7 @@
         "columnNumber": 24
     },
     {
-        "type": 57,
+        "type": 50,
         "text": "\"\"\"",
         "startPos": 353,
         "endPos": 356,
@@ -513,11 +455,27 @@
     },
     {
         "type": 50,
-        "text": "())",
+        "text": "(",
         "startPos": 367,
-        "endPos": 370,
+        "endPos": 368,
         "lineNumber": 9,
         "columnNumber": 52
+    },
+    {
+        "type": 50,
+        "text": ")",
+        "startPos": 368,
+        "endPos": 369,
+        "lineNumber": 9,
+        "columnNumber": 53
+    },
+    {
+        "type": 50,
+        "text": ")",
+        "startPos": 369,
+        "endPos": 370,
+        "lineNumber": 9,
+        "columnNumber": 54
     },
     {
         "type": 10,

@@ -73,9 +73,9 @@ public class LexerSupport {
     /**
      * Determines whether ch is a whitespace as defined in C89.
      */
-    public static boolean isWhitespace(int ch) {
+    public static boolean isC89Whitespace(int ch) {
         return ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r' ||
-                ch == '\f';
+                ch == '\f' || ch == '\u000b';
     }
 
 	public static boolean isNewLine(int ch) {
@@ -132,7 +132,7 @@ public class LexerSupport {
      * @param starter true if it is to be also determined whether ch can
      * be a valid start identifier.
      */
-    public static boolean isValidIdentifierChar(int ch, boolean starter) {
+    public static boolean isValidC89IdentifierChar(int ch, boolean starter) {
         if (ch == '_' || isAlpha(ch)) {
             return true;
         }

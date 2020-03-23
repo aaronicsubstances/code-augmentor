@@ -67,8 +67,8 @@ public class JavaPegParser extends BaseParser<PegToken> {
             push(new PegToken(PegToken.TYPE_IMPORT, matchRange(), importStatement.get())));
     }
 
-    boolean addToList(Var<List<IndexRange>> prev, IndexRange item) {
-        prev.get().add(item);
+    boolean addToList(Var<List<IndexRange>> importStatement, IndexRange item) {
+        importStatement.get().add(item);
         return true;
     }
 
@@ -108,18 +108,23 @@ public class JavaPegParser extends BaseParser<PegToken> {
     }
 
     Rule ImportContent(Var<List<IndexRange>> importStatement) {
+        Var<IndexRange> temp = new Var<>();
         return Sequence(
             IdOrNum(), addToList(importStatement, matchRange()),
             ZeroOrMore(Sequence(
                 Separators(), 
-                '.', addToList(importStatement, matchRange()),
+                '.', temp.set(matchRange()),
                 Separators(), 
-                IdOrNum(), addToList(importStatement, matchRange()))),
+                IdOrNum(),
+                addToList(importStatement, temp.get()),
+                addToList(importStatement, matchRange()))),
             Optional(
                 Separators(), 
-                '.', addToList(importStatement, matchRange()),
+                '.', temp.set(matchRange()),
                 Separators(), 
-                '*', addToList(importStatement, matchRange())));
+                '*', 
+                addToList(importStatement, temp.get()),
+                addToList(importStatement, matchRange())));
     }
 
     Rule PackageContent() {
@@ -136,7 +141,7 @@ public class JavaPegParser extends BaseParser<PegToken> {
     }
 
     Rule IdOrNumContent() {
-        return FirstOf(CharRange('A', 'Z'), CharRange('a', 'z'), '_');
+        return FirstOf(CharRange('A', 'Z'), CharRange('a', 'z'), '_', CharRange('0', '9'));
     }
 
     Rule Keywords(boolean validate) {

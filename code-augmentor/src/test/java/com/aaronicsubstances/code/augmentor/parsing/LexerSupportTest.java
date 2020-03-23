@@ -101,7 +101,7 @@ public class LexerSupportTest {
 
     @Test(dataProvider = "createTestIsWhitespaceData")
     public void testIsWhitespace(int ch, boolean expResult) {
-        boolean result = LexerSupport.isWhitespace(ch);
+        boolean result = LexerSupport.isC89Whitespace(ch);
         assertEquals(result, expResult);
     }
     
@@ -114,7 +114,7 @@ public class LexerSupportTest {
             new Object[]{ (int)'\n', true },
             new Object[]{ (int)'\r', true },
             new Object[]{ (int)'\f', true },
-            new Object[]{ (int)'\u000b', false },
+            new Object[]{ (int)'\u000b', true },
             new Object[]{ (int)'0', false },
             new Object[]{ (int)'_', false }
         };
@@ -291,7 +291,7 @@ public class LexerSupportTest {
 
     @Test(dataProvider = "createTestIsValidIdentifierCharData")
     public void testIsValidIdentifierChar(int ch, boolean starter, boolean expResult) {
-        boolean result = LexerSupport.isValidIdentifierChar(ch, starter);
+        boolean result = LexerSupport.isValidC89IdentifierChar(ch, starter);
         assertEquals(result, expResult);
     }
     

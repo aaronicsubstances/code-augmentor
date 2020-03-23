@@ -1,83 +1,11 @@
 [
     {
-        "type": 50,
-        "text": "package",
+        "type": 42,
+        "text": "package com.aaronicsubstances.programmer.companion;",
         "startPos": 0,
-        "endPos": 7,
-        "lineNumber": 1,
-        "columnNumber": 1
-    },
-    {
-        "type": 12,
-        "text": " ",
-        "startPos": 7,
-        "endPos": 8,
-        "lineNumber": 1,
-        "columnNumber": 8
-    },
-    {
-        "type": 50,
-        "text": "com",
-        "startPos": 8,
-        "endPos": 11,
-        "lineNumber": 1,
-        "columnNumber": 9
-    },
-    {
-        "type": 50,
-        "text": ".",
-        "startPos": 11,
-        "endPos": 12,
-        "lineNumber": 1,
-        "columnNumber": 12
-    },
-    {
-        "type": 50,
-        "text": "aaronicsubstances",
-        "startPos": 12,
-        "endPos": 29,
-        "lineNumber": 1,
-        "columnNumber": 13
-    },
-    {
-        "type": 50,
-        "text": ".",
-        "startPos": 29,
-        "endPos": 30,
-        "lineNumber": 1,
-        "columnNumber": 30
-    },
-    {
-        "type": 50,
-        "text": "programmer",
-        "startPos": 30,
-        "endPos": 40,
-        "lineNumber": 1,
-        "columnNumber": 31
-    },
-    {
-        "type": 50,
-        "text": ".",
-        "startPos": 40,
-        "endPos": 41,
-        "lineNumber": 1,
-        "columnNumber": 41
-    },
-    {
-        "type": 50,
-        "text": "companion",
-        "startPos": 41,
-        "endPos": 50,
-        "lineNumber": 1,
-        "columnNumber": 42
-    },
-    {
-        "type": 36,
-        "text": ";",
-        "startPos": 50,
         "endPos": 51,
         "lineNumber": 1,
-        "columnNumber": 51
+        "columnNumber": 1
     },
     {
         "type": 10,
