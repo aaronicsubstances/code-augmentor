@@ -23,20 +23,7 @@ import org.parboiled.support.ParsingResult;
  * Parses Java source code into a limited set of tokens from which new lines and comments
  * can be extracted.
  */
-public class JavaParser implements TokenSupplier {
-	public static final int TOKEN_TYPE_EOF = -1;
-	public static final int TOKEN_TYPE_SINGLE_LINE_COMMENT = 1;
-	public static final int TOKEN_TYPE_MULTI_LINE_COMMENT = 3;
-    public static final int TOKEN_TYPE_SINGLE_LINE_STRING_DELIMITER = 7;
-    public static final int TOKEN_TYPE_NEWLINE = 10;
-    public static final int TOKEN_TYPE_NON_NEWLINE_WHITESPACE = 12;
-    public static final int TOKEN_TYPE_LITERAL_STRING_CONTENT = 20;
-    public static final int TOKEN_TYPE_PACKAGE_STATEMENT = 40;
-    public static final int TOKEN_TYPE_IMPORT_STATEMENT = 41;
-    public static final int TOKEN_TYPE_OTHER = 50;
-
-    public static final String TOKEN_VALUE_KEY_IMPORT_STATEMENT = "import";
-    
+public class JavaParser implements TokenSupplier {    
     private final ParserInputSource inputSource;
 
     public JavaParser(String input) {
@@ -60,7 +47,10 @@ public class JavaParser implements TokenSupplier {
         StringBuilder parserFriendlyInput = new StringBuilder();
         for (int i = 0; i < transformedInput.length(); i++) {
             char ch = transformedInput.charAt(i);
-            if (Character.isJavaIdentifierPart(ch)) {
+            if (LexerSupport.isValidIdentifierChar(ch, false)) {
+                parserFriendlyInput.append(ch);
+            }
+            else if (Character.isJavaIdentifierPart(ch)) {
                 if (Character.isJavaIdentifierStart(ch)) {
                     parserFriendlyInput.append('_');
                 }
@@ -75,7 +65,7 @@ public class JavaParser implements TokenSupplier {
         }
 
         ParsingResult<PegToken> result = new ReportingParseRunner<PegToken>(startRule).run(
-            inputSource.getInput());
+            parserFriendlyInput.toString());
         if (result.hasErrors()) {
             ParseError error = result.parseErrors.get(0);
             inputSource.setPosition(error.getStartIndex());
@@ -96,32 +86,30 @@ public class JavaParser implements TokenSupplier {
             int type;
             switch (t.type) {
                 case PegToken.TYPE_DS_COMMENT:
-                    type = TOKEN_TYPE_SINGLE_LINE_COMMENT;
+                    type = Token.TYPE_SINGLE_LINE_COMMENT;
                     break;
                 case PegToken.TYPE_SS_COMMENT:
-                    type = TOKEN_TYPE_MULTI_LINE_COMMENT;
+                    type = Token.TYPE_MULTI_LINE_COMMENT;
                     break;
                 case PegToken.TYPE_NON_NEWLINE_WS:
-                    type = TOKEN_TYPE_NON_NEWLINE_WHITESPACE;
+                    type = Token.TYPE_NON_NEWLINE_WHITESPACE;
                     break;
                 case PegToken.TYPE_NEWLINE:
-                    type = TOKEN_TYPE_NEWLINE;
+                    type = Token.TYPE_NEWLINE;
                     break;
                 case PegToken.TYPE_PACKAGE:
-                    type = TOKEN_TYPE_PACKAGE_STATEMENT;
+                    type = Token.TYPE_PACKAGE_STATEMENT;
                     break;
                 case PegToken.TYPE_IMPORT:
-                    type = TOKEN_TYPE_IMPORT_STATEMENT;
-                    break;
-                case PegToken.TYPE_STRING_DELIMITER:
-                    type = TOKEN_TYPE_SINGLE_LINE_STRING_DELIMITER;
+                    type = Token.TYPE_IMPORT_STATEMENT;
                     break;
                 case PegToken.TYPE_LITERAL_STRING_CONTENT:
-                    type = TOKEN_TYPE_LITERAL_STRING_CONTENT;
+                    type = Token.TYPE_LITERAL_STRING_CONTENT;
                     break;
+                case PegToken.TYPE_STRING_DELIMITER:
                 case PegToken.TYPE_QUASI_ID:
                 case PegToken.TYPE_OTHER:
-                    type = TOKEN_TYPE_OTHER;
+                    type = Token.TYPE_OTHER;
                     break;
                 default:
                     inputSource.setPosition(t.startPos);
@@ -145,13 +133,14 @@ public class JavaParser implements TokenSupplier {
                 value = new HashMap<>();
                 StringBuilder importStatementStr = new StringBuilder();
                 for (IndexRange range : t.importStatement) {
+                    // make sure to use transformed input, not original.
                     String s = transformedInput.substring(range.start, range.end);
                     importStatementStr.append(s);
                     if ("import".equals(s) || "static".equals(s)) {
                         importStatementStr.append(' ');
                     }
                 }
-                value.put(TOKEN_VALUE_KEY_IMPORT_STATEMENT, importStatementStr);
+                value.put(Token.VALUE_KEY_IMPORT_STATEMENT, importStatementStr);
             }
             Token retToken = new Token(type, text, originalStartPos, originalEndPos, lineNumber);
             retToken.value = value;

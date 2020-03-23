@@ -19,13 +19,11 @@ import com.aaronicsubstances.code.augmentor.models.SourceFileDescriptor;
 import com.aaronicsubstances.code.augmentor.parsing.ParserException;
 import com.aaronicsubstances.code.augmentor.parsing.ParserInputSource;
 import com.aaronicsubstances.code.augmentor.parsing.Token;
-import com.aaronicsubstances.code.augmentor.parsing.java.JavaParser;
 
 /**
  * CodeGenerationRequestCreator
  */
-public class CodeGenerationRequestCreator {    
-    static final int SUFFIX_TYPE_HEADER = 1;
+public class CodeGenerationRequestCreator {
     static final int SUFFIX_TYPE_GEN_CODE_START = 10;
     static final int SUFFIX_TYPE_GEN_CODE_END = 11;
     static final int SUFFIX_TYPE_EMB_STRING = 21;
@@ -100,7 +98,6 @@ public class CodeGenerationRequestCreator {
     private int runningIndex;
 
     public CodeGenerationRequestCreator(
-            List<String> headerDoubleSlashSuffixes,
             List<String> genCodeStartSuffixes,
             List<String> genCodeEndSuffixes,
             List<String> embeddedStringDoubleSlashSuffixes,
@@ -108,12 +105,6 @@ public class CodeGenerationRequestCreator {
         suffixDescriptors = new ArrayList<SuffixDescriptor>();
         List<String> doubleSlashSuffixes = new ArrayList<>();
         List<String> slashStarSuffixes = new ArrayList<>();
-
-        // add suffixes for file header (ie import section)
-        for (String s : headerDoubleSlashSuffixes) {
-            suffixDescriptors.add(new SuffixDescriptor(s, SUFFIX_TYPE_HEADER, -1));
-            doubleSlashSuffixes.add(s);
-        }
 
         // add suffixes for beginning of generated code.
         for (String s : genCodeStartSuffixes) {
@@ -179,10 +170,10 @@ public class CodeGenerationRequestCreator {
 
     SuffixDescriptor getSuffixDescriptor(Token t) {
         Matcher regexMatcher;
-        if (t.type == JavaParser.TOKEN_TYPE_SINGLE_LINE_COMMENT) {
+        if (t.type == Token.TYPE_SINGLE_LINE_COMMENT) {
             regexMatcher = DOUBLE_SLASH_PATTERN.matcher(getCommentContentWithoutSuffix(t, ""));
         }
-        else if (t.type == JavaParser.TOKEN_TYPE_MULTI_LINE_COMMENT) {
+        else if (t.type == Token.TYPE_MULTI_LINE_COMMENT) {
             regexMatcher = SLASH_STAR_PATTERN.matcher(getCommentContentWithoutSuffix(t, ""));
         }
         else {
@@ -206,7 +197,7 @@ public class CodeGenerationRequestCreator {
         // 1. first get all slash star comments relevant as aug code.
         List<Token> slashStarRelevantTokens = getSlashStarRelevantTokens(sourceTokens);
 
-        // 2. next, get all double slash comments relevant as aug code, emb string or header.
+        // 2. next, get all double slash comments relevant as aug code or emb string.
         List<Token> doubleSlashRelevantTokens = getDoubleSlashReleventTokens(sourceTokens);
         
         // 3. group and validate double slash relevant tokens. slash star relevant tokens
@@ -222,26 +213,6 @@ public class CodeGenerationRequestCreator {
                 errors.add(error);
             }
         }
-        if (errors != null && errors.isEmpty()) {
-            // assert at most 1 header section.
-            boolean headerBlockSeen = false;
-            for (List<Token> relevantTokenGroup : doubleSlashRelevantTokenGroups) {
-                Token t = relevantTokenGroup.get(0);
-                SuffixDescriptor suffixDescriptor = getTokenAttributeSuffixDescriptor(t.value);
-                if (suffixDescriptor.suffixType == SUFFIX_TYPE_HEADER) {
-                    if (!headerBlockSeen) {
-                        headerBlockSeen = true;
-                    }
-                    else {
-                        ParserException error = inputSource.createAbortException("Duplicate header section", t);                        
-                        if (errors == null) {
-                            throw error;
-                        }
-                        errors.add(error);
-                    }
-                }
-            }
-        }
 
         // 4. If there are no validation errors,
         //    combine slash star and double slash aug codes, and sort them.
@@ -253,7 +224,6 @@ public class CodeGenerationRequestCreator {
 
         // 5. generate aug code blocks and associated descriptors
         List<CodeSnippetDescriptor> bodySnippets = new ArrayList<>();
-        CodeSnippetDescriptor headerSnippet = null;
         for (Object o : combined) {
             AugmentingCodeDescriptor augCodeDescriptor;
             GeneratedCodeDescriptor genCodeDescriptor;
@@ -280,21 +250,8 @@ public class CodeGenerationRequestCreator {
                 SuffixDescriptor suffixDescriptor = (SuffixDescriptor)tokenAttributes.get(TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR);
                 StringBuilder indentBuilder = new StringBuilder();
                 augmentingCode = createDoubleSlashAugCode(doubleSlashGroup, indentBuilder);
-                augCodeDescriptor.setIndent(indentBuilder.toString());
-
-                if (suffixDescriptor.suffixType == SUFFIX_TYPE_HEADER) {
-                    assert headerSnippet == null;
-
-                    headerSnippet = new CodeSnippetDescriptor();
-                    headerSnippet.setAugmentingCodeDescriptor(augCodeDescriptor);
-                    headerSnippet.setGeneratedCodeDescriptor(genCodeDescriptor);
-                    
-                    continue;
-                }
-                else {
-                    assert suffixDescriptor.suffixType == SUFFIX_TYPE_AUG_CODE;                    
-                    augCodeSpecIndex = suffixDescriptor.augCodeSpecIndex;
-                }
+                augCodeDescriptor.setIndent(indentBuilder.toString());                  
+                augCodeSpecIndex = suffixDescriptor.augCodeSpecIndex;
             }
             else {
                 Token starSlashSingle = (Token)o;
@@ -306,7 +263,7 @@ public class CodeGenerationRequestCreator {
                 augCodeDescriptor.setEndPos(starSlashSingle.endPos);
 
                 // b. create gen code descriptor.
-                Map<String, Object> tokenAttributes = (Map<String, Object>)starSlashSingle.value;
+                Map<String, Object> tokenAttributes = starSlashSingle.value;
                 int tokenIndex = (int)tokenAttributes.get(TOKEN_ATTRIBUTE_INDEX_IN_SOURCE);
                 genCodeDescriptor = createGeneratedCodeDescriptor(sourceTokens, tokenIndex + 1,
                     true);
@@ -335,17 +292,13 @@ public class CodeGenerationRequestCreator {
             runningIndex++;
         }
 
-        // 5. finally get all imports and normalize them.
-        List<String> normalizedImports;
-        if (headerSnippet != null) {
-            normalizedImports = getNormalizedImportStatements(sourceTokens);
-        }
-        else {
-            normalizedImports = Arrays.asList();
-        }
+        // 6. finally determine header section boundaries and contents.
+        List<String> normalizedImports = getNormalizedImportStatements(sourceTokens);
+        int headerSnippet = determineHeaderSnippetDescriptor(sourceTokens);
+
         SourceFileDescriptor sourceDescriptor = new SourceFileDescriptor(
             normalizedImports, bodySnippets);
-        sourceDescriptor.setHeaderSnippet(headerSnippet);
+        sourceDescriptor.setHeaderInsertPos(headerSnippet);
         return sourceDescriptor;
     }
 
@@ -353,12 +306,13 @@ public class CodeGenerationRequestCreator {
         List<Token> tokens = new ArrayList<>();
         for (int i = 0; i < sourceTokens.size(); i++) {
             Token t = sourceTokens.get(i);
-            if (t.type == JavaParser.TOKEN_TYPE_MULTI_LINE_COMMENT) {
+            if (t.type == Token.TYPE_MULTI_LINE_COMMENT) {
                 SuffixDescriptor suffixDescriptor = getSuffixDescriptor(t);
                 if (suffixDescriptor != null && suffixDescriptor.suffixType == SUFFIX_TYPE_AUG_CODE) {
                     Map<String, Object> tokenAttributes = new HashMap<>();
                     tokenAttributes.put(TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR, suffixDescriptor);
                     tokenAttributes.put(TOKEN_ATTRIBUTE_INDEX_IN_SOURCE, i);
+                    assert t.value == null;
                     t.value = tokenAttributes;
                     tokens.add(t);
                 }
@@ -373,7 +327,7 @@ public class CodeGenerationRequestCreator {
         StringBuilder indentBuilder = new StringBuilder();
         for (int i = 0; i < sourceTokens.size(); i++) {            
             Token t = sourceTokens.get(i);
-            if (t.type == JavaParser.TOKEN_TYPE_NEWLINE) {
+            if (t.type == Token.TYPE_NEWLINE) {
                 skipDslashSearch = false;
                 indentBuilder.setLength(0);
                 continue;
@@ -382,10 +336,10 @@ public class CodeGenerationRequestCreator {
                 continue;
             }
 
-            if (t.type == JavaParser.TOKEN_TYPE_NON_NEWLINE_WHITESPACE) {
+            if (t.type == Token.TYPE_NON_NEWLINE_WHITESPACE) {
                 indentBuilder.append(t.text);
             }
-            else if (t.type == JavaParser.TOKEN_TYPE_SINGLE_LINE_COMMENT) {
+            else if (t.type == Token.TYPE_SINGLE_LINE_COMMENT) {
                 SuffixDescriptor suffixDescriptor = getSuffixDescriptor(t);
                 if (suffixDescriptor != null && 
                         suffixDescriptor.suffixType != SUFFIX_TYPE_GEN_CODE_START &&
@@ -396,9 +350,10 @@ public class CodeGenerationRequestCreator {
                     tokenAttributes.put(TOKEN_ATTRIBUTE_INDENT, indentBuilder.toString());
                     if (i + 1 < sourceTokens.size()) {
                         Token ffNewline = sourceTokens.get(i + 1);
-                        assert ffNewline.type == JavaParser.TOKEN_TYPE_NEWLINE;
+                        assert ffNewline.type == Token.TYPE_NEWLINE;
                         tokenAttributes.put(TOKEN_ATTRIBUTE_FF_NEWLINE, ffNewline);
                     }
+                    assert t.value == null;
                     t.value = tokenAttributes;
                     tokens.add(t);
                 }
@@ -422,8 +377,8 @@ public class CodeGenerationRequestCreator {
             Token t = sourceTokens.get(i);
             // only tolerate whitespace as the only different token to expect,
             // not even gen code end.
-            if (t.type == JavaParser.TOKEN_TYPE_NON_NEWLINE_WHITESPACE ||
-                    t.type == JavaParser.TOKEN_TYPE_NEWLINE) {
+            if (t.type == Token.TYPE_NON_NEWLINE_WHITESPACE ||
+                    t.type == Token.TYPE_NEWLINE) {
                 continue;
             }
             // don't bother checking if relevant tokens other than gen code start or 
@@ -457,10 +412,10 @@ public class CodeGenerationRequestCreator {
                     generatedCodeDescriptor.setStartPos(sourceTokens.get(startIndex).startPos);
                     generatedCodeDescriptor.setEndPos(t.endPos);
                     // consume following new line if double slash comment.
-                    if (t.type == JavaParser.TOKEN_TYPE_SINGLE_LINE_COMMENT && 
+                    if (t.type == Token.TYPE_SINGLE_LINE_COMMENT && 
                             i + 1 < sourceTokens.size()) {
                         Token nextToken = sourceTokens.get(i + 1);
-                        assert nextToken.type == JavaParser.TOKEN_TYPE_NEWLINE;
+                        assert nextToken.type == Token.TYPE_NEWLINE;
                         generatedCodeDescriptor.setEndPos(nextToken.endPos);
                     }
                     return generatedCodeDescriptor;
@@ -492,27 +447,13 @@ public class CodeGenerationRequestCreator {
             List<Token> tokenGroup, 
             ParserInputSource inputSource) {
         Token token = tokenGroup.get(0);
-        SuffixDescriptor suffixDescriptor = getTokenAttributeSuffixDescriptor(token.value);
-        if (suffixDescriptor.suffixType == SUFFIX_TYPE_HEADER) {
-            for (int i = 1; i < tokenGroup.size(); i++) {
-                token = tokenGroup.get(i);
-                suffixDescriptor = getTokenAttributeSuffixDescriptor(token.value);
-                switch (suffixDescriptor.suffixType) {
-                    case SUFFIX_TYPE_HEADER:
-                        break;
-                    default:
-                        return inputSource.createAbortException("Expected header comment marker suffix", token);
-                }
-            }
-        }
-        else if (suffixDescriptor.suffixType == SUFFIX_TYPE_AUG_CODE) {
+        SuffixDescriptor suffixDescriptor = (SuffixDescriptor)token.value.get(TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR);
+        if (suffixDescriptor.suffixType == SUFFIX_TYPE_AUG_CODE) {
             int expectedAugCodeSpecIndex = suffixDescriptor.augCodeSpecIndex;
             for (int i = 1; i < tokenGroup.size(); i++) {
                 token = tokenGroup.get(i);
-                suffixDescriptor = getTokenAttributeSuffixDescriptor(token.value);
+                suffixDescriptor = (SuffixDescriptor)token.value.get(TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR);
                 switch (suffixDescriptor.suffixType) {
-                    case SUFFIX_TYPE_HEADER:
-                        return inputSource.createAbortException("Unexpected header comment marker suffix", token);
                     case SUFFIX_TYPE_EMB_STRING:
                         break;
                     default:
@@ -592,7 +533,6 @@ public class CodeGenerationRequestCreator {
 
         /*
          * Set minimum indent and consolidate with new lines.
-         * Cater for both header and real aug code.
          */
 
         String[] contentLines = new String[doubleSlashGroup.size()];
@@ -601,7 +541,7 @@ public class CodeGenerationRequestCreator {
 
         for (int i = 0; i < doubleSlashGroup.size(); i++) {
             Token t = doubleSlashGroup.get(i);
-            Map<String, Object> tokenAttributes = (Map<String, Object>)t.value;
+            Map<String, Object> tokenAttributes = t.value;
 
             // set minimum indent.
             String indent = (String)tokenAttributes.get(TOKEN_ATTRIBUTE_INDENT);
@@ -683,31 +623,39 @@ public class CodeGenerationRequestCreator {
         int i = 0;
         while (i < sourceTokens.size()) {
             Token t = sourceTokens.get(i);
-            if (t.type == JavaParser.TOKEN_TYPE_IMPORT_STATEMENT) {
-                Map<String, Object> tokenAttributes = (Map<String, Object>)t.value;
+            if (t.type == Token.TYPE_IMPORT_STATEMENT) {
+                Map<String, Object> tokenAttributes = t.value;
                 String importStatement = (String)tokenAttributes.get(
-                    JavaParser.TOKEN_VALUE_KEY_IMPORT_STATEMENT);
-                // normalize import by using a common whitespace separator.
-                String normaizedImport = importStatement.toString().trim().replaceAll("\\s+", " ");
-                normalizedImports.add(normaizedImport);
+                    Token.VALUE_KEY_IMPORT_STATEMENT);
+                normalizedImports.add(importStatement);
             }
             i++;
         }
         return normalizedImports;
     }
 
-    static SuffixDescriptor getTokenAttributeSuffixDescriptor(Object tokenValue) {
-        Map<String, Object> tokenAttributes = (Map<String, Object>)tokenValue;
-        SuffixDescriptor suffixDescriptor = (SuffixDescriptor)tokenAttributes.get(TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR);
-        return suffixDescriptor;
+    static int determineHeaderSnippetDescriptor(List<Token> sourceTokens) {
+        // place just after imports, package or shebang.
+        for (int i = sourceTokens.size() - 1; i >= 0; i--) {
+            Token t = sourceTokens.get(i);
+            switch (t.type) {
+                case Token.TYPE_SHEBANG:
+                case Token.TYPE_PACKAGE_STATEMENT:
+                case Token.TYPE_IMPORT_STATEMENT:                    
+                    return t.endPos;
+                default:
+                    break;
+            }
+        }
+        return 0;
     }
 
     static String getCommentContentWithoutSuffix(Token t, String suffix) {
-        if (t.type == JavaParser.TOKEN_TYPE_MULTI_LINE_COMMENT) {
+        if (t.type == Token.TYPE_MULTI_LINE_COMMENT) {
             return t.text.substring(("/*" + suffix).length(), t.text.length() - "*/".length());
         }
         else {
-            assert t.type == JavaParser.TOKEN_TYPE_SINGLE_LINE_COMMENT;
+            assert t.type == Token.TYPE_SINGLE_LINE_COMMENT;
             return t.text.substring(("//" + suffix).length());
         }
     }

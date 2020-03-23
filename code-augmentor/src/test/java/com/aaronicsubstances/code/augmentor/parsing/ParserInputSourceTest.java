@@ -46,7 +46,7 @@ public class ParserInputSourceTest {
         Token macToken = new Token(1, null, 26, 31, 3);
         return new Object[][]{
             new Object[]{ "testConsume-win32.txt", 10, null, 1, 11, "testAbortSnippet-01.txt" },
-            new Object[]{ "testConsume-unix.txt", 14, eofToken, 2, 4, "testAbortSnippet-02.txt" },
+            new Object[]{ "testConsume-unix.txt", 17, eofToken, 2, 4, "testAbortSnippet-02.txt" },
             new Object[]{ "testConsume-mac.txt", 0, macToken, 3, 1, "testAbortSnippet-03.txt" },
         };
     }

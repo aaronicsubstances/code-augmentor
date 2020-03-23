@@ -21,7 +21,6 @@ import com.aaronicsubstances.code.augmentor.models.SourceFileDescriptor;
 import com.aaronicsubstances.code.augmentor.parsing.LexerSupport;
 import com.aaronicsubstances.code.augmentor.parsing.ParserException;
 import com.aaronicsubstances.code.augmentor.parsing.Token;
-import com.aaronicsubstances.code.augmentor.parsing.java.JavaParser;
 
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Task;
@@ -170,12 +169,6 @@ public class CodeAugmentationTask extends Task {
                         String.format("at %s - %s in %s", augCodeDescriptor.getStartPos(),
                         augCodeDescriptor.getEndPos(), srcFile), ex);
                 }
-                if (!headerImports.isEmpty() && sourceFileDescriptor.getHeaderSnippet() == null) {
-                    throw new BuildException("No header code section specified to place generated header " +
-                        "code for aug code section " +
-                        String.format("at %s - %s in %s", augCodeDescriptor.getStartPos(),
-                        augCodeDescriptor.getEndPos(), srcFile));
-                }
                 List<Token> tokens;
                 try {
                     tokens = TaskUtils.parseSourceCode(sourceFileDescriptor.getRelativePath(), 
@@ -202,20 +195,14 @@ public class CodeAugmentationTask extends Task {
 
             // identify new imports.
             String headerImport = null;
-            if (sourceFileDescriptor.getHeaderSnippet() != null) {
-                String indent = sourceFileDescriptor.getHeaderSnippet()
-                    .getAugmentingCodeDescriptor().getIndent();
-                List<String> existingImports = sourceFileDescriptor.getImportStatements();
+            List<String> existingImports = sourceFileDescriptor.getImportStatements();
+            if (!existingImports.isEmpty()) {
                 headerImport = String.join(newline, sourceFileImports.stream().distinct()
                     .filter(imp -> !existingImports.contains(imp))
                     .sorted()
                     .collect(Collectors.toList()));
-                if (!TaskUtils.isNullOrEmpty(indent)) {
-                    headerImport = indentCode(headerImport, indent);
-                }
-                headerImport = wrapInGeneratedCodeComments(headerImport, 
-                    result.getGenCodeStartSuffix(), result.getGenCodeEndSuffix());
-                headerImport = newline + headerImport;
+                // surround with newlines.
+                headerImport = newline + headerImport + newline;
             }
 
             // Now merge generated code into source code.
@@ -225,12 +212,8 @@ public class CodeAugmentationTask extends Task {
                 CodeSnippetDescriptor snippetDescriptor = sourceFileDescriptor.getBodySnippets().get(i);
                 AugmentingCodeDescriptor augCodeDescriptor = snippetDescriptor.getAugmentingCodeDescriptor();
                 GeneratedCodeDescriptor genCodeDescriptor = snippetDescriptor.getGeneratedCodeDescriptor();
-                if (sourceFileDescriptor.getHeaderSnippet() != null) {
-                    CodeSnippetDescriptor headerSnippet = sourceFileDescriptor.getHeaderSnippet();
-                    AugmentingCodeDescriptor headerAugCodeDescriptor = headerSnippet.getAugmentingCodeDescriptor();
-                    if (headerAugCodeDescriptor.getStartPos() < augCodeDescriptor.getStartPos()) {
-                        break;
-                    }
+                if (headerImport != null && sourceFileDescriptor.getHeaderInsertPos() < augCodeDescriptor.getStartPos()) {
+                    break;
                 }
                 String genCode = generatedCodes.get(i);
                 if (genCodeDescriptor != null) {
@@ -241,18 +224,8 @@ public class CodeAugmentationTask extends Task {
                     transformer.addTransform(genCode, augCodeDescriptor.getEndPos());
                 }
             }
-            if (sourceFileDescriptor.getHeaderSnippet() != null) {
-                CodeSnippetDescriptor headerSnippet = sourceFileDescriptor.getHeaderSnippet();
-                AugmentingCodeDescriptor headerAugCodeDescriptor = headerSnippet.getAugmentingCodeDescriptor();
-                GeneratedCodeDescriptor genCodeDescriptor = headerSnippet.getGeneratedCodeDescriptor();
-                String genCode = headerImport;
-                if (genCodeDescriptor != null) {
-                    transformer.addTransform(genCode, genCodeDescriptor.getStartPos(),
-                        genCodeDescriptor.getEndPos());
-                }
-                else {
-                    transformer.addTransform(genCode, headerAugCodeDescriptor.getEndPos());
-                }
+            if (headerImport != null) {
+                transformer.addTransform(headerImport, sourceFileDescriptor.getHeaderInsertPos());
             }
             for (; i < generatedCodes.size(); i++) {
                 CodeSnippetDescriptor snippetDescriptor = sourceFileDescriptor.getBodySnippets().get(i);
@@ -297,7 +270,7 @@ public class CodeAugmentationTask extends Task {
             return false;
         }
         for (Token token : tokens) {
-            if (token.type == JavaParser.TOKEN_TYPE_LITERAL_STRING_CONTENT) {
+            if (token.type == Token.TYPE_LITERAL_STRING_CONTENT) {
                 if (LexerSupport.NEW_LINE_REGEX.matcher(token.text).find()) {
                     return false;
                 }

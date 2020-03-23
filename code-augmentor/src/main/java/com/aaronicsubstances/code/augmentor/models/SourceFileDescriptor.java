@@ -16,7 +16,7 @@ public class SourceFileDescriptor {
     private String dir;
     private String relativePath;
     private List<String> importStatements;
-    private CodeSnippetDescriptor headerSnippet;
+    private int headerInsertPos;
     private List<CodeSnippetDescriptor> bodySnippets;
     private String contentHash;
 
@@ -53,12 +53,12 @@ public class SourceFileDescriptor {
         this.importStatements = importStatements;
     }
 
-    public CodeSnippetDescriptor getHeaderSnippet() {
-        return headerSnippet;
+    public int getHeaderInsertPos() {
+        return headerInsertPos;
     }
 
-    public void setHeaderSnippet(CodeSnippetDescriptor headerSnippet) {
-        this.headerSnippet = headerSnippet;
+    public void setHeaderInsertPos(int headerInsertPos) {
+        this.headerInsertPos = headerInsertPos;
     }
 
     public List<CodeSnippetDescriptor> getBodySnippets() {
@@ -82,6 +82,7 @@ public class SourceFileDescriptor {
         xmlWriter.writeStartElement("file");
         xmlWriter.writeAttribute("dir", dir);
         xmlWriter.writeAttribute("rel_path", relativePath);
+        xmlWriter.writeAttribute("header_insert_pos", "" + headerInsertPos);
         xmlWriter.writeAttribute("hash", contentHash);
 
         xmlWriter.writeStartElement("import_list");
@@ -92,9 +93,6 @@ public class SourceFileDescriptor {
         }
         xmlWriter.writeEndElement(); // import_list
 
-        if (headerSnippet != null) {
-            serializeCodeSnippetDescriptor(xmlWriter, headerSnippet, "header_snippet");
-        }
         xmlWriter.writeStartElement("snippet_list");
 
         for (CodeSnippetDescriptor snippet : bodySnippets) {
@@ -146,6 +144,7 @@ public class SourceFileDescriptor {
         }
         dir = XmlEventReaderWrapper.requireAttributeValue(startElement, "dir");
         relativePath = XmlEventReaderWrapper.requireAttributeValue(startElement, "rel_path");
+        headerInsertPos = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "header_insert_pos");
         contentHash = XmlEventReaderWrapper.requireAttributeValue(startElement, "hash");
         
         importStatements = new ArrayList<>();
@@ -158,13 +157,7 @@ public class SourceFileDescriptor {
         }
         xmlReader.requireEndElement("import_list");
 
-        startElement = xmlReader.requireStartElement(new String[]{ "header_snippet", "snippet_list" });
-        if ("header_snippet".equals(startElement.getName().getLocalPart())) {
-            headerSnippet = deserialize(xmlReader, startElement);
-            xmlReader.requireEndElement("header_snippet");
-            startElement = xmlReader.requireStartElement("snippet_list");
-        }
-
+        startElement = xmlReader.requireStartElement("snippet_list");
         bodySnippets = new ArrayList<>();
         while ((startElement = xmlReader.locateStartElement("snippet")) != null) {
             CodeSnippetDescriptor snippet = deserialize(xmlReader, startElement);
@@ -228,7 +221,7 @@ public class SourceFileDescriptor {
         result = prime * result + ((bodySnippets == null) ? 0 : bodySnippets.hashCode());
         result = prime * result + ((contentHash == null) ? 0 : contentHash.hashCode());
         result = prime * result + ((dir == null) ? 0 : dir.hashCode());
-        result = prime * result + ((headerSnippet == null) ? 0 : headerSnippet.hashCode());
+        result = prime * result + headerInsertPos;
         result = prime * result + ((importStatements == null) ? 0 : importStatements.hashCode());
         result = prime * result + ((relativePath == null) ? 0 : relativePath.hashCode());
         return result;
@@ -258,10 +251,7 @@ public class SourceFileDescriptor {
                 return false;
         } else if (!dir.equals(other.dir))
             return false;
-        if (headerSnippet == null) {
-            if (other.headerSnippet != null)
-                return false;
-        } else if (!headerSnippet.equals(other.headerSnippet))
+        if (headerInsertPos != other.headerInsertPos)
             return false;
         if (importStatements == null) {
             if (other.importStatements != null)
@@ -279,7 +269,7 @@ public class SourceFileDescriptor {
     @Override
     public String toString() {
         return "SourceFileDescriptor{bodySnippets=" + bodySnippets + ", contentHash=" + contentHash + ", dir=" + dir
-                + ", headerSnippet=" + headerSnippet + ", importStatements=" + importStatements + ", relativePath="
+                + ", headerInsertPos=" + headerInsertPos + ", importStatements=" + importStatements + ", relativePath="
                 + relativePath + "}";
     }
 }

@@ -81,6 +81,7 @@ public class PersistenceTest {
 
                         s.setRelativePath(generateRandomString(randGen, false));
                         s.setDir(generateRandomString(randGen, false));
+                        s.setHeaderInsertPos(randGen.nextInt());
                         s.setContentHash(generateRandomString(randGen, false));
 
                         int importStatementListSize = randGen.nextInt(5);
@@ -89,9 +90,6 @@ public class PersistenceTest {
                             s.getImportStatements().add(imp);
                         }
 
-                        if (randGen.nextBoolean()) {
-                            s.setHeaderSnippet(generateRandomCodeSnippetDescriptor(randGen));
-                        }
                         int snippetListSize = randGen.nextInt(5);
                         for (int j = 0; j < snippetListSize; j++) {
                             CodeSnippetDescriptor c = generateRandomCodeSnippetDescriptor(randGen);

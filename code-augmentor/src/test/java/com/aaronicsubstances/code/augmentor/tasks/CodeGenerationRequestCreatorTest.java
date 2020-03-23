@@ -21,7 +21,6 @@ import com.aaronicsubstances.code.augmentor.models.SourceFileDescriptor;
 import com.aaronicsubstances.code.augmentor.parsing.ParserException;
 import com.aaronicsubstances.code.augmentor.parsing.ParserInputSource;
 import com.aaronicsubstances.code.augmentor.parsing.Token;
-import com.aaronicsubstances.code.augmentor.parsing.java.JavaParser;
 import com.aaronicsubstances.code.augmentor.tasks.CodeGenerationRequestCreator.SuffixDescriptor;
 import com.google.gson.Gson;
 
@@ -39,19 +38,19 @@ public class CodeGenerationRequestCreatorTest {
     @DataProvider
     public Object[][] createTestGetCommentContentWithoutSuffixData() {
         return new Object[][]{
-            new Object[]{ new Token(JavaParser.TOKEN_TYPE_SINGLE_LINE_COMMENT, "//a", 0, 0, 0), 
+            new Object[]{ new Token(Token.TYPE_SINGLE_LINE_COMMENT, "//a", 0, 0, 0), 
                 "", "a" },
-            new Object[]{ new Token(JavaParser.TOKEN_TYPE_MULTI_LINE_COMMENT, "/*b*/", 0, 0, 0), 
+            new Object[]{ new Token(Token.TYPE_MULTI_LINE_COMMENT, "/*b*/", 0, 0, 0), 
                 "", "b" },
-            new Object[]{ new Token(JavaParser.TOKEN_TYPE_SINGLE_LINE_COMMENT, "//a", 0, 0, 0), 
+            new Object[]{ new Token(Token.TYPE_SINGLE_LINE_COMMENT, "//a", 0, 0, 0), 
                 "a", "" },
-            new Object[]{ new Token(JavaParser.TOKEN_TYPE_MULTI_LINE_COMMENT, "/*a*/", 0, 0, 0), 
+            new Object[]{ new Token(Token.TYPE_MULTI_LINE_COMMENT, "/*a*/", 0, 0, 0), 
                 "a", "" },
-            new Object[]{ new Token(JavaParser.TOKEN_TYPE_SINGLE_LINE_COMMENT, "//a: print('yes')", 0, 0, 0), 
+            new Object[]{ new Token(Token.TYPE_SINGLE_LINE_COMMENT, "//a: print('yes')", 0, 0, 0), 
                 "a:", " print('yes')" },
-            new Object[]{ new Token(JavaParser.TOKEN_TYPE_SINGLE_LINE_COMMENT, "//a: print('yes')", 0, 0, 0), 
+            new Object[]{ new Token(Token.TYPE_SINGLE_LINE_COMMENT, "//a: print('yes')", 0, 0, 0), 
                 "a: ", "print('yes')" },
-            new Object[]{ new Token(JavaParser.TOKEN_TYPE_MULTI_LINE_COMMENT, "/*/\ncreateClassSnippet('TEST')\n*/", 0, 0, 0), 
+            new Object[]{ new Token(Token.TYPE_MULTI_LINE_COMMENT, "/*/\ncreateClassSnippet('TEST')\n*/", 0, 0, 0), 
                 "/", "\ncreateClassSnippet('TEST')\n" },
         };
     }
@@ -65,9 +64,9 @@ public class CodeGenerationRequestCreatorTest {
     @DataProvider
     public Object[][] createTestGetCommentContentWithoutSuffixErrorData() {
         return new Object[][]{
-            new Object[]{ new Token(JavaParser.TOKEN_TYPE_NON_NEWLINE_WHITESPACE, "//a", 0, 0, 0), 
+            new Object[]{ new Token(Token.TYPE_NON_NEWLINE_WHITESPACE, "//a", 0, 0, 0), 
                 "a" },
-            new Object[]{ new Token(JavaParser.TOKEN_TYPE_NEWLINE, "/*a*/", 0, 0, 0), 
+            new Object[]{ new Token(Token.TYPE_NEWLINE, "/*a*/", 0, 0, 0), 
                 "a" }
         };
     }
@@ -160,35 +159,29 @@ public class CodeGenerationRequestCreatorTest {
     @DataProvider
     public Object[][] createTestGetSuffixDescriptorData() {
         return new Object[][]{
-            new Object[]{ new Token(JavaParser.TOKEN_TYPE_SINGLE_LINE_COMMENT, "//ES3", 0, 0, 0), 
+            new Object[]{ new Token(Token.TYPE_SINGLE_LINE_COMMENT, "//ES3", 0, 0, 0), 
                 new SuffixDescriptor("ES", 
                 CodeGenerationRequestCreator.SUFFIX_TYPE_EMB_STRING, -1) },
-            new Object[]{ new Token(JavaParser.TOKEN_TYPE_MULTI_LINE_COMMENT, "/*GS5+*/", 0, 0, 0),
+            new Object[]{ new Token(Token.TYPE_MULTI_LINE_COMMENT, "/*GS5+*/", 0, 0, 0),
                 new SuffixDescriptor("GS", 
                 CodeGenerationRequestCreator.SUFFIX_TYPE_GEN_CODE_START, -1) },
-            new Object[]{ new Token(JavaParser.TOKEN_TYPE_SINGLE_LINE_COMMENT, "//GE", 0, 0, 0),
+            new Object[]{ new Token(Token.TYPE_SINGLE_LINE_COMMENT, "//GE", 0, 0, 0),
                 new SuffixDescriptor("GE", 
                 CodeGenerationRequestCreator.SUFFIX_TYPE_GEN_CODE_END, -1) },
-            new Object[]{ new Token(JavaParser.TOKEN_TYPE_MULTI_LINE_COMMENT, "/*H***/", 0, 0, 0), null },
-            new Object[]{ new Token(JavaParser.TOKEN_TYPE_SINGLE_LINE_COMMENT, "//H/", 0, 0, 0),
-                new SuffixDescriptor("H", 
-                CodeGenerationRequestCreator.SUFFIX_TYPE_HEADER, -1) },
-            new Object[]{ new Token(JavaParser.TOKEN_TYPE_SINGLE_LINE_COMMENT, "//I/", 0, 0, 0),
-                new SuffixDescriptor("I", 
-                CodeGenerationRequestCreator.SUFFIX_TYPE_HEADER, -1) },                
-            new Object[]{ new Token(JavaParser.TOKEN_TYPE_MULTI_LINE_COMMENT, "/*JS6*/", 0, 0, 0),
+            new Object[]{ new Token(Token.TYPE_MULTI_LINE_COMMENT, "/*H***/", 0, 0, 0), null },
+            new Object[]{ new Token(Token.TYPE_MULTI_LINE_COMMENT, "/*JS6*/", 0, 0, 0),
                 new SuffixDescriptor("JS", 
                 CodeGenerationRequestCreator.SUFFIX_TYPE_AUG_CODE, 0) },
-            new Object[]{ new Token(JavaParser.TOKEN_TYPE_SINGLE_LINE_COMMENT, "//PY30#", 0, 0, 0),
+            new Object[]{ new Token(Token.TYPE_SINGLE_LINE_COMMENT, "//PY30#", 0, 0, 0),
                 new SuffixDescriptor("PY30", 
                 CodeGenerationRequestCreator.SUFFIX_TYPE_AUG_CODE, 1) },
-            new Object[]{ new Token(JavaParser.TOKEN_TYPE_MULTI_LINE_COMMENT, "/*PY3#*/", 0, 0, 0),
+            new Object[]{ new Token(Token.TYPE_MULTI_LINE_COMMENT, "/*PY3#*/", 0, 0, 0),
                 new SuffixDescriptor("PY", 
                 CodeGenerationRequestCreator.SUFFIX_TYPE_AUG_CODE, 1) },
-            new Object[]{ new Token(JavaParser.TOKEN_TYPE_SINGLE_LINE_COMMENT, "//PY30#", 0, 0, 0),
+            new Object[]{ new Token(Token.TYPE_SINGLE_LINE_COMMENT, "//PY30#", 0, 0, 0),
                 new SuffixDescriptor("PY30", 
                 CodeGenerationRequestCreator.SUFFIX_TYPE_AUG_CODE, 1) },
-            new Object[]{ new Token(JavaParser.TOKEN_TYPE_NEWLINE, "\n", 0, 0, 0), null }
+            new Object[]{ new Token(Token.TYPE_NEWLINE, "\n", 0, 0, 0), null }
         };
     }
 
@@ -426,10 +419,6 @@ public class CodeGenerationRequestCreatorTest {
                 new GeneratedCodeDescriptor(1063, 1065))
         );
         SourceFileDescriptor second = new SourceFileDescriptor(importStatements2and3, bodySnippets2);
-        second.setHeaderSnippet(new CodeSnippetDescriptor(
-            createAugCodeDescriptor(false, "", 674, 677, 0), 
-            new GeneratedCodeDescriptor(677, 679)
-        ));
         List<AugmentingCode> secondJs = Arrays.asList(
             createAugCode(0, "JS", new Block(
                 " println(\"Hello World from JS-star\")\r\n" +
@@ -447,10 +436,6 @@ public class CodeGenerationRequestCreatorTest {
                 new GeneratedCodeDescriptor(581, 583))
         );
         SourceFileDescriptor third = new SourceFileDescriptor(importStatements2and3, bodySnippets3);
-        third.setHeaderSnippet(new CodeSnippetDescriptor(
-            createAugCodeDescriptor(false, "", 12, 15, 0), 
-            new GeneratedCodeDescriptor(15, 17)
-        ));
         List<AugmentingCode> thirdJs = Arrays.asList(
             createAugCode(0, "JS", new Block(
                 " println(\"Hello World from JS-star\")\r\n" +
@@ -470,8 +455,7 @@ public class CodeGenerationRequestCreatorTest {
         };
     }
 
-    private static CodeGenerationRequestCreator createInstance() {        
-        List<String> headerDoubleSlashSuffixes = Arrays.asList("H", "I");
+    private static CodeGenerationRequestCreator createInstance() {
         List<String> genCodeStartSuffixes = Arrays.asList("GS");
         List<String> genCodeEndSuffixes = Arrays.asList("GE");
         List<String> embeddedStringDoubleSlashSuffixes = Arrays.asList("ES");
@@ -480,7 +464,7 @@ public class CodeGenerationRequestCreatorTest {
             new CodeGenerationRequestSpecification(Arrays.asList("PY", "PY30"))
         );
         CodeGenerationRequestCreator instance = new CodeGenerationRequestCreator(
-            headerDoubleSlashSuffixes, genCodeStartSuffixes, genCodeEndSuffixes,
+            genCodeStartSuffixes, genCodeEndSuffixes,
             embeddedStringDoubleSlashSuffixes, requestSpecList);
         return instance;
     }
@@ -492,9 +476,6 @@ public class CodeGenerationRequestCreatorTest {
         }
         else if (suffixDescStr.equals("GS")) {
             suffixType = CodeGenerationRequestCreator.SUFFIX_TYPE_GEN_CODE_START;
-        }
-        else if (suffixDescStr.equals("H")) {
-            suffixType = CodeGenerationRequestCreator.SUFFIX_TYPE_HEADER;
         }
         else if (suffixDescStr.equals("ES")) {
             suffixType = CodeGenerationRequestCreator.SUFFIX_TYPE_EMB_STRING;
@@ -565,8 +546,8 @@ public class CodeGenerationRequestCreatorTest {
         tokenAttributes.put(CodeGenerationRequestCreator.TOKEN_ATTRIBUTE_INDENT,
             indent);
         tokenAttributes.put(CodeGenerationRequestCreator.TOKEN_ATTRIBUTE_FF_NEWLINE,
-            new Token(JavaParser.TOKEN_TYPE_NEWLINE, "\n", 0, 0, lineNumber));
-        Token t = new Token(JavaParser.TOKEN_TYPE_SINGLE_LINE_COMMENT, comment, 0, 0, 
+            new Token(Token.TYPE_NEWLINE, "\n", 0, 0, lineNumber));
+        Token t = new Token(Token.TYPE_SINGLE_LINE_COMMENT, comment, 0, 0, 
             lineNumber);
         t.value = tokenAttributes;
         return t;
@@ -612,33 +593,33 @@ public class CodeGenerationRequestCreatorTest {
         switch (text) {
             case "\r\n":
             case "\n":
-                type = JavaParser.TOKEN_TYPE_NEWLINE;
+                type = Token.TYPE_NEWLINE;
                 break;
             default:
-                if (text.startsWith("package ")) {
-                    type = JavaParser.TOKEN_TYPE_PACKAGE_STATEMENT;
+                if (text.startsWith("#!")) {
+                    type = Token.TYPE_SHEBANG;
+                }
+                else if (text.startsWith("package ")) {
+                    type = Token.TYPE_PACKAGE_STATEMENT;
                 }
                 else if (text.startsWith("import ")) {
-                    type = JavaParser.TOKEN_TYPE_IMPORT_STATEMENT;
+                    type = Token.TYPE_IMPORT_STATEMENT;
                 }
                 else if (text.startsWith("//")) {
-                    type = JavaParser.TOKEN_TYPE_SINGLE_LINE_COMMENT;
+                    type = Token.TYPE_SINGLE_LINE_COMMENT;
                 }
                 else if (text.startsWith("/*")) {
-                    type = JavaParser.TOKEN_TYPE_MULTI_LINE_COMMENT;
+                    type = Token.TYPE_MULTI_LINE_COMMENT;
                 }
                 else if (text.startsWith(" ")) {
-                    type = JavaParser.TOKEN_TYPE_NON_NEWLINE_WHITESPACE;
+                    type = Token.TYPE_NON_NEWLINE_WHITESPACE;
                 }
-                else if (text.equals("\"")) {
-                    type = JavaParser.TOKEN_TYPE_SINGLE_LINE_STRING_DELIMITER;
-                }
-                else if (text.startsWith("\"")) {
-                    type = JavaParser.TOKEN_TYPE_LITERAL_STRING_CONTENT;
+                else if (text.startsWith("\"") && text.length() > 1) {
+                    type = Token.TYPE_LITERAL_STRING_CONTENT;
                     text = text.substring(1, text.length() - 1);
                 }
                 else {
-                    type = JavaParser.TOKEN_TYPE_OTHER;
+                    type = Token.TYPE_OTHER;
                 }
                 break;
         }

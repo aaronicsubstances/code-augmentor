@@ -1,11 +1,24 @@
 package com.aaronicsubstances.code.augmentor.parsing;
 
+import java.util.Map;
 import java.util.Objects;
 
 /**
  * Represents result of lexing/scanning some source code prior to parsing.
  */
-public class Token {	
+public class Token {
+	public static final int TYPE_SINGLE_LINE_COMMENT = 1;
+	public static final int TYPE_MULTI_LINE_COMMENT = 3;
+    public static final int TYPE_NEWLINE = 10;
+    public static final int TYPE_NON_NEWLINE_WHITESPACE = 12;
+    public static final int TYPE_LITERAL_STRING_CONTENT = 20;
+    public static final int TYPE_SHEBANG = 40;
+    public static final int TYPE_PACKAGE_STATEMENT = 42;
+    public static final int TYPE_IMPORT_STATEMENT = 43;
+    public static final int TYPE_OTHER = 50;
+
+	public static final String VALUE_KEY_IMPORT_STATEMENT = "import";
+	
 	public final int type;
 	public final String text;
 	public final int startPos;
@@ -16,7 +29,7 @@ public class Token {
      * The value of this token parsed from its text. E.g. an integer,
      * unquoted string, etc. Can also be used to store map of attributes.
      */
-	public transient Object value;
+	public transient Map<String, Object> value;
 	
 	/**
 	 * Creates an end-of-line token.

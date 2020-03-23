@@ -45,7 +45,6 @@ public class PreCodeAugmentationTask extends Task {
      * generated code has multiline strings.
      */
     private final List<CodeGenerationRequestSpecification> requestSpecList = new ArrayList<>();
-    private final List<String> headerDoubleSlashSuffixes = new ArrayList<>();
     private final List<String> embeddedStringDoubleSlashSuffixes = new ArrayList<>();
 
     // for these prefer the very first one during code generation.
@@ -86,13 +85,6 @@ public class PreCodeAugmentationTask extends Task {
         requestSpecList.add(spec);
     }
 
-    public void addHeader_dslash_suffix(String suffix) {
-        suffix = CodeGenerationRequestSpecification.validateCommentMarkerSuffix(suffix);
-        if (!headerDoubleSlashSuffixes.contains(suffix)) {
-            headerDoubleSlashSuffixes.add(suffix);
-        }
-    }
-
     public void addEmbedded_string_dslash_suffix(String suffix) {
         suffix = CodeGenerationRequestSpecification.validateCommentMarkerSuffix(suffix);
         if (!embeddedStringDoubleSlashSuffixes.contains(suffix)) {
@@ -131,9 +123,6 @@ public class PreCodeAugmentationTask extends Task {
         if (parseResultsFile == null) {
             throw new BuildException("prepfile attribute is required");
         }
-        if (headerDoubleSlashSuffixes.isEmpty()) {
-            throw new BuildException("at least 1 nested header_dslash_suffix element is required");
-        }
         if (embeddedStringDoubleSlashSuffixes.isEmpty()) {
             throw new BuildException("at least 1 nested embedded_string_dslash_suffix element is required");
         }
@@ -147,8 +136,6 @@ public class PreCodeAugmentationTask extends Task {
         // Ensure uniqueness across comment suffixes.
         Set<String> allSuffixes = new HashSet<>();
         int totalSuffixCount = 0;
-        allSuffixes.addAll(headerDoubleSlashSuffixes);
-        totalSuffixCount += headerDoubleSlashSuffixes.size();
         allSuffixes.addAll(embeddedStringDoubleSlashSuffixes);
         totalSuffixCount += embeddedStringDoubleSlashSuffixes.size();
         allSuffixes.addAll(genCodeStartSuffixes);
@@ -238,7 +225,7 @@ public class PreCodeAugmentationTask extends Task {
         }
 
         CodeGenerationRequestCreator codeGenerationRequestCreator =
-            new CodeGenerationRequestCreator(this.headerDoubleSlashSuffixes,
+            new CodeGenerationRequestCreator(
                 this.genCodeStartSuffixes, this.genCodeEndSuffixes,
                 this.embeddedStringDoubleSlashSuffixes, requestSpecList);
 
