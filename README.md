@@ -1,0 +1,69 @@
+# Code Augmentor
+
+
+## Description
+
+This project aims to be a programmer's companion for maintaining statically typed code bases by enabling him to take advantage of the strong points of dynamically typed languages he happens to be familiar with.
+
+By so doing, even a fragile or aging code architecture can be supported to deliver expected quality guarantees to stakeholders.
+
+Technically, the tool provided here resembles C/C++ preprocessor and ESLint, but with two important differences:
+
+   * Similar to the behaviour of a C/C++ preprocessor, each source file may be modified before compilation. *CodeAugmentor* however modifies in place by default, unlike a preprocessor which generates new files for the subsequent compilation stage. This enables far easier integration of the tool into the work flow of the programmer; it can be leveraged as a standalone tool outside of any particular project build environment. 
+
+   * Similar to how ESLint or any linter in general works, the programmer may be forced to fix source files before compilation can succeed.  When using *CodeAugmentor* however, it is the same tool which fixes the code by employing a full blown (dynamically typed) programming language of the programmer's choice. Hence there is no need to learn a separate preprocessing/linter language.
+
+The workflow of the programmer using this tool may be exemplified in the following manner:
+   * Statically typed code to be generated into source files is written in comments using a different dynamically typed language.
+   * *CodeAugmentor* is integrated into build process as a linter, to check whether source files need to be regenerated.
+   * Before/After compilation, *CodeAugmentor* may report that source files need regeneration, and cause compilation to fail.
+   * Programmer runs *CodeAugumentor* separately outside of build environment to generate the source files into a temporary location. **Overwriting source files with generated ones from temporary location is the programmer's responsibility**, although it can be automated and need not be manual or laborious.
+   * Build process is triggered again to compile, and this time *CodeAugmentor* doesn't complain, but rather reports that source files are now in sync with  dynamically typed code generator scripts (written by the programmer).
+
+## Background
+
+The motivation for this tool is to support fragile or aging code architectures and maintain expected levels of code quality.
+
+First, some observations:
+
+   * From the book "Design Patterns: Elements of Reusable Object-Oriented Software" written by the so-called "Gang of Four" (Gamma et al), it can be observed that most of the problems the 23 design patterns are supposed to solve have to do with code duplication, ie having to update and synchronize similar code sections in multiple places in response to changes in software requirements.
+
+   * In Robert Glass' "Facts and Fallacies of Software Engineering" book, he asserts that maintenance of code is mostly about implementing new software requirements, which translates into adding new code.
+
+   * Agile methodologies (e.g.  https://www.agilealliance.org/resources/sessions/emergent-architecture-just-enough-just-in-time/) emphasize "emergent" or "serendipitous" architecture over waterfall/fully preplanned ones, in order to speed up the development of product releases to customers, and solicit feedback for subsequent iterations.
+
+What all this means is that
+
+   * Lack of familiarity/experience with design patterns may result in a fragile architecture in which code duplication is inevitable, and possibly a problem.
+
+   * Changing software requirements can make a previously satisfactory architecture obsolete, and make it prone to code duplication.
+
+   * Under time constraints imposed by stakeholders or the software methodology employed, the architecture which emerges may not be ideal/optimized, and therefore might be prone to code duplication.
+
+Usually, code duplication is frowned upon because it increases likelihood of errors, threatens reliablity and hence quality of code. 
+
+**The goal of *CodeAugmentor* is to compensate for challenges which result from hurriedly-developed code architectures**, such as code duplication, by
+
+   * automating the process of synchronizing similar code sections in multiple places.
+   * enabling the process of synchronizing selected comments and their associated code sections.
+   * enabling programmers to implement patterns which are much easier/less time consuming to do with code generation than code redesign.
+   * enabling programmers to generate and maintain well documented workarounds which can easily be migrated when superior alternatives arrive.
+
+The last point deserves some explanation. In the modern day development of software, programming languages, libraries, frameworks and even platforms (such as Android) are "works in progress" (meaning they evolve in response to usage patterns by developers).
+E.g. 
+   * Android has changed quite drastically since its inception, and continues to change. Its recent introduction of LiveData and ViewModel libraries are just few examples of significant introductions meant to steer the development community in a certain direction (by the way, those two libraries were Google's response to the problem of Android fragment interaction with async calls/requests).
+   * Java is often criticized as been too verbose, and hence there are many occasions where one has to employ object-oriented design in a competent way to prevent Java code from becoming verbose or overly complex (by the way, this project is particularly aimed at Java developers).
+   * Programming languages nowadays keep on copying features from one another. C#.NET is the archetype of this behaviour, but other mainstream languages including its chief statically typed competitor Java all try to incorporate language features from others which they deem helpful.
+
+Thus if a programmer encounters a situation in which the programming framework is missing something, or makes implementing something unnecessarily tedious, it may be not be in the long-term interest of the programmer to craft a comprehensive solution to the problem. The larger community or company backing that framework may also notice the problem and develop a more elegant solution, rendering any workaround obsolete.
+
+By employing *CodeAugmentor*, one can develop a strategy of settling for a simpler workarouond, well documented, and possibly involving code duplication in which synchronization problem is catered for by *CodeAugmentor*. Then when a superior alternative arrive, it is easy to identify all affected code sections and update them in a way in which errors cannot elude the programmer or the compiler.
+
+
+## To Be Done
+
+This project is a work in progress (first version is yet to be released). Already Apache Ant tasks have been implemented for experimenting with the features of the project. But the vision is to develop standalone command line application, and Maven and Gradle plugins.
+
+Currently Java and Android are the supported platform targets. Depending on how this project evolves, .NET Core will be considered as well.
+
+Ideas are welcome.
