@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.time.Duration;
 import java.time.Instant;
@@ -23,6 +24,7 @@ import com.aaronicsubstances.code.augmentor.parsing.ParserException;
 import com.aaronicsubstances.code.augmentor.parsing.Token;
 
 import org.apache.tools.ant.BuildException;
+import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 
 public class CodeAugmentationTask extends Task {
@@ -33,7 +35,7 @@ public class CodeAugmentationTask extends Task {
     private boolean generate = false;
     private String newline;
 
-    private final List<File> generatedCodeFiles = new ArrayList<>();
+    private final List<CodeGenerationResponseSpecification> generatedCodeFiles = new ArrayList<>();
     
     // validation results
 	private Charset charset;
@@ -62,7 +64,8 @@ public class CodeAugmentationTask extends Task {
         this.newline = newline;
     }
 
-    public void addGen_code_file(File f) {
+    public void addConfiguredSpec(CodeGenerationResponseSpecification f) {
+        f.validate();
         generatedCodeFiles.add(f);
     }
     
@@ -76,13 +79,13 @@ public class CodeAugmentationTask extends Task {
             throw ex;
         }
         catch (IOException ex) {
-            throw new BuildException("I/O error", ex);
+            throw new BuildException("I/O error: " + ex.getMessage(), ex);
         }
         catch (RuntimeException ex) {
             throw ex;
         }
         catch (Exception ex) {
-            throw new RuntimeException("Unexpected error", ex);
+            throw new RuntimeException("Unexpected error: " + ex.getMessage(), ex);
         }
             
         Instant endInstant = Instant.now();
@@ -108,12 +111,12 @@ public class CodeAugmentationTask extends Task {
             throw new BuildException("prepfile attribute is required");
         }
         if (generatedCodeFiles.isEmpty()) {
-            throw new BuildException("at least one gen_code_file nested element is required");
+            throw new BuildException("at least one spec nested element is required");
         }
 
         // set defaults.
         if (encoding == null) {
-            charset = Charset.defaultCharset();
+            charset = StandardCharsets.UTF_8;
         }
         if (newline == null) {
             newline = System.lineSeparator();
@@ -124,7 +127,8 @@ public class CodeAugmentationTask extends Task {
         PreCodeAugmentationResult result = new PreCodeAugmentationResult();
         Object resultReader = result.beginDeserializer(prepfile);
 
-        GeneratedCodeFetcher generatedCodeFetcher = new GeneratedCodeFetcher(generatedCodeFiles);
+        GeneratedCodeFetcher generatedCodeFetcher = new GeneratedCodeFetcher(
+            generatedCodeFiles.stream().map(g -> g.getGenCodeFile()).collect(Collectors.toList()));
 
         SourceFileDescriptor sourceFileDescriptor = new SourceFileDescriptor();
         while ((sourceFileDescriptor.deserialize(resultReader))) {
@@ -185,10 +189,8 @@ public class CodeAugmentationTask extends Task {
                     formattedCode = indentCode(formattedCode, augCodeDescriptor.getIndent());
                 }
                 formattedCode = wrapInGeneratedCodeComments(formattedCode, 
-                    result.getGenCodeStartSuffix(), result.getGenCodeEndSuffix());
-                if (!augCodeDescriptor.isAnnotatedWithSlashStar()) {
-                    formattedCode = newline + formattedCode;
-                }
+                    result.getGenCodeStartSuffix(), result.getGenCodeEndSuffix(),
+                    augCodeDescriptor, canIndent);
                 generatedCodes.add(formattedCode);
                 sourceFileImports.addAll(headerImports);
             }
@@ -242,15 +244,18 @@ public class CodeAugmentationTask extends Task {
             }
 
             String transformedCode = transformer.getTransformedText();
+            File destFile = new File(destdir, sourceFileDescriptor.getRelativePath());
             if (!sourceCode.equals(transformedCode)) {
                 if (generate) {
-                    File destFile = new File(destdir, sourceFileDescriptor.getRelativePath());
                     TaskUtils.writeFile(destFile, charset, transformedCode);
                 }
                 else {
                     throw new BuildException(String.format("Augmenting code needs regeneration " +
                         "starting with %s.", srcFile));
                 }
+            }
+            else if (generate) {
+                TaskUtils.writeFile(destFile, charset, sourceCode);
             }
             
             Instant endInstant = Instant.now();
@@ -283,8 +288,9 @@ public class CodeAugmentationTask extends Task {
         // apply indent.
         String[] lines = LexerSupport.NEW_LINE_REGEX.split(code, -1);
         StringBuilder indentedContent = new StringBuilder();
-        for (String line : lines) {
-            if (indentedContent.length() > 0) {
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i];
+            if (i > 0) {
                 indentedContent.append(newline);
             }
             indentedContent.append(indent).append(line);
@@ -292,17 +298,25 @@ public class CodeAugmentationTask extends Task {
         return indentedContent.toString();
     }
 
-    private String wrapInGeneratedCodeComments(String content, String genCodeStart, String genCodeEnd) {
-        if (LexerSupport.NEW_LINE_REGEX.matcher(content).find()) {
-            //use double slashes
-            return "//" + genCodeStart + newline + content +
-                "//" + genCodeEnd + newline;
+    private String wrapInGeneratedCodeComments(String content, String genCodeStart, String genCodeEnd,
+            AugmentingCodeDescriptor augmentingCodeDescriptor, boolean canIndent) {
+        boolean annotatedWithSlashStar = augmentingCodeDescriptor.isAnnotatedWithSlashStar();
+        String indent  = canIndent ? augmentingCodeDescriptor.getIndent() : "";
+        String formattedCode;
+        if (annotatedWithSlashStar && !LexerSupport.NEW_LINE_REGEX.matcher(content).find()) {
+            // use slash star
+            formattedCode = "/*" + genCodeStart + "*/" + content +
+                "/*" + genCodeEnd + "*/";
+            if (!annotatedWithSlashStar) {
+                formattedCode = newline + formattedCode;
+            }
         }
         else {
-            // use slash star
-            return "/*" + genCodeStart + "*/" + content +
-                "/*" + genCodeEnd + "*/";
+            //use double slashes
+            formattedCode = newline + indent + "//" + genCodeStart + newline + content + newline +
+                indent + "//" + genCodeEnd + newline;
         }
+        return formattedCode;
     }
 
     private static List<String> parseHeaderImports(String relativePath, GeneratedCode genCode) {
@@ -318,7 +332,7 @@ public class CodeAugmentationTask extends Task {
 
     private void logVerbose(String message, Object... args) {
         if (verbose) {
-            log("[" + String.format(message, args) + "]");
+            log("[" + String.format(message, args) + "]",  Project.MSG_VERBOSE);
         }
     }
 }

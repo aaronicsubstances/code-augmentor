@@ -101,7 +101,7 @@ public class CodeGenerationRequestCreator {
             List<String> genCodeStartSuffixes,
             List<String> genCodeEndSuffixes,
             List<String> embeddedStringDoubleSlashSuffixes,
-            List<CodeGenerationRequestSpecification> requestSpecList) {
+            List<List<String>> requestSpecList) {
         suffixDescriptors = new ArrayList<SuffixDescriptor>();
         List<String> doubleSlashSuffixes = new ArrayList<>();
         List<String> slashStarSuffixes = new ArrayList<>();
@@ -128,8 +128,8 @@ public class CodeGenerationRequestCreator {
 
         // add suffixes for augmenting code.
         for (int i = 0; i < requestSpecList.size(); i++) {
-            CodeGenerationRequestSpecification spec = requestSpecList.get(i);
-            for (String s : spec.getAugCodeSuffixes()) {
+            List<String> spec = requestSpecList.get(i);
+            for (String s : spec) {
                 suffixDescriptors.add(new SuffixDescriptor(s, SUFFIX_TYPE_AUG_CODE, i));
                 doubleSlashSuffixes.add(s);
                 slashStarSuffixes.add(s);

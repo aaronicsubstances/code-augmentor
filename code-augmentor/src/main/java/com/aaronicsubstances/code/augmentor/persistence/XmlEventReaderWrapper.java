@@ -190,20 +190,17 @@ public class XmlEventReaderWrapper implements AutoCloseable {
     }
 
     public String readElementValue() throws Exception {
-        StringBuilder content = null;
+        StringBuilder content = new StringBuilder();
         XMLEvent nextEvent;
         while (!(nextEvent = lookahead(0)).isEndElement()) {
             if (!nextEvent.isCharacters()) {
                 throw createAbortException("Expected element text here but found " +
                     nextEvent, nextEvent);
             }
-            if (content == null) {
-                content = new StringBuilder();
-            }
             content.append(nextEvent.asCharacters().getData());
             consume();
         }
-        return content != null ? content.toString() : null;
+        return content.toString();
 	}
 
     static String describeExpectedTag(String name, boolean start) {

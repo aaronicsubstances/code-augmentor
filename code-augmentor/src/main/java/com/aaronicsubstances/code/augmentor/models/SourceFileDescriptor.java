@@ -3,9 +3,7 @@ package com.aaronicsubstances.code.augmentor.models;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamWriter;
-import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.StartElement;
 
 import com.aaronicsubstances.code.augmentor.models.CodeSnippetDescriptor.AugmentingCodeDescriptor;
@@ -126,14 +124,20 @@ public class SourceFileDescriptor {
             "" + augmentingCodeDescriptor.getStartPos());
         xmlWriter.writeAttribute("end_pos", 
             "" + augmentingCodeDescriptor.getEndPos());
-        if (augmentingCodeDescriptor.getIndent() != null) {
-            xmlWriter.writeAttribute("indent", augmentingCodeDescriptor.getIndent());
-        }
         xmlWriter.writeAttribute("is_slash_star", 
             "" + augmentingCodeDescriptor.isAnnotatedWithSlashStar());
-        xmlWriter.writeEndElement();
 
-        xmlWriter.writeEndElement();
+        // treat indent with XML element rather than attribute to
+        // avoid tampering by XML attribute normalization rules.
+        xmlWriter.writeStartElement("indent");
+        if (augmentingCodeDescriptor.getIndent() != null) {
+            xmlWriter.writeCharacters(augmentingCodeDescriptor.getIndent());
+        }
+        xmlWriter.writeEndElement(); // indent
+        
+        xmlWriter.writeEndElement(); // aug
+
+        xmlWriter.writeEndElement(); // code snippet
     }
 
     public boolean deserialize(Object deserializer) throws Exception {
@@ -201,13 +205,16 @@ public class SourceFileDescriptor {
         endPos = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement,
             "end_pos");
         augmentingCodeDescriptor.setEndPos(endPos);
-        Attribute att = startElement.getAttributeByName(QName.valueOf("indent"));
-        if (att != null) {
-            augmentingCodeDescriptor.setIndent(att.getValue());
-        }
         boolean isSlashStar = XmlEventReaderWrapper.requireAttributeValueAsBoolean(startElement,
             "is_slash_star");
         augmentingCodeDescriptor.setAnnotatedWithSlashStar(isSlashStar);
+
+        xmlReader.requireStartElement("indent");
+        String indent = xmlReader.readElementValue();
+        if (!indent.isEmpty()) {
+            augmentingCodeDescriptor.setIndent(indent);
+        }
+        xmlReader.requireEndElement("indent");
         
         xmlReader.requireEndElement("augmenting_code_descriptor");
 

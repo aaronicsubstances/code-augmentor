@@ -9,15 +9,16 @@ import com.aaronicsubstances.code.augmentor.parsing.LexerSupport;
 import org.apache.tools.ant.BuildException;
 
 public class CodeGenerationRequestSpecification {
-
-    // use extension to determine which of XML or qCSV formats to use.
     private File augCodeDestFile; 
 
-    private final List<String> augCodeSuffixes;
+    private final List<SuffixSpec> augCodeSuffixes;
 
-    public static String validateCommentMarkerSuffix(String suffix) {
+    public static SuffixSpec validateCommentMarkerSuffix(SuffixSpec suffix) {
+        if (TaskUtils.isNullOrEmpty(suffix.getValue())) {
+            throw new BuildException("value attribute not specified.");
+        }
         // Ensure suffix does not contain newlines.
-        if (LexerSupport.NEW_LINE_REGEX.matcher(suffix).find()) {
+        if (LexerSupport.NEW_LINE_REGEX.matcher(suffix.getValue()).find()) {
             throw new BuildException("Newline characters not acceptable in comment marker suffix");
         }
         return suffix;
@@ -27,7 +28,7 @@ public class CodeGenerationRequestSpecification {
         augCodeSuffixes = new ArrayList<>();
     }
 
-    CodeGenerationRequestSpecification(List<String> augCodeSuffixes) {
+    CodeGenerationRequestSpecification(List<SuffixSpec> augCodeSuffixes) {
         this.augCodeSuffixes = augCodeSuffixes;
     }
     
@@ -39,11 +40,11 @@ public class CodeGenerationRequestSpecification {
         this.augCodeDestFile = f;
     }
 
-    public List<String> getAugCodeSuffixes() {
+    public List<SuffixSpec> getAugCodeSuffixes() {
         return augCodeSuffixes;
     }
 
-    public void addAug_code_suffix(String suffix) {
+    public void addConfiguredAug_code_suffix(SuffixSpec suffix) {
         suffix = validateCommentMarkerSuffix(suffix);
         if (!augCodeSuffixes.contains(suffix)) {
             augCodeSuffixes.add(suffix);

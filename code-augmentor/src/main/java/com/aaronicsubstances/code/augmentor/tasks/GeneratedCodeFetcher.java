@@ -21,7 +21,7 @@ public class GeneratedCodeFetcher {
         for (File f : generatedCodeFiles) {
             CodeGenerationResponse codeGenResp = new CodeGenerationResponse();
             codeGenerationResponses.add(codeGenResp);
-            boolean useXml = !"csv".equals(TaskUtils.getFileExt(f.getName()));
+            boolean useXml = TaskUtils.canUseXml(f);
             Object codeGenRespRdr = codeGenResp.beginDeserializer(f, useXml);
             codeGenerationResponseReaders.add(codeGenRespRdr);
         }

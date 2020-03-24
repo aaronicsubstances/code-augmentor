@@ -444,9 +444,8 @@ public class CodeGenerationRequestCreatorTest {
         List<String> genCodeStartSuffixes = Arrays.asList("GS");
         List<String> genCodeEndSuffixes = Arrays.asList("GE");
         List<String> embeddedStringDoubleSlashSuffixes = Arrays.asList("ES");
-        List<CodeGenerationRequestSpecification> requestSpecList = Arrays.asList(
-            new CodeGenerationRequestSpecification(Arrays.asList("JS")),
-            new CodeGenerationRequestSpecification(Arrays.asList("PY", "PY30"))
+        List<List<String>> requestSpecList = Arrays.asList(
+            Arrays.asList("JS"), Arrays.asList("PY", "PY30")
         );
         CodeGenerationRequestCreator instance = new CodeGenerationRequestCreator(
             genCodeStartSuffixes, genCodeEndSuffixes,

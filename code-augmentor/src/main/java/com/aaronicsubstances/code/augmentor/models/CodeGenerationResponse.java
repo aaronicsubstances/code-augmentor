@@ -25,10 +25,12 @@ import com.aaronicsubstances.code.augmentor.persistence.XmlEventReaderWrapper;
  */
 public class CodeGenerationResponse {
     private static final String[] csvFields;
+    private static final String[] readCsvFields;
 
     static {
         csvFields = new String[]{ "rel_path", "index", "is_error",
             "header", "body" };
+        readCsvFields = new String[]{ "index", "body" };
     }
 
     private List<GeneratedCode> generatedCodeSnippets;
@@ -111,9 +113,9 @@ public class CodeGenerationResponse {
         else {
             ModifiedCsvReader qCsvReader = new ModifiedCsvReader(stream);
             List<String> fields = qCsvReader.requireFieldsOpener();
-            if (!fields.containsAll(Arrays.asList(csvFields))) {
+            if (!fields.containsAll(Arrays.asList(readCsvFields))) {
                 throw qCsvReader.createAbortException("At least one expected field is absent: " +
-                    "expected " + Arrays.toString(csvFields) + " but found " + fields);
+                    "expected " + Arrays.toString(readCsvFields) + " but found " + fields);
             }
             return qCsvReader;
         }

@@ -69,4 +69,9 @@ public class TaskUtils {
         String hash = Base64.getEncoder().encodeToString(binaryContent);
         return hash;
     }
+
+	public static boolean canUseXml(File f) {
+        boolean useXml = !"csv".equals(TaskUtils.getFileExt(f.getName()));
+        return useXml;
+	}
 }

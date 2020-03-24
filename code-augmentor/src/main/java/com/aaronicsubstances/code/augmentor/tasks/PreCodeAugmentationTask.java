@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.time.Duration;
 import java.time.Instant;
@@ -13,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.aaronicsubstances.code.augmentor.models.AugmentingCode;
 import com.aaronicsubstances.code.augmentor.models.CodeGenerationRequest;
@@ -24,9 +26,9 @@ import com.aaronicsubstances.code.augmentor.parsing.TokenSupplier;
 
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.DirectoryScanner;
+import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.types.FileSet;
-import org.apache.tools.ant.types.LogLevel;
 
 public class PreCodeAugmentationTask extends Task {
     private String encoding;
@@ -35,21 +37,12 @@ public class PreCodeAugmentationTask extends Task {
     private final List<FileSet> srcDirs = new ArrayList<>();
     private File tempDir;
 
-    /*
-     * Comment markers for augmenting code and generated code snippets generally
-     * match. The few restrictions are: - if raw code is to be included in
-     * augmenting code, then // must be used. - upon return, if generated code is
-     * multiline, then // must be used. About indentation, - /* continues right
-     * after augmenting code, and just dumps verbatim. - only // tries to indent
-     * generated code and start on its own new line - however // ignores indent if
-     * generated code has multiline strings.
-     */
     private final List<CodeGenerationRequestSpecification> requestSpecList = new ArrayList<>();
-    private final List<String> embeddedStringDoubleSlashSuffixes = new ArrayList<>();
+    private final List<SuffixSpec> embeddedStringDoubleSlashSuffixes = new ArrayList<>();
 
     // for these prefer the very first one during code generation.
-    private final List<String> genCodeStartSuffixes = new ArrayList<>();
-    private final List<String> genCodeEndSuffixes = new ArrayList<>();
+    private final List<SuffixSpec> genCodeStartSuffixes = new ArrayList<>();
+    private final List<SuffixSpec> genCodeEndSuffixes = new ArrayList<>();
 
     private File parseResultsFile;
 
@@ -85,21 +78,21 @@ public class PreCodeAugmentationTask extends Task {
         requestSpecList.add(spec);
     }
 
-    public void addEmbedded_string_dslash_suffix(String suffix) {
+    public void addConfiguredEmbedded_string_dslash_suffix(SuffixSpec suffix) {
         suffix = CodeGenerationRequestSpecification.validateCommentMarkerSuffix(suffix);
         if (!embeddedStringDoubleSlashSuffixes.contains(suffix)) {
             embeddedStringDoubleSlashSuffixes.add(suffix);
         }
     }
 
-    public void addGen_code_start_suffix(String suffix) {
+    public void addConfiguredGen_code_start_suffix(SuffixSpec suffix) {
         suffix = CodeGenerationRequestSpecification.validateCommentMarkerSuffix(suffix);
         if (!genCodeStartSuffixes.contains(suffix)) {
             genCodeStartSuffixes.add(suffix);
         }
     }
 
-    public void addGen_code_end_suffix(String suffix) {
+    public void addConfiguredGen_code_end_suffix(SuffixSpec suffix) {
         suffix = CodeGenerationRequestSpecification.validateCommentMarkerSuffix(suffix);
         if (!genCodeEndSuffixes.contains(suffix)) {
             genCodeEndSuffixes.add(suffix);
@@ -134,7 +127,7 @@ public class PreCodeAugmentationTask extends Task {
         }
 
         // Ensure uniqueness across comment suffixes.
-        Set<String> allSuffixes = new HashSet<>();
+        Set<SuffixSpec> allSuffixes = new HashSet<>();
         int totalSuffixCount = 0;
         allSuffixes.addAll(embeddedStringDoubleSlashSuffixes);
         totalSuffixCount += embeddedStringDoubleSlashSuffixes.size();
@@ -152,7 +145,7 @@ public class PreCodeAugmentationTask extends Task {
 
         // set defaults.
         if (encoding == null) {
-            charset = Charset.defaultCharset();
+            charset = StandardCharsets.UTF_8;
         }
         if (tempDir == null) {
             tempDir = new File(System.getProperty("java.io.tmpdir"));
@@ -167,11 +160,11 @@ public class PreCodeAugmentationTask extends Task {
         } catch (BuildException ex) {
             throw ex;
         } catch (IOException ex) {
-            throw new BuildException("I/O error", ex);
+            throw new BuildException("I/O error: " + ex.getMessage(), ex);
         } catch (RuntimeException ex) {
             throw ex;
         } catch (Exception ex) {
-            throw new RuntimeException("Unexpected error", ex);
+            throw new RuntimeException("Unexpected error: " + ex.getMessage(), ex);
         }
 
         Instant endInstant = Instant.now();
@@ -210,8 +203,8 @@ public class PreCodeAugmentationTask extends Task {
 
         PreCodeAugmentationResult prepResult = new PreCodeAugmentationResult();
         prepResult.setTempDir(tempDir.getPath());
-        prepResult.setGenCodeStartSuffix(genCodeStartSuffixes.get(0));
-        prepResult.setGenCodeEndSuffix(genCodeEndSuffixes.get(0));
+        prepResult.setGenCodeStartSuffix(genCodeStartSuffixes.get(0).getValue());
+        prepResult.setGenCodeEndSuffix(genCodeEndSuffixes.get(0).getValue());
         Object resultWriter = prepResult.beginSerialize(parseResultsFile);
 
         List<Object> codeGenRequestWriters = new ArrayList<>();
@@ -219,15 +212,21 @@ public class PreCodeAugmentationTask extends Task {
         for (CodeGenerationRequestSpecification spec : requestSpecList) {
             CodeGenerationRequest codeGenRequest = new CodeGenerationRequest();
             codeGenRequests.add(codeGenRequest);
-            boolean useXml = !"csv".equals(TaskUtils.getFileExt(spec.getAugCodeDestFile().getName()));
+            boolean useXml = TaskUtils.canUseXml(spec.getAugCodeDestFile());
             Object requestWriter = codeGenRequest.beginSerialize(spec.getAugCodeDestFile(), useXml);
             codeGenRequestWriters.add(requestWriter);
         }
 
+        List<List<String>> augCodeSuffixes = new ArrayList<>();
+        for (CodeGenerationRequestSpecification r : requestSpecList) {
+            augCodeSuffixes.add(r.getAugCodeSuffixes().stream().map(s -> s.getValue()).collect(Collectors.toList()));
+        } 
         CodeGenerationRequestCreator codeGenerationRequestCreator =
             new CodeGenerationRequestCreator(
-                this.genCodeStartSuffixes, this.genCodeEndSuffixes,
-                this.embeddedStringDoubleSlashSuffixes, requestSpecList);
+                this.genCodeStartSuffixes.stream().map(s -> s.getValue()).collect(Collectors.toList()),
+                this.genCodeEndSuffixes.stream().map(s -> s.getValue()).collect(Collectors.toList()),
+                this.embeddedStringDoubleSlashSuffixes.stream().map(s -> s.getValue()).collect(Collectors.toList()),
+                augCodeSuffixes);
 
         List<List<AugmentingCode>> specAugCodesList = new ArrayList<>();
         for (int i = 0; i < requestSpecList.size(); i++) {
@@ -283,7 +282,7 @@ public class PreCodeAugmentationTask extends Task {
                     errorMap = new LinkedHashMap<>();
                 }
                 log(String.format("%s error(s) encountered in %s", errors.size(), srcFile),
-                    LogLevel.WARN.getLevel());
+                    Project.MSG_WARN);
                 errorMap.put(relativePath, errors);
             }
             
@@ -307,7 +306,7 @@ public class PreCodeAugmentationTask extends Task {
                 String srcPath = sourceFileErrors.getKey();
                 List<ParserException> errors = sourceFileErrors.getValue();
                 for (ParserException error: errors) {
-                    log("Error in " + srcPath + ":" + error, LogLevel.WARN.getLevel());
+                    log("Error in " + srcPath + ":" + error, Project.MSG_ERR);
                     errorCount++;
                 }
             }
@@ -317,7 +316,7 @@ public class PreCodeAugmentationTask extends Task {
 
     private void logVerbose(String message, Object... args) {
         if (verbose) {
-            log("[" + String.format(message, args) + "]");
+            log("[" + String.format(message, args) + "]", Project.MSG_VERBOSE);
         }
     }
 }

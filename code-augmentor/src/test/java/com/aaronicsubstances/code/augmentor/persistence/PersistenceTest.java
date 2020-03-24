@@ -223,10 +223,9 @@ public class PersistenceTest {
                         generatedCodeList.add(generatedCode);
 
                         generatedCode.setIndex(randGen.nextInt(30));
-                        generatedCode.setError(randGen.nextBoolean());
-                        
-                        generatedCode.setRelativePath(generateRandomString(randGen, false));
                         if (randGen.nextBoolean()) {
+                            generatedCode.setError(true);
+                            generatedCode.setRelativePath(generateRandomString(randGen, false));
                             generatedCode.setHeaderContent(generateRandomString(randGen, true));
                         }
                         generatedCode.setBodyContent(generateRandomString(randGen, true));
@@ -252,7 +251,17 @@ public class PersistenceTest {
         d.setAnnotatedWithSlashStar(randGen.nextBoolean());
         d.setIndex(randGen.nextInt(200));
         if (randGen.nextBoolean()) {
-            d.setIndent(generateRandomString(randGen, false));
+            if (randGen.nextBoolean()) {
+                int tabCount = randGen.nextInt(4) + 1;
+                StringBuilder s = new StringBuilder();
+                for (int i = 0; i < tabCount; i++) {
+                    s.append("\t");
+                }
+                d.setIndent(s.toString());
+            }
+            else {
+                d.setIndent(generateRandomString(randGen, false));
+            }
         }
         return c;
 	}

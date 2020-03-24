@@ -2,7 +2,9 @@ package com.aaronicsubstances.code.augmentor.models;
 
 import java.util.Map;
 
+import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamWriter;
+import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.StartElement;
 
 import com.aaronicsubstances.code.augmentor.persistence.ModifiedCsvReader;
@@ -63,9 +65,11 @@ public class GeneratedCode {
         if (serializer instanceof XMLStreamWriter) {
             XMLStreamWriter xmlWriter = (XMLStreamWriter) serializer;
             xmlWriter.writeStartElement("generated_code");
-            xmlWriter.writeAttribute("rel_path", relativePath);
             xmlWriter.writeAttribute("index", ""+ index);
-            xmlWriter.writeAttribute("error", ""+ error);
+            xmlWriter.writeAttribute("error", "" + error);
+            if (relativePath != null) {
+                xmlWriter.writeAttribute("rel_path", relativePath);
+            }
 
             if (headerContent != null) {
                 xmlWriter.writeStartElement("header");
@@ -94,9 +98,15 @@ public class GeneratedCode {
             if (startElement == null) {
                 return false;
             }
-            relativePath = XmlEventReaderWrapper.requireAttributeValue(startElement, "rel_path");
             index = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "index");
-            error = XmlEventReaderWrapper.requireAttributeValueAsBoolean(startElement, "error");
+            Attribute att = startElement.getAttributeByName(QName.valueOf("rel_path"));
+            if (att != null) {
+                relativePath = att.getValue();
+            }
+            att = startElement.getAttributeByName(QName.valueOf("error"));
+            if (att != null) {
+                error = Boolean.parseBoolean(att.getValue());
+            }
 
             startElement = xmlReader.requireStartElement(new String[]{ "header", "body" });
             if ("header".equals(startElement.getName().getLocalPart())) {
@@ -124,7 +134,10 @@ public class GeneratedCode {
             }
             String[] record = (String[]) result;
             Map<String, String> recordDict = qCsvReader.convertRecordToDict(record);
-            relativePath = qCsvReader.requireField(recordDict, "rel_path", false);
+            relativePath = recordDict.get("rel_path");
+            if ("".equals(relativePath)) {
+                relativePath = null;
+            }
             headerContent = recordDict.get("header");
             if ("".equals(headerContent)) {
                 headerContent = null;

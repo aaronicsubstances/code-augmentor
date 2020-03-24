@@ -109,8 +109,9 @@ public class ModifiedCsvWriter implements AutoCloseable {
 
     private String buildRecordString(String[] values) {
         StringBuilder recordString = new StringBuilder();
-        for (String value : values) {
-            if (recordString.length() > 0) {
+        for (int i = 0; i < values.length; i++) {
+            String value = values[i];
+            if (i > 0) {
                 recordString.append(',');
             }
             // escape value before adding.
