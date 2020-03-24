@@ -1,35 +1,7 @@
 [
     {
         "lineNumber": 1,
-        "text": "package"
-    },
-    {
-        "text": "//H",
-        "lineNumber": 1
-    },
-    {
-        "text": "\r\n",
-        "lineNumber": 1
-    },
-    {
-        "text": "//H",
-        "lineNumber": 2
-    },
-    {
-        "text": "\r\n",
-        "lineNumber": 2
-    },
-    {
-        "lineNumber": 3,
-        "text": " "
-    },
-    {
-        "lineNumber": 3,
-        "text": "com.aaronicsubstances.vision.members"
-    },
-    {
-        "lineNumber": 3,
-        "text": ";"
+        "text": "package//H\r\n//H\r\n com.aaronicsubstances.vision.members;"
     },
     {
         "lineNumber": 3,
@@ -45,19 +17,7 @@
     },
     {
         "lineNumber": 7,
-        "text": "import"
-    },
-    {
-        "lineNumber": 7,
-        "text": " "
-    },
-    {
-        "lineNumber": 7,
-        "text": "javax.ws.rs.GET"
-    },
-    {
-        "lineNumber": 7,
-        "text": ";"
+        "text": "import javax.ws.rs.GET;", "value": "import javax.ws.rs.GET"
     },
     {
         "lineNumber": 7,
@@ -65,19 +25,7 @@
     },
     {
         "lineNumber": 8,
-        "text": "import"
-    },
-    {
-        "lineNumber": 8,
-        "text": " "
-    },
-    {
-        "lineNumber": 8,
-        "text": "javax.ws.rs.Path"
-    },
-    {
-        "lineNumber": 8,
-        "text": ";"
+        "text": "import javax.ws.rs.Path;",        "value": "import javax.ws.rs.Path"
     },
     {
         "lineNumber": 8,
@@ -85,19 +33,7 @@
     },
     {
         "lineNumber": 9,
-        "text": "import"
-    },
-    {
-        "lineNumber": 9,
-        "text": " "
-    },
-    {
-        "lineNumber": 9,
-        "text": "javax.ws.rs.Produces"
-    },
-    {
-        "lineNumber": 9,
-        "text": ";"
+        "text": "import javax.ws.rs.Produces;",        "value": "import javax.ws.rs.Produces"
     },
     {
         "lineNumber": 9,
@@ -105,19 +41,7 @@
     },
     {
         "lineNumber": 10,
-        "text": "import"
-    },
-    {
-        "lineNumber": 10,
-        "text": " "
-    },
-    {
-        "lineNumber": 10,
-        "text": "javax.ws.rs.core.MediaType"
-    },
-    {
-        "lineNumber": 10,
-        "text": ";"
+        "text": "import javax.ws.rs.core.MediaType;",        "value": "import javax.ws.rs.core.MediaType"
     },
     {
         "lineNumber": 10,
@@ -125,19 +49,7 @@
     },
     {
         "lineNumber": 11,
-        "text": "import"
-    },
-    {
-        "lineNumber": 11,
-        "text": " "
-    },
-    {
-        "lineNumber": 11,
-        "text": "org.springframework.stereotype.Component"
-    },
-    {
-        "lineNumber": 11,
-        "text": ";"
+        "text": "import org.springframework.stereotype.Component;",  "value": "import org.springframework.stereotype.Component"
     },
     {
         "lineNumber": 11,

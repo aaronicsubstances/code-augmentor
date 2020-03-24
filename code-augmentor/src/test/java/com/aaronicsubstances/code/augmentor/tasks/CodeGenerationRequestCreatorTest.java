@@ -189,15 +189,11 @@ public class CodeGenerationRequestCreatorTest {
     public void testValidateDoubleSlashRelevantTokenGroup(int index, 
             List<Token> tokenGroup, Integer expected) {
         // create input which spans max possible line and column numbers.
-        final int maxLineNumber = 40, maxColumnNumber = 10;
+        final int maxLineNumber = 40;
         StringBuilder input = new StringBuilder();
         for (int i = 0; i < maxLineNumber; i++) {
-            for (int j = 0; j < maxColumnNumber; j++) {
-                if (j % 10 == 9) {
-                    input.append(' ');
-                }
-                input.append('x');
-            }
+            int ch = 'A' + (i % 26);
+            input.append((char)ch);
             input.append('\n');
         }
         ParserInputSource inputSource = new ParserInputSource(input.toString());
@@ -222,22 +218,15 @@ public class CodeGenerationRequestCreatorTest {
             newToken(3, "ES"));
         List<Token> fourthGroup = Arrays.asList(newToken(2, "1"),
             newToken(3, "ES"), newToken(4, "10"));
-        List<Token> fifthGroup = Arrays.asList(newToken(2, "H"),
-            newToken(3, "H"), newToken(4, "H"));
-        List<Token> sixthGroup = Arrays.asList(newToken(2, "H"));
-        List<Token> seventhGroup = Arrays.asList(newToken(12, "H"),
-            newToken(13, "H"), newToken(14, "0"));
-        List<Token> eighthGroup = Arrays.asList(newToken(12, "H"),
-            newToken(13, "ES"));
+        List<Token> fifthGroup = Arrays.asList(newToken(14, "0"));
+        List<Token> sixthGroup = Arrays.asList(newToken(13, "ES"));
         return new Object[][]{
             new Object[]{ 0, firstGroup, 2 },
             new Object[]{ 1, secondGroup, null },
             new Object[]{ 2, thirdGroup, null },
             new Object[]{ 3, fourthGroup, 4},
             new Object[]{ 4, fifthGroup, null },
-            new Object[]{ 5, sixthGroup, null },
-            new Object[]{ 6, seventhGroup, 14 },
-            new Object[]{ 7, eighthGroup, 13 }
+            new Object[]{ 5, sixthGroup, 13 }
         };
     }
 
@@ -282,11 +271,6 @@ public class CodeGenerationRequestCreatorTest {
             newToken(10, "JS", " ", "//JS);"),
             newToken(11, "JS", "", "//JS println()")
         );
-        List<Token> sixthGroup = Arrays.asList(
-            newToken(5, "H", "    ", "//H"),
-            newToken(6, "H", "    ", "//Here!"),
-            newToken(7, "H", "    ", "//Here!!")
-        );
         return new Object[][]{
             new Object[]{ firstGroup, "  ", createAugCode("JS", new Block(" println(", false)) },
             new Object[]{ secondGroup, "", createAugCode("JS", new Block(" println\n(\n", false),
@@ -297,8 +281,7 @@ public class CodeGenerationRequestCreatorTest {
             new Object[]{ fourthGroup, " ", createAugCode("JS", new Block(" println\n(\n", false),
                 new Block("{'value': true\n}", true)) },            
             new Object[]{ fifthGroup, "", createAugCode("JS", new Block(" println\n(\n", false),
-                new Block("{\n'value': true\n}", true), new Block("\n);\n println()", false)), },
-            new Object[]{ sixthGroup, "    ", createAugCode("H", new Block("\nere!\nere!!", false)) }
+                new Block("{\n'value': true\n}", true), new Block("\n);\n println()", false)), }
         };
     }
 
@@ -317,7 +300,7 @@ public class CodeGenerationRequestCreatorTest {
         List<Token> expected = Arrays.asList(
             newToken(5, "/*JS println(\"Hello World from JS-star\")\r\n" +
                 "var i = 3 + new Date(); \r\n" +
-                "...etc*/", 59, "0", 10, null, null)
+                "...etc*/", 59, "0", 3, null, null)
         );
         String s = TestResourceLoader.loadResource("tokens-for-relevance.json", getClass());
         List<Token> sourceTokens = fetchTokens(s);
@@ -329,9 +312,8 @@ public class CodeGenerationRequestCreatorTest {
     @Test
     public void testGetDoubleSlashReleventTokens() {
         List<Token> expected = Arrays.asList(
-            newToken(2, "//H", 12, "H", 3, "", newToken(2, "\r\n", 15)),
-            newToken(24, "//JS println(\"World\")", 493, "0", 61, "", newToken(24, "\r\n", 514)),
-            newToken(26, "//JS println(\"Hello\")", 560, "0", 73, "        ", newToken(26, "\r\n", 581))
+            newToken(24, "//JS println(\"World\")", 493, "0", 39, "", newToken(24, "\r\n", 514)),
+            newToken(26, "//JS println(\"Hello\")", 560, "0", 51, "        ", newToken(26, "\r\n", 581))
         );
         String s = TestResourceLoader.loadResource("tokens-for-relevance.json", getClass());
         List<Token> sourceTokens = fetchTokens(s);
@@ -356,28 +338,27 @@ public class CodeGenerationRequestCreatorTest {
         final String sourceName1 = "tokens-for-relevance.json";
         final String sourceName2 = "tokens-for-generated-code-descriptor.json";
         return new Object[][]{
-            new Object[]{ sourceName1, 4, false, new GeneratedCodeDescriptor(15, 17) },
-            new Object[]{ sourceName1, 40, true, null },
-            new Object[]{ sourceName1, 166, false, new GeneratedCodeDescriptor(1068, 1070) },
-            new Object[]{ sourceName1, 167, false, null },
+            new Object[]{ sourceName1, 3, true, null },
+            new Object[]{ sourceName1, 40, false, new GeneratedCodeDescriptor(514, 516) },
+            new Object[]{ sourceName1, 52, false, new GeneratedCodeDescriptor(581, 583) },
+            new Object[]{ sourceName1, 144, false, new GeneratedCodeDescriptor(1068, 1070) },
+            new Object[]{ sourceName1, 145, false, null },
             new Object[]{ sourceName2, 0, true, null },
-            new Object[]{ sourceName2, 3, true, null },
-            new Object[]{ sourceName2, 8, true, new GeneratedCodeDescriptor(61, 74) },
-            new Object[]{ sourceName2, 12, true, new GeneratedCodeDescriptor(89, 104) },
+            new Object[]{ sourceName2, 1, true, null },
+            new Object[]{ sourceName2, 7, true, null },
             new Object[]{ sourceName2, 16, true, null },
-            new Object[]{ sourceName2, 17, true, new GeneratedCodeDescriptor(110, 140) },
             new Object[]{ sourceName2, 34, true, null },
             new Object[]{ sourceName2, 38, true, null },
             new Object[]{ sourceName2, 80, true, null },
-            new Object[]{ sourceName2, 90, false, new GeneratedCodeDescriptor(549, 577) },
-            new Object[]{ sourceName2, 114, false, new GeneratedCodeDescriptor(672, 674) },
-            new Object[]{ sourceName2, 129, true, null },
-            new Object[]{ sourceName2, 160, true, new GeneratedCodeDescriptor(984, 997) },
-            new Object[]{ sourceName2, 164, true, null },
-            new Object[]{ sourceName2, 166, false, new GeneratedCodeDescriptor(1017, 1019) },
-            new Object[]{ sourceName2, 173, false, new GeneratedCodeDescriptor(1036, 1038) },
-            new Object[]{ sourceName2, 198, true, null },
-            new Object[]{ sourceName2, 224, false, new GeneratedCodeDescriptor(1305, 1307) }
+            new Object[]{ sourceName2, 66, false, new GeneratedCodeDescriptor(549, 577) },
+            new Object[]{ sourceName2, 90, false, new GeneratedCodeDescriptor(672, 674) },
+            new Object[]{ sourceName2, 105, true, null },
+            new Object[]{ sourceName2, 136, true, new GeneratedCodeDescriptor(984, 997) },
+            new Object[]{ sourceName2, 144, true, null },
+            new Object[]{ sourceName2, 142, false, new GeneratedCodeDescriptor(1017, 1019) },
+            new Object[]{ sourceName2, 149, false, new GeneratedCodeDescriptor(1036, 1038) },
+            new Object[]{ sourceName2, 176, true, null },
+            new Object[]{ sourceName2, 200, false, new GeneratedCodeDescriptor(1305, 1307) }
         };
     }
 
@@ -404,9 +385,12 @@ public class CodeGenerationRequestCreatorTest {
 
     @DataProvider
     public Object[][] createTestProcessSourceFileData() {
-        List<String> importStatements = Arrays.asList(
+        List<String> importStatements1 = Arrays.asList(
             "import org.springframework.boot.SpringApplication", 
             "import org.springframework.boot.autoconfigure.SpringBootApplication");
+        SourceFileDescriptor first = new SourceFileDescriptor(importStatements1,
+            new ArrayList<>());
+        first.setHeaderInsertPos(186);
         List<String> importStatements2and3 = Arrays.asList(
             "import javax.ws.rs.GET", 
             "import javax.ws.rs.Path",
@@ -419,6 +403,7 @@ public class CodeGenerationRequestCreatorTest {
                 new GeneratedCodeDescriptor(1063, 1065))
         );
         SourceFileDescriptor second = new SourceFileDescriptor(importStatements2and3, bodySnippets2);
+        second.setHeaderInsertPos(268);
         List<AugmentingCode> secondJs = Arrays.asList(
             createAugCode(0, "JS", new Block(
                 " println(\"Hello World from JS-star\")\r\n" +
@@ -436,6 +421,7 @@ public class CodeGenerationRequestCreatorTest {
                 new GeneratedCodeDescriptor(581, 583))
         );
         SourceFileDescriptor third = new SourceFileDescriptor(importStatements2and3, bodySnippets3);
+        third.setHeaderInsertPos(300);
         List<AugmentingCode> thirdJs = Arrays.asList(
             createAugCode(0, "JS", new Block(
                 " println(\"Hello World from JS-star\")\r\n" +
@@ -446,8 +432,7 @@ public class CodeGenerationRequestCreatorTest {
         );
         return new Object[][]{
             new Object[]{ "tokens-for-import.json", 
-                new SourceFileDescriptor(importStatements, Arrays.asList()), 
-                Arrays.asList(), Arrays.asList() },
+                first, Arrays.asList(), Arrays.asList() },
             new Object[]{ "tokens-for-generated-code-descriptor.json", 
                 second, secondJs, Arrays.asList() },
             new Object[]{ "tokens-for-relevance.json", 
@@ -521,6 +506,10 @@ public class CodeGenerationRequestCreatorTest {
         int startPos = 0;
         for (TokenLite t : ts) {
             Token token = newToken(t.lineNumber, t.text, startPos);
+            if (t.value != null) {
+                token.value = new HashMap<>();
+                token.value.put(Token.VALUE_KEY_IMPORT_STATEMENT, t.value);
+            }
             tokens.add(token);
             startPos = token.endPos;
         }
@@ -532,7 +521,10 @@ public class CodeGenerationRequestCreatorTest {
         Map<String, Object> tokenAttributes = new HashMap<>();
         tokenAttributes.put(CodeGenerationRequestCreator.TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR,
             suffixDescriptor);
-        Token t = new Token(0, null, 0, 0, lineNumber);
+        // assume single char per line.
+        int startPos = (lineNumber - 1) * 2;
+        int endPos = startPos + 2;
+        Token t = new Token(0, null, startPos, endPos, lineNumber);
         t.value = tokenAttributes;
         return t;
     }
@@ -586,6 +578,7 @@ public class CodeGenerationRequestCreatorTest {
     static class TokenLite {
         int lineNumber;
         String text;
+        String value;
     }
 
     private static Token newToken(int lineNumber, String text, int startPos) {
@@ -599,10 +592,10 @@ public class CodeGenerationRequestCreatorTest {
                 if (text.startsWith("#!")) {
                     type = Token.TYPE_SHEBANG;
                 }
-                else if (text.startsWith("package ")) {
+                else if (text.startsWith("package")) {
                     type = Token.TYPE_PACKAGE_STATEMENT;
                 }
-                else if (text.startsWith("import ")) {
+                else if (text.startsWith("import")) {
                     type = Token.TYPE_IMPORT_STATEMENT;
                 }
                 else if (text.startsWith("//")) {

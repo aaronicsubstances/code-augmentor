@@ -9,19 +9,7 @@
 	},
 	{
 		"lineNumber": 4,
-		"text": "package"
-	},
-	{
-		"lineNumber": 4,
-		"text": " "
-	},
-	{
-		"lineNumber": 4,
-		"text": "com.aaronicsubstances"
-	},
-	{
-		"lineNumber": 4,
-		"text": ";"
+		"text": "package com.aaronicsubstances;"
 	},
 	{
 		"lineNumber": 4,
@@ -33,19 +21,8 @@
 	},
 	{
 		"lineNumber": 6,
-		"text": "import"
-	},
-	{
-		"lineNumber": 6,
-		"text": " "
-	},
-	{
-		"lineNumber": 6,
-		"text": "org.springframework.boot.SpringApplication"
-	},
-	{
-		"lineNumber": 6,
-		"text": ";"
+		"text": "import org.springframework.boot.SpringApplication;",
+		"value": "import org.springframework.boot.SpringApplication"
 	},
 	{
 		"lineNumber": 6,
@@ -53,19 +30,8 @@
 	},
 	{
 		"lineNumber": 7,
-		"text": "import"
-	},
-	{
-		"lineNumber": 7,
-		"text": " "
-	},
-	{
-		"lineNumber": 7,
-		"text": "org.springframework.boot.autoconfigure.SpringBootApplication"
-	},
-	{
-		"lineNumber": 7,
-		"text": ";"
+		"text": "import org.springframework.boot.autoconfigure.SpringBootApplication;",
+		"value": "import org.springframework.boot.autoconfigure.SpringBootApplication"
 	},
 	{
 		"lineNumber": 7,
