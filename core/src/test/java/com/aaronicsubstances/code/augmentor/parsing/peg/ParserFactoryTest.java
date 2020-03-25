@@ -60,10 +60,12 @@ public class ParserFactoryTest {
         }
 
         String Number() {
-            return OneOrMore(this::Digit).stream().collect(joining());
+            //return OneOrMore(this::Digit).stream().collect(joining());
+            return OneOrMore(this::Digit).stream().map(String::valueOf).collect(joining());
         }
 
-        String Digit() {
+        //String Digit() {
+        char Digit() {
             return Char(Character::isDigit, "digit");
         }
     }
@@ -130,10 +132,12 @@ public class ParserFactoryTest {
         }
 
         int Number() {
-            return Integer.valueOf(OneOrMore(this::Digit).stream().collect(joining()));
+            //return Integer.valueOf(OneOrMore(this::Digit).stream().collect(joining()));
+            return Integer.valueOf(OneOrMore(this::Digit).stream().map(String::valueOf).collect(joining()));
         }
 
-        String Digit() {
+        //String Digit() {
+        char Digit() {
             return Char(Character::isDigit, "digit");
         }
     }

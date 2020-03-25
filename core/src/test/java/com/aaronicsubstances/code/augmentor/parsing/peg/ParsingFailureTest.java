@@ -23,11 +23,13 @@ public class ParsingFailureTest {
             return Str("foo");
         }
 
-        String matchChar() {
+        /*String matchChar() {*/
+        char matchChar() {
             return Char(Character::isLetter, "letter");
         }
 
-        String charRange() {
+        //String charRange() {
+        char charRange() {
             return CharRange('a', 'b');
         }
 

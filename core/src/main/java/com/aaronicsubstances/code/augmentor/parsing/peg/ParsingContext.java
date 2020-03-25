@@ -56,21 +56,26 @@ public class ParsingContext<TState extends ParsingState<TState>> {
     /**
      * Return the next codepoint of the input without consuming it
      */
-    public int peek() {
+    //public int peek() {
+    public char peek() {
         if (!hasNext())
             throw noMatch();
-        return content.codePointAt(getIndex());
+        /*return content.codePointAt(getIndex());*/
+        return content.charAt(state.index);
     }
 
     /**
      * Return the next codepoint of the input and consume it.
      */
-    public int next() {
+    //public int next() {
+    public char next() {
         if (!hasNext()) {
             throw noMatch();
         }
-        int result = content.codePointAt(getIndex());
-        state.index = getIndex() + Character.charCount(result);
+        /*int result = content.codePointAt(getIndex());
+        state.index = getIndex() + Character.charCount(result);*/
+        char result = content.charAt(state.index);
+        state.index++;
         return result;
     }
 
@@ -86,7 +91,8 @@ public class ParsingContext<TState extends ParsingState<TState>> {
      * Return true if there are more codepoints in the input
      */
     public boolean hasNext() {
-        return getIndex() < content.length();
+        /*return getIndex() < content.length();*/
+        return state.index < content.length();
     }
 
     /**
@@ -194,7 +200,7 @@ public class ParsingContext<TState extends ParsingState<TState>> {
      * {@link ExpectationFrame}
      */
     public void registerExpectation(String expectation) {
-        registerExpectation(expectation, getIndex());
+        registerExpectation(expectation, /*getIndex()*/state.index);
     }
 
     public static class Expectation {
@@ -267,35 +273,35 @@ public class ParsingContext<TState extends ParsingState<TState>> {
     public final LambdaPegEvent<RuleLoggingInfo> recursiveEvent = new LambdaPegEvent<>();
 
     public void recursive(RuleLoggingInfo loggingInfo) {
-        loggingInfo.index = getIndex();
+        loggingInfo.index = /*getIndex()*/state.index;
         recursiveEvent.fire(loggingInfo);
     }
 
     public final LambdaPegEvent<RuleLoggingInfo> enteringEvent = new LambdaPegEvent<>();
 
     public void entering(RuleLoggingInfo loggingInfo) {
-        loggingInfo.index = getIndex();
+        loggingInfo.index = /*getIndex()*/state.index;
         enteringEvent.fire(loggingInfo);
     }
 
     public final LambdaPegEvent<RuleLoggingInfo> failedEvent = new LambdaPegEvent<>();
 
     public void failed(RuleLoggingInfo loggingInfo) {
-        loggingInfo.index = getIndex();
+        loggingInfo.index = /*getIndex()*/state.index;
         failedEvent.fire(loggingInfo);
     }
 
     public final LambdaPegEvent<RuleLoggingInfo> leavingEvent = new LambdaPegEvent<>();
 
     public void leaving(RuleLoggingInfo loggingInfo) {
-        loggingInfo.index = getIndex();
+        loggingInfo.index = /*getIndex()*/state.index;
         leavingEvent.fire(loggingInfo);
     }
 
     public final LambdaPegEvent<RuleLoggingInfo> retryingEvent = new LambdaPegEvent<>();
 
     public void retrying(RuleLoggingInfo loggingInfo) {
-        loggingInfo.index = getIndex();
+        loggingInfo.index = /*getIndex()*/state.index;
         retryingEvent.fire(loggingInfo);
     }
 
@@ -333,7 +339,7 @@ public class ParsingContext<TState extends ParsingState<TState>> {
     }
 
     public PositionInfo currentPositionInfo() {
-        return new PositionInfo(content, getIndex());
+        return new PositionInfo(content, /*getIndex()*/state.index);
     }
 
     // private NoMatchException exception = new NoMatchException(this);
@@ -344,7 +350,7 @@ public class ParsingContext<TState extends ParsingState<TState>> {
     }
 
     public NoMatchException noMatch(String expected) {
-        return noMatch(expected, getIndex());
+        return noMatch(expected, /*getIndex()*/state.index);
     }
 
     public NoMatchException noMatch(String expected, int index) {

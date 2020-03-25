@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.PrimitiveIterator.OfInt;
+//import java.util.PrimitiveIterator.OfInt;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -358,7 +358,8 @@ public class Parser<TCtx extends ParsingContext<?>> {
      * Match one or more chars matching the criteria. If no matching character
      * is found, report the unmet expectation.
      */
-    public final String OneOrMoreChars(Predicate<Integer> criteria, String expectation) {
+    //public final String OneOrMoreChars(Predicate<Integer> criteria, String expectation) {
+    public final String OneOrMoreChars(Predicate<Character> criteria, String expectation) {
         String result = ZeroOrMoreChars(criteria, expectation);
         if (result.isEmpty()) {
             throw ctx.noMatch(expectation);
@@ -369,11 +370,13 @@ public class Parser<TCtx extends ParsingContext<?>> {
     /**
      * Match zero or more chars matching the criteria.
      */
-    public final String ZeroOrMoreChars(Predicate<Integer> criteria, String expectation) {
+    //public final String ZeroOrMoreChars(Predicate<Integer> criteria, String expectation) {
+    public final String ZeroOrMoreChars(Predicate<Character> criteria, String expectation) {
         StringBuilder sb = new StringBuilder();
         while (true) {
             if (ctx.hasNext() && criteria.test(ctx.peek())) {
-                sb.appendCodePoint(ctx.next());
+                //sb.appendCodePoint(ctx.next());
+                sb.append(ctx.next());
             } else {
                 ctx.registerExpectation(expectation);
                 break;
@@ -498,10 +501,12 @@ public class Parser<TCtx extends ParsingContext<?>> {
      * Match any character. The returned string contains the matched unicode
      * character, as one or two chars (for surrogate pairs)
      */
-    public final String AnyChar() {
+    //public final String AnyChar() {
+    public final char AnyChar() {
         if (!ctx.hasNext())
             throw ctx.noMatch("any character");
-        return new String(Character.toChars(ctx.next()));
+        //return new String(Character.toChars(ctx.next()));
+        return ctx.next();
     }
 
     /**
@@ -509,7 +514,7 @@ public class Parser<TCtx extends ParsingContext<?>> {
      * found.
      */
     private boolean matchString(String expected) {
-        OfInt it = expected.codePoints().iterator();
+        /*OfInt it = expected.codePoints().iterator();
         while (it.hasNext() && ctx.hasNext()) {
             if (it.nextInt() != ctx.peek()) {
                 return false;
@@ -517,7 +522,15 @@ public class Parser<TCtx extends ParsingContext<?>> {
             ctx.next();
         }
 
-        return !it.hasNext();
+        return !it.hasNext();*/
+        int idx = 0;
+        for (; idx < expected.length() && ctx.hasNext(); idx++) {
+            if (expected.charAt(idx) != ctx.peek()) {
+                return false;
+            }
+            ctx.next();
+        }
+        return idx >= expected.length();
     }
 
     /**
@@ -559,12 +572,14 @@ public class Parser<TCtx extends ParsingContext<?>> {
      * the next code point in the input. If the match fails, the specified
      * expectation is reported.
      */
-    public final String Char(Predicate<Integer> predicate, String expectation) {
+    //public final String Char(Predicate<Integer> predicate, String expectation) {
+    public final char Char(Predicate<Character> predicate, String expectation) {
         int startIndex = ctx.getIndex();
         if (ctx.hasNext()) {
-            int cp = ctx.next();
+            /*int*/char cp = ctx.next();
             if (predicate.test(cp)) {
-                return new String(Character.toChars(cp));
+                //return new String(Character.toChars(cp));
+                return cp;
             }
         }
         throw ctx.noMatch(expectation, startIndex);
@@ -574,12 +589,15 @@ public class Parser<TCtx extends ParsingContext<?>> {
     /**
      * Match all chars except the ones specified
      */
-    public final String NoneOf(String chars) {
+    //public final String NoneOf(String chars) {
+    public final char NoneOf(String chars) {
         int startIndex = ctx.getIndex();
         if (ctx.hasNext()) {
-            int cp = ctx.next();
-            if (chars.codePoints().allMatch(x -> x != cp)) {
-                return String.valueOf(Character.toChars(cp));
+            /*int*/char cp = ctx.next();
+            if (chars.indexOf(cp) == -1) {
+            //if (chars.codePoints().allMatch(x -> x != cp)) {
+                //return String.valueOf(Character.toChars(cp));
+                return cp;
             }
         }
         throw ctx.noMatch("any char except " + chars, startIndex);
@@ -589,19 +607,23 @@ public class Parser<TCtx extends ParsingContext<?>> {
      * Match all characters in a given range (inclusive). Return a string
      * containing only the matched character.
      */
-    public final String CharRange(int first, int last) {
+    //public final String CharRange(int first, int last) {
+    public final char CharRange(char first, char last) {
         int startIndex = ctx.getIndex();
         if (ctx.hasNext()) {
-            int cp = ctx.next();
+            /*int*/char cp = ctx.next();
             if (cp >= first && cp <= last) {
-                return new String(Character.toChars(cp));
+                //return new String(Character.toChars(cp));
+                return cp;
             }
         }
         StringBuilder sb = new StringBuilder();
         sb.append("character between ");
-        sb.appendCodePoint(first);
+        //sb.appendCodePoint(first);
+        sb.append(first);
         sb.append(" and ");
-        sb.appendCodePoint(last);
+        //sb.appendCodePoint(last);
+        sb.append(last);
         throw ctx.noMatch(sb.toString(), startIndex);
     }
 
