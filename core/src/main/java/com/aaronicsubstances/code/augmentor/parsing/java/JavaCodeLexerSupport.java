@@ -41,7 +41,7 @@ public class JavaCodeLexerSupport {
      * position changes information useful for mapping back from transformed code
      * to original code.
      * 
-     * @returns transformed java source code containing no unicode escapes.
+     * @return transformed java source code containing no unicode escapes.
      */
     public static String transformUnicodeEscapes(String javaSourceCode, 
             SourceMap sourceMap) {        

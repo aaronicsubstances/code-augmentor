@@ -49,12 +49,12 @@ public class LexerSupportTest {
     
     @DataProvider
     public Object[][] createTestCalculateLineAndColumnNumbersData() {
-        String inputWin32 = TestResourceLoader.loadResource("testConsume-win32.txt", 
-            ParserInputSourceTest.class);
-        String inputUnix = TestResourceLoader.loadResource("testConsume-unix.txt", 
-            ParserInputSourceTest.class);
-        String inputMac = TestResourceLoader.loadResource("testConsume-mac.txt", 
-            ParserInputSourceTest.class);
+        String inputWin32 = TestResourceLoader.loadResourceNewlinesNormalized("testConsume-win32.txt", 
+            ParserInputSourceTest.class, "\r\n");
+        String inputUnix = TestResourceLoader.loadResourceNewlinesNormalized("testConsume-unix.txt", 
+            ParserInputSourceTest.class, "\n");
+        String inputMac = TestResourceLoader.loadResourceNewlinesNormalized("testConsume-mac.txt", 
+            ParserInputSourceTest.class, "\r");
 
         return new Object[][]{
             { "", 0, 1, 1 },
@@ -63,7 +63,6 @@ public class LexerSupportTest {
             { "ab\nc", 4, 2, 2 },
             { "ab\nc\r\n", 6, 3, 1 },
 
-            // copied from {@link ParserInputSourceTest#createTestConsumeDataWin32()}
             new Object[]{ inputWin32, 1, 1, 2 },
             new Object[]{ inputWin32, 4, 1, 5 },
             new Object[]{ inputWin32, 5, 1, 6 },
@@ -75,7 +74,6 @@ public class LexerSupportTest {
             new Object[]{ inputWin32, 15, 2, 1 },  // until \n here on this line.
             new Object[]{ inputWin32, 18, 2, 4 },
 
-            // copied from {@link ParserInputSourceTest#createTestConsumeDataUnix()}
             new Object[]{ inputUnix, 1, 1, 2 },
             new Object[]{ inputUnix, 4, 1, 5 },
             new Object[]{ inputUnix, 5, 1, 6 },
@@ -86,7 +84,6 @@ public class LexerSupportTest {
             new Object[]{ inputUnix, 14, 2, 1 },
             new Object[]{ inputUnix, 17, 2, 4 },
 
-            // copied from {@link ParserInputSourceTest#createTestConsumeDataMac()}
             new Object[]{ inputMac, 1, 1, 2 },
             new Object[]{ inputMac, 4, 1, 5 },
             new Object[]{ inputMac, 5, 1, 6 },

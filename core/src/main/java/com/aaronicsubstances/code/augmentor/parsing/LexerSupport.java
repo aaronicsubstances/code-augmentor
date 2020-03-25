@@ -146,7 +146,7 @@ public class LexerSupport {
      * @param start start of substring
      * @param end end of substring
      * 
-     * @returns positive number (or 0).
+     * @return positive number (or 0).
      */
     public static int parseDecimalString(CharSequence s, int start, int end) {
         if (s.length() == 0 || start >= end) {
@@ -173,7 +173,7 @@ public class LexerSupport {
      * @param start start of substring
      * @param end end of substring
      * 
-     * @returns positive number (or 0).
+     * @return positive number (or 0).
      */
     public static int parseHexadecimalString(CharSequence s, int start, int end) {
         if (s.length() == 0 || start >= end) {
