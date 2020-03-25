@@ -1,5 +1,7 @@
 package com.aaronicsubstances.code.augmentor.parsing;
 
+import com.aaronicsubstances.code.augmentor.parsing.peg.PositionInfo;
+
 /**
  * Used to manage chain of transformed source codes in order to trace 
  * positions back to original source code.
@@ -17,11 +19,11 @@ public class ParserInputSource {
      * @param input input/source code string
      */
     public ParserInputSource(String input) {
-        this(input, null);
+        this.input = input;
     }
 
-    public ParserInputSource(String transformedInput, SourceMap sourceMap) {
-        this.input = transformedInput;
+    public ParserInputSource(String originalInput, SourceMap sourceMap) {
+        this.input = originalInput;
         this.sourceMap = sourceMap;
     }
 
@@ -71,14 +73,17 @@ public class ParserInputSource {
      * @return original input string. 
      */
     public String fixInputCoordinates(int[] inputCoordinates) {
-		if (inputCoordinates != null && sourceMap != null) {
-            int transformedPosition = inputCoordinates[0];
-            int originalPosition = sourceMap.getSrcIndex(transformedPosition);
-            inputCoordinates[0] = originalPosition;
-        }
 		if (embeddedInputSource != null) {
-			return embeddedInputSource.fixInputCoordinates(inputCoordinates);
-		}
+            if (inputCoordinates != null) {
+                SourceMap sourceMap = embeddedInputSource.getSourceMap();
+                if (sourceMap != null) {
+                    int transformedPosition = inputCoordinates[0];
+                    int originalPosition = sourceMap.getSrcIndex(transformedPosition);
+                    inputCoordinates[0] = originalPosition;
+                }
+            }
+            return embeddedInputSource.fixInputCoordinates(inputCoordinates);
+        }
         return input;
     }
 
@@ -101,27 +106,14 @@ public class ParserInputSource {
         // Thus we need to get the real input and the corresponding coordinates which
         // map to errorLineNumber and errorColumnNumber.
         int[] dest = new int[]{ errorPosition };
-        String originalInput = input;
-        if (embeddedInputSource != null) {
-			originalInput = embeddedInputSource.fixInputCoordinates(dest);
-        }
+        String originalInput = fixInputCoordinates(dest);
         int originalPosition = dest[0];
-        int[] originalLineAndColumnNumbers = LexerSupport.calculateLineAndColumnNumbers(
-            input, originalPosition);
-        int errorLineNumber = originalLineAndColumnNumbers[0];
-        int errorColumnNumber = originalLineAndColumnNumbers[1];
+        PositionInfo pInfo = new PositionInfo(originalInput, originalPosition);
+        int errorLineNumber = pInfo.getLineNr();
+        int errorColumnNumber = pInfo.getIndexInLine() + 1;
 
-        // visually identify error location in input.
-        String[] inputLines = LexerSupport.NEW_LINE_REGEX.split(originalInput, -1);
-        StringBuilder snippet = new StringBuilder(inputLines[errorLineNumber - 1]);
-        // for purposes of testing, accept invalid column numbers without complaining
-        if (errorColumnNumber > 0) {
-            snippet.append("\n");
-            for (int i = 0; i < errorColumnNumber - 1; i++) {
-                snippet.append(' ');
-            }
-            snippet.append('^');
-        }
+        StringBuilder snippet = new StringBuilder(pInfo.getLine());
+        snippet.append('\n').append(pInfo.getUnderline(' ', '^'));
         
         String errorMessage = String.format("%s:%s %s\n\n%s", errorLineNumber,
             errorColumnNumber, message, snippet);

@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.aaronicsubstances"
-version = "1.0-SNAPSHOT"
+version = "0.5-SNAPSHOT"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -18,6 +18,9 @@ javadoc {
         options.addBooleanOption('html5', true)
     }
 }
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
+javadoc.options.encoding = 'UTF-8'
 
 repositories {
 	jcenter()

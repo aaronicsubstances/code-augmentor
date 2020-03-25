@@ -191,6 +191,7 @@ public class CodeGenerationRequestCreator {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public SourceFileDescriptor processSourceFile(
             ParserInputSource inputSource, List<Token> sourceTokens,
             List<List<AugmentingCode>> specAugCodesList, List<ParserException> errors) {
@@ -471,6 +472,7 @@ public class CodeGenerationRequestCreator {
         return null;
     }
 
+    @SuppressWarnings("unchecked")
     static List<Object> combineAndSortRelevantTokens(List<Token> slashStarRelevantTokens,
             List<List<Token>> doubleSlashRelevantTokenGroups) {
         List<Object> combined = new ArrayList<>();

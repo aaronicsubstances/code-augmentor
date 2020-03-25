@@ -99,6 +99,7 @@ public class CodeGenerationRequest {
         return serializer;
     }
 
+    @SuppressWarnings("resource")
     public Object beginDeserialize(Reader stream, boolean useXml) throws Exception {
         augmentingCodeSnippets = new ArrayList<>();
         if (useXml) {
