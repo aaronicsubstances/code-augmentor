@@ -29,7 +29,7 @@ import com.aaronicsubstances.code.augmentor.parsing.peg.Parser.RuleCacheValue;
 public class ParsingContext<TState extends ParsingState<TState>> {
     private String content;
 
-    private TState state;
+    protected TState state;
 
     public ParsingContext(String content) {
         setContent(content);
