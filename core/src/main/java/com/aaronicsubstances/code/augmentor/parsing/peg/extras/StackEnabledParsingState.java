@@ -1,15 +1,17 @@
 package com.aaronicsubstances.code.augmentor.parsing.peg.extras;
 
+import java.util.Map;
+
 import com.aaronicsubstances.code.augmentor.parsing.peg.ParsingState;
 
 public class StackEnabledParsingState extends ParsingState<StackEnabledParsingState> {
-    private int sizeToKeep;
+    private Map<Class<?>, Integer> valueStackSizes;
 
-    public int getSizeToKeep() {
-        return sizeToKeep;
+    public Map<Class<?>, Integer> getValueStackSizes() {
+        return valueStackSizes;
     }
 
-    public void setSizeToKeep(int sizeToKeep) {
-        this.sizeToKeep = sizeToKeep;
+    public void setValueStackSizes(Map<Class<?>, Integer> valueStackSizes) {
+        this.valueStackSizes = valueStackSizes;
     }
 }

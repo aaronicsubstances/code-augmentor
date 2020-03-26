@@ -18,6 +18,11 @@ public class KotlinParserTest {
         String input = loadInput(inputIndex);
         KotlinParser instance = new KotlinParser(input);
 
+        if (inputIndex == 2) {
+            instance.setInfoLog(System.out::println);
+            instance.setTraceLog(System.err::println);
+        }
+
         List<Token> expected = new ArrayList<>(TestResourceLoader.deserializeTokens(
             expectedTokenListIndex, getClass()));
         List<Token> actual = new ArrayList<>(instance.parse());

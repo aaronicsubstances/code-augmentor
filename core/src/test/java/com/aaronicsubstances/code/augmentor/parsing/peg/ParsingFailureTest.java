@@ -38,7 +38,7 @@ public class ParsingFailureTest {
         }
 
         String atomic() {
-            return Atomic("atomic", () -> Str("a") + Str("b"));
+            return AtomicRet("atomic", () -> Str("a") + Str("b"));
         }
 
         String expect() {

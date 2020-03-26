@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.aaronicsubstances.code.augmentor.parsing.LexerSupport;
@@ -22,9 +23,12 @@ import com.aaronicsubstances.code.augmentor.parsing.peg.extras.PegToken;
  */
 public class KotlinParser implements TokenSupplier {    
     private final ParserInputSource inputSource;
+    private final KotlinPegParser pegParser;
 
     public KotlinParser(String input) {
         inputSource = new ParserInputSource(input);
+        String transformedInput = inputSource.getInput();
+        pegParser = new KotlinPegParser(transformedInput);
     }
 
     @Override
@@ -32,16 +36,22 @@ public class KotlinParser implements TokenSupplier {
         return inputSource;
     }
 
+    public void setTraceLog(Consumer<String> traceLog) {
+        pegParser.setTraceLog(traceLog);
+    }
+
+    public void setInfoLog(Consumer<String> infoLog) {
+        pegParser.setInfoLog(infoLog);
+    }
+
 	@Override
     public List<Token> parse() {
-        String transformedInput = inputSource.getInput();
-        KotlinPegParser parser = new KotlinPegParser(transformedInput);
         List<PegToken> tokenList;
         try {
-            tokenList = parser.Parse();
-        } 
+            tokenList = pegParser.Parse();
+        }
         catch (NoMatchException ex) {
-            ErrorDescription errorDesc = parser.getParsingContext().getErrorDescription();
+            ErrorDescription errorDesc = pegParser.getParsingContext().getErrorDescription();
             PositionInfo errorLineInfo = inputSource.createErrorLineInfo(errorDesc.errorPosition);
             String errorMsg = "Expected: " +
                     errorDesc.expectations.stream().collect(Collectors.joining(", ")) + 

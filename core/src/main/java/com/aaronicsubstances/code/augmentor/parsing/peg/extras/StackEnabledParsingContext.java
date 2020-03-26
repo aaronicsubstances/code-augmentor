@@ -1,18 +1,20 @@
 package com.aaronicsubstances.code.augmentor.parsing.peg.extras;
 
-import java.util.LinkedList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Stack;
 
 import com.aaronicsubstances.code.augmentor.parsing.peg.ParsingContext;
 
 public class StackEnabledParsingContext extends ParsingContext<StackEnabledParsingState> {
-    private final LinkedList<Object> valueStack = new LinkedList<>();
+    private final Map<Class<?>, Stack<Object>> valueStackMap = new HashMap<>();
 
     public StackEnabledParsingContext(String content) {
         super(content);
     }
 
-    public LinkedList<Object> getValueStack() {
-        return valueStack;
+    public Map<Class<?>, Stack<Object>> getValueStackMap() {
+        return valueStackMap;
     }
 
     @Override
@@ -32,24 +34,38 @@ public class StackEnabledParsingContext extends ParsingContext<StackEnabledParsi
         StackEnabledParsingState snapshot;
 
         public StateSnapshotImpl() {
-            snapshot = state.clone();
-            snapshot.setSizeToKeep(valueStack.size());
+            snapshot = state().clone();
+            Map<Class<?>, Integer> valueStackSizes = new HashMap<>();
+            for (Map.Entry<Class<?>, Stack<Object>> e : valueStackMap.entrySet()) {
+                valueStackSizes.put(e.getKey(), e.getValue().size());
+            }
+            snapshot.setValueStackSizes(valueStackSizes);
         }
 
         @Override
         public void restore() {
             checkSnapshot();
-            state = snapshot;
+            setState(snapshot);
             snapshot = null;
-            while (valueStack.size() > state.getSizeToKeep()) {
-                valueStack.pop();
+            Map<Class<?>, Integer> valueStackSizes = state().getValueStackSizes();
+            for (Map.Entry<Class<?>, Stack<Object>> e : valueStackMap.entrySet()) {
+                Stack<Object> stack = e.getValue();
+                if (valueStackSizes.containsKey(e.getKey())) {
+                    int sizeToKeep = valueStackSizes.get(e.getKey());
+                    while (stack.size() > sizeToKeep) {
+                        stack.pop();
+                    }
+                }
+                else {
+                    stack.clear();
+                }
             }
         }
 
         @Override
         public void restoreClone() {
             checkSnapshot();
-            state = snapshot.clone();
+            setState(snapshot.clone());
         }
 
         private void checkSnapshot() {

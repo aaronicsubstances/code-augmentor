@@ -40,19 +40,19 @@ public class ParserFactoryTest {
 
         String Expression() {
             return "(" + Term()
-                    + ZeroOrMore(() -> FirstOf(() -> Str("+", " plus "), () -> Str("-", " minus ")) + Term() + ")")
+                    + ZeroOrMoreRet(() -> FirstOfRet(() -> Str("+", " plus "), () -> Str("-", " minus ")) + Term() + ")")
                             .stream().collect(Collectors.joining());
         }
 
         String Term() {
             return "(" + Factor()
-                    + ZeroOrMore(() -> FirstOf(() -> Str("*", " mul "), () -> Str("/", " div")) + Factor()).stream()
+                    + ZeroOrMoreRet(() -> FirstOfRet(() -> Str("*", " mul "), () -> Str("/", " div")) + Factor()).stream()
                             .collect(Collectors.joining())
                     + ")";
         }
 
         String Factor() {
-            return FirstOf(this::Number, () -> Parens());
+            return FirstOfRet(this::Number, () -> Parens());
         }
 
         String Parens() {
@@ -61,7 +61,7 @@ public class ParserFactoryTest {
 
         String Number() {
             //return OneOrMore(this::Digit).stream().collect(joining());
-            return OneOrMore(this::Digit).stream().map(String::valueOf).collect(joining());
+            return OneOrMoreRet(this::Digit).stream().map(String::valueOf).collect(joining());
         }
 
         //String Digit() {
@@ -96,14 +96,14 @@ public class ParserFactoryTest {
 
         int Expression() {
             int left = Term();
-            return FirstOf(() -> Str("+", () -> left + Term()), () -> Str("-", () -> left - Term()));
+            return FirstOfRet(() -> Str("+", () -> left + Term()), () -> Str("-", () -> left - Term()));
         }
 
         int Term() {
             int left = Factor();
 
-            Collection<Function<Integer, Integer>> funcs = ZeroOrMore(
-                    () -> this.<Function<Integer, Integer>> FirstOf(() -> {
+            Collection<Function<Integer, Integer>> funcs = ZeroOrMoreRet(
+                    () -> this.<Function<Integer, Integer>> FirstOfRet(() -> {
                         Str("*");
                         int right = Factor();
                         return x -> x * right;
@@ -121,7 +121,7 @@ public class ParserFactoryTest {
         }
 
         int Factor() {
-            return FirstOf(this::Number, () -> Parens());
+            return FirstOfRet(this::Number, () -> Parens());
         }
 
         int Parens() {
@@ -133,7 +133,7 @@ public class ParserFactoryTest {
 
         int Number() {
             //return Integer.valueOf(OneOrMore(this::Digit).stream().collect(joining()));
-            return Integer.valueOf(OneOrMore(this::Digit).stream().map(String::valueOf).collect(joining()));
+            return Integer.valueOf(OneOrMoreRet(this::Digit).stream().map(String::valueOf).collect(joining()));
         }
 
         //String Digit() {

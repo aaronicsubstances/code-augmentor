@@ -86,7 +86,7 @@ public class Parser<TCtx extends ParsingContext<?>> {
      * after matching. If the runnable matches, a {@link NoMatchException} is
      * raised.
      */
-    public void TestNot(Runnable runnable, String expectation) {
+    public void TestNot(Runnable runnable, Supplier<String> expectation) {
         StateSnapshot snapshot = ctx.snapshot();
         boolean success = false;
         try {
@@ -98,7 +98,7 @@ public class Parser<TCtx extends ParsingContext<?>> {
             snapshot.restore();
         }
         if (success) {
-            throw ctx.noMatch(expectation);
+            throw ctx.noMatch(expectation.get());
         }
     }
 
@@ -117,7 +117,7 @@ public class Parser<TCtx extends ParsingContext<?>> {
     /**
      * Match the given runnable. The input position is not advanced.
      */
-    public <T> T Test(Supplier<T> term) {
+    public <T> T TestRet(Supplier<T> term) {
         StateSnapshot snapshot = ctx.snapshot();
         try {
             return term.get();
@@ -196,7 +196,7 @@ public class Parser<TCtx extends ParsingContext<?>> {
      * returns it's value. If a choice is null, it is ignored.
      */
     @SafeVarargs
-    public final <T> T FirstOf(Supplier<? extends T>... choices) {
+    public final <T> T FirstOfRet(Supplier<? extends T>... choices) {
         for (Supplier<? extends T> choice : choices) {
             if (choice == null)
                 continue;
@@ -215,7 +215,7 @@ public class Parser<TCtx extends ParsingContext<?>> {
      * Tries each choice in turn until a choice can successfully be matched and
      * returns it's value. If a choice is null, it is ignored.
      */
-    public final <T> T FirstOf(Iterable<Supplier<? extends T>> choices) {
+    public final <T> T FirstOfRet(Iterable<Supplier<? extends T>> choices) {
         for (Supplier<? extends T> choice : choices) {
             if (choice == null)
                 continue;
@@ -251,7 +251,7 @@ public class Parser<TCtx extends ParsingContext<?>> {
      * Repeat matching the term until it fails. Succeeds even if the term never
      * matches. The return values of the terms are collected and returned.
      */
-    public final <T> Collection<T> ZeroOrMore(Supplier<T> term) {
+    public final <T> Collection<T> ZeroOrMoreRet(Supplier<T> term) {
         ArrayList<T> parts = new ArrayList<>();
         while (true) {
             StateSnapshot snapshot = ctx.snapshot();
@@ -334,7 +334,7 @@ public class Parser<TCtx extends ParsingContext<?>> {
      * Try to match the term. If it fails, succeed anyways
      */
     public final void Opt(Runnable term) {
-        Opt(() -> {
+        OptRet(() -> {
             term.run();
             return null;
         });
@@ -344,7 +344,7 @@ public class Parser<TCtx extends ParsingContext<?>> {
      * Try to match the term. If it fails, succeed anyways. If the term matches,
      * return the result, otherwise {@link java.util.Optional#empty()}
      */
-    public final <T> Optional<T> Opt(Supplier<T> term) {
+    public final <T> Optional<T> OptRet(Supplier<T> term) {
         StateSnapshot snapshot = ctx.snapshot();
         try {
             return Optional.ofNullable(term.get());
@@ -390,7 +390,7 @@ public class Parser<TCtx extends ParsingContext<?>> {
      * Match the term one ore more times. Return the results of the matched
      * terms.
      */
-    public final <T> Collection<T> OneOrMore(Supplier<T> term) {
+    public final <T> Collection<T> OneOrMoreRet(Supplier<T> term) {
         ArrayList<T> parts = new ArrayList<>();
         while (true) {
             StateSnapshot snapshot = ctx.snapshot();
@@ -429,18 +429,18 @@ public class Parser<TCtx extends ParsingContext<?>> {
         }
     }
 
-    public final <T> Collection<T> OneOrMore(Supplier<T> term, Runnable separator) {
+    public final <T> Collection<T> OneOrMoreRet(Supplier<T> term, Runnable separator) {
         ArrayList<T> result = new ArrayList<>();
         result.add(term.get());
-        result.addAll(ZeroOrMore(() -> {
+        result.addAll(ZeroOrMoreRet(() -> {
             separator.run();
             return term.get();
         }));
         return result;
     }
 
-    public final <T> Collection<T> ZeroOrMore(Supplier<T> term, Runnable separator) {
-        return Opt(() -> OneOrMore(term, separator)).orElse(Collections.emptyList());
+    public final <T> Collection<T> ZeroOrMoreRet(Supplier<T> term, Runnable separator) {
+        return OptRet(() -> OneOrMoreRet(term, separator)).orElse(Collections.emptyList());
     }
 
     /**
@@ -450,7 +450,7 @@ public class Parser<TCtx extends ParsingContext<?>> {
      * beginning of the matching attempt.
      */
     public final void Atomic(String expectation, Runnable term) {
-        Atomic(expectation, () -> {
+        AtomicRet(expectation, () -> {
             term.run();
             return null;
         });
@@ -462,7 +462,7 @@ public class Parser<TCtx extends ParsingContext<?>> {
      * expectation is registered as expected at the input position at the
      * beginning of the matching attempt.
      */
-    public final <T> T Atomic(String expectation, Supplier<T> term) {
+    public final <T> T AtomicRet(String expectation, Supplier<T> term) {
         int startIdx = ctx.getIndex();
         ExpectationFrame oldFrame = ctx.getExpectationFrame();
         ctx.setNewExpectationFrame();

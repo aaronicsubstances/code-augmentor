@@ -31,7 +31,7 @@ public class PlusMinusTest {
 
         int sum() {
             int result = number();
-            return ZeroOrMore((Supplier<Integer>) () -> FirstOf(() -> {
+            return ZeroOrMoreRet((Supplier<Integer>) () -> FirstOfRet(() -> {
                 Str("+");
                 return number();
             } , () -> {
