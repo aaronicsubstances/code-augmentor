@@ -19,7 +19,6 @@ public class KotlinParserTest {
         KotlinParser instance = new KotlinParser(input);
 
         if (inputIndex == 2) {
-            instance.setInfoLog(System.out::println);
             instance.setTraceLog(System.err::println);
         }
 

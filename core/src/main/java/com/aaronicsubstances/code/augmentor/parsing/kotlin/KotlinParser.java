@@ -40,8 +40,8 @@ public class KotlinParser implements TokenSupplier {
         pegParser.setTraceLog(traceLog);
     }
 
-    public void setInfoLog(Consumer<String> infoLog) {
-        pegParser.setInfoLog(infoLog);
+    public void setVerbose(boolean verbose) {
+        pegParser.setVerbose(verbose);
     }
 
 	@Override

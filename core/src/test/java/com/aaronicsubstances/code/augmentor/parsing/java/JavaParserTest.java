@@ -17,20 +17,16 @@ public class JavaParserTest {
     public void test(int inputIndex, int expectedTokenListIndex) {
         String input = loadInput(inputIndex);
         JavaParser instance = new JavaParser(input);
-        if (inputIndex == 0) {
+        if (inputIndex == 1) {
             System.out.format("\nParsing JavaParserTest#%s\n" +
                 "-------------------------------\n", inputIndex);
-            instance.setInfoLog(System.out::println);
             instance.setTraceLog(System.err::println);
+            instance.setVerbose(true);
         }
 
         List<Token> expected = new ArrayList<>(TestResourceLoader.deserializeTokens(
             expectedTokenListIndex, getClass()));
         List<Token> actual = new ArrayList<>(instance.parse());
-        
-        if (inputIndex == 0) {
-            System.out.format("===============================\n\n");
-        }
 
         // make list same in length to make error messages clearer.
         int maxLen = Math.max(expected.size(), actual.size());

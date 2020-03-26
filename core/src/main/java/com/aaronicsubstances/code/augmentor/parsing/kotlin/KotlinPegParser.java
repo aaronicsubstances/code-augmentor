@@ -29,12 +29,10 @@ public class KotlinPegParser extends StackEnabledParser {
 
     void Shebang() {
         runRule("Shebang", true, () -> {
-            markRuleStart();
             Str("#!");
             ZeroOrMore(() -> NoneOf("\r\n"));
-            markRuleEnd();
-            push(new PegToken(PegToken.TYPE_SHEBANG, matchRange()));
         });
+        push(new PegToken(PegToken.TYPE_SHEBANG, matchRange()));
     }
 
     void TopLevelObject() {
@@ -56,107 +54,98 @@ public class KotlinPegParser extends StackEnabledParser {
     }
 
     void BracedBlock() {
-        runRule("BracedBlock", true, () -> {
-            markRuleStart();
-            MatchChar('{');
-            markRuleEnd();
+        runRule("BracedBlock", () -> {
+            runRule(null, () -> {
+                MatchChar('{');
+            });
             push(new PegToken(PegToken.TYPE_BRACED_BLOCK_START, matchRange()));
 
             ZeroOrMore(() -> TopLevelObject());
             
-            markRuleStart();
-            MatchChar('}');
-            markRuleEnd();
+            runRule(null, () -> {
+                MatchChar('}');
+            });
             push(new PegToken(PegToken.TYPE_BRACED_BLOCK_END, matchRange()));
         });
     }
 
     void DsComment(boolean significant) {
         runRule("DsComment", true, () -> {
-            markRuleStart();
             Str("//");
             ZeroOrMore(() -> NoneOf("\r\n"));
-            markRuleEnd();
-            if (significant) {
-                push(new PegToken(PegToken.TYPE_DS_COMMENT, matchRange()));
-            }
         });
+        if (significant) {
+            push(new PegToken(PegToken.TYPE_DS_COMMENT, matchRange()));
+        }
     }
 
     void SsComment(boolean significant) {
         runRule("SsComment", true, () -> {
-            markRuleStart();
             Str("/*");
             ZeroOrMore(() -> SsCommentContent());
             Str("*/");
-            markRuleEnd();
-            if (significant) {
-                push(new PegToken(PegToken.TYPE_SS_COMMENT, matchRange()));
-            }
         });
+        if (significant) {
+            push(new PegToken(PegToken.TYPE_SS_COMMENT, matchRange()));
+        }
     }
 
     void NonNewlineWhitespace(boolean significant) {
         runRule("NonNewlineWhitespace", true, () -> {
-            markRuleStart();
             OneOrMore(() -> AnyOf(" \t\f"));
-            markRuleEnd();
-            if (significant) {
-                push(new PegToken(PegToken.TYPE_NON_NEWLINE_WS, matchRange()));
-            }
         });
+        if (significant) {
+            push(new PegToken(PegToken.TYPE_NON_NEWLINE_WS, matchRange()));
+        }
     }
 
     void Newline(boolean significant) {
         runRule("Newline", true, () -> {
-            markRuleStart();
             FirstOf(
                 () -> Str("\r\n"), 
                 () -> MatchChar('\r'), 
                 () -> MatchChar('\n')
             );
-            markRuleEnd();
-            if (significant) {
-                push(new PegToken(PegToken.TYPE_NEWLINE, matchRange()));
-            }
         });
+        if (significant) {
+            push(new PegToken(PegToken.TYPE_NEWLINE, matchRange()));
+        }
     }
 
     void SingleQuotedStringExpression() {
-        runRule("SingleQuotedStringExpression", true, () -> {
-            markRuleStart();
-            MatchChar('"');
-            markRuleEnd();
+        runRule("SingleQuotedStringExpression", () -> {
+            runRule(null, () -> {
+                MatchChar('"');
+            });
             push(new PegToken(PegToken.TYPE_STRING_DELIMITER, matchRange()));
             
             SingleQuotedStringContent();
             
-            markRuleStart();
-            MatchChar('"');
-            markRuleEnd();
+            runRule(null, () -> {
+                MatchChar('"');
+            });
             push(new PegToken(PegToken.TYPE_STRING_DELIMITER, matchRange()));
         });
     }
 
     void TripleQuotedStringExpression() {
-        runRule("TripleQuotedStringExpression", true, () -> {
-            markRuleStart();
-            Str("\"\"\"");
-            markRuleEnd(); 
+        runRule("TripleQuotedStringExpression", () -> {
+            runRule(null, () -> {
+                Str("\"\"\"");
+            });
             push(new PegToken(PegToken.TYPE_TRIPLE_QUOTED_STRING_DELIMITER, matchRange()));
             
             TripleQuotedStringContent();
-            
-            markRuleStart();
-            Str("\"\"\"");
-            markRuleEnd();
+
+            runRule(null, () -> {
+                Str("\"\"\"");
+            });
             push(new PegToken(PegToken.TYPE_TRIPLE_QUOTED_STRING_DELIMITER, matchRange()));
         });
     }
 
     void PackageStatement() {
         runRule("PackageStatement", true, () -> {
-            markRuleStart();
             Keyword("package"); 
             Separators();
             PackageContent();
@@ -164,20 +153,17 @@ public class KotlinPegParser extends StackEnabledParser {
                 Separators();
                 MatchChar(';');
             });
-            markRuleEnd();
-            push(new PegToken(PegToken.TYPE_PACKAGE, matchRange()));
         });
+        push(new PegToken(PegToken.TYPE_PACKAGE, matchRange()));
     }
 
     void ImportStatement() {
+        List<IndexRange> importStatement = new ArrayList<>();
         runRule("ImportStatement", true, () -> {
-            List<IndexRange> importStatement = new ArrayList<>();
 
-            markRuleStart();
-
-            markRuleStart();
-            Keyword("import");
-            markRuleEnd();
+            runRule(null, () -> {
+                Keyword("import");
+            });
             importStatement.add(matchRange());
             
             Separators();
@@ -185,16 +171,16 @@ public class KotlinPegParser extends StackEnabledParser {
             Opt(() -> {
                 Separators();
 
-                markRuleStart();
-                Keyword("as");
-                markRuleEnd();
+                runRule(null, () -> {
+                    Keyword("as");
+                });
                 IndexRange temp = matchRange();
                 
                 Separators();
 
-                markRuleStart();
-                IdOrNum();
-                markRuleEnd();
+                runRule(null, () -> {
+                    IdOrNum();
+                });
                 
                 importStatement.add(temp);
                 importStatement.add(matchRange());
@@ -203,25 +189,20 @@ public class KotlinPegParser extends StackEnabledParser {
                 Separators();
                 MatchChar(';');
             });
-
-            markRuleEnd();
-            push(new PegToken(PegToken.TYPE_IMPORT, matchRange(), importStatement));
         });
+        push(new PegToken(PegToken.TYPE_IMPORT, matchRange(), importStatement));
     }
 
     void IdOrNumOrKeyword() {
         runRule("IdOrNumOrKeyword", true, () -> {
-            markRuleStart();
             TestNot(() -> Keywords(false), () -> "NOT any of select few keywords");
             KotlinIdOrNumContent();
-            markRuleEnd();
-            push(new PegToken(PegToken.TYPE_QUASI_ID, matchRange()));
         });
+        push(new PegToken(PegToken.TYPE_QUASI_ID, matchRange()));
     }
 
     void OtherToken() {
         runRule("OtherToken", true, () -> {
-            markRuleStart();
             TestNot(() -> Keywords(false), () -> "NOT any of select few keywords");
             TestNot(() -> FirstOf(
                 () -> Str("/*"), 
@@ -234,9 +215,8 @@ public class KotlinPegParser extends StackEnabledParser {
                 escapeChar('"') + ", " + escapeChar('`') + ", " + escapeChar('{') + ", " +
                 escapeChar('}'));
             AnyChar();
-            markRuleEnd();
-            push(new PegToken(PegToken.TYPE_OTHER, matchRange()));
         });
+        push(new PegToken(PegToken.TYPE_OTHER, matchRange()));
     }
 
     private void SsCommentContent() {
@@ -256,7 +236,7 @@ public class KotlinPegParser extends StackEnabledParser {
     }
 
     private void SingleQuotedStringContent() {
-        runRule("SingleQuotedStringContent", () -> {
+        runRule("SingleQuotedStringContent", true, () -> {
             ZeroOrMore(() -> {
                 FirstOf(
                     () -> EscapedStringContent(), 
@@ -269,19 +249,16 @@ public class KotlinPegParser extends StackEnabledParser {
 
     private void EscapedStringContent() {
         runRule("EscapedStringContent", () -> {
-            markRuleStart();
             OneOrMore(() -> {
                 MatchChar('\\');
                 NoneOf("\r\n");
             });
-            markRuleEnd();
-            push(new PegToken(PegToken.TYPE_LITERAL_STRING_CONTENT, matchRange()));
         });
+        push(new PegToken(PegToken.TYPE_LITERAL_STRING_CONTENT, matchRange()));
     }
 
     private void LiteralStringContent(boolean tripleQuoted) {
         runRule("LiteralStringContent", () -> {
-            markRuleStart();
             OneOrMore(() -> {
                 TestNot(() -> {
                     FirstOf(
@@ -305,13 +282,12 @@ public class KotlinPegParser extends StackEnabledParser {
                     NoneOf("\r\n");
                 }
             });
-            markRuleEnd();
-            push(new PegToken(PegToken.TYPE_LITERAL_STRING_CONTENT, matchRange()));
-        });        
+        });
+        push(new PegToken(PegToken.TYPE_LITERAL_STRING_CONTENT, matchRange()));    
     }
 
     void TripleQuotedStringContent() {
-        runRule("TripleQuotedStringContent", () -> {
+        runRule("TripleQuotedStringContent", true, () -> {
             ZeroOrMore(() -> {
                 FirstOf(
                     () -> StringContentTemplate(), 
@@ -323,56 +299,58 @@ public class KotlinPegParser extends StackEnabledParser {
 
     void StringContentTemplate() {
         runRule("StringContentTemplate", () -> {
-            markRuleStart();
-            Str("${");
-            markRuleEnd();
+            runRule(null, () -> {
+                Str("${");
+            });
             push(new PegToken(PegToken.TYPE_STRING_TEMPLATE_START, matchRange()));
             
             ZeroOrMore(() -> TopLevelObject());
             
-            markRuleStart();
-            MatchChar('}');
-            markRuleEnd();
+            runRule(null, () -> {
+                MatchChar('}');
+            });
             push(new PegToken(PegToken.TYPE_STRING_TEMPLATE_END, matchRange()));
         });
     }
 
     void ImportContent(List<IndexRange> importStatement) {
-        runRule("ImportContent", () -> {            
-            markRuleStart();
-            IdOrNum();
-            markRuleEnd();
+        runRule("ImportContent", () -> {   
+            runRule(null, () -> {
+                IdOrNum();
+            });
             importStatement.add(matchRange());
 
             ZeroOrMore(() -> {
                 Separators();
 
-                markRuleStart();
-                MatchChar('.'); 
-                markRuleEnd();
+                runRule(null, () -> {
+                    MatchChar('.');
+                });
                 IndexRange temp = matchRange();
                 
                 Separators();
                 
-                markRuleStart();
-                IdOrNum();
-                markRuleEnd();
+                runRule(null, () -> {
+                    IdOrNum();
+                });
+
                 importStatement.add(temp);
                 importStatement.add(matchRange());
             });
             Opt(() -> {
                 Separators(); 
 
-                markRuleStart();
-                MatchChar('.'); 
-                markRuleEnd();
+                runRule(null, () -> {
+                    MatchChar('.');
+                });
                 IndexRange temp = matchRange();
                 
                 Separators();
                 
-                markRuleStart();
-                MatchChar('*');
-                markRuleEnd();
+                runRule(null, () -> {
+                    MatchChar('*');
+                });
+                
                 importStatement.add(temp);
                 importStatement.add(matchRange());
             });

@@ -46,136 +46,119 @@ public class JavaPegParser extends StackEnabledParser {
 
     void DsComment(boolean significant) {
         runRule("DsComment", true, () -> {
-            markRuleStart();
             Str("//");
             ZeroOrMore(() -> NoneOf("\r\n"));
-            markRuleEnd();
-            if (significant) {
-                push(new PegToken(PegToken.TYPE_DS_COMMENT, matchRange()));
-            }
         });
+        if (significant) {
+            push(new PegToken(PegToken.TYPE_DS_COMMENT, matchRange()));
+        }
     }
 
     void SsComment(boolean significant) {
         runRule("SsComment", true, () -> {
-            markRuleStart();
             Str("/*");
             ZeroOrMore(() -> SsCommentContent());
             Str("*/");
-            markRuleEnd();
-            if (significant) {
-                push(new PegToken(PegToken.TYPE_SS_COMMENT, matchRange()));
-            }
         });
+        if (significant) {
+            push(new PegToken(PegToken.TYPE_SS_COMMENT, matchRange()));
+        }
     }
 
     void NonNewlineWhitespace(boolean significant) {
         runRule("NonNewlineWhitespace", true, () -> {
-            markRuleStart();
             OneOrMore(() -> AnyOf(" \t\f"));
-            markRuleEnd();
-            if (significant) {
-                push(new PegToken(PegToken.TYPE_NON_NEWLINE_WS, matchRange()));
-            }
         });
+        if (significant) {
+            push(new PegToken(PegToken.TYPE_NON_NEWLINE_WS, matchRange()));
+        }
     }
 
     void Newline(boolean significant) {
         runRule("Newline", true, () -> {
-            markRuleStart();
             FirstOf(
                 () -> Str("\r\n"), 
                 () -> MatchChar('\r'), 
                 () -> MatchChar('\n')
             );
-            markRuleEnd();
-            if (significant) {
-                push(new PegToken(PegToken.TYPE_NEWLINE, matchRange()));
-            }
         });
+        if (significant) {
+            push(new PegToken(PegToken.TYPE_NEWLINE, matchRange()));
+        }
     }
 
     void StringExpression() {
-        runRule("StringExpression", true, () -> {
-            markRuleStart();
-            MatchChar('"');
-            markRuleEnd();
+        runRule("StringExpression", () -> {
+            runRule(null, () -> {
+                MatchChar('"');
+            });
             push(new PegToken(PegToken.TYPE_STRING_DELIMITER, matchRange()));
             
-            markRuleStart();
-            StringContent();
-            markRuleEnd();
+            runRule(null, () -> {
+                StringContent();
+            });
             push(new PegToken(PegToken.TYPE_LITERAL_STRING_CONTENT, matchRange()));
 
-            markRuleStart();
-            MatchChar('"');
-            markRuleEnd();
+            runRule(null, () -> {
+                MatchChar('"');
+            });
             push(new PegToken(PegToken.TYPE_STRING_DELIMITER, matchRange()));
         });
     }
 
     void ImportStatement() {
+        List<IndexRange> importStatement = new ArrayList<>();
         runRule("ImportStatement", true, () -> {
-            List<IndexRange> importStatement = new ArrayList<>();
-            markRuleStart();
-
-            markRuleStart();
-            Keyword("import");
-            markRuleEnd();
+            
+            runRule(null, () -> {
+                Keyword("import");
+            });
             importStatement.add(matchRange());
 
             Opt(() -> {
                 Separators();
-                markRuleStart();
-                Keyword("static");
-                markRuleEnd();
+                runRule(null, () -> {
+                    Keyword("static");
+                });
                 importStatement.add(matchRange());
             });
             Separators();
             ImportContent(importStatement);
             Separators();
             MatchChar(';');
-
-            markRuleEnd();
-            push(new PegToken(PegToken.TYPE_IMPORT, matchRange(), importStatement));
         });
+        push(new PegToken(PegToken.TYPE_IMPORT, matchRange(), importStatement));
     }
 
     void PackageStatement() {
         runRule("PackageStatement", true, () -> {
-            markRuleStart();
             Keyword("package"); 
             Separators(); 
             PackageContent();
             Separators();
             MatchChar(';');
-            markRuleEnd();
-            push(new PegToken(PegToken.TYPE_PACKAGE, matchRange()));
         });
+        push(new PegToken(PegToken.TYPE_PACKAGE, matchRange()));
     }
 
     void IdOrNumOrKeyword() {
         runRule("IdOrNumOrKeyword", true, () -> {
-            markRuleStart();
             TestNot(() -> Keywords(false), () -> "NOT select few keywords");
             OneOrMore(() -> IdOrNumContent());
-            markRuleEnd();
-            push(new PegToken(PegToken.TYPE_QUASI_ID, matchRange()));
         });
+        push(new PegToken(PegToken.TYPE_QUASI_ID, matchRange()));
     }
 
     void OtherToken() {
         runRule("OtherToken", true, () -> {
-            markRuleStart();
             TestNot(() -> Keywords(false), () -> "NOT any of select few keywords");
             TestNot(() -> FirstOf(
                 () -> Str("/*"), 
                 () -> MatchChar('"') 
             ), () -> "NOT any of " + escapeString("/*") + ", " + escapeChar('"'));
             AnyChar();
-            markRuleEnd();
-            push(new PegToken(PegToken.TYPE_OTHER, matchRange()));
         });
+        push(new PegToken(PegToken.TYPE_OTHER, matchRange()));
     }
 
     private void SsCommentContent() {
@@ -186,7 +169,7 @@ public class JavaPegParser extends StackEnabledParser {
     }
 
     private void StringContent() {
-        runRule("StringContent", () -> {
+        runRule("StringContent", true, () -> {
             ZeroOrMore(() -> {
                 TestNot(() -> MatchChar('"'), () -> "NOT " + escapeChar('"'));
                 FirstOf(() -> EscapedStringContent(), () -> LiteralStringContent());
@@ -209,24 +192,25 @@ public class JavaPegParser extends StackEnabledParser {
 
     private void ImportContent(List<IndexRange> importStatement) {
         runRule("ImportContent", () -> {
-            markRuleStart();
-            IdOrNum();
-            markRuleEnd();
+            
+            runRule(null, () -> {
+                IdOrNum();
+            });
             importStatement.add(matchRange());
     
             ZeroOrMore(() -> {
                 Separators();
     
-                markRuleStart();
-                MatchChar('.');
-                markRuleEnd();
+                runRule(null, () -> {
+                    MatchChar('.');
+                });
                 IndexRange temp = matchRange();
     
                 Separators();
     
-                markRuleStart();
-                IdOrNum();
-                markRuleEnd();
+                runRule(null, () -> {
+                    IdOrNum();
+                });
     
                 importStatement.add(temp);
                 importStatement.add(matchRange());
@@ -234,16 +218,16 @@ public class JavaPegParser extends StackEnabledParser {
             Opt(() -> {
                 Separators();
     
-                markRuleStart();
-                MatchChar('.');
-                markRuleEnd();
+                runRule(null, () -> {
+                    MatchChar('.');
+                });
                 IndexRange temp = matchRange();
     
                 Separators();
     
-                markRuleStart();
-                MatchChar('*'); 
-                markRuleEnd();
+                runRule(null, () -> {
+                    MatchChar('*');
+                });
     
                 importStatement.add(temp);
                 importStatement.add(matchRange());

@@ -14,11 +14,50 @@ import com.aaronicsubstances.code.augmentor.parsing.peg.PositionInfo;
 import com.aaronicsubstances.code.augmentor.parsing.peg.ParsingContext.ErrorDescription;
 
 public class StackEnabledParser extends Parser<StackEnabledParsingContext> {
-    private StackEnabledParsingState lastState;
+
+    public static class LogData {
+        public final int depth;
+        public final boolean supressLogs;
+    
+        public LogData(int depth, boolean supressLogs) {
+            this.depth = depth;
+            this.supressLogs = supressLogs;
+        }
+    }
+
+    public static class LogDecision {
+        public final boolean loggingEnabled;
+        public final int logDepth;
+        public final boolean logBegin;
+        public final boolean logEndSuccess;
+        public final boolean logEndSuccessVerbosely;
+        public final boolean logEndError;
+
+        public LogDecision() {
+            this(false, 0, false, false, false, false);
+        }
+
+        public LogDecision(boolean loggingEnabled, int logDepth,
+                boolean logBegin, boolean logEndSuccess, 
+                boolean logEndSuccessVerbosely, boolean logEndError) {
+            this.loggingEnabled = loggingEnabled;
+            this.logDepth = logDepth;
+            this.logBegin = logBegin;
+            this.logEndSuccess = logEndSuccess;
+            this.logEndSuccessVerbosely = logEndSuccessVerbosely;
+            this.logEndError = logEndError;
+        }
+    }
+
     private Consumer<String> traceLog;
-    private Consumer<String> infoLog;
+    private boolean verbose;
     private int indentSize = 4;
     private char indentChar = ' ';
+
+    // internal state fields.
+    private final String LOG_LEVEL_NAME_TRACE = "TRACE";
+    private final String LOG_LEVEL_NAME_INFO = "INFO";
+    private int lastStateIndex;
     
     public StackEnabledParser(StackEnabledParsingContext ctx) {
         super(ctx);
@@ -32,12 +71,12 @@ public class StackEnabledParser extends Parser<StackEnabledParsingContext> {
         this.traceLog = traceLog;
     }
 
-    public Consumer<String> getInfoLog() {
-        return infoLog;
+    public boolean isVerbose() {
+        return verbose;
     }
 
-    public void setInfoLog(Consumer<String> infoLog) {
-        this.infoLog = infoLog;
+    public void setVerbose(boolean verbose) {
+        this.verbose = verbose;
     }
 
     public int getIndentSize() {
@@ -70,118 +109,130 @@ public class StackEnabledParser extends Parser<StackEnabledParsingContext> {
     }
 
     public void runRule(String ruleName, Runnable ruleCode) {
-        if (traceLog == null && infoLog == null) {
-            ruleCode.run();
-            return;
-        }
         runRule(ruleName, false, ruleCode);
     }
 
     public void runRule(String ruleName, boolean suppressChildNodes, Runnable ruleCode) {
-        if (traceLog == null && infoLog == null) {
-            ruleCode.run();
-            return;
-        }
-        LogData prevLogData = peek(LogData.class);
-        if (prevLogData == null) {
-            prevLogData = new LogData(0, false);
-            push(prevLogData);
-        }
-        if (!prevLogData.supressLogs) {
-            beginLog(ruleName, prevLogData.depth);
-        }
-        push(new LogData(prevLogData.depth + 1, suppressChildNodes || prevLogData.supressLogs));
+        LogDecision logDecision = markRuleStart(ruleName, suppressChildNodes);
         try {
+            if (logDecision.logBegin) {
+                beginLog(ruleName, logDecision);
+            }
             ruleCode.run();
-            if (!prevLogData.supressLogs) {
-                // make major log if at boundary of child node suppression.
-                boolean isMajor = infoLog != null && suppressChildNodes;
-                endLog(ruleName, prevLogData.depth, null, isMajor);
+            if (logDecision.logEndSuccess) {
+                endLogSuccess(ruleName, logDecision);
             }
         }
         catch (NoMatchException ex) {
-            if (!prevLogData.supressLogs) {
-                endLog(ruleName, prevLogData.depth, ex, false);
+            if (logDecision.logEndError) {
+                endLogError(ruleName, logDecision);
             }
             throw ex;
         }
         finally {
+            markRuleEnd(logDecision);
+        }
+    }
+
+	private LogDecision markRuleStart(String ruleName, boolean suppressChildNodes) {
+        push(getParsingContext().state().index);
+
+        // use null rule name to signal no need for logging.
+        if (ruleName == null) {
+            return new LogDecision();
+        }
+
+        // also ignore logging if trace logger has not been provided.
+        if (traceLog == null) {
+            return new LogDecision();
+        }
+
+        // lastly ignore logging if suppression is in force.
+        LogData currLogData = peek(LogData.class);
+        if (currLogData != null && currLogData.supressLogs) {
+            return new LogDecision();
+        }
+
+        if (currLogData == null) {
+            currLogData = new LogData(0, false);
+            push(currLogData);
+        }
+        int logDepth = currLogData.depth;
+        LogData childLogData = new LogData(logDepth + 1, suppressChildNodes);
+        push(childLogData);
+
+        boolean logEndError = verbose;
+        
+        // make major log if at boundary of child node suppression.
+        boolean logEndSuccessVerbosely = suppressChildNodes;
+
+        return new LogDecision(true, logDepth, 
+            true, true, logEndSuccessVerbosely, logEndError);
+    }
+
+    private void markRuleEnd(LogDecision logDecision) {
+        lastStateIndex = pop(Integer.class);
+        if (logDecision.loggingEnabled) {
             pop(LogData.class);
         }
     }
 
-    private void beginLog(String ruleName, int depth) {
-        if (traceLog == null && infoLog == null) {
-            return;
-        }
+    private void beginLog(String ruleName, LogDecision logDecision) {
         int currPos = getParsingContext().state().index;
-        StringBuilder indent = new StringBuilder();
-        for (int i = 0; i < depth; i++) {
-            indent.append("  ");
-        }
-        if (traceLog != null) {
-            String log = String.format("%s[TRACE] Attempting to match rule '%s' at pos %s...", 
-                indent, ruleName, currPos);
-            traceLog.accept(log);
+        String indent = createIndent(logDecision.logDepth, null);
+        String log = String.format("%s[%s] Attempting to match rule '%s' at pos %s...", 
+            indent, LOG_LEVEL_NAME_TRACE, ruleName, currPos);
+        traceLog.accept(log);
+    }
+
+    private void endLogError(String ruleName, LogDecision logDecision) {
+        int currPos = getParsingContext().state().index;
+        String msgIndent = createIndent(logDecision.logDepth, LOG_LEVEL_NAME_TRACE);
+        String errorMsg = craftErrorMessage(msgIndent);        
+        String indent = createIndent(logDecision.logDepth, null);
+        String log = String.format("%s[%s] Failed to match rule '%s' at pos %s: %s",
+            indent, LOG_LEVEL_NAME_TRACE, ruleName, currPos, errorMsg);
+        traceLog.accept(log);
+	}
+
+    private void endLogSuccess(String ruleName, LogDecision logDecision) {
+        if (logDecision.logEndSuccessVerbosely) { 
+            logMajorSuccess(ruleName, logDecision);
         }
         else {
-            String log = String.format("%s[INFO] Attempting to match rule '%s' at pos %s...", 
-                indent, ruleName, currPos);
-            infoLog.accept(log);
+            int currPos = getParsingContext().state().index;
+            String indent = createIndent(logDecision.logDepth, null);
+            String log = String.format("%s[%s] Successfully matched rule '%s' ending at pos %s.", 
+                indent, LOG_LEVEL_NAME_INFO, ruleName, currPos - 1);
+            traceLog.accept(log);
         }
     }
 
-    private void endLog(String ruleName, int depth, NoMatchException ex, boolean isMajor) {
-        if (ex != null && traceLog == null) {
-            return;
-        }
-        if (ex == null && traceLog == null && infoLog == null) {
-            return;
-        }
+    private void logMajorSuccess(String ruleName, LogDecision logDecision) {
+        String msgIndent = createIndent(logDecision.logDepth, LOG_LEVEL_NAME_INFO);
+        String successMsg = craftSuccessMessage(msgIndent);
+        String indent = createIndent(logDecision.logDepth, null);
         int currPos = getParsingContext().state().index;
-        StringBuilder indent = new StringBuilder();
-        for (int i = 0; i < depth; i++) {
-            indent.append("  ");
-        }
-        if (ex != null) {
-            StringBuilder msgIndent = new StringBuilder(indent);
-            for (int i = 0; i < "[TRACE] ".length(); i++) {
-                msgIndent.append(indentChar);
-            }
-            String errorMsg = craftErrorMessage(msgIndent.toString());
-            String log = String.format("%s[TRACE] Failed to match rule '%s' at pos %s: %s",
-                indent, ruleName, currPos, errorMsg);
-            traceLog.accept(log);
-        }
-        else {
-            if (isMajor) { 
-                logMajorSuccess(ruleName, indent.toString());
-            }
-            else {
-                if (traceLog != null) {
-                    String log = String.format("%s[TRACE] Successfully matched rule '%s' just before pos %s.", 
-                        indent, ruleName, currPos);
-                    traceLog.accept(log);
-                }
-                else {
-                    String log = String.format("%s[INFO] Successfully matched rule '%s' just before pos %s.", 
-                        indent, ruleName, currPos);
-                    infoLog.accept(log);
-                }
-            }
-        }
+        String log = String.format("%s[%s] Successfully matched rule '%s' ending at pos %s: %s", 
+            indent, LOG_LEVEL_NAME_INFO, ruleName, currPos - 1, successMsg);
+        traceLog.accept(log);
     }
 
-    private void logMajorSuccess(String ruleName, String indent) {
-        StringBuilder msgIndent = new StringBuilder(indent);
-        for (int i = 0; i < "[INFO] ".length(); i++) {
-            msgIndent.append(indentChar);
+    private String createIndent(int depth, String extra) {
+        StringBuilder indent = new StringBuilder();
+        for (int i = 0; i < depth; i++) {
+            for (int j = 0; j < indentSize; j++) {
+                indent.append(indentChar);
+            }
         }
-        String successMsg = craftSuccessMessage(msgIndent.toString());        
-        int currPos = getParsingContext().state().index;
-        String log = String.format("%s[INFO] Successfully matched rule '%s' just before pos %s: %s", 
-            indent, ruleName, currPos, successMsg);
-        infoLog.accept(log);
+        if (extra != null) {
+            // add 3 for surrounding square brackets and extra space after closing
+            // square bracket.
+            for (int i = 0; i < extra.length() + 3; i++) {
+                indent.append(indentChar);
+            }
+        }
+        return indent.toString();
     }
 
     private String craftErrorMessage(String indent) {
@@ -244,16 +295,8 @@ public class StackEnabledParser extends Parser<StackEnabledParsingContext> {
         }
     }
 
-    protected void markRuleStart() {
-        push(getParsingContext().state().clone());
-    }
-
-    protected void markRuleEnd() {
-        lastState = pop(StackEnabledParsingState.class);
-    }
-
     protected IndexRange matchRange() {
-        int startPos = lastState.index;
+        int startPos = lastStateIndex;
         int endPos = getParsingContext().state().index;
         return new IndexRange(startPos, endPos);
     }
