@@ -7,7 +7,7 @@ public class test {
     private String name = "around \"Nana\" place";
     
     // test2
-    public static class test2 {
+    public static class te$t2 {
 
         
     }

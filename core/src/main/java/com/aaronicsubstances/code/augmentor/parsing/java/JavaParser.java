@@ -4,80 +4,53 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.aaronicsubstances.code.augmentor.parsing.LexerSupport;
 import com.aaronicsubstances.code.augmentor.parsing.ParserInputSource;
-import com.aaronicsubstances.code.augmentor.parsing.PegToken;
 import com.aaronicsubstances.code.augmentor.parsing.SourceMap;
 import com.aaronicsubstances.code.augmentor.parsing.Token;
 import com.aaronicsubstances.code.augmentor.parsing.TokenSupplier;
-
-import org.parboiled.Parboiled;
-import org.parboiled.Rule;
-import org.parboiled.errors.ParseError;
-import org.parboiled.parserunners.ReportingParseRunner;
-import org.parboiled.support.IndexRange;
-import org.parboiled.support.ParsingResult;
+import com.aaronicsubstances.code.augmentor.parsing.peg.NoMatchException;
+import com.aaronicsubstances.code.augmentor.parsing.peg.PositionInfo;
+import com.aaronicsubstances.code.augmentor.parsing.peg.ParsingContext.ErrorDescription;
+import com.aaronicsubstances.code.augmentor.parsing.peg.extras.IndexRange;
+import com.aaronicsubstances.code.augmentor.parsing.peg.extras.PegToken;
 
 /**
- * Parses Java source code into a limited set of tokens from which new lines and comments
- * can be extracted.
+ * Parses Java source code into a limited set of tokens from which new lines and
+ * comments can be extracted.
  */
-public class JavaParser implements TokenSupplier {    
+public class JavaParser implements TokenSupplier {
     private final ParserInputSource inputSource;
 
     public JavaParser(String input) {
         SourceMap sourceMap = new SourceMap();
         String transformedInput = JavaCodeLexerSupport.transformUnicodeEscapes(input, sourceMap);
-        inputSource = new ParserInputSource(transformedInput, sourceMap);
-        inputSource.setEmbeddedInputSource(new ParserInputSource(input));
+        inputSource = new ParserInputSource(transformedInput);
+        inputSource.setEmbeddedInputSource(new ParserInputSource(input, sourceMap));
     }
 
     @Override
-	public ParserInputSource getInputSource() {
-		return inputSource;
-	}
+    public ParserInputSource getInputSource() {
+        return inputSource;
+    }
 
-	@Override
+    @Override
     public List<Token> parse() {
-        JavaPegParser parser = Parboiled.createParser(JavaPegParser.class);
-        Rule startRule = parser.Parse();
-
         String transformedInput = inputSource.getInput();
-        StringBuilder parserFriendlyInput = new StringBuilder();
-        for (int i = 0; i < transformedInput.length(); i++) {
-            char ch = transformedInput.charAt(i);
-            // Cater specially for dollar sign since it is valid Java identifier char, but
-            // invalid C89 identifier char. 
-            if (ch == '$' || LexerSupport.isValidC89IdentifierChar(ch, false)) {
-                parserFriendlyInput.append(ch);
-            }
-            else {
-                // Use in-built Java's means of defining valid identifier
-                // characters.
-                if (Character.isJavaIdentifierStart(ch)) {
-                    parserFriendlyInput.append('_');
-                }
-                else if (Character.isJavaIdentifierPart(ch)) {
-                    parserFriendlyInput.append('0');
-                }
-                else {
-                    parserFriendlyInput.append(ch);
-                }
-            }
-        }
-
-        ParsingResult<PegToken> result = new ReportingParseRunner<PegToken>(startRule).run(
-            parserFriendlyInput.toString());
-        if (result.hasErrors()) {
-            ParseError error = result.parseErrors.get(0);
-            inputSource.setPosition(error.getStartIndex());
-            throw inputSource.createAbortException(error.getErrorMessage(), null);
-        }
-        List<PegToken> tokenList = new ArrayList<>();
-        for (PegToken t : result.valueStack) {
-            // reverse stack
-            tokenList.add(0, t);
+        JavaPegParser parser = new JavaPegParser(transformedInput);
+        List<PegToken> tokenList;
+        try {
+            tokenList = parser.Parse();
+        } 
+        catch (NoMatchException ex) {
+            ErrorDescription errorDesc = parser.getParsingContext().getErrorDescription();
+            PositionInfo errorLineInfo = inputSource.createErrorLineInfo(errorDesc.errorPosition);
+            String errorMsg = "Expected: " +
+                    errorDesc.expectations.stream().collect(Collectors.joining(", ")) + 
+                    " instead of '" + errorLineInfo.getPositionChar() + '\'';
+            throw inputSource.createAbortException(errorLineInfo, errorMsg);
         }
 
         // Convert tokens.
@@ -109,8 +82,8 @@ public class JavaParser implements TokenSupplier {
                 case PegToken.TYPE_LITERAL_STRING_CONTENT:
                     type = Token.TYPE_LITERAL_STRING_CONTENT;
                     break;
-                case PegToken.TYPE_STRING_DELIMITER:
                 case PegToken.TYPE_QUASI_ID:
+                case PegToken.TYPE_STRING_DELIMITER:
                 case PegToken.TYPE_OTHER:
                     type = Token.TYPE_OTHER;
                     break;

@@ -4,21 +4,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.aaronicsubstances.code.augmentor.parsing.LexerSupport;
-import com.aaronicsubstances.code.augmentor.parsing.ParserException;
 import com.aaronicsubstances.code.augmentor.parsing.ParserInputSource;
-import com.aaronicsubstances.code.augmentor.parsing.PegToken;
 import com.aaronicsubstances.code.augmentor.parsing.Token;
 import com.aaronicsubstances.code.augmentor.parsing.TokenSupplier;
-
-import org.parboiled.Parboiled;
-import org.parboiled.Rule;
-import org.parboiled.errors.ErrorUtils;
-import org.parboiled.parserunners.ReportingParseRunner;
-import org.parboiled.support.IndexRange;
-//import org.parboiled.support.ParseTreeUtils;
-import org.parboiled.support.ParsingResult;
+import com.aaronicsubstances.code.augmentor.parsing.peg.NoMatchException;
+import com.aaronicsubstances.code.augmentor.parsing.peg.PositionInfo;
+import com.aaronicsubstances.code.augmentor.parsing.peg.ParsingContext.ErrorDescription;
+import com.aaronicsubstances.code.augmentor.parsing.peg.extras.IndexRange;
+import com.aaronicsubstances.code.augmentor.parsing.peg.extras.PegToken;
 
 /**
  * Parses Kotlin source code into a limited set of tokens from which new lines and comments
@@ -38,48 +34,23 @@ public class KotlinParser implements TokenSupplier {
 
 	@Override
     public List<Token> parse() {
-        KotlinPegParser parser = Parboiled.createParser(KotlinPegParser.class);
-        Rule startRule = parser.Parse();
-
-        String originalInput = inputSource.getInput();
-        StringBuilder parserFriendlyInput = new StringBuilder();
-        for (int i = 0; i < originalInput.length(); i++) {
-            char ch = originalInput.charAt(i);
-            if (LexerSupport.isValidC89IdentifierChar(ch, false)) {
-                parserFriendlyInput.append(ch);
-            }
-            else {
-                // Kotlin's definition of valid identifiers is a subset of Java's own,
-                // and maps to Character.isLetter(), LETTER_NUMBER, underscore and Character.isDigit()
-                if (ch == '_' || Character.isLetter(ch) || 
-                        Character.getType(ch) == Character.LETTER_NUMBER) {
-                    parserFriendlyInput.append('_');
-                }
-                else if (Character.isDigit(ch)) {
-                    parserFriendlyInput.append('0');
-
-                }
-                else {
-                    parserFriendlyInput.append(ch);
-                }
-            }
-        }
-
-        ParsingResult<PegToken> result = new ReportingParseRunner<PegToken>(startRule).run(
-            parserFriendlyInput.toString());
-        if (result.hasErrors()) {
-            String errorMsg = ErrorUtils.printParseErrors(result);
-            throw new ParserException(errorMsg);
-        }
-        //System.out.println("\nParse Tree:\n" + ParseTreeUtils.printNodeTree(result) + '\n');
-
-        List<PegToken> tokenList = new ArrayList<>();
-        for (PegToken t : result.valueStack) {
-            // reverse stack
-            tokenList.add(0, t);
+        String transformedInput = inputSource.getInput();
+        KotlinPegParser parser = new KotlinPegParser(transformedInput);
+        List<PegToken> tokenList;
+        try {
+            tokenList = parser.Parse();
+        } 
+        catch (NoMatchException ex) {
+            ErrorDescription errorDesc = parser.getParsingContext().getErrorDescription();
+            PositionInfo errorLineInfo = inputSource.createErrorLineInfo(errorDesc.errorPosition);
+            String errorMsg = "Expected: " +
+                    errorDesc.expectations.stream().collect(Collectors.joining(", ")) + 
+                    " instead of '" + errorLineInfo.getPositionChar() + '\'';
+            throw inputSource.createAbortException(errorLineInfo, errorMsg);
         }
 
         // Convert tokens.
+        String originalInput = inputSource.getInput();
         List<Token> parseResults = new ArrayList<>();
         int prevEndPos = -1;
         int lineNumber = 1;

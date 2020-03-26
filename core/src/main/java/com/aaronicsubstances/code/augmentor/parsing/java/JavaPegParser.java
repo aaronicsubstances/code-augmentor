@@ -3,154 +3,400 @@ package com.aaronicsubstances.code.augmentor.parsing.java;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.aaronicsubstances.code.augmentor.parsing.PegToken;
+import com.aaronicsubstances.code.augmentor.parsing.peg.NoMatchException;
+import com.aaronicsubstances.code.augmentor.parsing.peg.extras.IndexRange;
+import com.aaronicsubstances.code.augmentor.parsing.peg.extras.PegToken;
+import com.aaronicsubstances.code.augmentor.parsing.peg.extras.StackEnabledParser;
+import com.aaronicsubstances.code.augmentor.parsing.peg.extras.StackEnabledParsingContext;
 
-import org.parboiled.BaseParser;
-import org.parboiled.Rule;
-import org.parboiled.annotations.SuppressSubnodes;
-import org.parboiled.support.IndexRange;
-import org.parboiled.support.Var;
-
-//@BuildParseTree
-public class JavaPegParser extends BaseParser<PegToken> {
-
-    public Rule Parse() {
-        return Sequence(ZeroOrMore(TopLevelObject()), EOI);
+public class JavaPegParser extends StackEnabledParser {
+    
+    public JavaPegParser(String input) {
+        super(new StackEnabledParsingContext(input));
     }
 
-    Rule TopLevelObject() {
-        return FirstOf(DsComment(true), SsComment(true), NonNewlineWhitespace(true),
-            Newline(true), StringExpression(), PackageStatement(), ImportStatement(),
-            IdOrNumOrKeyword(), OtherToken());
+    public List<PegToken> Parse() {
+        EntireInput();
+        List<PegToken> tokenList = new ArrayList<>();
+        for (Object stackItem : getParsingContext().getValueStack()) {
+            if (stackItem instanceof PegToken) {
+                // add in reverse.
+                tokenList.add(0, (PegToken)stackItem);
+            }
+        }
+        return tokenList;
     }
 
-    @SuppressSubnodes
-    Rule DsComment(boolean significant) {
-        return Sequence(Sequence("//", ZeroOrMore(NoneOf("\r\n"))),
-            !significant || push(new PegToken(PegToken.TYPE_DS_COMMENT, matchRange())));
+    void EntireInput() {
+        final String ruleName = "EntireInput";
+        try {
+            beginLog(ruleName);
+
+            ZeroOrMore(() -> {
+                TopLevelObject();
+            });
+            EOI();
+
+            endLogMajorSuccess(ruleName);
+        }
+        catch (NoMatchException ex) {
+            endLog(ruleName, ex);
+            throw ex;
+        }
     }
 
-    @SuppressSubnodes
-    Rule SsComment(boolean significant) {
-        return Sequence(Sequence("/*", ZeroOrMore(SsCommentContent()), "*/"),
-            !significant || push(new PegToken(PegToken.TYPE_SS_COMMENT, matchRange())));
+    void TopLevelObject() {
+        final String ruleName = "TopLevelObject";
+        try {
+            beginLog(ruleName);
+
+            FirstOf(
+                () -> DsComment(true), 
+                () -> SsComment(true), 
+                () -> NonNewlineWhitespace(true),
+                () -> Newline(true), 
+                () -> StringExpression(), 
+                () -> PackageStatement(), 
+                () -> ImportStatement(),
+                () -> IdOrNumOrKeyword(), 
+                () -> OtherToken()
+            );
+
+            endLogMajorSuccess(ruleName);
+        }
+        catch (NoMatchException ex) {
+            endLog(ruleName, ex);
+            throw ex;
+        }
     }
 
-    @SuppressSubnodes
-    Rule NonNewlineWhitespace(boolean significant) {
-        return Sequence(OneOrMore(AnyOf(" \t\f")),
-            !significant || push(new PegToken(PegToken.TYPE_NON_NEWLINE_WS, matchRange())));
+    void DsComment(boolean significant) {
+        final String ruleName = "DsComment";
+        try {
+            beginLog(ruleName, significant);
+
+            markRuleStart();
+            Str("//");
+            ZeroOrMore(() -> {
+                NoneOf("\r\n"); });
+            markRuleEnd();
+            if (significant) {
+                push(new PegToken(PegToken.TYPE_DS_COMMENT, matchRange()));
+            }
+
+            endLog(ruleName, significant, null);
+        }
+        catch (NoMatchException ex) {
+            endLog(ruleName, significant, ex);
+            throw ex;
+        }
     }
 
-    @SuppressSubnodes
-    Rule Newline(boolean significant) {
-        return Sequence(FirstOf("\r\n", '\r', '\n'),
-            !significant || push(new PegToken(PegToken.TYPE_NEWLINE, matchRange())));
+    void SsComment(boolean significant) {
+        final String ruleName = "SsComment";
+        try {
+            beginLog(ruleName, significant);
+
+            markRuleStart();
+            Str("/*");
+            ZeroOrMore(() -> SsCommentContent());
+            Str("*/");
+            markRuleEnd();
+            if (significant) {
+                push(new PegToken(PegToken.TYPE_SS_COMMENT, matchRange()));
+            }
+
+            endLog(ruleName, significant, null);
+        }
+        catch (NoMatchException ex) {
+            endLog(ruleName, significant, ex);
+            throw ex;
+        }
     }
 
-    @SuppressSubnodes
-    Rule StringExpression() {
-        return Sequence('"', push(new PegToken(PegToken.TYPE_STRING_DELIMITER, matchRange())),
-            StringContent(),  push(new PegToken(PegToken.TYPE_LITERAL_STRING_CONTENT, matchRange())),
-            '"', push(new PegToken(PegToken.TYPE_STRING_DELIMITER, matchRange())));
+    void NonNewlineWhitespace(boolean significant) {
+        final String ruleName = "NonNewlineWhitespace";
+        try {
+            beginLog(ruleName, significant);
+
+            markRuleStart();
+            OneOrMore(() -> {
+                AnyOf(" \t\f");
+            });
+            markRuleEnd();
+            if (significant) {
+                push(new PegToken(PegToken.TYPE_NON_NEWLINE_WS, matchRange()));
+            }
+
+            endLog(ruleName, significant, null);
+        }
+        catch (NoMatchException ex) {
+            endLog(ruleName, significant, ex);
+            throw ex;
+        }
     }
 
-    @SuppressSubnodes
-    Rule ImportStatement() {
-        Var<List<IndexRange>> importStatement = new Var<>(new ArrayList<>());
-        return Sequence(
-                Sequence(Keyword("import"), addToList(importStatement, matchRange()),
-                Optional(Separators(), 
-                    Keyword("static"), addToList(importStatement, matchRange())),
-                Separators(), 
-                ImportContent(importStatement), Separators(), ';'),
-            push(new PegToken(PegToken.TYPE_IMPORT, matchRange(), importStatement.get())));
+    void Newline(boolean significant) {
+        final String ruleName = "Newline";
+        try {
+            beginLog(ruleName, significant);
+
+            markRuleStart();
+            FirstOf(
+                () -> { Str("\r\n"); }, 
+                () -> { MatchChar('\r'); }, 
+                () -> { MatchChar('\n'); }
+            );
+            markRuleEnd();
+            if (significant) {
+                push(new PegToken(PegToken.TYPE_NEWLINE, matchRange()));
+            }
+
+            endLog(ruleName, significant, null);
+        }
+        catch (NoMatchException ex) {
+            endLog(ruleName, significant, ex);
+            throw ex;
+        }
     }
 
-    boolean addToList(Var<List<IndexRange>> importStatement, IndexRange item) {
-        importStatement.get().add(item);
-        return true;
+    void StringExpression() {
+        final String ruleName = "StringExpression";
+        try {
+            beginLog(ruleName);
+
+            markRuleStart();
+            MatchChar('"');
+            markRuleEnd();
+            push(new PegToken(PegToken.TYPE_STRING_DELIMITER, matchRange()));
+            
+            markRuleStart();
+            StringContent();
+            markRuleEnd();
+            push(new PegToken(PegToken.TYPE_LITERAL_STRING_CONTENT, matchRange()));
+
+            markRuleStart();
+            MatchChar('"');
+            markRuleEnd();
+            push(new PegToken(PegToken.TYPE_STRING_DELIMITER, matchRange()));
+
+            endLog(ruleName, null);
+        }
+        catch (NoMatchException ex) {
+            endLog(ruleName, ex);
+            throw ex;
+        }
     }
 
-    @SuppressSubnodes
-    Rule PackageStatement() {
-        return Sequence(Sequence(Keyword("package"), Separators(), PackageContent(), Separators(), ';'),
-            push(new PegToken(PegToken.TYPE_PACKAGE, matchRange())));
+    void ImportStatement() {
+        final String ruleName = "ImportStatement";
+        try {
+            beginLog(ruleName);
+
+            List<IndexRange> importStatement = new ArrayList<>();
+            markRuleStart();
+
+            markRuleStart();
+            Keyword("import");
+            markRuleEnd();
+            importStatement.add(matchRange());
+
+            Opt(() -> {
+                Separators();
+                markRuleStart();
+                Keyword("static");
+                markRuleEnd();
+                importStatement.add(matchRange());
+            });
+            Separators();
+            ImportContent(importStatement);
+            Separators();
+            MatchChar(';');
+
+            markRuleEnd();
+            push(new PegToken(PegToken.TYPE_IMPORT, matchRange(), importStatement));
+
+            endLog(ruleName, null);
+        }
+        catch (NoMatchException ex) {
+            endLog(ruleName, ex);
+            throw ex;
+        }
     }
 
-    @SuppressSubnodes
-    Rule IdOrNumOrKeyword() {
-        return Sequence(Sequence(TestNot(Keywords(false)), OneOrMore(IdOrNumContent())),
-            push(new PegToken(PegToken.TYPE_QUASI_ID, matchRange())));
+    void PackageStatement() {
+        final String ruleName = "PackageStatement";
+        try {
+            beginLog(ruleName);
+
+            markRuleStart();
+            Keyword("package"); 
+            Separators(); 
+            PackageContent();
+            Separators();
+            MatchChar(';');
+            markRuleEnd();
+            push(new PegToken(PegToken.TYPE_PACKAGE, matchRange()));
+            
+            endLog(ruleName, null);
+        }
+        catch (NoMatchException ex) {
+            endLog(ruleName, ex);
+            throw ex;
+        }
     }
 
-    @SuppressSubnodes
-    Rule OtherToken() {
-        return Sequence(TestNot(Keywords(false)), TestNot(FirstOf("/*", '"')), ANY,
-            push(new PegToken(PegToken.TYPE_OTHER, matchRange())));
+    void IdOrNumOrKeyword() {
+        final String ruleName = "IdOrNumOrKeyword";
+        try {
+            beginLog(ruleName);
+
+            markRuleStart();
+            TestNot(() -> Keywords(false), "NOT select few keywords");
+            OneOrMore(() -> IdOrNumContent());
+            markRuleEnd();
+            push(new PegToken(PegToken.TYPE_QUASI_ID, matchRange()));
+
+            endLog(ruleName, null);
+        }
+        catch (NoMatchException ex) {
+            endLog(ruleName, ex);
+            throw ex;
+        }
     }
 
-    Rule SsCommentContent() {
-        return Sequence(TestNot("*/"), ANY);
+    void OtherToken() {
+        final String ruleName = "OtherToken";
+        try {
+            beginLog(ruleName);
+
+            markRuleStart();
+            TestNot(() -> Keywords(false), "NOT any of select few keywords");
+            TestNot(() -> FirstOf(
+                () -> { Str("/*"); }, 
+                () -> { MatchChar('"'); } 
+            ), "NOT any of " + escapeString("/*") + ", " + escapeChar('"'));
+            AnyChar();
+            markRuleEnd();
+            push(new PegToken(PegToken.TYPE_OTHER, matchRange()));
+
+            endLog(ruleName, null);
+        }
+        catch (NoMatchException ex) {
+            endLog(ruleName, ex);
+            throw ex;
+        }
     }
 
-    Rule StringContent() {
-        return ZeroOrMore(Sequence(TestNot('"'),
-            FirstOf(EscapedStringContent(), LiteralStringContent())));
+    private void SsCommentContent() {
+        TestNot(() -> { Str("*/"); }, "NOT " + escapeString("*/"));
+        AnyChar();
     }
 
-    Rule EscapedStringContent() {
-        return Sequence("\\", NoneOf("\r\n"));
+    private void StringContent() {
+        ZeroOrMore(() -> {
+            TestNot(() -> { MatchChar('"'); }, "NOT " + escapeChar('"'));
+            FirstOf(() -> EscapedStringContent(), () -> LiteralStringContent());
+        });
     }
 
-    Rule LiteralStringContent() {
-        return NoneOf("\r\n");
+    private void EscapedStringContent() {
+        MatchChar('\\');
+        NoneOf("\r\n");
     }
 
-    Rule ImportContent(Var<List<IndexRange>> importStatement) {
-        Var<IndexRange> temp = new Var<>();
-        return Sequence(
-            IdOrNum(), addToList(importStatement, matchRange()),
-            ZeroOrMore(Sequence(
-                Separators(), 
-                '.', temp.set(matchRange()),
-                Separators(), 
-                IdOrNum(),
-                addToList(importStatement, temp.get()),
-                addToList(importStatement, matchRange()))),
-            Optional(
-                Separators(), 
-                '.', temp.set(matchRange()),
-                Separators(), 
-                '*', 
-                addToList(importStatement, temp.get()),
-                addToList(importStatement, matchRange())));
+    private void LiteralStringContent() {
+        NoneOf("\r\n");
     }
 
-    Rule PackageContent() {
-        return Sequence(IdOrNum(), ZeroOrMore(Sequence(Separators(), '.', Separators(), IdOrNum())));
+    private void ImportContent(List<IndexRange> importStatement) {
+        markRuleStart();
+        IdOrNum();
+        markRuleEnd();
+        importStatement.add(matchRange());
+
+        ZeroOrMore(() -> {
+            Separators();
+
+            markRuleStart();
+            MatchChar('.');
+            markRuleEnd();
+            IndexRange temp = matchRange();
+
+            Separators();
+
+            markRuleStart();
+            IdOrNum();
+            markRuleEnd();
+
+            importStatement.add(temp);
+            importStatement.add(matchRange());
+        });
+        Opt(() -> {
+            Separators();
+
+            markRuleStart();
+            MatchChar('.');
+            markRuleEnd();
+            IndexRange temp = matchRange();
+
+            Separators();
+
+            markRuleStart();
+            MatchChar('*'); 
+            markRuleEnd();
+
+            importStatement.add(temp);
+            importStatement.add(matchRange());
+        });
     }
 
-    Rule Separators() {
-        return ZeroOrMore(FirstOf(NonNewlineWhitespace(false), Newline(false), 
-            DsComment(false), SsComment(false)));
+    private void PackageContent() {
+        IdOrNum();
+        ZeroOrMore(() -> {
+            Separators();
+            MatchChar('.');
+            Separators();
+            IdOrNum();
+        });
     }
 
-    Rule IdOrNum() {
-        return Sequence(TestNot(Keywords(true)), OneOrMore(IdOrNumContent()));
+    private void Separators() {
+        ZeroOrMore(() ->
+            FirstOf(
+                () -> NonNewlineWhitespace(false),
+                () -> Newline(false), 
+                () -> DsComment(false), 
+                () -> SsComment(false)
+            )
+        );
     }
 
-    Rule IdOrNumContent() {
-        return FirstOf(CharRange('A', 'Z'), CharRange('a', 'z'), '_', CharRange('0', '9'));
+    private void IdOrNum() {
+        TestNot(() -> Keywords(true), "NOT any of select Keywords");
+        OneOrMore(() -> IdOrNumContent());
     }
 
-    Rule Keywords(boolean validate) {
+    private void IdOrNumContent() {
+        Char(Character::isJavaIdentifierPart, "valid Java identifier character");
+    }
+
+    private void Keywords(boolean validate) {
         // keep updated with all usages of Keyword() below.
-        return Sequence(FirstOf("import", "package", validate ? "static" : NOTHING), 
-            TestNot(IdOrNumContent()));
+        FirstOf(
+            () -> { 
+                Str("import"); },
+            () -> { 
+                Str("package"); },
+            validate ? () -> {
+                Str("static");
+            } : null
+        );
+        TestNot(() -> IdOrNumContent(), "NOT IdOrNumContent");
     }
 
-    Rule Keyword(String s) {
-        return Sequence(s, TestNot(IdOrNumContent()));
+    private void Keyword(String s) {
+        Str(s);
+        TestNot(() -> IdOrNumContent(), "NOT IdOrNumContent");
     }
 }

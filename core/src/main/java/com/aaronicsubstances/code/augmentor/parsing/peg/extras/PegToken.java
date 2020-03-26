@@ -1,8 +1,6 @@
-package com.aaronicsubstances.code.augmentor.parsing;
+package com.aaronicsubstances.code.augmentor.parsing.peg.extras;
 
 import java.util.List;
-
-import org.parboiled.support.IndexRange;
 
 public class PegToken {
 	public static final String TYPE_DS_COMMENT = "DS_COMMENT";

@@ -54,7 +54,7 @@ public class PositionInfo {
                 }
             }
 
-            if (position >= idx && (endIdx == -1 || endIdx + 1 > position)) {
+            if (position >= idx && (endIdx == -1 || endIdx + (winLn ? 2 : 1) > position)) {
                 line = content.substring(idx, endIdx == -1 ? content.length() : endIdx);
                 indexInLine = position - idx;
                 this.lineNr = lineNr;
@@ -98,6 +98,14 @@ public class PositionInfo {
     public String toString() {
         calculate();
         return "LineInfo: Line: " + lineNr + "\n" + line + "\n" + getUnderline(' ', '^');
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public int getPosition() {
+        return position; 
     }
 
     public int getLineNr() {

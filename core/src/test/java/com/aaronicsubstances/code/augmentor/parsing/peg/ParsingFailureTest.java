@@ -62,8 +62,8 @@ public class ParsingFailureTest {
 
     @Test
     public void string() {
-        expectFailure("fo", parser::string, 0, "foo");
-        expectFailure("foa ", parser::string, 0, "foo");
+        expectFailure("fo", parser::string, 0, "\"foo\"");
+        expectFailure("foa ", parser::string, 0, "\"foo\"");
 
         ctx.setContent("foo");
         assertEquals(parser.string(), "foo");
@@ -80,8 +80,8 @@ public class ParsingFailureTest {
 
     @Test
     public void charRange() {
-        expectFailure("c", parser::charRange, 0, "character between a and b");
-        expectFailure("", parser::charRange, 0, "character between a and b");
+        expectFailure("c", parser::charRange, 0, "character between 'a' and 'b'");
+        expectFailure("", parser::charRange, 0, "character between 'a' and 'b'");
     }
 
     @Test

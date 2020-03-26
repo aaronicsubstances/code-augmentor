@@ -86,7 +86,7 @@ public class Parser<TCtx extends ParsingContext<?>> {
      * after matching. If the runnable matches, a {@link NoMatchException} is
      * raised.
      */
-    public void Not(Runnable runnable, String expectation) {
+    public void TestNot(Runnable runnable, String expectation) {
         StateSnapshot snapshot = ctx.snapshot();
         boolean success = false;
         try {
@@ -97,8 +97,9 @@ public class Parser<TCtx extends ParsingContext<?>> {
         } finally {
             snapshot.restore();
         }
-        if (success)
+        if (success) {
             throw ctx.noMatch(expectation);
+        }
     }
 
     /**
@@ -539,7 +540,7 @@ public class Parser<TCtx extends ParsingContext<?>> {
     public final String Str(String expected) {
         int startIndex = ctx.getIndex();
         if (!matchString(expected))
-            throw ctx.noMatch(expected, startIndex);
+            throw ctx.noMatch(escapeString(expected), startIndex);
         else
             return expected;
     }
@@ -550,7 +551,7 @@ public class Parser<TCtx extends ParsingContext<?>> {
     public final <T> T Str(String expected, T result) {
         int startIndex = ctx.getIndex();
         if (!matchString(expected))
-            throw ctx.noMatch(expected, startIndex);
+            throw ctx.noMatch(escapeString(expected), startIndex);
         else
             return result;
     }
@@ -562,7 +563,7 @@ public class Parser<TCtx extends ParsingContext<?>> {
     public final <T> T Str(String expected, Supplier<T> result) {
         int startIndex = ctx.getIndex();
         if (!matchString(expected))
-            throw ctx.noMatch(expected, startIndex);
+            throw ctx.noMatch(escapeString(expected), startIndex);
         else
             return result.get();
     }
@@ -587,6 +588,94 @@ public class Parser<TCtx extends ParsingContext<?>> {
     }
 
     /**
+     * Match specified char.
+     */
+    public final char MatchChar(char ch) {
+        int startIndex = ctx.getIndex();
+        if (ctx.hasNext()) {
+            char cp = ctx.next();
+            if (ch == cp) {
+                return cp;
+            }
+        }
+        throw ctx.noMatch(escapeChar(ch), startIndex);
+    }
+
+    public static final String escapeChar(char ch) {
+        StringBuilder escape = new StringBuilder("'");
+        switch (ch) {
+            case '\\':
+            case '\'':
+                escape.append('\\');
+                break;
+            default:
+                break;
+        }
+        if (ch != ' ' && Character.isWhitespace(ch)) {
+            escape.append(String.format("\\u%04x", (int)ch));
+        }
+        else {
+            escape.append(ch);
+        }
+        escape.append("'");
+        return escape.toString();
+    }
+
+    public static final String escapeString(String s) {
+        StringBuilder escape = new StringBuilder("\"");
+        for (int i = 0; i < s.length(); i++) {
+            char ch = s.charAt(i);
+            switch (ch) {
+                case '\\':
+                case '"':
+                    escape.append('\\');
+                    break;
+                default:
+                    break;
+            }
+            if (ch != ' ' && Character.isWhitespace(ch)) {
+                escape.append(String.format("\\u%04x", (int)ch));
+            }
+            else {
+                escape.append(ch);
+            }
+        }
+        escape.append("\"");
+        return escape.toString();
+    }
+
+    /**
+     * Match any of the specified chars.
+     */
+    public final char AnyOf(String chars) {
+        int startIndex = ctx.getIndex();
+        if (ctx.hasNext()) {
+            char cp = ctx.next();
+            if (chars.indexOf(cp) != -1) {
+                return cp;
+            }
+        }
+        String expectation = createCharsExpectation(chars);
+        throw ctx.noMatch(expectation, startIndex);
+    }
+
+    public static String createCharsExpectation(String chars) {        
+        StringBuilder expectation = new StringBuilder();
+        for (int i = 0; i < chars.length(); i++) {
+            if (i > 0) {
+                if (i + 1 < chars.length()) {
+                    expectation.append(", ");
+                }
+                else {
+                    expectation.append(" or ");
+                }
+            }
+            expectation.append(escapeChar(chars.charAt(i)));
+        }
+        return expectation.toString();
+    }
+
+    /**
      * Match all chars except the ones specified
      */
     //public final String NoneOf(String chars) {
@@ -600,7 +689,8 @@ public class Parser<TCtx extends ParsingContext<?>> {
                 return cp;
             }
         }
-        throw ctx.noMatch("any char except " + chars, startIndex);
+        String expectation = createCharsExpectation(chars);
+        throw ctx.noMatch("any char except " + expectation, startIndex);
     }
 
     /**
@@ -620,10 +710,10 @@ public class Parser<TCtx extends ParsingContext<?>> {
         StringBuilder sb = new StringBuilder();
         sb.append("character between ");
         //sb.appendCodePoint(first);
-        sb.append(first);
+        sb.append(escapeChar(first));
         sb.append(" and ");
         //sb.appendCodePoint(last);
-        sb.append(last);
+        sb.append(escapeChar(last));
         throw ctx.noMatch(sb.toString(), startIndex);
     }
 

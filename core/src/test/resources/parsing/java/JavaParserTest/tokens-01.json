@@ -316,7 +316,7 @@
     },
     {
         "type": 50,
-        "text": "test2",
+        "text": "te$t2",
         "startPos": 198,
         "endPos": 203,
         "lineNumber": 10,

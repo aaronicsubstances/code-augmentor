@@ -230,8 +230,8 @@ public class ParsingContext<TState extends ParsingState<TState>> {
      * Return an error description according to the currently reported
      * expectations
      */
-    public ErrorDesciption getErrorDescription() {
-        ErrorDesciption result = new ErrorDesciption(Collections.unmodifiableSet(expectationFrame.expectations),
+    public ErrorDescription getErrorDescription() {
+        ErrorDescription result = new ErrorDescription(Collections.unmodifiableSet(expectationFrame.expectations),
                 content, expectationFrame.index);
         return result;
     }
@@ -249,13 +249,13 @@ public class ParsingContext<TState extends ParsingState<TState>> {
         return expectationFrame;
     }
 
-    public static class ErrorDesciption {
+    public static class ErrorDescription {
         public int errorPosition;
         public Set<String> expectations;
 
         public PositionInfo errorLineInfo;
 
-        public ErrorDesciption(Set<String> expectations, String content, int errorPosition) {
+        public ErrorDescription(Set<String> expectations, String content, int errorPosition) {
             this.expectations = expectations;
             this.errorPosition = errorPosition;
             errorLineInfo = new PositionInfo(content, errorPosition);

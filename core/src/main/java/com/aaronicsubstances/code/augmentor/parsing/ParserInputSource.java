@@ -105,10 +105,11 @@ public class ParserInputSource {
         // of transforming some original source code.
         // Thus we need to get the real input and the corresponding coordinates which
         // map to errorLineNumber and errorColumnNumber.
-        int[] dest = new int[]{ errorPosition };
-        String originalInput = fixInputCoordinates(dest);
-        int originalPosition = dest[0];
-        PositionInfo pInfo = new PositionInfo(originalInput, originalPosition);
+        PositionInfo pInfo = createErrorLineInfo(errorPosition);
+        return createAbortException(pInfo, message);
+    }
+
+    public ParserException createAbortException(PositionInfo pInfo, String message) {
         int errorLineNumber = pInfo.getLineNr();
         int errorColumnNumber = pInfo.getIndexInLine() + 1;
 
@@ -118,5 +119,13 @@ public class ParserInputSource {
         String errorMessage = String.format("%s:%s %s\n\n%s", errorLineNumber,
             errorColumnNumber, message, snippet);
         return new ParserException(errorMessage, errorLineNumber, errorColumnNumber, snippet.toString());
+    }
+
+    public PositionInfo createErrorLineInfo(int errorPosition) {
+        int[] dest = new int[]{ errorPosition };
+        String originalInput = fixInputCoordinates(dest);
+        int originalPosition = dest[0];
+        PositionInfo pInfo = new PositionInfo(originalInput, originalPosition);
+        return pInfo;
     }
 }

@@ -1,10 +1,8 @@
 package com.aaronicsubstances.code.augmentor.parsing.peg.extras;
 
-import java.util.Stack;
-
 import com.aaronicsubstances.code.augmentor.parsing.peg.ParsingState;
 
-public class StackEnabledParsingState<T> extends ParsingState<StackEnabledParsingState<T>> {
+public class StackEnabledParsingState extends ParsingState<StackEnabledParsingState> {
     private int sizeToKeep;
 
     public int getSizeToKeep() {

@@ -1,23 +1,23 @@
 package com.aaronicsubstances.code.augmentor.parsing.peg.extras;
 
-import java.util.Stack;
+import java.util.LinkedList;
 
 import com.aaronicsubstances.code.augmentor.parsing.peg.ParsingContext;
 
-public class StackEnabledParsingContext<T> extends ParsingContext<StackEnabledParsingState<T>> {
-    private final Stack<T> valueStack = new Stack<>();
+public class StackEnabledParsingContext extends ParsingContext<StackEnabledParsingState> {
+    private final LinkedList<Object> valueStack = new LinkedList<>();
 
     public StackEnabledParsingContext(String content) {
         super(content);
     }
 
-    public Stack<T> getValueStack() {
+    public LinkedList<Object> getValueStack() {
         return valueStack;
     }
 
     @Override
-    protected StackEnabledParsingState<T> createInitialState() {
-        return new StackEnabledParsingState<>();
+    protected StackEnabledParsingState createInitialState() {
+        return new StackEnabledParsingState();
     }
 
     @Override
@@ -29,7 +29,7 @@ public class StackEnabledParsingContext<T> extends ParsingContext<StackEnabledPa
      * Implementation of {@link StateSnapshot}
      */
     private class StateSnapshotImpl implements StateSnapshot {
-        StackEnabledParsingState<T> snapshot;
+        StackEnabledParsingState snapshot;
 
         public StateSnapshotImpl() {
             snapshot = state.clone();
