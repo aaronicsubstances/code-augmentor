@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 import com.aaronicsubstances.code.augmentor.models.AugmentingCode;
 import com.aaronicsubstances.code.augmentor.models.CodeGenerationRequest;
 import com.aaronicsubstances.code.augmentor.models.PreCodeAugmentationResult;
+import com.aaronicsubstances.code.augmentor.models.SourceFileAugmentingCode;
 import com.aaronicsubstances.code.augmentor.models.SourceFileDescriptor;
 import com.aaronicsubstances.code.augmentor.parsing.ParserException;
 import com.aaronicsubstances.code.augmentor.parsing.Token;
@@ -269,10 +270,14 @@ public class PreCodeAugmentationTask extends Task {
                     for (int j = 0; j < requestSpecList.size(); j++) {
                         Object requestWriter = codeGenRequestWriters.get(j);
                         List<AugmentingCode> specAugCodes = specAugCodesList.get(j);
-                        for (AugmentingCode specAugCode : specAugCodes) {
-                            specAugCode.setRelativePath(s.getRelativePath());
-                            specAugCode.serialize(requestWriter);
+                        if (specAugCodes.isEmpty()) {
+                            continue;
                         }
+                        SourceFileAugmentingCode sourceFileAugCode = new SourceFileAugmentingCode(
+                            specAugCodes);
+                        sourceFileAugCode.setFileIndex(i);
+                        sourceFileAugCode.setRelativePath(s.getRelativePath());
+                        sourceFileAugCode.serialize(requestWriter);
                     }
                 }
             }

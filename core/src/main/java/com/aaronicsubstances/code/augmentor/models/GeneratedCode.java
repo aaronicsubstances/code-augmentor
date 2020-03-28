@@ -1,33 +1,10 @@
 package com.aaronicsubstances.code.augmentor.models;
 
-import java.util.Map;
-
-import javax.xml.namespace.QName;
-import javax.xml.stream.XMLStreamWriter;
-import javax.xml.stream.events.Attribute;
-import javax.xml.stream.events.StartElement;
-
-import com.aaronicsubstances.code.augmentor.persistence.ModifiedCsvReader;
-import com.aaronicsubstances.code.augmentor.persistence.ModifiedCsvWriter;
-import com.aaronicsubstances.code.augmentor.persistence.XmlEventReaderWrapper;
-
-/**
- * 
- */
 public class GeneratedCode {
-    private String relativePath;
     private int index;
     private boolean error;
     private String headerContent;
     private String bodyContent;
-
-    public String getRelativePath() {
-        return relativePath;
-    }
-
-    public void setRelativePath(String relativePath) {
-        this.relativePath = relativePath;
-    }
 
     public int getIndex() {
         return index;
@@ -61,96 +38,6 @@ public class GeneratedCode {
         this.bodyContent = bodyContent;
     }
 
-	public void serialize(Object serializer) throws Exception {
-        if (serializer instanceof XMLStreamWriter) {
-            XMLStreamWriter xmlWriter = (XMLStreamWriter) serializer;
-            xmlWriter.writeStartElement("generated_code");
-            xmlWriter.writeAttribute("index", ""+ index);
-            xmlWriter.writeAttribute("error", "" + error);
-            if (relativePath != null) {
-                xmlWriter.writeAttribute("rel_path", relativePath);
-            }
-
-            if (headerContent != null) {
-                xmlWriter.writeStartElement("header");
-                xmlWriter.writeCharacters(headerContent);
-                xmlWriter.writeEndElement();
-            }
-
-            xmlWriter.writeStartElement("body");
-            xmlWriter.writeCharacters(bodyContent);
-            xmlWriter.writeEndElement();
-            
-            xmlWriter.writeEndElement();
-            xmlWriter.flush();
-        }
-        else {
-            ModifiedCsvWriter qCsvWriter = (ModifiedCsvWriter) serializer;
-            Object[] record = { relativePath, index, error, headerContent, bodyContent};
-            qCsvWriter.writeRecord(record);
-        }
-    }
-
-	public boolean deserialize(Object deserializer) throws Exception {
-        if (deserializer instanceof XmlEventReaderWrapper) {
-            XmlEventReaderWrapper xmlReader = (XmlEventReaderWrapper) deserializer;
-            StartElement startElement = xmlReader.locateStartElement("generated_code");
-            if (startElement == null) {
-                return false;
-            }
-            index = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "index");
-            Attribute att = startElement.getAttributeByName(QName.valueOf("rel_path"));
-            if (att != null) {
-                relativePath = att.getValue();
-            }
-            att = startElement.getAttributeByName(QName.valueOf("error"));
-            if (att != null) {
-                error = Boolean.parseBoolean(att.getValue());
-            }
-
-            startElement = xmlReader.requireStartElement(new String[]{ "header", "body" });
-            if ("header".equals(startElement.getName().getLocalPart())) {
-                headerContent = xmlReader.readElementValue();
-                xmlReader.requireEndElement("header");
-                startElement = xmlReader.requireStartElement("body");
-            }
-
-            bodyContent = xmlReader.readElementValue();
-            xmlReader.requireEndElement("body");
-
-            xmlReader.requireEndElement("generated_code");
-            return true;
-        }
-        else {
-            ModifiedCsvReader qCsvReader = (ModifiedCsvReader) deserializer;
-            Object result;
-            while ((result = qCsvReader.read()) != null) {
-                if (result instanceof String[]) {
-                    break;
-                }
-            }
-            if (result == null) {
-                return false;
-            }
-            String[] record = (String[]) result;
-            Map<String, String> recordDict = qCsvReader.convertRecordToDict(record);
-            relativePath = recordDict.get("rel_path");
-            if ("".equals(relativePath)) {
-                relativePath = null;
-            }
-            headerContent = recordDict.get("header");
-            if ("".equals(headerContent)) {
-                headerContent = null;
-            }
-            bodyContent = qCsvReader.requireField(recordDict, "body", true);
-
-            error = Boolean.parseBoolean(recordDict.get("is_error"));
-            index = qCsvReader.requireIntField(recordDict, "index");
-
-            return true;
-        }
-    }
-
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -159,7 +46,6 @@ public class GeneratedCode {
         result = prime * result + (error ? 1231 : 1237);
         result = prime * result + ((headerContent == null) ? 0 : headerContent.hashCode());
         result = prime * result + index;
-        result = prime * result + ((relativePath == null) ? 0 : relativePath.hashCode());
         return result;
     }
 
@@ -186,17 +72,12 @@ public class GeneratedCode {
             return false;
         if (index != other.index)
             return false;
-        if (relativePath == null) {
-            if (other.relativePath != null)
-                return false;
-        } else if (!relativePath.equals(other.relativePath))
-            return false;
         return true;
     }
 
     @Override
     public String toString() {
         return "GeneratedCode{bodyContent=" + bodyContent + ", error=" + error + ", headerContent=" + headerContent
-                + ", index=" + index + ", relativePath=" + relativePath + "}";
+                + ", index=" + index + "}";
     }
 }

@@ -143,6 +143,8 @@ public class CodeAugmentationTask extends Task {
                     srcFile));
             }
 
+            generatedCodeFetcher.prepareForFile(sourceFileDescriptor.getFileIndex());
+
             // fetch applicable generated code per aug code descriptor.
             List<String> generatedCodes = new ArrayList<>();
             List<String> sourceFileImports = new ArrayList<>();
@@ -150,7 +152,8 @@ public class CodeAugmentationTask extends Task {
                 AugmentingCodeDescriptor augCodeDescriptor = snippetDescriptor.getAugmentingCodeDescriptor();
                 int augCodeIndex = augCodeDescriptor.getIndex();
 
-                GeneratedCode genCode = generatedCodeFetcher.getGeneratedCode(augCodeIndex);
+                GeneratedCode genCode = generatedCodeFetcher.getGeneratedCode(sourceFileDescriptor.getFileIndex(), 
+                    augCodeIndex);
                 if (genCode == null) {
                     throw new BuildException("Could not find generated code for aug code section " +
                         String.format("at %s - %s in %s", augCodeDescriptor.getStartPos(),

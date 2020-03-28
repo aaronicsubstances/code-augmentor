@@ -11,6 +11,7 @@ import com.aaronicsubstances.code.augmentor.models.CodeSnippetDescriptor.Generat
 import com.aaronicsubstances.code.augmentor.persistence.XmlEventReaderWrapper;
 
 public class SourceFileDescriptor {
+    private int fileIndex;
     private String dir;
     private String relativePath;
     private List<String> importStatements;
@@ -25,6 +26,14 @@ public class SourceFileDescriptor {
             List<CodeSnippetDescriptor> bodySnippets) {
         this.importStatements = importStatements;
         this.bodySnippets = bodySnippets;
+    }
+
+    public int getFileIndex() {
+        return fileIndex;
+    }
+
+    public void setFileIndex(int fileIndex) {
+        this.fileIndex = fileIndex;
     }
 
     public String getDir() {
@@ -78,6 +87,7 @@ public class SourceFileDescriptor {
     public void serialize(Object serializer) throws Exception {    
         XMLStreamWriter xmlWriter = (XMLStreamWriter) serializer;
         xmlWriter.writeStartElement("file");
+        xmlWriter.writeAttribute("file_index", "" + fileIndex);
         xmlWriter.writeAttribute("dir", dir);
         xmlWriter.writeAttribute("rel_path", relativePath);
         xmlWriter.writeAttribute("header_insert_pos", "" + headerInsertPos);
@@ -146,6 +156,7 @@ public class SourceFileDescriptor {
         if (startElement == null) {
             return false;
         }
+        fileIndex = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "file_index");
         dir = XmlEventReaderWrapper.requireAttributeValue(startElement, "dir");
         relativePath = XmlEventReaderWrapper.requireAttributeValue(startElement, "rel_path");
         headerInsertPos = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "header_insert_pos");

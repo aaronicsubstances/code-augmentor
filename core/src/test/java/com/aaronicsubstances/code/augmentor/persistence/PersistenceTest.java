@@ -19,7 +19,9 @@ import com.aaronicsubstances.code.augmentor.models.CodeSnippetDescriptor.Augment
 import com.aaronicsubstances.code.augmentor.models.CodeSnippetDescriptor.GeneratedCodeDescriptor;
 import com.aaronicsubstances.code.augmentor.models.GeneratedCode;
 import com.aaronicsubstances.code.augmentor.models.PreCodeAugmentationResult;
+import com.aaronicsubstances.code.augmentor.models.SourceFileAugmentingCode;
 import com.aaronicsubstances.code.augmentor.models.SourceFileDescriptor;
+import com.aaronicsubstances.code.augmentor.models.SourceFileGeneratedCode;
 
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -79,6 +81,7 @@ public class PersistenceTest {
                             new ArrayList<>());
                         instance.getFileDescriptors().add(s);
 
+                        s.setFileIndex(i);
                         s.setRelativePath(generateRandomString(randGen, false));
                         s.setDir(generateRandomString(randGen, false));
                         s.setHeaderInsertPos(randGen.nextInt());
@@ -110,8 +113,8 @@ public class PersistenceTest {
         // first, serialize
         StringWriter writer = new StringWriter();
         Object serializer = expected.beginSerialize(writer, useXml);
-        for (AugmentingCode augCodeSnippet : expected.getAugmentingCodeSnippets()) {
-            augCodeSnippet.serialize(serializer);
+        for (SourceFileAugmentingCode fileAugCodeSnippet : expected.getSourceFileAugmentingCodeList()) {
+            fileAugCodeSnippet.serialize(serializer);
         }
         expected.endSerialize(serializer);
         String serialized = writer.toString();
@@ -120,10 +123,10 @@ public class PersistenceTest {
         // next, deserialize 
         CodeGenerationRequest actual = new CodeGenerationRequest();
         Object deserializer = actual.beginDeserialize(new StringReader(serialized), useXml);
-        AugmentingCode augCodeSnippet = new AugmentingCode();
+        SourceFileAugmentingCode augCodeSnippet = new SourceFileAugmentingCode();
         while (augCodeSnippet.deserialize(deserializer)) {
-            actual.getAugmentingCodeSnippets().add(augCodeSnippet);
-            augCodeSnippet = new AugmentingCode();
+            actual.getSourceFileAugmentingCodeList().add(augCodeSnippet);
+            augCodeSnippet = new SourceFileAugmentingCode();
         }
         actual.endDeserialize(deserializer);
 
@@ -144,26 +147,34 @@ public class PersistenceTest {
 
             @Override
             public Object[] next() {
-                List<AugmentingCode> codeSnippets = new ArrayList<>();
-                CodeGenerationRequest instance = new CodeGenerationRequest(codeSnippets);
+                List<SourceFileAugmentingCode> files = new ArrayList<>();
+                CodeGenerationRequest instance = new CodeGenerationRequest(files);
                 if (count > 0) {
-                    int codeSnippetListSize = randGen.nextInt(5);
-                    for (int i = 0; i < codeSnippetListSize; i++) {
-                        AugmentingCode codeSnippet = new AugmentingCode(new ArrayList<>());
-                        codeSnippets.add(codeSnippet);
-                        
-                        // ensure uniqueness of augmenting code index to avoid flaky tests.
-                        codeSnippet.setIndex(i);
-                        codeSnippet.setRelativePath(generateRandomString(randGen, false));
-                        codeSnippet.setCommentSuffix(generateRandomString(randGen, false));
-                        
-                        // ensure at least 1 block.
-                        int blockCount = randGen.nextInt(5) + 1;
-                        for (int j = 0; j < blockCount; j++) {
-                            Block block = new Block();
-                            codeSnippet.getBlocks().add(block);
-                            block.setStringify(randGen.nextBoolean());
-                            block.setContent(generateRandomString(randGen, true));
+                    int fileListSize = randGen.nextInt(6);
+                    for (int i = 0; i < fileListSize; i++) {
+                        List<AugmentingCode> codeSnippets = new ArrayList<>();
+                        SourceFileAugmentingCode fileAugCode = new SourceFileAugmentingCode(
+                            codeSnippets);
+                        files.add(fileAugCode);
+                        fileAugCode.setFileIndex(i);
+                        fileAugCode.setRelativePath(generateRandomString(randGen, false));
+
+                        int codeSnippetListSize = randGen.nextInt(5);
+                        for (int j = 0; j < codeSnippetListSize; j++) {
+                            AugmentingCode codeSnippet = new AugmentingCode(new ArrayList<>());
+                            codeSnippets.add(codeSnippet);
+                            
+                            codeSnippet.setIndex(i);
+                            codeSnippet.setCommentSuffix(generateRandomString(randGen, false));
+                            
+                            // ensure at least 1 block.
+                            int blockCount = randGen.nextInt(5) + 1;
+                            for (int k = 0; k < blockCount; k++) {
+                                Block block = new Block();
+                                codeSnippet.getBlocks().add(block);
+                                block.setStringify(randGen.nextBoolean());
+                                block.setContent(generateRandomString(randGen, true));
+                            }
                         }
                     }
                 }
@@ -180,7 +191,7 @@ public class PersistenceTest {
         // first, serialize
         StringWriter writer = new StringWriter();
         Object serializer = expected.beginSerialize(writer, useXml);
-        for (GeneratedCode generatedCode : expected.getGeneratedCodeSnippets()) {
+        for (SourceFileGeneratedCode generatedCode : expected.getSourceFileGeneratedCodeList()) {
             generatedCode.serialize(serializer);
         }
         expected.endSerialize(serializer);
@@ -190,10 +201,10 @@ public class PersistenceTest {
         // next, deserialize 
         CodeGenerationResponse actual = new CodeGenerationResponse();
         Object deserializer = actual.beginDeserialize(new StringReader(serialized), useXml);
-        GeneratedCode generatedCode = new GeneratedCode();
+        SourceFileGeneratedCode generatedCode = new SourceFileGeneratedCode();
         while (generatedCode.deserialize(deserializer)) {
-            actual.getGeneratedCodeSnippets().add(generatedCode);
-            generatedCode = new GeneratedCode();
+            actual.getSourceFileGeneratedCodeList().add(generatedCode);
+            generatedCode = new SourceFileGeneratedCode();
         }
         actual.endDeserialize(deserializer);
 
@@ -214,21 +225,27 @@ public class PersistenceTest {
 
             @Override
             public Object[] next() {
-                List<GeneratedCode> generatedCodeList = new ArrayList<>();
-                CodeGenerationResponse instance = new CodeGenerationResponse(generatedCodeList);
+                List<SourceFileGeneratedCode> files = new ArrayList<>();
+                CodeGenerationResponse instance = new CodeGenerationResponse(files);
                 if (count > 0) {
-                    int generatedCodeListSize = randGen.nextInt(5);
-                    for (int i = 0; i < generatedCodeListSize; i++) {
-                        GeneratedCode generatedCode = new GeneratedCode();
-                        generatedCodeList.add(generatedCode);
+                    int fileListSize = randGen.nextInt(5);
+                    for (int i = 0; i < fileListSize; i++) {
+                        List<GeneratedCode> generatedCodeList = new ArrayList<>();
+                        SourceFileGeneratedCode file = new SourceFileGeneratedCode(generatedCodeList);
+                        files.add(file);
+                        file.setFileIndex(i);
+                        int generatedCodeListSize = randGen.nextInt(5);
+                        for (int j = 0; j < generatedCodeListSize; j++) {
+                            GeneratedCode generatedCode = new GeneratedCode();
+                            generatedCodeList.add(generatedCode);
 
-                        generatedCode.setIndex(randGen.nextInt(30));
-                        if (randGen.nextBoolean()) {
-                            generatedCode.setError(true);
-                            generatedCode.setRelativePath(generateRandomString(randGen, false));
-                            generatedCode.setHeaderContent(generateRandomString(randGen, true));
+                            generatedCode.setIndex(j);
+                            if (randGen.nextBoolean()) {
+                                generatedCode.setError(true);
+                                generatedCode.setHeaderContent(generateRandomString(randGen, true));
+                            }
+                            generatedCode.setBodyContent(generateRandomString(randGen, true));
                         }
-                        generatedCode.setBodyContent(generateRandomString(randGen, true));
                     }
                 }
                 return new Object[]{ count++, instance, randGen.nextBoolean() };

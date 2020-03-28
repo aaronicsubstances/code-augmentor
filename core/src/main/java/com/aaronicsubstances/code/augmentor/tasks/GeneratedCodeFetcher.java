@@ -3,37 +3,27 @@ package com.aaronicsubstances.code.augmentor.tasks;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.aaronicsubstances.code.augmentor.models.CodeGenerationResponse;
 import com.aaronicsubstances.code.augmentor.models.GeneratedCode;
+import com.aaronicsubstances.code.augmentor.models.SourceFileGeneratedCode;
 
-/**
- * GeneratedCodeFetcher
- */
 public class GeneratedCodeFetcher {
     private final List<CodeGenerationResponse> codeGenerationResponses;
     private final List<Object> codeGenerationResponseReaders;
-    private final List<GeneratedCode> lastFetches;
+    private List<SourceFileGeneratedCode> lastFetches;
 
     public GeneratedCodeFetcher(List<File> generatedCodeFiles) throws Exception {
         this.codeGenerationResponses = new ArrayList<>();
         this.codeGenerationResponseReaders = new ArrayList<>();
+        lastFetches = new ArrayList<>();
         for (File f : generatedCodeFiles) {
             CodeGenerationResponse codeGenResp = new CodeGenerationResponse();
             codeGenerationResponses.add(codeGenResp);
             boolean useXml = TaskUtils.canUseXml(f);
             Object codeGenRespRdr = codeGenResp.beginDeserializer(f, useXml);
             codeGenerationResponseReaders.add(codeGenRespRdr);
-        }
-
-        // prime fetcher.
-        lastFetches = new ArrayList<>();
-        for (Object rdr : codeGenerationResponseReaders) {
-            GeneratedCode genCode = new GeneratedCode();
-            if (!genCode.deserialize(rdr)) {
-                genCode = null;
-            }
-            lastFetches.add(genCode);
         }
     }
 
@@ -43,23 +33,47 @@ public class GeneratedCodeFetcher {
             Object codeGenRespRdr = codeGenerationResponseReaders.get(i);
             codeGenResp.endDeserialize(codeGenRespRdr);
         }
-	}
+    }
+    
+    public void prepareForFile(int fileIndex) throws Exception {
+        boolean firstPrepare = false;
+        if (lastFetches == null) {
+            lastFetches = new ArrayList<>();
+            firstPrepare = true;
+            for (int i = 0; i < codeGenerationResponseReaders.size(); i++) {
+                lastFetches.add(null);
+            }
+        }
+        for (int i = 0; i < lastFetches.size(); i++) {
+            SourceFileGeneratedCode fileGenCode;
+            if (!firstPrepare) {
+                fileGenCode = lastFetches.get(i);
+                if (fileGenCode == null || fileGenCode.getFileIndex() != fileIndex) {
+                    continue;
+                }
+            }
+            fileGenCode = new SourceFileGeneratedCode();
+            Object rdr = codeGenerationResponseReaders.get(i);
+            if (!fileGenCode.deserialize(rdr)) {
+                fileGenCode = null;
+            }
+            lastFetches.set(i, fileGenCode);
+        }
+    }
 
-	public GeneratedCode getGeneratedCode(int augCodeIndex) throws Exception {
+	public GeneratedCode getGeneratedCode(int fileIndex, int augCodeIndex) throws Exception {
         GeneratedCode nextGenCode = null;
 		for (int i = 0; i < lastFetches.size(); i++) {
-            GeneratedCode genCode = lastFetches.get(i);
-            if (genCode == null || genCode.getIndex() != augCodeIndex) {
+            SourceFileGeneratedCode fileGenCode = lastFetches.get(i);
+            if (fileGenCode == null || fileGenCode.getFileIndex() != fileIndex) {
                 continue;
             }
-            nextGenCode = genCode;
-            // move to next gen code at index i.
-            Object rdr = codeGenerationResponseReaders.get(i);
-            genCode = new GeneratedCode();
-            if (!genCode.deserialize(rdr)) {
-                genCode = null;
+            Optional<GeneratedCode> genCodeOpt = fileGenCode.getGeneratedCodeList()
+                .stream().filter(x -> x.getIndex() == augCodeIndex).findFirst();
+            if (genCodeOpt.isPresent()) {
+                nextGenCode = genCodeOpt.get();
+                break;
             }
-            lastFetches.set(i, genCode);
         }
         return nextGenCode;
 	}

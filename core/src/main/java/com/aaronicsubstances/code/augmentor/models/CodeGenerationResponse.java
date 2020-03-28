@@ -9,45 +9,30 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamWriter;
 
-import com.aaronicsubstances.code.augmentor.persistence.ModifiedCsvReader;
-import com.aaronicsubstances.code.augmentor.persistence.ModifiedCsvWriter;
 import com.aaronicsubstances.code.augmentor.persistence.XmlEventReaderWrapper;
 
-/**
- * 
- */
 public class CodeGenerationResponse {
-    private static final String[] csvFields;
-    private static final String[] readCsvFields;
-
-    static {
-        csvFields = new String[]{ "rel_path", "index", "is_error",
-            "header", "body" };
-        readCsvFields = new String[]{ "index", "body" };
-    }
-
-    private List<GeneratedCode> generatedCodeSnippets;
+    private List<SourceFileGeneratedCode> sourceFileGeneratedCodeList;
 
     public CodeGenerationResponse() {
     }
 
-    public CodeGenerationResponse(List<GeneratedCode> generatedCodeSnippets) {
-        this.generatedCodeSnippets = generatedCodeSnippets;
+    public CodeGenerationResponse(List<SourceFileGeneratedCode> sourceFileGeneratedCodeList) {
+        this.sourceFileGeneratedCodeList = sourceFileGeneratedCodeList;
     }
 
-    public List<GeneratedCode> getGeneratedCodeSnippets() {
-        return generatedCodeSnippets;
+    public List<SourceFileGeneratedCode> getSourceFileGeneratedCodeList() {
+        return sourceFileGeneratedCodeList;
     }
 
-    public void setGeneratedCodeSnippets(List<GeneratedCode> generatedCodeSnippets) {
-        this.generatedCodeSnippets = generatedCodeSnippets;
+    public void setSourceFileGeneratedCodeList(List<SourceFileGeneratedCode> sourceFileGeneratedCodeList) {
+        this.sourceFileGeneratedCodeList = sourceFileGeneratedCodeList;
     }
 
     public Object beginSerialize(File file, boolean useXml) throws Exception {
@@ -58,18 +43,13 @@ public class CodeGenerationResponse {
     }
 
     public Object beginSerialize(Writer stream, boolean useXml) throws Exception {
-        if (useXml) {
+        /*if (useXml)*/ {
             XMLOutputFactory f = XMLOutputFactory.newInstance();
             XMLStreamWriter xmlWriter = f.createXMLStreamWriter(stream);
             xmlWriter.writeStartDocument("UTF-8", "1.0");
             xmlWriter.writeStartElement("response");
-            xmlWriter.writeStartElement("generated_code_list");
+            xmlWriter.writeStartElement("file_list");
             return xmlWriter;
-        }
-        else {
-            ModifiedCsvWriter qCsvWriter = new ModifiedCsvWriter(stream);
-            qCsvWriter.writeFields(csvFields);
-            return qCsvWriter;
         }
     }
 
@@ -77,20 +57,16 @@ public class CodeGenerationResponse {
         if (serializer == null) {
             return;
         }
-        if (serializer instanceof XMLStreamWriter) {
+        /*if (serializer instanceof XMLStreamWriter)*/ {
             XMLStreamWriter xmlWriter = (XMLStreamWriter) serializer;
             try {
-                xmlWriter.writeEndElement(); // generated_code_list
+                xmlWriter.writeEndElement(); // file_list
                 xmlWriter.writeEndElement(); // response
                 xmlWriter.writeEndDocument();
             }
             finally {
                 xmlWriter.close();
             }
-        }
-        else {
-            ModifiedCsvWriter quasiCsvWriter = (ModifiedCsvWriter) serializer;
-            quasiCsvWriter.close();
         }
     }
 
@@ -102,22 +78,13 @@ public class CodeGenerationResponse {
     }
 
     public Object beginDeserialize(Reader stream, boolean useXml) throws Exception {
-        generatedCodeSnippets = new ArrayList<>();
-        if (useXml) {
+        sourceFileGeneratedCodeList = new ArrayList<>();
+        /*if (useXml)*/ {
             XMLInputFactory inputFactory = XMLInputFactory.newInstance();
             XmlEventReaderWrapper xmlReader = new XmlEventReaderWrapper(inputFactory.createXMLEventReader(stream));
             xmlReader.requireDocOpener("response");        
-            xmlReader.requireStartElement("generated_code_list");
+            xmlReader.requireStartElement("file_list");
             return xmlReader;
-        }
-        else {
-            ModifiedCsvReader qCsvReader = new ModifiedCsvReader(stream);
-            List<String> fields = qCsvReader.requireFieldsOpener();
-            if (!fields.containsAll(Arrays.asList(readCsvFields))) {
-                throw qCsvReader.createAbortException("At least one expected field is absent: " +
-                    "expected " + Arrays.toString(readCsvFields) + " but found " + fields);
-            }
-            return qCsvReader;
         }
     }
 
@@ -125,13 +92,9 @@ public class CodeGenerationResponse {
         if (deserializer == null) {
             return;
         }
-        if (deserializer instanceof XmlEventReaderWrapper) {
+        /*if (deserializer instanceof XmlEventReaderWrapper)*/ {
             XmlEventReaderWrapper xmlReader = (XmlEventReaderWrapper) deserializer;
             xmlReader.close();
-        }
-        else {
-            ModifiedCsvReader qCsvReader = (ModifiedCsvReader) deserializer;
-            qCsvReader.close();
         }
     }
 
@@ -139,7 +102,7 @@ public class CodeGenerationResponse {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((generatedCodeSnippets == null) ? 0 : generatedCodeSnippets.hashCode());
+        result = prime * result + ((sourceFileGeneratedCodeList == null) ? 0 : sourceFileGeneratedCodeList.hashCode());
         return result;
     }
 
@@ -152,16 +115,16 @@ public class CodeGenerationResponse {
         if (getClass() != obj.getClass())
             return false;
         CodeGenerationResponse other = (CodeGenerationResponse) obj;
-        if (generatedCodeSnippets == null) {
-            if (other.generatedCodeSnippets != null)
+        if (sourceFileGeneratedCodeList == null) {
+            if (other.sourceFileGeneratedCodeList != null)
                 return false;
-        } else if (!generatedCodeSnippets.equals(other.generatedCodeSnippets))
+        } else if (!sourceFileGeneratedCodeList.equals(other.sourceFileGeneratedCodeList))
             return false;
         return true;
     }
 
     @Override
     public String toString() {
-        return "CodeGenerationResponse{generatedCodeSnippets=" + generatedCodeSnippets + "}";
+        return "CodeGenerationResponse{sourceFileGeneratedCodeList=" + sourceFileGeneratedCodeList + "}";
     }
 }
