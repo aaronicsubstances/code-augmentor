@@ -73,7 +73,15 @@ public class ParserInputSource {
      * @return original input string. 
      */
     public String fixInputCoordinates(int[] inputCoordinates) {
-		if (embeddedInputSource != null) {
+		return fixInputCoordinates(inputCoordinates, null);
+    }
+
+	public String fixInputCoordinates(int[] inputCoordinates, String targetInput) {
+        // Yes, use identity comparison rather than equivalence.
+        if (input == targetInput) {
+            return input;
+        }
+        if (embeddedInputSource != null) {
             if (inputCoordinates != null) {
                 SourceMap sourceMap = embeddedInputSource.getSourceMap();
                 if (sourceMap != null) {
@@ -85,7 +93,7 @@ public class ParserInputSource {
             return embeddedInputSource.fixInputCoordinates(inputCoordinates);
         }
         return input;
-    }
+	}
 
     /**
      * Generates an appropriate parser exception message with embedded error 

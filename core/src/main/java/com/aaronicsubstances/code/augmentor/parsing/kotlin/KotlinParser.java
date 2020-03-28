@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import com.aaronicsubstances.code.augmentor.parsing.LexerSupport;
 import com.aaronicsubstances.code.augmentor.parsing.ParserInputSource;
+import com.aaronicsubstances.code.augmentor.parsing.SourceMap;
 import com.aaronicsubstances.code.augmentor.parsing.Token;
 import com.aaronicsubstances.code.augmentor.parsing.TokenSupplier;
 import com.aaronicsubstances.code.augmentor.parsing.peg.NoMatchException;
@@ -16,6 +17,7 @@ import com.aaronicsubstances.code.augmentor.parsing.peg.PositionInfo;
 import com.aaronicsubstances.code.augmentor.parsing.peg.ParsingContext.ErrorDescription;
 import com.aaronicsubstances.code.augmentor.parsing.peg.extras.IndexRange;
 import com.aaronicsubstances.code.augmentor.parsing.peg.extras.PegToken;
+import com.aaronicsubstances.code.augmentor.parsing.peg.extras.UnicodeBmpNormalizer;
 
 /**
  * Parses Kotlin source code into a limited set of tokens from which new lines and comments
@@ -26,9 +28,38 @@ public class KotlinParser implements TokenSupplier {
     private final KotlinPegParser pegParser;
 
     public KotlinParser(String input) {
-        inputSource = new ParserInputSource(input);
-        String transformedInput = inputSource.getInput();
-        pegParser = new KotlinPegParser(transformedInput);
+        int startIndex = 0;
+        KotlinPegParser trialPegParser = new KotlinPegParser(input);
+        try {
+            trialPegParser.Shebang();
+            List<PegToken> trialList = trialPegParser.getTokenList();
+            PegToken shebangToken = trialList.get(0);
+            startIndex = shebangToken.endPos;
+        }
+        catch (NoMatchException ignore) {}
+
+        // use 1 stage transformation.
+        ParserInputSource inputSource1 = new ParserInputSource(input, new SourceMap());
+        String transformedInput1 = UnicodeBmpNormalizer.replaceSupplementaryCharacters(
+            input, startIndex, input.length(), 
+            codePoint -> {
+                // Kotlin's definition of valid identifiers is a subset of Java's own,
+                // and maps to Character.isLetter(), LETTER_NUMBER, underscore and Character.isDigit()
+                if (codePoint == '_' || Character.isLetter(codePoint) || 
+                        Character.getType(codePoint) == Character.LETTER_NUMBER) {
+                    return '_';
+                }
+                else if (Character.isDigit(codePoint)) {
+                    return '0';
+                }
+                return '=';
+            },
+            inputSource1.getSourceMap());
+
+        inputSource = new ParserInputSource(transformedInput1);
+        inputSource.setEmbeddedInputSource(inputSource1);
+
+        pegParser = new KotlinPegParser(inputSource.getInput());
     }
 
     @Override
@@ -107,16 +138,29 @@ public class KotlinParser implements TokenSupplier {
                         t.type, null);
             }
 
-            int originalStartPos = t.startPos;
-            int originalEndPos = t.endPos;
+            int[] temp = new int[]{ t.startPos };
+            inputSource.fixInputCoordinates(temp);
+            int originalStartPos = temp[0];
+
+            temp[0] = t.endPos;
+            inputSource.fixInputCoordinates(temp);
+            int originalEndPos = temp[0];
 
             String text = originalInput.substring(originalStartPos, originalEndPos);
             Map<String, Object> value = null;
             if (t.importStatement != null) {
                 value = new HashMap<>();
                 StringBuilder importStatementStr = new StringBuilder();
-                for (IndexRange range : t.importStatement) {
-                    String s = originalInput.substring(range.start, range.end);
+                for (IndexRange range : t.importStatement) {                    
+                    temp = new int[]{ range.start };
+                    inputSource.fixInputCoordinates(temp);
+                    int originalRangeStart = temp[0];
+
+                    temp[0] = range.end;
+                    inputSource.fixInputCoordinates(temp);
+                    int originalRangeEnd = temp[0];
+
+                    String s = originalInput.substring(originalRangeStart, originalRangeEnd);
                     // deal with backticks.
                     if (s.startsWith("`")) {
                         assert s.charAt(s.length() - 1) == '`';

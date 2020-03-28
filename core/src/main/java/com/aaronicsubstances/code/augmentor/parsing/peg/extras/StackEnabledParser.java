@@ -95,7 +95,7 @@ public class StackEnabledParser extends Parser<StackEnabledParsingContext> {
         this.indentChar = indentChar;
     }
 
-    protected List<PegToken> getTokenList() {        
+    public List<PegToken> getTokenList() {        
         List<PegToken> tokenList = new ArrayList<>();
         Stack<Object> tokenStack = getParsingContext().getValueStackMap().get(PegToken.class);
         if (tokenStack != null) {
@@ -134,10 +134,10 @@ public class StackEnabledParser extends Parser<StackEnabledParsingContext> {
         }
     }
 
-	private LogDecision markRuleStart(String ruleName, boolean suppressChildNodes) {
+    private LogDecision markRuleStart(String ruleName, boolean suppressChildNodes) {
         push(getParsingContext().state().index);
 
-        // use null rule name to signal no need for logging.
+        // interpret null rule name to mean no need for logging.
         if (ruleName == null) {
             return new LogDecision();
         }

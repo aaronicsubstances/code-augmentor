@@ -17,6 +17,7 @@ import com.aaronicsubstances.code.augmentor.parsing.peg.PositionInfo;
 import com.aaronicsubstances.code.augmentor.parsing.peg.ParsingContext.ErrorDescription;
 import com.aaronicsubstances.code.augmentor.parsing.peg.extras.IndexRange;
 import com.aaronicsubstances.code.augmentor.parsing.peg.extras.PegToken;
+import com.aaronicsubstances.code.augmentor.parsing.peg.extras.UnicodeBmpNormalizer;
 
 /**
  * Parses Java source code into a limited set of tokens from which new lines and
@@ -25,14 +26,38 @@ import com.aaronicsubstances.code.augmentor.parsing.peg.extras.PegToken;
 public class JavaParser implements TokenSupplier {
     private final ParserInputSource inputSource;
     private final JavaPegParser pegParser;
-	private final String transformedInput;
+	private final String semanticInput;
 
     public JavaParser(String input) {
-        SourceMap sourceMap = new SourceMap();
-        transformedInput = JavaCodeLexerSupport.transformUnicodeEscapes(input, sourceMap);
-        inputSource = new ParserInputSource(transformedInput);
-        inputSource.setEmbeddedInputSource(new ParserInputSource(input, sourceMap));
-        pegParser = new JavaPegParser(transformedInput);
+        // use two stage transformation.
+        ParserInputSource inputSource1 = new ParserInputSource(input, new SourceMap());
+        String transformedInput1 = JavaCodeLexerSupport.transformUnicodeEscapes(input, 
+            inputSource1.getSourceMap());
+        ParserInputSource inputSource2 = new ParserInputSource(transformedInput1, new SourceMap());
+        inputSource1.setEmbeddedInputSource(inputSource1);
+
+        String transformedInput2 = UnicodeBmpNormalizer.replaceSupplementaryCharacters(
+            transformedInput1, 0, transformedInput1.length(), 
+            codePoint -> {
+                if (Character.isJavaIdentifierPart(codePoint)) {
+                    if (Character.isJavaIdentifierStart(codePoint)) {
+                        return '_';
+                    }
+                    else {
+                        return '0';
+                    }
+                }
+                else {
+                    return '=';
+                }
+            },
+            inputSource2.getSourceMap());
+
+        inputSource= new ParserInputSource(transformedInput2);
+        inputSource.setEmbeddedInputSource(inputSource2);
+
+        pegParser = new JavaPegParser(inputSource.getInput());
+        semanticInput = transformedInput1;
     }
 
     @Override
@@ -118,7 +143,17 @@ public class JavaParser implements TokenSupplier {
                 StringBuilder importStatementStr = new StringBuilder();
                 for (IndexRange range : t.importStatement) {
                     // make sure to use transformed input, not original.
-                    String s = transformedInput.substring(range.start, range.end);
+                    
+                    temp = new int[]{ range.start };
+                    inputSource.fixInputCoordinates(temp, semanticInput);
+                    int originalRangeStart = temp[0];
+
+                    temp[0] = range.end;
+                    inputSource.fixInputCoordinates(temp, semanticInput);
+                    int originalRangeEnd = temp[0];
+
+                    String s = semanticInput.substring(originalRangeStart, 
+                        originalRangeEnd);
                     importStatementStr.append(s);
                     if ("import".equals(s) || "static".equals(s)) {
                         importStatementStr.append(' ');
