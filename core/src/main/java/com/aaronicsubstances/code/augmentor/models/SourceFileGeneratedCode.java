@@ -1,7 +1,13 @@
 package com.aaronicsubstances.code.augmentor.models;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamWriter;
@@ -9,6 +15,7 @@ import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.StartElement;
 
 import com.aaronicsubstances.code.augmentor.persistence.XmlEventReaderWrapper;
+import com.aaronicsubstances.code.augmentor.tasks.TaskUtils;
 
 public class SourceFileGeneratedCode {
     private int fileIndex;
@@ -39,7 +46,7 @@ public class SourceFileGeneratedCode {
     }
 
 	public void serialize(Object serializer) throws Exception {
-        /*if (serializer instanceof XMLStreamWriter)*/ {
+        if (serializer instanceof XMLStreamWriter) {
             XMLStreamWriter xmlWriter = (XMLStreamWriter) serializer;
             xmlWriter.writeStartElement("file");
             xmlWriter.writeAttribute("file_index", "" + fileIndex);
@@ -69,23 +76,33 @@ public class SourceFileGeneratedCode {
 
             xmlWriter.flush();
         }
+        else {
+            String s = TaskUtils.serializeToJson(this);
+            byte[] buf = s.getBytes(StandardCharsets.UTF_8);
+            ZipOutputStream zip = (ZipOutputStream) serializer;
+            ZipEntry e = new ZipEntry(fileIndex + ".json");
+            zip.putNextEntry(e);
+            ByteArrayInputStream inStream = new ByteArrayInputStream(buf);
+            TaskUtils.copyStream(inStream, zip);
+            zip.closeEntry();
+        }
     }
 
-	public boolean deserialize(Object deserializer) throws Exception {
-        generatedCodeList = new ArrayList<>();
-        /*if (deserializer instanceof XmlEventReaderWrapper)*/ {
+	public static SourceFileGeneratedCode deserialize(Object deserializer) throws Exception {
+        if (deserializer instanceof XmlEventReaderWrapper) {
             XmlEventReaderWrapper xmlReader = (XmlEventReaderWrapper) deserializer;
             StartElement startElement = xmlReader.locateStartElement("file");
             if (startElement == null) {
-                return false;
+                return null;
             }
-            fileIndex = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "file_index");
+            SourceFileGeneratedCode obj = new SourceFileGeneratedCode(new ArrayList<>());
+            obj.fileIndex = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "file_index");
 
             xmlReader.requireStartElement("generated_code_list");
 
             while ((startElement = xmlReader.locateStartElement("generated_code")) != null) {
                 GeneratedCode genCode = new GeneratedCode();
-                generatedCodeList.add(genCode);
+                obj.generatedCodeList.add(genCode);
 
                 int index = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "index");
                 genCode.setIndex(index);
@@ -112,7 +129,23 @@ public class SourceFileGeneratedCode {
             xmlReader.requireEndElement("generated_code_list");
             xmlReader.requireEndElement("file");
 
-            return true;
+            return obj;
+        }
+        else {
+            ZipInputStream zip = (ZipInputStream) deserializer;
+            ZipEntry e = zip.getNextEntry();
+            if (e == null) {
+                return null;
+            }
+            ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+            TaskUtils.copyStream(zip, outStream);
+            outStream.flush();
+            zip.closeEntry();
+            byte[] buf = outStream.toByteArray();
+            String s = new String(buf, StandardCharsets.UTF_8);
+            SourceFileGeneratedCode obj = TaskUtils.deserializeFromJson(s, 
+                SourceFileGeneratedCode.class);
+            return obj;
         }
     }
 

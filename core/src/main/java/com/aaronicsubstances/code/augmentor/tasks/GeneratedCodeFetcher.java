@@ -10,35 +10,28 @@ import com.aaronicsubstances.code.augmentor.models.GeneratedCode;
 import com.aaronicsubstances.code.augmentor.models.SourceFileGeneratedCode;
 
 public class GeneratedCodeFetcher {
-    private final List<CodeGenerationResponse> codeGenerationResponses;
     private final List<Object> codeGenerationResponseReaders;
-    private List<SourceFileGeneratedCode> lastFetches;
+    private final List<SourceFileGeneratedCode> lastFetches;
 
     public GeneratedCodeFetcher(List<File> generatedCodeFiles) throws Exception {
-        this.codeGenerationResponses = new ArrayList<>();
         this.codeGenerationResponseReaders = new ArrayList<>();
-        lastFetches = new ArrayList<>();
         for (File f : generatedCodeFiles) {
-            CodeGenerationResponse codeGenResp = new CodeGenerationResponse();
-            codeGenerationResponses.add(codeGenResp);
             boolean useXml = TaskUtils.canUseXml(f);
-            Object codeGenRespRdr = codeGenResp.beginDeserializer(f, useXml);
+            Object codeGenRespRdr = CodeGenerationResponse.beginDeserialize(f, useXml);
             codeGenerationResponseReaders.add(codeGenRespRdr);
         }
+        lastFetches = new ArrayList<>();
     }
 
 	public void close() throws Exception {        
-        for (int i = 0; i < codeGenerationResponses.size(); i++) {
-            CodeGenerationResponse codeGenResp = codeGenerationResponses.get(i);
-            Object codeGenRespRdr = codeGenerationResponseReaders.get(i);
-            codeGenResp.endDeserialize(codeGenRespRdr);
+        for (Object codeGenRespRdr : codeGenerationResponseReaders) {
+            CodeGenerationResponse.endDeserialize(codeGenRespRdr);
         }
     }
     
     public void prepareForFile(int fileIndex) throws Exception {
         boolean firstPrepare = false;
-        if (lastFetches == null) {
-            lastFetches = new ArrayList<>();
+        if (lastFetches.isEmpty()) {
             firstPrepare = true;
             for (int i = 0; i < codeGenerationResponseReaders.size(); i++) {
                 lastFetches.add(null);
@@ -52,11 +45,8 @@ public class GeneratedCodeFetcher {
                     continue;
                 }
             }
-            fileGenCode = new SourceFileGeneratedCode();
             Object rdr = codeGenerationResponseReaders.get(i);
-            if (!fileGenCode.deserialize(rdr)) {
-                fileGenCode = null;
-            }
+            fileGenCode = SourceFileGeneratedCode.deserialize(rdr);
             lastFetches.set(i, fileGenCode);
         }
     }

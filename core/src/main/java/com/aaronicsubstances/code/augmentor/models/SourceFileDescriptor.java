@@ -150,43 +150,45 @@ public class SourceFileDescriptor {
         xmlWriter.writeEndElement(); // code snippet
     }
 
-    public boolean deserialize(Object deserializer) throws Exception {
+    public static SourceFileDescriptor deserialize(Object deserializer) throws Exception {
         XmlEventReaderWrapper xmlReader = (XmlEventReaderWrapper) deserializer;
         StartElement startElement = xmlReader.locateStartElement("file");
         if (startElement == null) {
-            return false;
+            return null;
         }
-        fileIndex = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "file_index");
-        dir = XmlEventReaderWrapper.requireAttributeValue(startElement, "dir");
-        relativePath = XmlEventReaderWrapper.requireAttributeValue(startElement, "rel_path");
-        headerInsertPos = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "header_insert_pos");
-        contentHash = XmlEventReaderWrapper.requireAttributeValue(startElement, "hash");
+        SourceFileDescriptor obj = new SourceFileDescriptor();
+        obj.fileIndex = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "file_index");
+        obj.dir = XmlEventReaderWrapper.requireAttributeValue(startElement, "dir");
+        obj.relativePath = XmlEventReaderWrapper.requireAttributeValue(startElement, "rel_path");
+        obj.headerInsertPos = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "header_insert_pos");
+        obj.contentHash = XmlEventReaderWrapper.requireAttributeValue(startElement, "hash");
         
-        importStatements = new ArrayList<>();
+        obj.importStatements = new ArrayList<>();
         startElement = xmlReader.requireStartElement("import_list");
         while ((startElement = xmlReader.locateStartElement("import")) != null) {
             String importStatement = xmlReader.readElementValue();
             xmlReader.requireEndElement("import");
 
-            importStatements.add(importStatement);
+            obj.importStatements.add(importStatement);
         }
         xmlReader.requireEndElement("import_list");
 
         startElement = xmlReader.requireStartElement("snippet_list");
-        bodySnippets = new ArrayList<>();
+        obj.bodySnippets = new ArrayList<>();
         while ((startElement = xmlReader.locateStartElement("snippet")) != null) {
-            CodeSnippetDescriptor snippet = deserialize(xmlReader, startElement);
-            bodySnippets.add(snippet);
+            CodeSnippetDescriptor snippet = deserializeSnippet(xmlReader, startElement);
+            obj.bodySnippets.add(snippet);
             xmlReader.requireEndElement("snippet");
         }
             
         xmlReader.requireEndElement("snippet_list");
         xmlReader.requireEndElement("file");
 
-        return true;
+        return obj;
     }
     
-    private CodeSnippetDescriptor deserialize(XmlEventReaderWrapper xmlReader, StartElement startElement) 
+    private static CodeSnippetDescriptor deserializeSnippet(
+            XmlEventReaderWrapper xmlReader, StartElement startElement) 
             throws Exception {
         int startPos, endPos;
         startElement = xmlReader.requireStartElement( 

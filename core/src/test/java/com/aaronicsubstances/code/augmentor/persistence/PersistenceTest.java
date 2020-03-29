@@ -3,8 +3,7 @@ package com.aaronicsubstances.code.augmentor.persistence;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -34,22 +33,20 @@ public class PersistenceTest {
         assertNotNull(expected);
         
         // first, serialize
-        StringWriter writer = new StringWriter();
-        Object serializer = expected.beginSerialize(writer);
+        File tempDir = new File(System.getProperty("java.io.tmpdir"));
+        File f = new File(tempDir, String.format("TESTp-%02d.xml", index));
+        Object serializer = expected.beginSerialize(f);
         for (SourceFileDescriptor fileDescriptor : expected.getFileDescriptors()) {
             fileDescriptor.serialize(serializer);
         }
         expected.endSerialize(serializer);
-        String serialized = writer.toString();
-        System.out.println(serialized);
 
         // next, deserialize 
         PreCodeAugmentationResult actual = new PreCodeAugmentationResult();
-        Object deserializer = actual.beginDeserialize(new StringReader(serialized));
-        SourceFileDescriptor s = new SourceFileDescriptor();
-        while (s.deserialize(deserializer)) {
+        Object deserializer = actual.beginDeserialize(f);
+        SourceFileDescriptor s;
+        while ((s = SourceFileDescriptor.deserialize(deserializer)) != null) {
             actual.getFileDescriptors().add(s);
-            s = new SourceFileDescriptor();
         }
         actual.endDeserialize(deserializer);
 
@@ -111,24 +108,22 @@ public class PersistenceTest {
         assertNotNull(expected);
         
         // first, serialize
-        StringWriter writer = new StringWriter();
-        Object serializer = expected.beginSerialize(writer, useXml);
+        File tempDir = new File(System.getProperty("java.io.tmpdir"));
+        File f = new File(tempDir, String.format("TESTreq-%02d.%s", index, useXml ? "xml" : "zip"));
+        Object serializer = expected.beginSerialize(f, useXml);
         for (SourceFileAugmentingCode fileAugCodeSnippet : expected.getSourceFileAugmentingCodeList()) {
             fileAugCodeSnippet.serialize(serializer);
         }
         expected.endSerialize(serializer);
-        String serialized = writer.toString();
-        System.out.println(serialized);
 
         // next, deserialize 
-        CodeGenerationRequest actual = new CodeGenerationRequest();
-        Object deserializer = actual.beginDeserialize(new StringReader(serialized), useXml);
-        SourceFileAugmentingCode augCodeSnippet = new SourceFileAugmentingCode();
-        while (augCodeSnippet.deserialize(deserializer)) {
+        CodeGenerationRequest actual = new CodeGenerationRequest(new ArrayList<>());
+        Object deserializer = CodeGenerationRequest.beginDeserialize(f, useXml);
+        SourceFileAugmentingCode augCodeSnippet;
+        while ((augCodeSnippet = SourceFileAugmentingCode.deserialize(deserializer)) != null) {
             actual.getSourceFileAugmentingCodeList().add(augCodeSnippet);
-            augCodeSnippet = new SourceFileAugmentingCode();
         }
-        actual.endDeserialize(deserializer);
+        CodeGenerationRequest.endDeserialize(deserializer);
 
         // finally, compare deserialized result with original
         assertEquals(actual, expected);
@@ -167,8 +162,7 @@ public class PersistenceTest {
                             codeSnippet.setIndex(i);
                             codeSnippet.setCommentSuffix(generateRandomString(randGen, false));
                             
-                            // ensure at least 1 block.
-                            int blockCount = randGen.nextInt(5) + 1;
+                            int blockCount = randGen.nextInt(5);
                             for (int k = 0; k < blockCount; k++) {
                                 Block block = new Block();
                                 codeSnippet.getBlocks().add(block);
@@ -189,24 +183,22 @@ public class PersistenceTest {
         assertNotNull(expected);
         
         // first, serialize
-        StringWriter writer = new StringWriter();
-        Object serializer = expected.beginSerialize(writer, useXml);
+        File tempDir = new File(System.getProperty("java.io.tmpdir"));
+        File f = new File(tempDir, String.format("TESTres-%02d.%s", index, useXml ? "xml" : "zip"));
+        Object serializer = expected.beginSerialize(f, useXml);
         for (SourceFileGeneratedCode generatedCode : expected.getSourceFileGeneratedCodeList()) {
             generatedCode.serialize(serializer);
         }
         expected.endSerialize(serializer);
-        String serialized = writer.toString();
-        System.out.println(serialized);
 
         // next, deserialize 
-        CodeGenerationResponse actual = new CodeGenerationResponse();
-        Object deserializer = actual.beginDeserialize(new StringReader(serialized), useXml);
-        SourceFileGeneratedCode generatedCode = new SourceFileGeneratedCode();
-        while (generatedCode.deserialize(deserializer)) {
+        CodeGenerationResponse actual = new CodeGenerationResponse(new ArrayList<>());
+        Object deserializer = CodeGenerationResponse.beginDeserialize(f, useXml);
+        SourceFileGeneratedCode generatedCode;
+        while ((generatedCode = SourceFileGeneratedCode.deserialize(deserializer)) != null) {
             actual.getSourceFileGeneratedCodeList().add(generatedCode);
-            generatedCode = new SourceFileGeneratedCode();
         }
-        actual.endDeserialize(deserializer);
+        CodeGenerationResponse.endDeserialize(deserializer);
 
         // finally, compare deserialized result with original
         assertEquals(actual, expected);
@@ -284,10 +276,7 @@ public class PersistenceTest {
 	}
 
     static String generateRandomString(Random randGen, boolean includeNewLine) {
-        // ensure at least one string char,
-        // since null is indistinguishable from empty string
-        // in modified CSV format.
-        int length = randGen.nextInt(50) + 1;
+        int length = randGen.nextInt(50);
         StringBuilder s = new StringBuilder();
         String chars = "x x x x x x  xxxxxxxxxxxxxxxxxx" + (includeNewLine ? "\n\n\n" : "");
         for (int i = 0; i < length; i++) {

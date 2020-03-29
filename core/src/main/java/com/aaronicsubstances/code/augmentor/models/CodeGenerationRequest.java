@@ -5,11 +5,10 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.Reader;
-import java.io.Writer;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLOutputFactory;
@@ -35,15 +34,11 @@ public class CodeGenerationRequest {
         this.sourceFileAugmentingCodeList = sourceFileAugmentingCodeList;
     }
 
-    public Object beginSerialize(File file, boolean useXml) throws Exception {        
-        OutputStreamWriter stream = new OutputStreamWriter(
-            new FileOutputStream(file), StandardCharsets.UTF_8);
-        Object serializer = beginSerialize(stream, useXml);
-        return serializer;
-    }
-
-    public Object beginSerialize(Writer stream, boolean useXml) throws Exception {
-        /*if (useXml)*/ {
+    public Object beginSerialize(File file, boolean useXml) throws Exception {
+        FileOutputStream fout = new FileOutputStream(file);
+        if (useXml) {
+            OutputStreamWriter stream = new OutputStreamWriter(
+                fout, StandardCharsets.UTF_8);
             XMLOutputFactory f = XMLOutputFactory.newInstance();
             XMLStreamWriter xmlWriter = f.createXMLStreamWriter(stream);
             xmlWriter.writeStartDocument("utf-8", "1.0");
@@ -51,13 +46,17 @@ public class CodeGenerationRequest {
             xmlWriter.writeStartElement("file_list");
             return xmlWriter;
         }
+        else {
+            ZipOutputStream zip = new ZipOutputStream(fout, StandardCharsets.UTF_8);
+            return zip;
+        }
     }
 
     public void endSerialize(Object serializer) throws Exception {
         if (serializer == null) {
             return;
         }
-        /*if (serializer instanceof XMLStreamWriter)*/ {
+        if (serializer instanceof XMLStreamWriter) {
             XMLStreamWriter xmlWriter = (XMLStreamWriter) serializer;
             try {
                 xmlWriter.writeEndElement(); // file_list
@@ -68,19 +67,17 @@ public class CodeGenerationRequest {
                 xmlWriter.close();
             }
         }
+        else {
+            ZipOutputStream zip = (ZipOutputStream) serializer;
+            zip.finish();
+        }
     }
 
-    public Object beginDeserializer(File file, boolean useXml) throws Exception {    
-        InputStreamReader stream = new InputStreamReader(
-            new FileInputStream(file), StandardCharsets.UTF_8);
-        Object serializer = beginDeserialize(stream, useXml);
-        return serializer;
-    }
-
-    @SuppressWarnings("resource")
-    public Object beginDeserialize(Reader stream, boolean useXml) throws Exception {
-        sourceFileAugmentingCodeList = new ArrayList<>();
-        /*if (useXml)*/ {
+    public static Object beginDeserialize(File file, boolean useXml) throws Exception {
+        FileInputStream fin = new FileInputStream(file);
+        if (useXml) {
+            InputStreamReader stream = new InputStreamReader(
+                fin, StandardCharsets.UTF_8);
             XMLInputFactory inputFactory = XMLInputFactory.newInstance();
             XmlEventReaderWrapper xmlReader = new XmlEventReaderWrapper(
                 inputFactory.createXMLEventReader(stream));
@@ -89,15 +86,23 @@ public class CodeGenerationRequest {
     
             return xmlReader;
         }
+        else {
+            ZipInputStream zip = new ZipInputStream(fin, StandardCharsets.UTF_8);
+            return zip;
+        }
     }
 
-    public void endDeserialize(Object deserializer) throws Exception {
+    public static void endDeserialize(Object deserializer) throws Exception {
         if (deserializer == null) {
             return;
         }
-        /*if (deserializer instanceof XmlEventReaderWrapper)*/ {
+        if (deserializer instanceof XmlEventReaderWrapper) {
             XmlEventReaderWrapper xmlReader = (XmlEventReaderWrapper) deserializer;
             xmlReader.close();
+        }
+        else {
+            ZipInputStream zip = (ZipInputStream) deserializer;
+            zip.close();
         }
     }
 

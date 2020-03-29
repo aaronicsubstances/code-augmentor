@@ -1,7 +1,13 @@
 package com.aaronicsubstances.code.augmentor.models;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamWriter;
@@ -10,6 +16,7 @@ import javax.xml.stream.events.StartElement;
 
 import com.aaronicsubstances.code.augmentor.models.AugmentingCode.Block;
 import com.aaronicsubstances.code.augmentor.persistence.XmlEventReaderWrapper;
+import com.aaronicsubstances.code.augmentor.tasks.TaskUtils;
 
 public class SourceFileAugmentingCode {
     private int fileIndex;
@@ -17,7 +24,6 @@ public class SourceFileAugmentingCode {
     private List<AugmentingCode> augmentingCodeList;
 
     public SourceFileAugmentingCode() {
-
     }
 
     public SourceFileAugmentingCode(List<AugmentingCode> augmentingCodeList) {
@@ -49,9 +55,9 @@ public class SourceFileAugmentingCode {
     }
 
     public void serialize(Object serializer) throws Exception {
-        /*if (serializer instanceof XMLStreamWriter)*/ {
+        if (serializer instanceof XMLStreamWriter) {
             XMLStreamWriter xmlWriter = (XMLStreamWriter) serializer;
-            xmlWriter.writeStartElement("file");;
+            xmlWriter.writeStartElement("file");
             xmlWriter.writeAttribute("file_index", "" + fileIndex);
             xmlWriter.writeAttribute("rel_path", relativePath);
 
@@ -79,24 +85,34 @@ public class SourceFileAugmentingCode {
 
             xmlWriter.writeEndElement(); // file
         }
+        else {
+            String s = TaskUtils.serializeToJson(this);
+            byte[] buf = s.getBytes(StandardCharsets.UTF_8);
+            ZipOutputStream zip = (ZipOutputStream) serializer;
+            ZipEntry e = new ZipEntry(fileIndex + ".json");
+            zip.putNextEntry(e);
+            ByteArrayInputStream inStream = new ByteArrayInputStream(buf);
+            TaskUtils.copyStream(inStream, zip);
+            zip.closeEntry();
+        }
     }
 
-    public boolean deserialize(Object deserializer) throws Exception {
-        augmentingCodeList = new ArrayList<>();
-        /*if (deserializer instanceof XmlEventReaderWrapper)*/ {
+    public static SourceFileAugmentingCode deserialize(Object deserializer) throws Exception {
+        if (deserializer instanceof XmlEventReaderWrapper) {
             XmlEventReaderWrapper xmlReader = (XmlEventReaderWrapper) deserializer;
             StartElement startElement = xmlReader.locateStartElement("file");
             if (startElement == null) {
-                return false;
+                return null;
             }
-            fileIndex = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "file_index");
-            relativePath = XmlEventReaderWrapper.requireAttributeValue(startElement, "rel_path");
+            SourceFileAugmentingCode obj = new SourceFileAugmentingCode(new ArrayList<>());
+            obj.fileIndex = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "file_index");
+            obj.relativePath = XmlEventReaderWrapper.requireAttributeValue(startElement, "rel_path");
             
             startElement = xmlReader.requireStartElement("augmenting_code_list");
 
             while ((startElement = xmlReader.locateStartElement("augmenting_code")) != null) {
                 AugmentingCode augCode = new AugmentingCode(new ArrayList<>());
-                augmentingCodeList.add(augCode);
+                obj.augmentingCodeList.add(augCode);
                 int index = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "index");
                 augCode.setIndex(index);
                 String commentSuffix = XmlEventReaderWrapper.requireAttributeValue(startElement, "comment_suffix");
@@ -123,7 +139,23 @@ public class SourceFileAugmentingCode {
             xmlReader.requireEndElement("augmenting_code_list");
             xmlReader.requireEndElement("file");
 
-            return true;
+            return obj;
+        }
+        else {
+            ZipInputStream zip = (ZipInputStream) deserializer;
+            ZipEntry e = zip.getNextEntry();
+            if (e == null) {
+                return null;
+            }
+            ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+            TaskUtils.copyStream(zip, outStream);
+            outStream.flush();
+            zip.closeEntry();
+            byte[] buf = outStream.toByteArray();
+            String s = new String(buf, StandardCharsets.UTF_8);
+            SourceFileAugmentingCode obj = TaskUtils.deserializeFromJson(s, 
+                SourceFileAugmentingCode.class);
+            return obj;
         }
     }
 

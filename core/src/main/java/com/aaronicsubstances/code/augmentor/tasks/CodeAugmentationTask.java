@@ -125,13 +125,13 @@ public class CodeAugmentationTask extends Task {
 
     private void _execute() throws Exception {
         PreCodeAugmentationResult result = new PreCodeAugmentationResult();
-        Object resultReader = result.beginDeserializer(prepfile);
+        Object resultReader = result.beginDeserialize(prepfile);
 
         GeneratedCodeFetcher generatedCodeFetcher = new GeneratedCodeFetcher(
             generatedCodeFiles.stream().map(g -> g.getGenCodeFile()).collect(Collectors.toList()));
 
-        SourceFileDescriptor sourceFileDescriptor = new SourceFileDescriptor();
-        while ((sourceFileDescriptor.deserialize(resultReader))) {
+        SourceFileDescriptor sourceFileDescriptor;
+        while ((sourceFileDescriptor = SourceFileDescriptor.deserialize(resultReader)) != null) {
             File srcFile = new File(sourceFileDescriptor.getDir(),
                 sourceFileDescriptor.getRelativePath());
             logVerbose("Processing %s", srcFile);
@@ -264,8 +264,6 @@ public class CodeAugmentationTask extends Task {
             Instant endInstant = Instant.now();
             long timeElapsed = Duration.between(startInstant, endInstant).toMillis();
             logVerbose("done in %s ms", timeElapsed);
-
-            sourceFileDescriptor = new SourceFileDescriptor();
         }
 
         // close readers

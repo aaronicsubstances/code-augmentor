@@ -103,7 +103,7 @@ public class PreCodeAugmentationResult {
         }
     }
 
-    public Object beginDeserializer(File file) throws Exception {    
+    public Object beginDeserialize(File file) throws Exception {    
         InputStreamReader stream = new InputStreamReader(
             new FileInputStream(file), StandardCharsets.UTF_8);
         Object serializer = beginDeserialize(stream);
