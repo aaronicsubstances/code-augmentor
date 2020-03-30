@@ -16,8 +16,7 @@ public class GeneratedCodeFetcher {
     public GeneratedCodeFetcher(List<File> generatedCodeFiles) throws Exception {
         this.codeGenerationResponseReaders = new ArrayList<>();
         for (File f : generatedCodeFiles) {
-            boolean useXml = TaskUtils.canUseXml(f);
-            Object codeGenRespRdr = CodeGenerationResponse.beginDeserialize(f, useXml);
+            Object codeGenRespRdr = CodeGenerationResponse.beginDeserialize(f);
             codeGenerationResponseReaders.add(codeGenRespRdr);
         }
         lastFetches = new ArrayList<>();

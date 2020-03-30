@@ -3,18 +3,11 @@ package com.aaronicsubstances.code.augmentor.models;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import javax.xml.namespace.QName;
-import javax.xml.stream.XMLStreamWriter;
-import javax.xml.stream.events.Attribute;
-import javax.xml.stream.events.StartElement;
-
-import com.aaronicsubstances.code.augmentor.persistence.XmlEventReaderWrapper;
 import com.aaronicsubstances.code.augmentor.tasks.TaskUtils;
 
 public class SourceFileGeneratedCode {
@@ -46,107 +39,31 @@ public class SourceFileGeneratedCode {
     }
 
 	public void serialize(Object serializer) throws Exception {
-        if (serializer instanceof XMLStreamWriter) {
-            XMLStreamWriter xmlWriter = (XMLStreamWriter) serializer;
-            xmlWriter.writeStartElement("file");
-            xmlWriter.writeAttribute("file_index", "" + fileIndex);
-
-            xmlWriter.writeStartElement("generated_code_list");
-
-            for (GeneratedCode genCode : generatedCodeList) {
-                xmlWriter.writeStartElement("generated_code");
-                xmlWriter.writeAttribute("index", "" + genCode.getIndex());
-                xmlWriter.writeAttribute("error", "" + genCode.isError());
-
-                if (genCode.getHeaderContent() != null) {
-                    xmlWriter.writeStartElement("header");
-                    xmlWriter.writeCharacters(genCode.getHeaderContent());
-                    xmlWriter.writeEndElement();
-                }
-
-                xmlWriter.writeStartElement("body");
-                xmlWriter.writeCharacters(genCode.getBodyContent());
-                xmlWriter.writeEndElement();
-                
-                xmlWriter.writeEndElement();
-            }
-
-            xmlWriter.writeEndElement(); // generated_code_list
-            xmlWriter.writeEndElement(); // file
-
-            xmlWriter.flush();
-        }
-        else {
-            String s = TaskUtils.serializeToJson(this);
-            byte[] buf = s.getBytes(StandardCharsets.UTF_8);
-            ZipOutputStream zip = (ZipOutputStream) serializer;
-            ZipEntry e = new ZipEntry(fileIndex + ".json");
-            zip.putNextEntry(e);
-            ByteArrayInputStream inStream = new ByteArrayInputStream(buf);
-            TaskUtils.copyStream(inStream, zip);
-            zip.closeEntry();
-        }
+        String s = TaskUtils.serializeToJson(this);
+        byte[] buf = s.getBytes(StandardCharsets.UTF_8);
+        ZipOutputStream zip = (ZipOutputStream) serializer;
+        ZipEntry e = new ZipEntry(fileIndex + ".json");
+        zip.putNextEntry(e);
+        ByteArrayInputStream inStream = new ByteArrayInputStream(buf);
+        TaskUtils.copyStream(inStream, zip);
+        zip.closeEntry();
     }
 
 	public static SourceFileGeneratedCode deserialize(Object deserializer) throws Exception {
-        if (deserializer instanceof XmlEventReaderWrapper) {
-            XmlEventReaderWrapper xmlReader = (XmlEventReaderWrapper) deserializer;
-            StartElement startElement = xmlReader.locateStartElement("file");
-            if (startElement == null) {
-                return null;
-            }
-            SourceFileGeneratedCode obj = new SourceFileGeneratedCode(new ArrayList<>());
-            obj.fileIndex = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "file_index");
-
-            xmlReader.requireStartElement("generated_code_list");
-
-            while ((startElement = xmlReader.locateStartElement("generated_code")) != null) {
-                GeneratedCode genCode = new GeneratedCode();
-                obj.generatedCodeList.add(genCode);
-
-                int index = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "index");
-                genCode.setIndex(index);
-                Attribute att = startElement.getAttributeByName(QName.valueOf("error"));
-                if (att != null) {
-                    genCode.setError(Boolean.parseBoolean(att.getValue()));
-                }
-
-                startElement = xmlReader.requireStartElement(new String[]{ "header", "body" });
-                if ("header".equals(startElement.getName().getLocalPart())) {
-                    String headerContent = xmlReader.readElementValue();
-                    genCode.setHeaderContent(headerContent);
-                    xmlReader.requireEndElement("header");
-                    startElement = xmlReader.requireStartElement("body");
-                }
-
-                String bodyContent = xmlReader.readElementValue();
-                genCode.setBodyContent(bodyContent);
-                xmlReader.requireEndElement("body");
-
-                xmlReader.requireEndElement("generated_code");
-            }
-
-            xmlReader.requireEndElement("generated_code_list");
-            xmlReader.requireEndElement("file");
-
-            return obj;
+        ZipInputStream zip = (ZipInputStream) deserializer;
+        ZipEntry e = zip.getNextEntry();
+        if (e == null) {
+            return null;
         }
-        else {
-            ZipInputStream zip = (ZipInputStream) deserializer;
-            ZipEntry e = zip.getNextEntry();
-            if (e == null) {
-                return null;
-            }
-            ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-            TaskUtils.copyStream(zip, outStream);
-            outStream.flush();
-            zip.closeEntry();
-            byte[] buf = outStream.toByteArray();
-            String s = new String(buf, StandardCharsets.UTF_8);
-            SourceFileGeneratedCode obj = TaskUtils.deserializeFromJson(s, 
-                SourceFileGeneratedCode.class);
-            return obj;
-        }
+        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+        TaskUtils.copyStream(zip, outStream);
+        outStream.flush();
+        zip.closeEntry();
+        byte[] buf = outStream.toByteArray();
+        String s = new String(buf, StandardCharsets.UTF_8);
+        SourceFileGeneratedCode obj = TaskUtils.deserializeFromJson(s, 
+            SourceFileGeneratedCode.class);
+        return obj;
     }
 
     @Override

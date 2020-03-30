@@ -28,9 +28,11 @@ public class TestResourceLoader {
             path = path.substring(1);
         }
         String eventualPath = pathPrefix + path;
-        System.out.println("Resource path: " + eventualPath);
         InputStream resourceStream = TestResourceLoader.class.getClassLoader().getResourceAsStream(
             eventualPath);
+        if (resourceStream == null) {
+            throw new RuntimeException("Could not classpath resource " + eventualPath);
+        }
         try (InputStream dummy = resourceStream) {
             return IOUtils.toString(dummy, StandardCharsets.UTF_8);
         }

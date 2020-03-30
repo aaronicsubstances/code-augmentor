@@ -213,8 +213,7 @@ public class PreCodeAugmentationTask extends Task {
         for (CodeGenerationRequestSpecification spec : requestSpecList) {
             CodeGenerationRequest codeGenRequest = new CodeGenerationRequest();
             codeGenRequests.add(codeGenRequest);
-            boolean useXml = TaskUtils.canUseXml(spec.getAugCodeDestFile());
-            Object requestWriter = codeGenRequest.beginSerialize(spec.getAugCodeDestFile(), useXml);
+            Object requestWriter = codeGenRequest.beginSerialize(spec.getAugCodeDestFile());
             codeGenRequestWriters.add(requestWriter);
         }
 

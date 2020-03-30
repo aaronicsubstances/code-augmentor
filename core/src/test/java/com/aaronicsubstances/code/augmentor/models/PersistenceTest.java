@@ -1,4 +1,4 @@
-package com.aaronicsubstances.code.augmentor.persistence;
+package com.aaronicsubstances.code.augmentor.models;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -9,18 +9,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
-import com.aaronicsubstances.code.augmentor.models.AugmentingCode;
 import com.aaronicsubstances.code.augmentor.models.AugmentingCode.Block;
-import com.aaronicsubstances.code.augmentor.models.CodeGenerationRequest;
-import com.aaronicsubstances.code.augmentor.models.CodeGenerationResponse;
-import com.aaronicsubstances.code.augmentor.models.CodeSnippetDescriptor;
 import com.aaronicsubstances.code.augmentor.models.CodeSnippetDescriptor.AugmentingCodeDescriptor;
 import com.aaronicsubstances.code.augmentor.models.CodeSnippetDescriptor.GeneratedCodeDescriptor;
-import com.aaronicsubstances.code.augmentor.models.GeneratedCode;
-import com.aaronicsubstances.code.augmentor.models.PreCodeAugmentationResult;
-import com.aaronicsubstances.code.augmentor.models.SourceFileAugmentingCode;
-import com.aaronicsubstances.code.augmentor.models.SourceFileDescriptor;
-import com.aaronicsubstances.code.augmentor.models.SourceFileGeneratedCode;
 
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -70,7 +61,9 @@ public class PersistenceTest {
                 PreCodeAugmentationResult instance = new PreCodeAugmentationResult(new ArrayList<>());
                 instance.setGenCodeStartSuffix(generateRandomString(randGen, false));
                 instance.setGenCodeEndSuffix(generateRandomString(randGen, false));
-                instance.setTempDir(generateRandomString(randGen, false));
+                if (randGen.nextBoolean()) {
+                    instance.setTempDir(generateRandomString(randGen, false));
+                }
                 if (count > 0) {
                     int fileDescriptorListSize = randGen.nextInt(5);
                     for (int i = 0; i < fileDescriptorListSize; i++) {
@@ -103,14 +96,14 @@ public class PersistenceTest {
     }
 
 	@Test(dataProvider = "createTestCodeGenerationRequestPersistenceData")
-    public void testCodeGenerationRequestPersistence(int index, CodeGenerationRequest expected,
-            boolean useXml) throws Exception {
+    public void testCodeGenerationRequestPersistence(int index, CodeGenerationRequest expected)
+            throws Exception {
         assertNotNull(expected);
         
         // first, serialize
         File tempDir = new File(System.getProperty("java.io.tmpdir"));
-        File f = new File(tempDir, String.format("TESTreq-%02d.%s", index, useXml ? "xml" : "zip"));
-        Object serializer = expected.beginSerialize(f, useXml);
+        File f = new File(tempDir, String.format("TESTreq-%02d.zip", index));
+        Object serializer = expected.beginSerialize(f);
         for (SourceFileAugmentingCode fileAugCodeSnippet : expected.getSourceFileAugmentingCodeList()) {
             fileAugCodeSnippet.serialize(serializer);
         }
@@ -118,7 +111,7 @@ public class PersistenceTest {
 
         // next, deserialize 
         CodeGenerationRequest actual = new CodeGenerationRequest(new ArrayList<>());
-        Object deserializer = CodeGenerationRequest.beginDeserialize(f, useXml);
+        Object deserializer = CodeGenerationRequest.beginDeserialize(f);
         SourceFileAugmentingCode augCodeSnippet;
         while ((augCodeSnippet = SourceFileAugmentingCode.deserialize(deserializer)) != null) {
             actual.getSourceFileAugmentingCodeList().add(augCodeSnippet);
@@ -172,20 +165,20 @@ public class PersistenceTest {
                         }
                     }
                 }
-                return new Object[]{ count++, instance, randGen.nextBoolean() };
+                return new Object[]{ count++, instance };
             }
         };
     }
 
     @Test(dataProvider = "createTestCodeGenerationResponsePersistenceData")
-    public void testCodeGenerationResponsePersistence(int index, CodeGenerationResponse expected,
-            boolean useXml) throws Exception {
+    public void testCodeGenerationResponsePersistence(int index, CodeGenerationResponse expected)
+            throws Exception {
         assertNotNull(expected);
         
         // first, serialize
         File tempDir = new File(System.getProperty("java.io.tmpdir"));
-        File f = new File(tempDir, String.format("TESTres-%02d.%s", index, useXml ? "xml" : "zip"));
-        Object serializer = expected.beginSerialize(f, useXml);
+        File f = new File(tempDir, String.format("TESTres-%02d.zip", index));
+        Object serializer = expected.beginSerialize(f);
         for (SourceFileGeneratedCode generatedCode : expected.getSourceFileGeneratedCodeList()) {
             generatedCode.serialize(serializer);
         }
@@ -193,7 +186,7 @@ public class PersistenceTest {
 
         // next, deserialize 
         CodeGenerationResponse actual = new CodeGenerationResponse(new ArrayList<>());
-        Object deserializer = CodeGenerationResponse.beginDeserialize(f, useXml);
+        Object deserializer = CodeGenerationResponse.beginDeserialize(f);
         SourceFileGeneratedCode generatedCode;
         while ((generatedCode = SourceFileGeneratedCode.deserialize(deserializer)) != null) {
             actual.getSourceFileGeneratedCodeList().add(generatedCode);
@@ -240,7 +233,7 @@ public class PersistenceTest {
                         }
                     }
                 }
-                return new Object[]{ count++, instance, randGen.nextBoolean() };
+                return new Object[]{ count++, instance };
             }
         };
     }
@@ -261,7 +254,7 @@ public class PersistenceTest {
         d.setIndex(randGen.nextInt(200));
         if (randGen.nextBoolean()) {
             if (randGen.nextBoolean()) {
-                int tabCount = randGen.nextInt(4) + 1;
+                int tabCount = randGen.nextInt(4);
                 StringBuilder s = new StringBuilder();
                 for (int i = 0; i < tabCount; i++) {
                     s.append("\t");

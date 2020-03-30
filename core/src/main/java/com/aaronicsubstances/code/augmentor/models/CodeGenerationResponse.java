@@ -3,18 +3,13 @@ package com.aaronicsubstances.code.augmentor.models;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLOutputFactory;
-import javax.xml.stream.XMLStreamWriter;
-
-import com.aaronicsubstances.code.augmentor.persistence.XmlEventReaderWrapper;
+import com.aaronicsubstances.code.augmentor.tasks.TaskUtils;
 
 public class CodeGenerationResponse {
     private List<SourceFileGeneratedCode> sourceFileGeneratedCodeList;
@@ -34,74 +29,40 @@ public class CodeGenerationResponse {
         this.sourceFileGeneratedCodeList = sourceFileGeneratedCodeList;
     }
 
-    public Object beginSerialize(File file, boolean useXml) throws Exception {
+    public Object beginSerialize(File file) throws Exception {
         FileOutputStream fout = new FileOutputStream(file);
-        if (useXml) {
-            OutputStreamWriter stream = new OutputStreamWriter(
-                fout, StandardCharsets.UTF_8);
-            XMLOutputFactory f = XMLOutputFactory.newInstance();
-            XMLStreamWriter xmlWriter = f.createXMLStreamWriter(stream);
-            xmlWriter.writeStartDocument("UTF-8", "1.0");
-            xmlWriter.writeStartElement("response");
-            xmlWriter.writeStartElement("file_list");
-            return xmlWriter;
-        }
-        else {
-            ZipOutputStream zip = new ZipOutputStream(fout, StandardCharsets.UTF_8);
-            return zip;
-        }
+        ZipOutputStream zip = new ZipOutputStream(fout, StandardCharsets.UTF_8);
+        return zip;
     }
 
     public void endSerialize(Object serializer) throws Exception {
         if (serializer == null) {
             return;
         }
-        if (serializer instanceof XMLStreamWriter) {
-            XMLStreamWriter xmlWriter = (XMLStreamWriter) serializer;
-            try {
-                xmlWriter.writeEndElement(); // file_list
-                xmlWriter.writeEndElement(); // response
-                xmlWriter.writeEndDocument();
-            }
-            finally {
-                xmlWriter.close();
-            }
-        }
-        else {
-            ZipOutputStream zip = (ZipOutputStream) serializer;
-            zip.finish();
-        }
+        ZipOutputStream zip = (ZipOutputStream) serializer;
+        zip.finish();
     }
 
-    public static Object beginDeserialize(File file, boolean useXml) throws Exception {
+    public static Object beginDeserialize(File file) throws Exception {
         FileInputStream fin = new FileInputStream(file);
-        if (useXml) {
-            InputStreamReader stream = new InputStreamReader(
-                fin, StandardCharsets.UTF_8);
-            XMLInputFactory inputFactory = XMLInputFactory.newInstance();
-            XmlEventReaderWrapper xmlReader = new XmlEventReaderWrapper(inputFactory.createXMLEventReader(stream));
-            xmlReader.requireDocOpener("response");        
-            xmlReader.requireStartElement("file_list");
-            return xmlReader;
-        }
-        else {
-            ZipInputStream zip = new ZipInputStream(fin, StandardCharsets.UTF_8);
-            return zip;
-        }
+        ZipInputStream zip = new ZipInputStream(fin, StandardCharsets.UTF_8);
+        return zip;
     }
 
     public static void endDeserialize(Object deserializer) throws Exception {
         if (deserializer == null) {
             return;
         }
-        if (deserializer instanceof XmlEventReaderWrapper) {
-            XmlEventReaderWrapper xmlReader = (XmlEventReaderWrapper) deserializer;
-            xmlReader.close();
-        }
-        else {
-            ZipInputStream zip = (ZipInputStream) deserializer;
-            zip.close();
-        }
+        ZipInputStream zip = (ZipInputStream) deserializer;
+        zip.close();
+    }
+
+    public static CodeGenerationResponse deserialize(String str) throws Exception {
+        SourceFileGeneratedCode[] fileGenCodes = TaskUtils.deserializeFromJson(str,
+            SourceFileGeneratedCode[].class);
+        CodeGenerationResponse instance = new CodeGenerationResponse();
+        instance.setSourceFileGeneratedCodeList(Arrays.asList(fileGenCodes));
+        return instance;
     }
 
     @Override

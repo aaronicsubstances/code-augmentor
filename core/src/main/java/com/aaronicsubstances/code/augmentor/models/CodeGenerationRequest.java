@@ -3,18 +3,14 @@ package com.aaronicsubstances.code.augmentor.models;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLOutputFactory;
-import javax.xml.stream.XMLStreamWriter;
-
-import com.aaronicsubstances.code.augmentor.persistence.XmlEventReaderWrapper;
+import com.aaronicsubstances.code.augmentor.tasks.TaskUtils;
 
 public class CodeGenerationRequest {
     private List<SourceFileAugmentingCode> sourceFileAugmentingCodeList;
@@ -34,76 +30,56 @@ public class CodeGenerationRequest {
         this.sourceFileAugmentingCodeList = sourceFileAugmentingCodeList;
     }
 
-    public Object beginSerialize(File file, boolean useXml) throws Exception {
+    public Object beginSerialize(File file) throws Exception {
         FileOutputStream fout = new FileOutputStream(file);
-        if (useXml) {
-            OutputStreamWriter stream = new OutputStreamWriter(
-                fout, StandardCharsets.UTF_8);
-            XMLOutputFactory f = XMLOutputFactory.newInstance();
-            XMLStreamWriter xmlWriter = f.createXMLStreamWriter(stream);
-            xmlWriter.writeStartDocument("utf-8", "1.0");
-            xmlWriter.writeStartElement("request");
-            xmlWriter.writeStartElement("file_list");
-            return xmlWriter;
-        }
-        else {
-            ZipOutputStream zip = new ZipOutputStream(fout, StandardCharsets.UTF_8);
-            return zip;
-        }
+        ZipOutputStream zip = new ZipOutputStream(fout, StandardCharsets.UTF_8);
+        return zip;
     }
 
     public void endSerialize(Object serializer) throws Exception {
         if (serializer == null) {
             return;
         }
-        if (serializer instanceof XMLStreamWriter) {
-            XMLStreamWriter xmlWriter = (XMLStreamWriter) serializer;
-            try {
-                xmlWriter.writeEndElement(); // file_list
-                xmlWriter.writeEndElement(); // request
-                xmlWriter.writeEndDocument();
-            }
-            finally {
-                xmlWriter.close();
-            }
-        }
-        else {
-            ZipOutputStream zip = (ZipOutputStream) serializer;
-            zip.finish();
-        }
+        ZipOutputStream zip = (ZipOutputStream) serializer;
+        zip.finish();
     }
 
-    public static Object beginDeserialize(File file, boolean useXml) throws Exception {
+    public static Object beginDeserialize(File file) throws Exception {
         FileInputStream fin = new FileInputStream(file);
-        if (useXml) {
-            InputStreamReader stream = new InputStreamReader(
-                fin, StandardCharsets.UTF_8);
-            XMLInputFactory inputFactory = XMLInputFactory.newInstance();
-            XmlEventReaderWrapper xmlReader = new XmlEventReaderWrapper(
-                inputFactory.createXMLEventReader(stream));
-            xmlReader.requireDocOpener("request");        
-            xmlReader.requireStartElement("file_list");
-    
-            return xmlReader;
-        }
-        else {
-            ZipInputStream zip = new ZipInputStream(fin, StandardCharsets.UTF_8);
-            return zip;
-        }
+        ZipInputStream zip = new ZipInputStream(fin, StandardCharsets.UTF_8);
+        return zip;
     }
 
     public static void endDeserialize(Object deserializer) throws Exception {
         if (deserializer == null) {
             return;
         }
-        if (deserializer instanceof XmlEventReaderWrapper) {
-            XmlEventReaderWrapper xmlReader = (XmlEventReaderWrapper) deserializer;
-            xmlReader.close();
+        ZipInputStream zip = (ZipInputStream) deserializer;
+        zip.close();
+    }
+
+    public static CodeGenerationRequest deserialize(String str) throws Exception {
+        SourceFileAugmentingCode[] fileAugCodes = TaskUtils.deserializeFromJson(str,
+            SourceFileAugmentingCode[].class);
+        CodeGenerationRequest instance = new CodeGenerationRequest();
+        instance.setSourceFileAugmentingCodeList(Arrays.asList(fileAugCodes));
+        return instance;
+    }
+
+    public static CodeGenerationRequest deserialize(File file) throws Exception {
+        CodeGenerationRequest instance = new CodeGenerationRequest(new ArrayList<>());
+        Object deserializer = null;
+        try {
+            deserializer = beginDeserialize(file);
+            SourceFileAugmentingCode s;
+            while ((s = SourceFileAugmentingCode.deserialize(deserializer)) != null) {
+                instance.getSourceFileAugmentingCodeList().add(s);
+            }
         }
-        else {
-            ZipInputStream zip = (ZipInputStream) deserializer;
-            zip.close();
+        finally {
+            endDeserialize(deserializer);
         }
+        return instance;
     }
 
     @Override

@@ -24,7 +24,7 @@ import com.google.gson.GsonBuilder;
  * Exposes helper methods for generic tasks
  */
 public class TaskUtils {
-    private static final Gson JSON_CONVERT = new GsonBuilder().setPrettyPrinting().create();
+    public static final Gson JSON_CONVERT = new GsonBuilder().setPrettyPrinting().create();
 
     public static String getFileExt(String path) {
         int index = path.lastIndexOf(".");
@@ -76,11 +76,6 @@ public class TaskUtils {
         String hash = Base64.getEncoder().encodeToString(binaryContent);
         return hash;
     }
-
-	public static boolean canUseXml(File f) {
-        boolean useXml = "xml".equals(TaskUtils.getFileExt(f.getName()));
-        return useXml;
-	}
 
     public static void copyStream(InputStream inStream, OutputStream outStream) throws IOException {
         byte[] b  = new byte[8192];

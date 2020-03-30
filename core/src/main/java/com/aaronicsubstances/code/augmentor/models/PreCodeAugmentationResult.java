@@ -11,20 +11,19 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLOutputFactory;
-import javax.xml.stream.XMLStreamWriter;
-import javax.xml.stream.events.StartElement;
+import com.aaronicsubstances.code.augmentor.tasks.TaskUtils;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 
-import com.aaronicsubstances.code.augmentor.persistence.XmlEventReaderWrapper;
-
-/**
- * 
- */
 public class PreCodeAugmentationResult {
+    @SerializedName("gen_code_start_suffix")
     private String genCodeStartSuffix;
+    @SerializedName("gen_code_end_suffix")
     private String genCodeEndSuffix;
+    @SerializedName("temp_dir")
     private String tempDir;
+    @SerializedName("files")
     private List<SourceFileDescriptor> fileDescriptors;
 
     public PreCodeAugmentationResult() {
@@ -73,33 +72,26 @@ public class PreCodeAugmentationResult {
         return serializer;
     }
 
-    public Object beginSerialize(Writer stream) throws Exception {    
-        XMLOutputFactory f = XMLOutputFactory.newInstance();
-        XMLStreamWriter xmlWriter = f.createXMLStreamWriter(stream);
-        xmlWriter.writeStartDocument("utf-8", "1.0");
-        xmlWriter.writeStartElement("result");
-        xmlWriter.writeAttribute("gen_code_start_suffix", 
-            genCodeStartSuffix);
-        xmlWriter.writeAttribute("gen_code_end_suffix", 
-            genCodeEndSuffix);
-        xmlWriter.writeAttribute("temp_dir", 
-            tempDir);
-
-        xmlWriter.writeStartElement("file_list");
-        return xmlWriter;
+    public Object beginSerialize(Writer stream) throws Exception {
+        JsonWriter writer = new JsonWriter(stream);
+        writer.setIndent("  ");
+        writer.beginObject();
+        writer.name("gen_code_start_suffix").value(genCodeStartSuffix);
+        writer.name("gen_code_end_suffix").value(genCodeEndSuffix);
+        if (tempDir != null) {
+            writer.name("temp_dir").value(tempDir);
+        }
+        writer.name("files");
+        writer.beginArray();
+        return writer;
     }
 
     public void endSerialize(Object serializer) throws Exception {
         if (serializer != null) {
-            XMLStreamWriter xmlWriter = (XMLStreamWriter) serializer;
-            try {
-                xmlWriter.writeEndElement(); // file_list
-                xmlWriter.writeEndElement(); // result
-                xmlWriter.writeEndDocument();
-            }
-            finally {
-                xmlWriter.close();
-            }
+            JsonWriter writer = (JsonWriter) serializer;
+            writer.endArray();
+            writer.endObject();
+            writer.close();
         }
     }
 
@@ -111,28 +103,40 @@ public class PreCodeAugmentationResult {
     }
 
     public Object beginDeserialize(Reader stream) throws Exception {
-        XMLInputFactory inputFactory = XMLInputFactory.newInstance();
-        XmlEventReaderWrapper xmlReader = new XmlEventReaderWrapper(inputFactory.createXMLEventReader(stream));
-
-        StartElement rootElement = xmlReader.requireDocOpener("result");
-        genCodeStartSuffix = XmlEventReaderWrapper.requireAttributeValue(rootElement,
-            "gen_code_start_suffix");
-        genCodeEndSuffix = XmlEventReaderWrapper.requireAttributeValue(rootElement,
-            "gen_code_end_suffix");
-        tempDir = XmlEventReaderWrapper.requireAttributeValue(rootElement,
-            "temp_dir");
-
-        xmlReader.requireStartElement("file_list");
+        JsonReader reader = new JsonReader(stream);
+        reader.beginObject();
+        String name;
+        while (!(name = reader.nextName()).equals("files")) {            ;
+            switch (name) {
+                case "gen_code_start_suffix":
+                    genCodeStartSuffix = reader.nextString();
+                    break;
+                case "gen_code_end_suffix":
+                    genCodeEndSuffix = reader.nextString();
+                    break;
+                case "temp_dir":
+                    tempDir = reader.nextString();
+                    break;
+                default:
+                    reader.skipValue();
+                    break;
+            }
+        }
+        reader.beginArray();
 
         fileDescriptors = new ArrayList<>();
-        return xmlReader;
+        return reader;
     }
 
     public void endDeserialize(Object deserializer) throws Exception {
-        if (deserializer != null) {
-            XmlEventReaderWrapper xmlReader = (XmlEventReaderWrapper) deserializer;
-            xmlReader.close();
-        }
+        JsonReader reader = (JsonReader) deserializer;
+        reader.close();
+    }
+
+    public static PreCodeAugmentationResult deserialize(String str) throws Exception {
+        PreCodeAugmentationResult instance = TaskUtils.deserializeFromJson(str, 
+            PreCodeAugmentationResult.class);
+        return instance;
     }
 
     @Override

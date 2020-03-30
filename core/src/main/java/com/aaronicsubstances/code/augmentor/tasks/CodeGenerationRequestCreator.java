@@ -95,8 +95,6 @@ public class CodeGenerationRequestCreator {
     private final Pattern DOUBLE_SLASH_PATTERN;
     private final Pattern SLASH_STAR_PATTERN;
 
-    private int runningIndex;
-
     public CodeGenerationRequestCreator(
             List<String> genCodeStartSuffixes,
             List<String> genCodeEndSuffixes,
@@ -195,6 +193,8 @@ public class CodeGenerationRequestCreator {
     public SourceFileDescriptor processSourceFile(
             ParserInputSource inputSource, List<Token> sourceTokens,
             List<List<AugmentingCode>> specAugCodesList, List<ParserException> errors) {
+        int runningIndex = 0;
+        
         // 1. first get all slash star comments relevant as aug code.
         List<Token> slashStarRelevantTokens = getSlashStarRelevantTokens(sourceTokens);
 

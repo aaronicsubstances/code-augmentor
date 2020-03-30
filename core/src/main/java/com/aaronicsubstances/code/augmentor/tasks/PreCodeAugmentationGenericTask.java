@@ -38,7 +38,9 @@ public class PreCodeAugmentationGenericTask {
 
     public void execute() throws Exception {
         PreCodeAugmentationResult prepResult = new PreCodeAugmentationResult();
-        prepResult.setTempDir(tempDir.getPath());
+        if (tempDir != null) {
+            prepResult.setTempDir(tempDir.getPath());
+        }
         prepResult.setGenCodeStartSuffix(genCodeStartSuffixes.get(0));
         prepResult.setGenCodeEndSuffix(genCodeEndSuffixes.get(0));
         Object resultWriter = prepResult.beginSerialize(parseResultsFile);
@@ -48,8 +50,7 @@ public class PreCodeAugmentationGenericTask {
         for (File augCodeDestFile : augCodeDestFiles) {
             CodeGenerationRequest codeGenRequest = new CodeGenerationRequest();
             codeGenRequests.add(codeGenRequest);
-            boolean useXml = TaskUtils.canUseXml(augCodeDestFile);
-            Object requestWriter = codeGenRequest.beginSerialize(augCodeDestFile, useXml);
+            Object requestWriter = codeGenRequest.beginSerialize(augCodeDestFile);
             codeGenRequestWriters.add(requestWriter);
         }
          

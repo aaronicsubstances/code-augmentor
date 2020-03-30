@@ -1,21 +1,25 @@
 package com.aaronicsubstances.code.augmentor.models;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import javax.xml.stream.XMLStreamWriter;
-import javax.xml.stream.events.StartElement;
-
-import com.aaronicsubstances.code.augmentor.models.CodeSnippetDescriptor.AugmentingCodeDescriptor;
-import com.aaronicsubstances.code.augmentor.models.CodeSnippetDescriptor.GeneratedCodeDescriptor;
-import com.aaronicsubstances.code.augmentor.persistence.XmlEventReaderWrapper;
+import com.aaronicsubstances.code.augmentor.tasks.TaskUtils;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
+import com.google.gson.stream.JsonWriter;
 
 public class SourceFileDescriptor {
+    @SerializedName("file_index")
     private int fileIndex;
+    @SerializedName("dir")
     private String dir;
+    @SerializedName("rel_path")
     private String relativePath;
+    @SerializedName("imports")
     private List<String> importStatements;
+    @SerializedName("header_insert_pos")
     private int headerInsertPos;
+    @SerializedName("snippets")
     private List<CodeSnippetDescriptor> bodySnippets;
     private String contentHash;
 
@@ -85,154 +89,19 @@ public class SourceFileDescriptor {
     }
 
     public void serialize(Object serializer) throws Exception {    
-        XMLStreamWriter xmlWriter = (XMLStreamWriter) serializer;
-        xmlWriter.writeStartElement("file");
-        xmlWriter.writeAttribute("file_index", "" + fileIndex);
-        xmlWriter.writeAttribute("dir", dir);
-        xmlWriter.writeAttribute("rel_path", relativePath);
-        xmlWriter.writeAttribute("header_insert_pos", "" + headerInsertPos);
-        xmlWriter.writeAttribute("hash", contentHash);
-
-        xmlWriter.writeStartElement("import_list");
-        for (String importStatement : importStatements) {
-            xmlWriter.writeStartElement("import");
-            xmlWriter.writeCharacters(importStatement);            
-            xmlWriter.writeEndElement();
-        }
-        xmlWriter.writeEndElement(); // import_list
-
-        xmlWriter.writeStartElement("snippet_list");
-
-        for (CodeSnippetDescriptor snippet : bodySnippets) {
-            serializeCodeSnippetDescriptor(xmlWriter, snippet, "snippet");
-        }
-               
-        xmlWriter.writeEndElement(); // snippet_list
-        xmlWriter.writeEndElement(); // file
-        xmlWriter.flush();
-    }
-
-    private void serializeCodeSnippetDescriptor(XMLStreamWriter xmlWriter, 
-            CodeSnippetDescriptor snippet, String elementName) throws Exception {
-        xmlWriter.writeStartElement(elementName);
-
-        GeneratedCodeDescriptor generatedCodeDescriptor = snippet.getGeneratedCodeDescriptor();
-        if (generatedCodeDescriptor != null) {
-            xmlWriter.writeStartElement("generated_code_descriptor");
-            xmlWriter.writeAttribute("start_pos", 
-                "" + generatedCodeDescriptor.getStartPos());
-            xmlWriter.writeAttribute("end_pos", 
-                "" + generatedCodeDescriptor.getEndPos());
-            xmlWriter.writeEndElement();
-        }
-
-        AugmentingCodeDescriptor augmentingCodeDescriptor = snippet.getAugmentingCodeDescriptor();
-        xmlWriter.writeStartElement("augmenting_code_descriptor");
-        xmlWriter.writeAttribute("index", 
-            "" + augmentingCodeDescriptor.getIndex());
-        xmlWriter.writeAttribute("start_pos", 
-            "" + augmentingCodeDescriptor.getStartPos());
-        xmlWriter.writeAttribute("end_pos", 
-            "" + augmentingCodeDescriptor.getEndPos());
-        xmlWriter.writeAttribute("is_slash_star", 
-            "" + augmentingCodeDescriptor.isAnnotatedWithSlashStar());
-
-        // treat indent with XML element rather than attribute to
-        // avoid tampering by XML attribute normalization rules.
-        xmlWriter.writeStartElement("indent");
-        if (augmentingCodeDescriptor.getIndent() != null) {
-            xmlWriter.writeCharacters(augmentingCodeDescriptor.getIndent());
-        }
-        xmlWriter.writeEndElement(); // indent
-        
-        xmlWriter.writeEndElement(); // aug
-
-        xmlWriter.writeEndElement(); // code snippet
+        JsonWriter writer = (JsonWriter) serializer;
+        TaskUtils.JSON_CONVERT.toJson(this, SourceFileDescriptor.class, writer);
+        writer.flush();
     }
 
     public static SourceFileDescriptor deserialize(Object deserializer) throws Exception {
-        XmlEventReaderWrapper xmlReader = (XmlEventReaderWrapper) deserializer;
-        StartElement startElement = xmlReader.locateStartElement("file");
-        if (startElement == null) {
+        JsonReader reader = (JsonReader) deserializer;
+        if (reader.peek() == JsonToken.END_ARRAY) {
             return null;
         }
-        SourceFileDescriptor obj = new SourceFileDescriptor();
-        obj.fileIndex = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "file_index");
-        obj.dir = XmlEventReaderWrapper.requireAttributeValue(startElement, "dir");
-        obj.relativePath = XmlEventReaderWrapper.requireAttributeValue(startElement, "rel_path");
-        obj.headerInsertPos = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, "header_insert_pos");
-        obj.contentHash = XmlEventReaderWrapper.requireAttributeValue(startElement, "hash");
-        
-        obj.importStatements = new ArrayList<>();
-        startElement = xmlReader.requireStartElement("import_list");
-        while ((startElement = xmlReader.locateStartElement("import")) != null) {
-            String importStatement = xmlReader.readElementValue();
-            xmlReader.requireEndElement("import");
-
-            obj.importStatements.add(importStatement);
-        }
-        xmlReader.requireEndElement("import_list");
-
-        startElement = xmlReader.requireStartElement("snippet_list");
-        obj.bodySnippets = new ArrayList<>();
-        while ((startElement = xmlReader.locateStartElement("snippet")) != null) {
-            CodeSnippetDescriptor snippet = deserializeSnippet(xmlReader, startElement);
-            obj.bodySnippets.add(snippet);
-            xmlReader.requireEndElement("snippet");
-        }
-            
-        xmlReader.requireEndElement("snippet_list");
-        xmlReader.requireEndElement("file");
-
+        SourceFileDescriptor obj = TaskUtils.JSON_CONVERT.fromJson(reader, SourceFileDescriptor.class);
         return obj;
     }
-    
-    private static CodeSnippetDescriptor deserializeSnippet(
-            XmlEventReaderWrapper xmlReader, StartElement startElement) 
-            throws Exception {
-        int startPos, endPos;
-        startElement = xmlReader.requireStartElement( 
-            new String[]{ "generated_code_descriptor", "augmenting_code_descriptor" });
-        GeneratedCodeDescriptor generatedCodeDescriptor = null;
-        if ("generated_code_descriptor".equals(startElement.getName().getLocalPart())) {
-            generatedCodeDescriptor = new GeneratedCodeDescriptor();            
-            startPos = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, 
-                "start_pos");
-            generatedCodeDescriptor.setStartPos(startPos);
-            endPos = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement,
-                "end_pos");
-            generatedCodeDescriptor.setEndPos(endPos);
-            xmlReader.requireEndElement("generated_code_descriptor");
-
-            startElement = xmlReader.requireStartElement( 
-                "augmenting_code_descriptor");
-        }
-
-        AugmentingCodeDescriptor augmentingCodeDescriptor = new AugmentingCodeDescriptor();
-        int index = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, 
-            "index");
-        augmentingCodeDescriptor.setIndex(index);
-        startPos = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement, 
-            "start_pos");
-        augmentingCodeDescriptor.setStartPos(startPos);
-        endPos = XmlEventReaderWrapper.requireAttributeValueAsInt(startElement,
-            "end_pos");
-        augmentingCodeDescriptor.setEndPos(endPos);
-        boolean isSlashStar = XmlEventReaderWrapper.requireAttributeValueAsBoolean(startElement,
-            "is_slash_star");
-        augmentingCodeDescriptor.setAnnotatedWithSlashStar(isSlashStar);
-
-        xmlReader.requireStartElement("indent");
-        String indent = xmlReader.readElementValue();
-        if (!indent.isEmpty()) {
-            augmentingCodeDescriptor.setIndent(indent);
-        }
-        xmlReader.requireEndElement("indent");
-        
-        xmlReader.requireEndElement("augmenting_code_descriptor");
-
-        return new CodeSnippetDescriptor(augmentingCodeDescriptor, generatedCodeDescriptor);
-	}
 
     @Override
     public int hashCode() {

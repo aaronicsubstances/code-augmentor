@@ -346,8 +346,4 @@ public class CodeAugmentationGenericTask {
     public boolean isUpToDate() {
         return upToDate;
     }
-
-    public void setUpToDate(boolean upToDate) {
-        this.upToDate = upToDate;
-    }
 }
