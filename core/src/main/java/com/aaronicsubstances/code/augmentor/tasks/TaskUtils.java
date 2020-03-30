@@ -1,14 +1,13 @@
 package com.aaronicsubstances.code.augmentor.tasks;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
@@ -21,10 +20,8 @@ import com.aaronicsubstances.code.augmentor.parsing.kotlin.KotlinParser;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import org.apache.tools.ant.util.FileUtils;
-
 /**
- * Exposes helper methods for Ant tasks
+ * Exposes helper methods for generic tasks
  */
 public class TaskUtils {
     private static final Gson JSON_CONVERT = new GsonBuilder().setPrettyPrinting().create();
@@ -38,9 +35,14 @@ public class TaskUtils {
     }
 
     public static String readFile(File srcFile, Charset charset) throws IOException {
-        try (Reader rdr = new InputStreamReader(new FileInputStream(srcFile), charset)) {
-            return FileUtils.readFully(rdr);
+        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+        try (InputStream inStream = new FileInputStream(srcFile)) {
+            copyStream(inStream, outStream);
+            outStream.flush();
         }
+        byte[] buf = outStream.toByteArray();
+        String s = new String(buf, charset);
+        return s;
     }
 
     public static void writeFile(File destFile, Charset charset, String contents) throws IOException {
@@ -94,5 +96,13 @@ public class TaskUtils {
 
 	public static <T> T deserializeFromJson(String s, Class<T> cls) {
 		return JSON_CONVERT.fromJson(s, cls);
+	}
+
+	public static void copyFile(File srcFile, File destFile) throws IOException {
+        try (InputStream inputStream = new FileInputStream(srcFile)) {
+            try (OutputStream outputStream = new FileOutputStream(destFile)) {
+                copyStream(inputStream, outputStream);
+            }
+        }
 	}
 }

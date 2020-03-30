@@ -11,17 +11,21 @@ public class SourceCodeTransformer {
         this.transformedText = new StringBuilder(originalText);
     }
 
-    public void addTransform(String replacement, int startPos) {
+    public int addTransform(String replacement, int startPos) {
         transformedText.insert(positionAdjustment + startPos, replacement);
-        positionAdjustment += replacement.length();
+        int diff = replacement.length();
+        positionAdjustment += diff;
+        return diff;
         // Alternatively.
-        //addTransform(replacement, startPos, startPos);
+        //return addTransform(replacement, startPos, startPos);
     }
     
-    public void addTransform(String replacement, int startPos, int endPos) {
+    public int addTransform(String replacement, int startPos, int endPos) {
         transformedText.replace(positionAdjustment + startPos, positionAdjustment + endPos, 
             replacement);
-        positionAdjustment += replacement.length() - (endPos - startPos);
+        int diff = replacement.length() - (endPos - startPos);
+        positionAdjustment += diff;
+        return diff;
     }
 
     public String getTransformedText() {
