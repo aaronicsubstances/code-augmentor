@@ -1,8 +1,7 @@
 {
 	"gen_code_start_suffix": "GS",
 	"gen_code_end_suffix": "GE",
-	"files": [],
-	"files_": [
+	"files": [
 		{
 			"file_index": 0,
 			"rel_path": "task-spec-00-0.java",

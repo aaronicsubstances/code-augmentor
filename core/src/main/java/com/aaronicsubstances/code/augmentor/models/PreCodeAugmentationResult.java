@@ -21,8 +21,6 @@ public class PreCodeAugmentationResult {
     private String genCodeStartSuffix;
     @SerializedName("gen_code_end_suffix")
     private String genCodeEndSuffix;
-    @SerializedName("temp_dir")
-    private String tempDir;
     @SerializedName("files")
     private List<SourceFileDescriptor> fileDescriptors;
 
@@ -57,14 +55,6 @@ public class PreCodeAugmentationResult {
         this.genCodeEndSuffix = genCodeEndSuffix;
     }
 
-    public String getTempDir() {
-        return tempDir;
-    }
-
-    public void setTempDir(String tempDir) {
-        this.tempDir = tempDir;
-    }
-
     public Object beginSerialize(File file) throws Exception {        
         OutputStreamWriter stream = new OutputStreamWriter(
             new FileOutputStream(file), StandardCharsets.UTF_8);
@@ -78,9 +68,6 @@ public class PreCodeAugmentationResult {
         writer.beginObject();
         writer.name("gen_code_start_suffix").value(genCodeStartSuffix);
         writer.name("gen_code_end_suffix").value(genCodeEndSuffix);
-        if (tempDir != null) {
-            writer.name("temp_dir").value(tempDir);
-        }
         writer.name("files");
         writer.beginArray();
         return writer;
@@ -114,9 +101,6 @@ public class PreCodeAugmentationResult {
                 case "gen_code_end_suffix":
                     genCodeEndSuffix = reader.nextString();
                     break;
-                case "temp_dir":
-                    tempDir = reader.nextString();
-                    break;
                 default:
                     reader.skipValue();
                     break;
@@ -133,6 +117,17 @@ public class PreCodeAugmentationResult {
         reader.close();
     }
 
+	public static PreCodeAugmentationResult deserialize(File prepfile) throws Exception {
+        PreCodeAugmentationResult instance = new PreCodeAugmentationResult();
+        Object deserializer = instance.beginDeserialize(prepfile);
+        SourceFileDescriptor s;
+        while ((s = SourceFileDescriptor.deserialize(deserializer)) != null) {
+            instance.getFileDescriptors().add(s);
+        }
+        instance.endDeserialize(deserializer);
+        return instance;
+	}
+
     public static PreCodeAugmentationResult deserialize(String str) throws Exception {
         PreCodeAugmentationResult instance = TaskUtils.deserializeFromJson(str, 
             PreCodeAugmentationResult.class);
@@ -146,7 +141,6 @@ public class PreCodeAugmentationResult {
         result = prime * result + ((fileDescriptors == null) ? 0 : fileDescriptors.hashCode());
         result = prime * result + ((genCodeEndSuffix == null) ? 0 : genCodeEndSuffix.hashCode());
         result = prime * result + ((genCodeStartSuffix == null) ? 0 : genCodeStartSuffix.hashCode());
-        result = prime * result + ((tempDir == null) ? 0 : tempDir.hashCode());
         return result;
     }
 
@@ -174,17 +168,12 @@ public class PreCodeAugmentationResult {
                 return false;
         } else if (!genCodeStartSuffix.equals(other.genCodeStartSuffix))
             return false;
-        if (tempDir == null) {
-            if (other.tempDir != null)
-                return false;
-        } else if (!tempDir.equals(other.tempDir))
-            return false;
         return true;
     }
 
     @Override
     public String toString() {
         return "PreCodeAugmentationResult{fileDescriptors=" + fileDescriptors + ", genCodeEndSuffix="
-                + genCodeEndSuffix + ", genCodeStartSuffix=" + genCodeStartSuffix + ", tempDir=" + tempDir + "}";
+                + genCodeEndSuffix + ", genCodeStartSuffix=" + genCodeStartSuffix + "}";
     }
 }

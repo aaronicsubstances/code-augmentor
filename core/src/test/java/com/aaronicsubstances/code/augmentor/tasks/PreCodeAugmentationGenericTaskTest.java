@@ -46,10 +46,10 @@ public class PreCodeAugmentationGenericTaskTest {
         task.setBaseDirs(new ArrayList<>());
 
         // copy files to temp dir.
-        File tempDir = new File(System.getProperty("java.io.tmpdir"));
+        File tempDir = FileUtils.getTempDirectory();
         for (String relativePath : taskSpec.relativePaths) {
-            String contents = TestResourceLoader.loadResource(relativePath, 
-                PreCodeAugmentationGenericTaskTest.class);
+            String contents = TestResourceLoader.loadResourceNewlinesNormalized(relativePath, 
+                PreCodeAugmentationGenericTaskTest.class, "\r\n");
             FileUtils.write(new File(tempDir, relativePath), contents, task.getCharset());
             task.getRelativePaths().add(relativePath);
             task.getBaseDirs().add(tempDir);
@@ -67,14 +67,16 @@ public class PreCodeAugmentationGenericTaskTest {
         task.setEmbeddedStringDoubleSlashSuffixes(Arrays.asList(
             taskSpec.embeddedStringDoubleSlashSuffixes));
 
+        task.setTempDir(tempDir);
+
         return task;
     }
 
     @Test(dataProvider = "createTestExecuteData")
-    public void testExecute(String jsonPath, boolean useXml) throws Exception {
+    public void testExecute(String jsonPath) throws Exception {
         PreCodeAugmentationGenericTask task = deserialize(jsonPath);
         String expectedPrepFileContents = TestResourceLoader.loadResource(
-            jsonPath.replace(".json", "-expected-results.json"), getClass());
+            jsonPath.replace(".json", "-expected-prep.json"), getClass());
         PreCodeAugmentationResult expResult = PreCodeAugmentationResult.deserialize(
             expectedPrepFileContents);
         List<CodeGenerationRequest> expectedRequests = new ArrayList<>(); 
@@ -87,11 +89,15 @@ public class PreCodeAugmentationGenericTaskTest {
             expectedRequests.add(exp);
         }
         task.execute();
-        assertEquals(task.getAllErrors(), Arrays.asList());
+        if (!task.getAllErrors().isEmpty()) {
+            fail("Unexpected errors: " + task.getAllErrors());
+        }
         String actualPrepFileContents = FileUtils.readFileToString(task.getParseResultsFile(),
             task.getCharset());
         PreCodeAugmentationResult actualResult = PreCodeAugmentationResult.deserialize(
             actualPrepFileContents);
+        // to enable easier testing, don't require dir (we won't know temp dir on every
+        // host dev't machine), and content hash
         for (SourceFileDescriptor f : actualResult.getFileDescriptors()) {
             f.setDir(null);
             f.setContentHash(null);
@@ -109,7 +115,7 @@ public class PreCodeAugmentationGenericTaskTest {
     @DataProvider
     public Object[][] createTestExecuteData() {
         return new Object[][]{
-            new Object[] { "task-spec-00.json", true }
+            new Object[] { "task-spec-00.json" }
         };
     }
 

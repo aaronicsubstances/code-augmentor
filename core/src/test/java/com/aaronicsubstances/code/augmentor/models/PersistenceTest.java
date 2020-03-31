@@ -61,9 +61,6 @@ public class PersistenceTest {
                 PreCodeAugmentationResult instance = new PreCodeAugmentationResult(new ArrayList<>());
                 instance.setGenCodeStartSuffix(generateRandomString(randGen, false));
                 instance.setGenCodeEndSuffix(generateRandomString(randGen, false));
-                if (randGen.nextBoolean()) {
-                    instance.setTempDir(generateRandomString(randGen, false));
-                }
                 if (count > 0) {
                     int fileDescriptorListSize = randGen.nextInt(5);
                     for (int i = 0; i < fileDescriptorListSize; i++) {

@@ -32,6 +32,7 @@ public class CodeAugmentationGenericTask {
     private File destdir;
     private boolean generate;
     private String newline;
+    private File tempDir;
 
     private boolean upToDate;
     
@@ -45,9 +46,23 @@ public class CodeAugmentationGenericTask {
 
         SourceFileDescriptor sourceFileDescriptor;
         while ((sourceFileDescriptor = SourceFileDescriptor.deserialize(resultReader)) != null) {
+            if (sourceFileDescriptor.getDir() == null) {
+                sourceFileDescriptor.setDir(tempDir.getPath());
+            }
             File srcFile = new File(sourceFileDescriptor.getDir(),
                 sourceFileDescriptor.getRelativePath());
             logVerbose("Processing %s", srcFile);
+
+            // don't bother to touch file if it doesn't contain any snippets of 
+            // augmenting code.
+            if (sourceFileDescriptor.getBodySnippets().isEmpty()) {           
+                if (generate) {
+                    File destFile = new File(destdir, sourceFileDescriptor.getRelativePath());
+                    TaskUtils.copyFile(srcFile, destFile);
+                }
+                continue;
+            }
+            
             Instant startInstant = Instant.now();
             String sourceCode = TaskUtils.readFile(srcFile, charset);
             String inputHash = TaskUtils.calcHash(sourceCode, charset);
@@ -341,6 +356,14 @@ public class CodeAugmentationGenericTask {
 
     public void setNewline(String newline) {
         this.newline = newline;
+    }
+
+    public File getTempDir() {
+        return tempDir;
+    }
+
+    public void setTempDir(File tempDir) {
+        this.tempDir = tempDir;
     }
 
     public boolean isUpToDate() {

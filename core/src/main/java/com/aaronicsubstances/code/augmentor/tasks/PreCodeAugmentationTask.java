@@ -203,7 +203,6 @@ public class PreCodeAugmentationTask extends Task {
         }
 
         PreCodeAugmentationResult prepResult = new PreCodeAugmentationResult();
-        prepResult.setTempDir(tempDir.getPath());
         prepResult.setGenCodeStartSuffix(genCodeStartSuffixes.get(0).getValue());
         prepResult.setGenCodeEndSuffix(genCodeEndSuffixes.get(0).getValue());
         Object resultWriter = prepResult.beginSerialize(parseResultsFile);

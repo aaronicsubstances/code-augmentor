@@ -38,9 +38,6 @@ public class PreCodeAugmentationGenericTask {
 
     public void execute() throws Exception {
         PreCodeAugmentationResult prepResult = new PreCodeAugmentationResult();
-        if (tempDir != null) {
-            prepResult.setTempDir(tempDir.getPath());
-        }
         prepResult.setGenCodeStartSuffix(genCodeStartSuffixes.get(0));
         prepResult.setGenCodeEndSuffix(genCodeEndSuffixes.get(0));
         Object resultWriter = prepResult.beginSerialize(parseResultsFile);
@@ -92,7 +89,7 @@ public class PreCodeAugmentationGenericTask {
             if (s != null) {
                 // don't bother to serialize any further if there are
                 // previous errors.
-                if (!allErrors.isEmpty()) {
+                if (allErrors.isEmpty()) {
                     // write out descriptor.
                     s.setDir(baseDir.getPath());
                     s.setRelativePath(relativePath);
