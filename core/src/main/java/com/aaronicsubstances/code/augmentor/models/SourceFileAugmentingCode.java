@@ -1,12 +1,8 @@
 package com.aaronicsubstances.code.augmentor.models;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.nio.charset.StandardCharsets;
+import java.io.BufferedReader;
+import java.io.PrintWriter;
 import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 
 import com.aaronicsubstances.code.augmentor.tasks.TaskUtils;
 import com.google.gson.annotations.SerializedName;
@@ -50,32 +46,25 @@ public class SourceFileAugmentingCode {
         this.augmentingCodeList = augmentingCodeList;
     }
 
-    public void serialize(Object serializer) throws Exception {
-        String s = TaskUtils.serializeToJson(this);
-        byte[] buf = s.getBytes(StandardCharsets.UTF_8);
-        ZipOutputStream zip = (ZipOutputStream) serializer;
-        ZipEntry e = new ZipEntry(fileIndex + ".json");
-        zip.putNextEntry(e);
-        ByteArrayInputStream inStream = new ByteArrayInputStream(buf);
-        TaskUtils.copyStream(inStream, zip);
-        zip.closeEntry();
+	public void serialize(Object serializer) throws Exception {
+        PrintWriter writer = (PrintWriter) serializer;
+        String s = TaskUtils.serializeCompactlyToJson(this);
+        writer.println(s);
     }
 
-    public static SourceFileAugmentingCode deserialize(Object deserializer) throws Exception {
-        ZipInputStream zip = (ZipInputStream) deserializer;
-        ZipEntry e = zip.getNextEntry();
-        if (e == null) {
-            return null;
+	public static SourceFileAugmentingCode deserialize(Object deserializer) throws Exception {
+        BufferedReader reader = (BufferedReader) deserializer;
+        String line;
+        while ((line = reader.readLine()) != null) {
+            // ignore comments and blank lines.
+            if (line.startsWith("#") || line.trim().isEmpty()) {
+                continue;
+            }
+            SourceFileAugmentingCode instance = TaskUtils.deserializeFromJson(line,
+                SourceFileAugmentingCode.class);
+            return instance;
         }
-        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-        TaskUtils.copyStream(zip, outStream);
-        outStream.flush();
-        zip.closeEntry();
-        byte[] buf = outStream.toByteArray();
-        String s = new String(buf, StandardCharsets.UTF_8);
-        SourceFileAugmentingCode obj = TaskUtils.deserializeFromJson(s, 
-            SourceFileAugmentingCode.class);
-        return obj;
+        return null;
     }
 
     @Override

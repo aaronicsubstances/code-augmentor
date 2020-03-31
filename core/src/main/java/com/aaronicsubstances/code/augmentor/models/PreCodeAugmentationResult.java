@@ -21,6 +21,8 @@ public class PreCodeAugmentationResult {
     private String genCodeStartSuffix;
     @SerializedName("gen_code_end_suffix")
     private String genCodeEndSuffix;
+
+    // always ensure this list comes last when adding new fields.
     @SerializedName("files")
     private List<SourceFileDescriptor> fileDescriptors;
 
@@ -82,6 +84,19 @@ public class PreCodeAugmentationResult {
         }
     }
 
+    public void serialize(File file) throws Exception {
+        try (Writer writer = new OutputStreamWriter(new FileOutputStream(file),
+                StandardCharsets.UTF_8)) {
+            serialize(writer);
+        }
+    }
+
+    public void serialize(Writer writer) throws Exception {
+        String json = TaskUtils.serializeToJson(this);
+        writer.write(json);
+        writer.flush();
+    }
+
     public Object beginDeserialize(File file) throws Exception {    
         InputStreamReader stream = new InputStreamReader(
             new FileInputStream(file), StandardCharsets.UTF_8);
@@ -117,22 +132,26 @@ public class PreCodeAugmentationResult {
         reader.close();
     }
 
-	public static PreCodeAugmentationResult deserialize(File prepfile) throws Exception {
+    public static PreCodeAugmentationResult deserialize(File file) throws Exception {
+        Reader reader = new InputStreamReader(new FileInputStream(file), 
+            StandardCharsets.UTF_8);
+        return deserialize(reader);
+    }
+
+	public static PreCodeAugmentationResult deserialize(Reader reader) throws Exception {
         PreCodeAugmentationResult instance = new PreCodeAugmentationResult();
-        Object deserializer = instance.beginDeserialize(prepfile);
-        SourceFileDescriptor s;
-        while ((s = SourceFileDescriptor.deserialize(deserializer)) != null) {
-            instance.getFileDescriptors().add(s);
+        Object deserializer = instance.beginDeserialize(reader);
+        try {
+            SourceFileDescriptor s;
+            while ((s = SourceFileDescriptor.deserialize(deserializer)) != null) {
+                instance.getFileDescriptors().add(s);
+            }
         }
-        instance.endDeserialize(deserializer);
+        finally {
+            instance.endDeserialize(deserializer);
+        }
         return instance;
 	}
-
-    public static PreCodeAugmentationResult deserialize(String str) throws Exception {
-        PreCodeAugmentationResult instance = TaskUtils.deserializeFromJson(str, 
-            PreCodeAugmentationResult.class);
-        return instance;
-    }
 
     @Override
     public int hashCode() {

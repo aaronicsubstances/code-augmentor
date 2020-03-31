@@ -10,21 +10,26 @@ import com.aaronicsubstances.code.augmentor.models.GeneratedCode;
 import com.aaronicsubstances.code.augmentor.models.SourceFileGeneratedCode;
 
 public class GeneratedCodeFetcher {
+    private final List<CodeGenerationResponse> codeGenerationResponses;
     private final List<Object> codeGenerationResponseReaders;
     private final List<SourceFileGeneratedCode> lastFetches;
 
     public GeneratedCodeFetcher(List<File> generatedCodeFiles) throws Exception {
+        this.codeGenerationResponses = new ArrayList<>();
         this.codeGenerationResponseReaders = new ArrayList<>();
         for (File f : generatedCodeFiles) {
-            Object codeGenRespRdr = CodeGenerationResponse.beginDeserialize(f);
+            CodeGenerationResponse instance = new CodeGenerationResponse();
+            Object codeGenRespRdr = instance.beginDeserialize(f);
             codeGenerationResponseReaders.add(codeGenRespRdr);
         }
         lastFetches = new ArrayList<>();
     }
 
 	public void close() throws Exception {        
-        for (Object codeGenRespRdr : codeGenerationResponseReaders) {
-            CodeGenerationResponse.endDeserialize(codeGenRespRdr);
+        for (int i = 0; i < codeGenerationResponses.size(); i++) {
+            CodeGenerationResponse instance = codeGenerationResponses.get(i);
+            Object codeGenRespRdr = codeGenerationResponseReaders.get(i);
+            instance.endDeserialize(codeGenRespRdr);
         }
     }
     
@@ -32,7 +37,7 @@ public class GeneratedCodeFetcher {
         boolean firstPrepare = false;
         if (lastFetches.isEmpty()) {
             firstPrepare = true;
-            for (int i = 0; i < codeGenerationResponseReaders.size(); i++) {
+            for (int i = 0; i < codeGenerationResponses.size(); i++) {
                 lastFetches.add(null);
             }
         }
@@ -53,13 +58,25 @@ public class GeneratedCodeFetcher {
 	public GeneratedCode getGeneratedCode(int fileIndex, int augCodeIndex) throws Exception {
         GeneratedCode nextGenCode = null;
 		for (int i = 0; i < lastFetches.size(); i++) {
-            SourceFileGeneratedCode fileGenCode = lastFetches.get(i);
-            if (fileGenCode == null || fileGenCode.getFileIndex() != fileIndex) {
-                continue;
+            Optional<GeneratedCode> genCodeOpt = null;
+            // check whether codeGenRes already has all generated codes loaded.
+            // used during testing, and in theory can be used when it is
+            // deemed not to be a problem for memory.
+            CodeGenerationResponse codeGenRes = codeGenerationResponses.get(i);
+            if (!codeGenRes.getSourceFileGeneratedCodeList().isEmpty()) {
+                genCodeOpt = codeGenRes.getSourceFileGeneratedCodeList()
+                    .stream().filter(x -> x.getFileIndex() == fileIndex)
+                    .flatMap(x -> x.getGeneratedCodeList().stream())
+                    .filter(x -> x.getIndex() == augCodeIndex).findFirst();
             }
-            Optional<GeneratedCode> genCodeOpt = fileGenCode.getGeneratedCodeList()
-                .stream().filter(x -> x.getIndex() == augCodeIndex).findFirst();
-            if (genCodeOpt.isPresent()) {
+            else {
+                SourceFileGeneratedCode fileGenCode = lastFetches.get(i);
+                if (fileGenCode != null && fileGenCode.getFileIndex() == fileIndex) {
+                    genCodeOpt = fileGenCode.getGeneratedCodeList()
+                        .stream().filter(x -> x.getIndex() == augCodeIndex).findFirst();
+                }
+            }
+            if (genCodeOpt != null && genCodeOpt.isPresent()) {
                 nextGenCode = genCodeOpt.get();
                 break;
             }

@@ -1,17 +1,24 @@
 package com.aaronicsubstances.code.augmentor.models;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 
 import com.aaronicsubstances.code.augmentor.tasks.TaskUtils;
+import com.google.gson.annotations.SerializedName;
 
 public class CodeGenerationResponse {
+    @SerializedName("files")
     private List<SourceFileGeneratedCode> sourceFileGeneratedCodeList;
 
     public CodeGenerationResponse() {
@@ -30,38 +37,90 @@ public class CodeGenerationResponse {
     }
 
     public Object beginSerialize(File file) throws Exception {
-        FileOutputStream fout = new FileOutputStream(file);
-        ZipOutputStream zip = new ZipOutputStream(fout, StandardCharsets.UTF_8);
-        return zip;
+        Writer writer = new OutputStreamWriter(new FileOutputStream(file),
+            StandardCharsets.UTF_8);
+        return beginSerialize(writer);
+    }
+
+    public Object beginSerialize(Writer writer) {
+        PrintWriter pW = new PrintWriter(writer, true);
+        return pW;
     }
 
     public void endSerialize(Object serializer) throws Exception {
         if (serializer == null) {
             return;
         }
-        ZipOutputStream zip = (ZipOutputStream) serializer;
-        zip.finish();
+        Writer writer = (Writer) serializer;
+        writer.close();
     }
 
-    public static Object beginDeserialize(File file) throws Exception {
-        FileInputStream fin = new FileInputStream(file);
-        ZipInputStream zip = new ZipInputStream(fin, StandardCharsets.UTF_8);
-        return zip;
+	public void serialize(File file, boolean serializeAllAsJson) throws Exception {        
+        try (Writer writer = new OutputStreamWriter(new FileOutputStream(file),
+                StandardCharsets.UTF_8)) {
+            serialize(writer, serializeAllAsJson);
+        }
+	}
+
+	public void serialize(Writer writer, boolean serializeAllAsJson) throws Exception {
+        if (serializeAllAsJson) {
+            String json = TaskUtils.serializeToJson(sourceFileGeneratedCodeList);
+            writer.write(json);
+            writer.flush();
+        }
+        else {
+            PrintWriter pW = new PrintWriter(writer);
+            for (SourceFileGeneratedCode s : sourceFileGeneratedCodeList) {
+                s.serialize(pW);
+            }
+            pW.flush();
+        }
+	}
+
+    public Object beginDeserialize(File file) throws Exception {
+        Reader reader = new InputStreamReader(new FileInputStream(file),
+            StandardCharsets.UTF_8);
+        return beginDeserialize(reader);
     }
 
-    public static void endDeserialize(Object deserializer) throws Exception {
+    public Object beginDeserialize(Reader reader) throws Exception {
+        BufferedReader bufRdr = new BufferedReader(reader);
+        boolean perFile = TaskUtils.peekSerializedJsonForPerFile(bufRdr);
+        if (perFile) {
+            String json = TaskUtils.readFully(bufRdr);
+            SourceFileGeneratedCode[] files = TaskUtils.deserializeFromJson(json,
+                SourceFileGeneratedCode[].class);
+            sourceFileGeneratedCodeList = Arrays.asList(files);
+        }
+        else {
+            sourceFileGeneratedCodeList = new ArrayList<>();
+        }
+
+        return bufRdr;
+    }
+
+    public void endDeserialize(Object deserializer) throws Exception {
         if (deserializer == null) {
             return;
         }
-        ZipInputStream zip = (ZipInputStream) deserializer;
-        zip.close();
+        Reader rdr = (Reader) deserializer;
+        rdr.close();
     }
 
-    public static CodeGenerationResponse deserialize(String str) throws Exception {
-        SourceFileGeneratedCode[] fileGenCodes = TaskUtils.deserializeFromJson(str,
-            SourceFileGeneratedCode[].class);
+    public static CodeGenerationResponse deserialize(File file) throws Exception {
+        try (Reader reader = new InputStreamReader(new FileInputStream(file),
+                StandardCharsets.UTF_8)) {
+            return deserialize(reader);
+        }
+    }
+
+    public static CodeGenerationResponse deserialize(Reader reader) throws Exception {
         CodeGenerationResponse instance = new CodeGenerationResponse();
-        instance.setSourceFileGeneratedCodeList(Arrays.asList(fileGenCodes));
+        BufferedReader bufRdr = (BufferedReader) instance.beginDeserialize(reader);
+        SourceFileGeneratedCode s;
+        while ((s = SourceFileGeneratedCode.deserialize(bufRdr)) != null) {
+            instance.sourceFileGeneratedCodeList.add(s);
+        }
         return instance;
     }
 

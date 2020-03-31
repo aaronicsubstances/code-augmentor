@@ -1,9 +1,9 @@
 package com.aaronicsubstances.code.augmentor.models;
 
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
 
-import java.io.File;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -19,27 +19,38 @@ import org.testng.annotations.Test;
 public class PersistenceTest {
 
     @Test(dataProvider = "createTestPreCodeAugmentationResultPersistenceData")
-    public void testPreCodeAugmentationResultPersistence(int index, PreCodeAugmentationResult expected)
-            throws Exception {
-        assertNotNull(expected);
-        
+    public void testPreCodeAugmentationResultPersistence(int index, PreCodeAugmentationResult expected,
+            boolean stream) throws Exception {
         // first, serialize
-        File tempDir = new File(System.getProperty("java.io.tmpdir"));
-        File f = new File(tempDir, String.format("TESTp-%02d.xml", index));
-        Object serializer = expected.beginSerialize(f);
-        for (SourceFileDescriptor fileDescriptor : expected.getFileDescriptors()) {
-            fileDescriptor.serialize(serializer);
+        StringWriter sw = new StringWriter();
+        if (stream) {
+            Object serializer = expected.beginSerialize(sw);
+            for (SourceFileDescriptor file : expected.getFileDescriptors()) {
+                file.serialize(serializer);
+            }
+            expected.endSerialize(serializer);
         }
-        expected.endSerialize(serializer);
-
-        // next, deserialize 
-        PreCodeAugmentationResult actual = new PreCodeAugmentationResult();
-        Object deserializer = actual.beginDeserialize(f);
-        SourceFileDescriptor s;
-        while ((s = SourceFileDescriptor.deserialize(deserializer)) != null) {
-            actual.getFileDescriptors().add(s);
+        else {
+            expected.serialize(sw);
         }
-        actual.endDeserialize(deserializer);
+        String expectedOutput = sw.toString();
+        //System.out.println(expectedOutput);
+            
+        // next, deserialize
+        StringReader sr = new StringReader(expectedOutput);
+        PreCodeAugmentationResult actual;
+        if (stream) {
+            actual = new PreCodeAugmentationResult();
+            Object deserializer = actual.beginDeserialize(sr);
+            SourceFileDescriptor file;
+            while ((file = SourceFileDescriptor.deserialize(deserializer)) != null) {
+                actual.getFileDescriptors().add(file);
+            }
+            actual.endDeserialize(deserializer);
+        }
+        else {
+            actual = PreCodeAugmentationResult.deserialize(sr);
+        }
 
         // finally, compare deserialized result with original
         assertEquals(actual, expected);
@@ -87,33 +98,44 @@ public class PersistenceTest {
                         }
                     }
                 }
-                return new Object[]{ count++, instance };
+                return new Object[]{ count++, instance, randGen.nextBoolean() };
             }
         };
     }
 
 	@Test(dataProvider = "createTestCodeGenerationRequestPersistenceData")
-    public void testCodeGenerationRequestPersistence(int index, CodeGenerationRequest expected)
-            throws Exception {
-        assertNotNull(expected);
-        
+    public void testCodeGenerationRequestPersistence(int index, CodeGenerationRequest expected,
+            boolean serializeAllAsJson, boolean stream) throws Exception {
         // first, serialize
-        File tempDir = new File(System.getProperty("java.io.tmpdir"));
-        File f = new File(tempDir, String.format("TESTreq-%02d.zip", index));
-        Object serializer = expected.beginSerialize(f);
-        for (SourceFileAugmentingCode fileAugCodeSnippet : expected.getSourceFileAugmentingCodeList()) {
-            fileAugCodeSnippet.serialize(serializer);
+        StringWriter sw = new StringWriter();
+        if (stream) {
+            Object serializer = expected.beginSerialize(sw);
+            for (SourceFileAugmentingCode augmentingCode : expected.getSourceFileAugmentingCodeList()) {
+                augmentingCode.serialize(serializer);
+            }
+            expected.endSerialize(serializer);
         }
-        expected.endSerialize(serializer);
-
-        // next, deserialize 
-        CodeGenerationRequest actual = new CodeGenerationRequest(new ArrayList<>());
-        Object deserializer = CodeGenerationRequest.beginDeserialize(f);
-        SourceFileAugmentingCode augCodeSnippet;
-        while ((augCodeSnippet = SourceFileAugmentingCode.deserialize(deserializer)) != null) {
-            actual.getSourceFileAugmentingCodeList().add(augCodeSnippet);
+        else {
+            expected.serialize(sw, serializeAllAsJson);
         }
-        CodeGenerationRequest.endDeserialize(deserializer);
+        String expectedOutput = sw.toString();
+        //System.out.println(index + "\n" + expectedOutput);
+            
+        // next, deserialize
+        StringReader sr = new StringReader(expectedOutput);
+        CodeGenerationRequest actual;
+        if (stream) {
+            actual = new CodeGenerationRequest();
+            Object deserializer = actual.beginDeserialize(sr);
+            SourceFileAugmentingCode augmentingCode;
+            while ((augmentingCode = SourceFileAugmentingCode.deserialize(deserializer)) != null) {
+                actual.getSourceFileAugmentingCodeList().add(augmentingCode);
+            }
+            actual.endDeserialize(deserializer);
+        }
+        else {
+            actual = CodeGenerationRequest.deserialize(sr);
+        }
 
         // finally, compare deserialized result with original
         assertEquals(actual, expected);
@@ -162,33 +184,44 @@ public class PersistenceTest {
                         }
                     }
                 }
-                return new Object[]{ count++, instance };
+                return new Object[]{ count++, instance, randGen.nextBoolean(), randGen.nextBoolean() };
             }
         };
     }
 
     @Test(dataProvider = "createTestCodeGenerationResponsePersistenceData")
-    public void testCodeGenerationResponsePersistence(int index, CodeGenerationResponse expected)
-            throws Exception {
-        assertNotNull(expected);
-        
+    public void testCodeGenerationResponsePersistence(int index, CodeGenerationResponse expected,
+            boolean serializeAllAsJson, boolean stream) throws Exception {
         // first, serialize
-        File tempDir = new File(System.getProperty("java.io.tmpdir"));
-        File f = new File(tempDir, String.format("TESTres-%02d.zip", index));
-        Object serializer = expected.beginSerialize(f);
-        for (SourceFileGeneratedCode generatedCode : expected.getSourceFileGeneratedCodeList()) {
-            generatedCode.serialize(serializer);
+        StringWriter sw = new StringWriter();
+        if (stream) {
+            Object serializer = expected.beginSerialize(sw);
+            for (SourceFileGeneratedCode generatedCode : expected.getSourceFileGeneratedCodeList()) {
+                generatedCode.serialize(serializer);
+            }
+            expected.endSerialize(serializer);
         }
-        expected.endSerialize(serializer);
-
-        // next, deserialize 
-        CodeGenerationResponse actual = new CodeGenerationResponse(new ArrayList<>());
-        Object deserializer = CodeGenerationResponse.beginDeserialize(f);
-        SourceFileGeneratedCode generatedCode;
-        while ((generatedCode = SourceFileGeneratedCode.deserialize(deserializer)) != null) {
-            actual.getSourceFileGeneratedCodeList().add(generatedCode);
+        else {
+            expected.serialize(sw, serializeAllAsJson);
         }
-        CodeGenerationResponse.endDeserialize(deserializer);
+        String expectedOutput = sw.toString();
+        //System.out.println(expectedOutput);
+            
+        // next, deserialize
+        StringReader sr = new StringReader(expectedOutput);
+        CodeGenerationResponse actual;
+        if (stream) {
+            actual = new CodeGenerationResponse();
+            Object deserializer = actual.beginDeserialize(sr);
+            SourceFileGeneratedCode generatedCode;
+            while ((generatedCode = SourceFileGeneratedCode.deserialize(deserializer)) != null) {
+                actual.getSourceFileGeneratedCodeList().add(generatedCode);
+            }
+            actual.endDeserialize(deserializer);
+        }
+        else {
+            actual = CodeGenerationResponse.deserialize(sr);
+        }
 
         // finally, compare deserialized result with original
         assertEquals(actual, expected);
@@ -230,7 +263,7 @@ public class PersistenceTest {
                         }
                     }
                 }
-                return new Object[]{ count++, instance };
+                return new Object[]{ count++, instance, randGen.nextBoolean(), randGen.nextBoolean() };
             }
         };
     }

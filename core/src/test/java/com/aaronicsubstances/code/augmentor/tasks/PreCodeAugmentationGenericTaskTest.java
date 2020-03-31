@@ -4,6 +4,7 @@ import static org.testng.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -78,24 +79,22 @@ public class PreCodeAugmentationGenericTaskTest {
         String expectedPrepFileContents = TestResourceLoader.loadResource(
             jsonPath.replace(".json", "-expected-prep.json"), getClass());
         PreCodeAugmentationResult expResult = PreCodeAugmentationResult.deserialize(
-            expectedPrepFileContents);
+            new StringReader(expectedPrepFileContents));
         List<CodeGenerationRequest> expectedRequests = new ArrayList<>(); 
         for (int i = 0; i < task.getAugCodeDestFiles().size(); i++) {
             String reqPath = jsonPath.replace(".json",
                 "-expected-request-" + i + ".json");
             String contents = TestResourceLoader.loadResource(
                 reqPath, getClass());
-            CodeGenerationRequest exp = CodeGenerationRequest.deserialize(contents);
+            CodeGenerationRequest exp = CodeGenerationRequest.deserialize(new StringReader(contents));
             expectedRequests.add(exp);
         }
         task.execute();
         if (!task.getAllErrors().isEmpty()) {
             fail("Unexpected errors: " + task.getAllErrors());
         }
-        String actualPrepFileContents = FileUtils.readFileToString(task.getParseResultsFile(),
-            task.getCharset());
         PreCodeAugmentationResult actualResult = PreCodeAugmentationResult.deserialize(
-            actualPrepFileContents);
+            task.getParseResultsFile());
         // to enable easier testing, don't require dir (we won't know temp dir on every
         // host dev't machine), and content hash
         for (SourceFileDescriptor f : actualResult.getFileDescriptors()) {
