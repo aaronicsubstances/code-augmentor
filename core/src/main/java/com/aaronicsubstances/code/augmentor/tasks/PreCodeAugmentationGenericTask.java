@@ -91,6 +91,7 @@ public class PreCodeAugmentationGenericTask {
                 // previous errors.
                 if (allErrors.isEmpty()) {
                     // write out descriptor.
+                    s.setFileIndex(i);
                     s.setDir(baseDir.getPath());
                     s.setRelativePath(relativePath);
                     s.setContentHash(inputHash);

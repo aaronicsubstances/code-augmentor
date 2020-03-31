@@ -1,11 +1,11 @@
 {
-	"relativePaths" : [ "task-spec-00-0.java", "task-spec-00-1.java" ],
+	"relativePaths" : [ "task-spec-01-0.java", "task-spec-01-1.java" ],
 	"genCodeStartSuffixes" : [ "GS" ],
 	"genCodeEndSuffixes" : [ "GE" ],
 	"embeddedStringDoubleSlashSuffixes" : [ "ES" ],
-	"parseResultsFile" : "task-spec-00-actual-prep.json",
+	"parseResultsFile" : "task-spec-01-actual-prep.json",
 	"augCodeSuffixes" : [{
-		"file": "task-spec-00-actual-request-0.zip",
+		"file": "task-spec-01-actual-request-0.zip",
 		"suffixes": [ "JS" ]
 	}]
 }

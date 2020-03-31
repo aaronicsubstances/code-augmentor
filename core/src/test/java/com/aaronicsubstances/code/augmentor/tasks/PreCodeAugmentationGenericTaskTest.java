@@ -115,7 +115,8 @@ public class PreCodeAugmentationGenericTaskTest {
     @DataProvider
     public Object[][] createTestExecuteData() {
         return new Object[][]{
-            new Object[] { "task-spec-00.json" }
+            new Object[] { "task-spec-00.json" },
+            new Object[] { "task-spec-01.json" }
         };
     }
 

@@ -2,10 +2,14 @@ package com.aaronicsubstances.code.augmentor.models;
 
 import java.util.List;
 
+import com.google.gson.annotations.SerializedName;
+
 public class AugmentingCode {
     
     public static class Block {
+        @SerializedName("content")
         private String content;
+        @SerializedName("stringify")
         private boolean stringify;
 
         public Block() {
@@ -66,8 +70,11 @@ public class AugmentingCode {
         }
     }
 
+    @SerializedName("index")
     private int index;
+    @SerializedName("blocks")
     private List<Block> blocks;
+    @SerializedName("comment_suffix")
     private String commentSuffix;
 
     public AugmentingCode() {

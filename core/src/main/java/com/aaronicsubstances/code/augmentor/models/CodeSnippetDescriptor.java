@@ -1,12 +1,19 @@
 package com.aaronicsubstances.code.augmentor.models;
 
+import com.google.gson.annotations.SerializedName;
+
 public class CodeSnippetDescriptor {
 
     public static class AugmentingCodeDescriptor {
+        @SerializedName("index")
         private int index = 0;
+        @SerializedName("start_pos")
         private int startPos = 0;
+        @SerializedName("end_pos")
         private int endPos = 0;
+        @SerializedName("indent")
         private String indent;
+        @SerializedName("slash_star")
         private boolean annotatedWithSlashStar;
 
         public int getIndex() {
@@ -95,7 +102,9 @@ public class CodeSnippetDescriptor {
     }
 
     public static class GeneratedCodeDescriptor {
+        @SerializedName("start_pos")
         private int startPos = 0;
+        @SerializedName("end_pos")
         private int endPos = 0;
 
         public GeneratedCodeDescriptor() {
@@ -153,7 +162,9 @@ public class CodeSnippetDescriptor {
         }
     }
     
+    @SerializedName("augmenting_code")
     private AugmentingCodeDescriptor augmentingCodeDescriptor;
+    @SerializedName("generated_code")
     private GeneratedCodeDescriptor generatedCodeDescriptor;
 
     public CodeSnippetDescriptor() {

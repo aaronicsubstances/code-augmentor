@@ -9,10 +9,14 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import com.aaronicsubstances.code.augmentor.tasks.TaskUtils;
+import com.google.gson.annotations.SerializedName;
 
 public class SourceFileAugmentingCode {
+    @SerializedName("file_index")
     private int fileIndex;
+    @SerializedName("rel_path")
     private String relativePath;
+    @SerializedName("augmenting_codes")
     private List<AugmentingCode> augmentingCodeList;
 
     public SourceFileAugmentingCode() {
