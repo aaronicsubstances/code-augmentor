@@ -1,4 +1,4 @@
-package com.aaronicsubstances.code.augmentor.models;
+package com.aaronicsubstances.code.augmentor.persistence;
 
 import static org.testng.Assert.assertEquals;
 
@@ -9,9 +9,18 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
+import com.aaronicsubstances.code.augmentor.models.AugmentingCode;
 import com.aaronicsubstances.code.augmentor.models.AugmentingCode.Block;
+import com.aaronicsubstances.code.augmentor.models.CodeGenerationRequest;
+import com.aaronicsubstances.code.augmentor.models.CodeGenerationResponse;
+import com.aaronicsubstances.code.augmentor.models.CodeSnippetDescriptor;
 import com.aaronicsubstances.code.augmentor.models.CodeSnippetDescriptor.AugmentingCodeDescriptor;
 import com.aaronicsubstances.code.augmentor.models.CodeSnippetDescriptor.GeneratedCodeDescriptor;
+import com.aaronicsubstances.code.augmentor.models.GeneratedCode;
+import com.aaronicsubstances.code.augmentor.models.PreCodeAugmentationResult;
+import com.aaronicsubstances.code.augmentor.models.SourceFileAugmentingCode;
+import com.aaronicsubstances.code.augmentor.models.SourceFileDescriptor;
+import com.aaronicsubstances.code.augmentor.models.SourceFileGeneratedCode;
 
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;

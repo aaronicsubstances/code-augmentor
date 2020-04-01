@@ -4,7 +4,7 @@ import java.io.BufferedReader;
 import java.io.PrintWriter;
 import java.util.List;
 
-import com.aaronicsubstances.code.augmentor.tasks.TaskUtils;
+import com.aaronicsubstances.code.augmentor.persistence.PersistenceUtil;
 import com.google.gson.annotations.SerializedName;
 
 public class SourceFileAugmentingCode {
@@ -47,20 +47,16 @@ public class SourceFileAugmentingCode {
     }
 
 	public void serialize(Object serializer) throws Exception {
-        PrintWriter writer = (PrintWriter) serializer;
-        String s = TaskUtils.serializeCompactlyToJson(this);
+        PrintWriter writer = ((PersistenceUtil) serializer).getPrintWriter();
+        String s = PersistenceUtil.serializeCompactlyToJson(this);
         writer.println(s);
     }
 
 	public static SourceFileAugmentingCode deserialize(Object deserializer) throws Exception {
-        BufferedReader reader = (BufferedReader) deserializer;
+        BufferedReader reader = ((PersistenceUtil) deserializer).getBufferedReader();
         String line;
         while ((line = reader.readLine()) != null) {
-            // ignore comments and blank lines.
-            if (line.startsWith("#") || line.trim().isEmpty()) {
-                continue;
-            }
-            SourceFileAugmentingCode instance = TaskUtils.deserializeFromJson(line,
+            SourceFileAugmentingCode instance = PersistenceUtil.deserializeFromJson(line,
                 SourceFileAugmentingCode.class);
             return instance;
         }

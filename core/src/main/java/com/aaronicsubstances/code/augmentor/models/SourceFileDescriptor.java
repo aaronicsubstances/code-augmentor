@@ -2,16 +2,13 @@ package com.aaronicsubstances.code.augmentor.models;
 
 import java.util.List;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.aaronicsubstances.code.augmentor.persistence.PersistenceUtil;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
 public class SourceFileDescriptor {
-    private static final Gson JSON_CONVERT = new GsonBuilder().setPrettyPrinting().create();
-
     @SerializedName("file_index")
     private int fileIndex;
     @SerializedName("dir")
@@ -92,17 +89,18 @@ public class SourceFileDescriptor {
     }
 
     public void serialize(Object serializer) throws Exception {    
-        JsonWriter writer = (JsonWriter) serializer;
-        JSON_CONVERT.toJson(this, SourceFileDescriptor.class, writer);
+        JsonWriter writer = ((PersistenceUtil) serializer).getJsonWriter();
+        PersistenceUtil.JSON_CONVERT.toJson(this, SourceFileDescriptor.class, writer);
         writer.flush();
     }
 
     public static SourceFileDescriptor deserialize(Object deserializer) throws Exception {
-        JsonReader reader = (JsonReader) deserializer;
+        JsonReader reader = ((PersistenceUtil) deserializer).getJsonReader();
         if (reader.peek() == JsonToken.END_ARRAY) {
             return null;
         }
-        SourceFileDescriptor obj = JSON_CONVERT.fromJson(reader, SourceFileDescriptor.class);
+        SourceFileDescriptor obj = PersistenceUtil.JSON_CONVERT.fromJson(reader, 
+            SourceFileDescriptor.class);
         return obj;
     }
 

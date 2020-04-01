@@ -11,7 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.aaronicsubstances.code.augmentor.tasks.TaskUtils;
+import com.aaronicsubstances.code.augmentor.persistence.PersistenceUtil;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
@@ -60,11 +60,14 @@ public class PreCodeAugmentationResult {
     public Object beginSerialize(File file) throws Exception {        
         OutputStreamWriter stream = new OutputStreamWriter(
             new FileOutputStream(file), StandardCharsets.UTF_8);
-        Object serializer = beginSerialize(stream);
+        Object serializer = beginSerialize(stream, true);
         return serializer;
     }
-
     public Object beginSerialize(Writer stream) throws Exception {
+        return beginSerialize(stream, false);
+    }
+
+    private PersistenceUtil beginSerialize(Writer stream, boolean closeStream) throws Exception {
         JsonWriter writer = new JsonWriter(stream);
         writer.setIndent("  ");
         writer.beginObject();
@@ -72,15 +75,21 @@ public class PreCodeAugmentationResult {
         writer.name("gen_code_end_suffix").value(genCodeEndSuffix);
         writer.name("files");
         writer.beginArray();
-        return writer;
+        return new PersistenceUtil(writer, closeStream);
     }
 
     public void endSerialize(Object serializer) throws Exception {
-        if (serializer != null) {
-            JsonWriter writer = (JsonWriter) serializer;
+        PersistenceUtil persistenceUtil = (PersistenceUtil) serializer;
+        JsonWriter writer = persistenceUtil.getJsonWriter();
+        try {
             writer.endArray();
             writer.endObject();
-            writer.close();
+            writer.flush();
+        }
+        finally {
+            if (persistenceUtil.isCloseWhenDone()) {
+                writer.close();
+            }
         }
     }
 
@@ -92,7 +101,7 @@ public class PreCodeAugmentationResult {
     }
 
     public void serialize(Writer writer) throws Exception {
-        String json = TaskUtils.serializeToJson(this);
+        String json = PersistenceUtil.serializeToJson(this);
         writer.write(json);
         writer.flush();
     }
@@ -100,11 +109,15 @@ public class PreCodeAugmentationResult {
     public Object beginDeserialize(File file) throws Exception {    
         InputStreamReader stream = new InputStreamReader(
             new FileInputStream(file), StandardCharsets.UTF_8);
-        Object serializer = beginDeserialize(stream);
+        Object serializer = beginDeserialize(stream, true);
         return serializer;
     }
 
     public Object beginDeserialize(Reader stream) throws Exception {
+        return beginDeserialize(stream, false);
+    }
+
+    private PersistenceUtil beginDeserialize(Reader stream, boolean closeStream) throws Exception {
         JsonReader reader = new JsonReader(stream);
         reader.beginObject();
         String name;
@@ -124,18 +137,22 @@ public class PreCodeAugmentationResult {
         reader.beginArray();
 
         fileDescriptors = new ArrayList<>();
-        return reader;
+        return new PersistenceUtil(reader, closeStream);
     }
 
     public void endDeserialize(Object deserializer) throws Exception {
-        JsonReader reader = (JsonReader) deserializer;
-        reader.close();
+        PersistenceUtil persistenceUtil = (PersistenceUtil) deserializer;
+        JsonReader reader = persistenceUtil.getJsonReader();
+        if (persistenceUtil.isCloseWhenDone()) {
+            reader.close();
+        }
     }
 
     public static PreCodeAugmentationResult deserialize(File file) throws Exception {
-        Reader reader = new InputStreamReader(new FileInputStream(file), 
-            StandardCharsets.UTF_8);
-        return deserialize(reader);
+        try (Reader reader = new InputStreamReader(new FileInputStream(file), 
+                StandardCharsets.UTF_8)) {
+            return deserialize(reader);
+        }
     }
 
 	public static PreCodeAugmentationResult deserialize(Reader reader) throws Exception {

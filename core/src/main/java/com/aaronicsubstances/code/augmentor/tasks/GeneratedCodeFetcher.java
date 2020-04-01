@@ -45,7 +45,7 @@ public class GeneratedCodeFetcher {
             SourceFileGeneratedCode fileGenCode;
             if (!firstPrepare) {
                 fileGenCode = lastFetches.get(i);
-                if (fileGenCode == null || fileGenCode.getFileIndex() != fileIndex) {
+                if (fileGenCode == null || fileIndex <= fileGenCode.getFileIndex()) {
                     continue;
                 }
             }

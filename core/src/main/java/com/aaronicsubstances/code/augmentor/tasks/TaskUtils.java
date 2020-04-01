@@ -1,6 +1,5 @@
 package com.aaronicsubstances.code.augmentor.tasks;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,7 +8,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
@@ -19,15 +17,11 @@ import java.util.Base64;
 import com.aaronicsubstances.code.augmentor.parsing.TokenSupplier;
 import com.aaronicsubstances.code.augmentor.parsing.java.JavaParser;
 import com.aaronicsubstances.code.augmentor.parsing.kotlin.KotlinParser;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 /**
  * Exposes helper methods for generic tasks
  */
 public class TaskUtils {
-    private static final Gson JSON_CONVERT = new GsonBuilder().setPrettyPrinting().create();
-    private static final Gson JSON_CONVERT_COMPACT = new Gson();
 
     public static String getFileExt(String path) {
         int index = path.lastIndexOf(".");
@@ -88,45 +82,11 @@ public class TaskUtils {
         }
     }
 
-	public static String serializeCompactlyToJson(Object obj) {
-		return JSON_CONVERT_COMPACT.toJson(obj);
-	}
-
-	public static String serializeToJson(Object obj) {
-		return JSON_CONVERT.toJson(obj);
-	}
-
-	public static <T> T deserializeFromJson(String s, Class<T> cls) {
-		return JSON_CONVERT.fromJson(s, cls);
-	}
-
 	public static void copyFile(File srcFile, File destFile) throws IOException {
         try (InputStream inputStream = new FileInputStream(srcFile)) {
             try (OutputStream outputStream = new FileOutputStream(destFile)) {
                 copyStream(inputStream, outputStream);
             }
         }
-	}
-
-	public static String readFully(Reader rdr) throws IOException {
-        StringBuilder str = new StringBuilder();
-        char[] chars  = new char[8192];
-        int len;
-        while ((len = rdr.read(chars)) > 0) {
-            str.append(chars, 0, len);
-        }
-        return str.toString();
-	}
-
-	public static boolean peekSerializedJsonForPerFile(BufferedReader bufRdr) throws IOException {		
-        // decide between per-line json or per-file json
-        boolean perFile = false;
-        bufRdr.mark(1);
-        int firstCh = bufRdr.read();
-        bufRdr.reset();
-        if (firstCh == '[') {
-            perFile = true;
-        }
-        return perFile;
 	}
 }
