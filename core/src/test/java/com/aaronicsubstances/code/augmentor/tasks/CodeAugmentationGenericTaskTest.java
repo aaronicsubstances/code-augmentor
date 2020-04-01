@@ -108,7 +108,9 @@ public class CodeAugmentationGenericTaskTest {
     public Object[][] createTestExecuteData() {
         return new Object[][]{
             new Object[] { "task-spec-00.json", true },
-            new Object[] { "task-spec-00-1.json", true }
+            new Object[] { "task-spec-00-1.json", true },
+            new Object[] { "task-spec-01.json", true },
+            new Object[] { "task-spec-02.json", true }
         };
     }
 

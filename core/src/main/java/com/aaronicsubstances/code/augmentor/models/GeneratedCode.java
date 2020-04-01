@@ -1,9 +1,15 @@
 package com.aaronicsubstances.code.augmentor.models;
 
+import com.google.gson.annotations.SerializedName;
+
 public class GeneratedCode {
+    @SerializedName("index")
     private int index;
+    @SerializedName("error")
     private boolean error;
+    @SerializedName("header")
     private String headerContent;
+    @SerializedName("body")
     private String bodyContent;
 
     public int getIndex() {

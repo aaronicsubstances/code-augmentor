@@ -15,10 +15,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.persistence.PersistenceUtil;
-import com.google.gson.annotations.SerializedName;
 
 public class CodeGenerationRequest {
-    @SerializedName("files")
     private List<SourceFileAugmentingCode> sourceFileAugmentingCodeList;
 
     public CodeGenerationRequest() {

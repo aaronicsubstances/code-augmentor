@@ -62,7 +62,7 @@ By employing *CodeAugmentor*, one can develop a strategy of settling for a simpl
 
 ## To Be Done
 
-This project is a work in progress (first version is yet to be released). Already Apache Ant tasks have been implemented for experimenting with the features of the project. But the vision is to develop standalone command line application, and Maven and Gradle plugins.
+This project is a work in progress (first version is yet to be released). The vision is to develop standalone command line application, Maven and Gradle plugins.
 
 Currently Java and Android are the supported platform targets. Depending on how this project evolves, .NET Core will be considered as well.
 

@@ -19,6 +19,7 @@ public class GeneratedCodeFetcher {
         this.codeGenerationResponseReaders = new ArrayList<>();
         for (File f : generatedCodeFiles) {
             CodeGenerationResponse instance = new CodeGenerationResponse();
+            codeGenerationResponses.add(instance);
             Object codeGenRespRdr = instance.beginDeserialize(f);
             codeGenerationResponseReaders.add(codeGenRespRdr);
         }
@@ -81,6 +82,11 @@ public class GeneratedCodeFetcher {
                 break;
             }
         }
+        /*if (nextGenCode == null) {
+            System.out.println("codeGenerationResponses for (" + fileIndex + ", " + augCodeIndex + "): " + 
+                codeGenerationResponses);
+            System.out.println("lastFetches: " + lastFetches);
+        }*/
         return nextGenCode;
 	}
 }

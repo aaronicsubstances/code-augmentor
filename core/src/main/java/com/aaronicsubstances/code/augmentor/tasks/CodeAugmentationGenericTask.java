@@ -65,10 +65,12 @@ public class CodeAugmentationGenericTask {
             
             Instant startInstant = Instant.now();
             String sourceCode = TaskUtils.readFile(srcFile, charset);
-            String inputHash = TaskUtils.calcHash(sourceCode, charset);
-            if (!inputHash.equals(sourceFileDescriptor.getContentHash())) {
-                throw new GenericTaskException(String.format("Changes to source files detected in %s. Regeneration required.",
-                    srcFile));
+            if (sourceFileDescriptor.getContentHash() != null) {
+                String inputHash = TaskUtils.calcHash(sourceCode, charset);
+                if (!inputHash.equals(sourceFileDescriptor.getContentHash())) {
+                    throw new GenericTaskException(String.format("Changes to source files detected in %s. Regeneration required.",
+                        srcFile));
+                }
             }
 
             generatedCodeFetcher.prepareForFile(sourceFileDescriptor.getFileIndex());
@@ -148,7 +150,7 @@ public class CodeAugmentationGenericTask {
                 else {
                     diff = transformer.addTransform(genCode, augCodeDescriptor.getEndPos());
                 }
-                if (headerImport != null && sourceFileDescriptor.getHeaderInsertPos() < augCodeDescriptor.getStartPos()) {
+                if (headerImport != null && sourceFileDescriptor.getHeaderInsertPos() > augCodeDescriptor.getStartPos()) {
                     headerPosInc += diff;
                 }                
             }
@@ -186,9 +188,6 @@ public class CodeAugmentationGenericTask {
     }
 
     static List<String> filterImports(List<String> sourceFileImports, List<String> existingImports) {
-        if (existingImports.isEmpty()) {
-            return sourceFileImports;
-        }
         List<String> filtered = new ArrayList<>();
         for (String imp : sourceFileImports) {
             if (existingImports.contains(imp)) {
@@ -209,7 +208,8 @@ public class CodeAugmentationGenericTask {
                     continue;
                 }
             }
-            filtered.add(imp);
+			// add back semi-colons. mandatory for Java, not a problem for Kotlin.
+            filtered.add(imp + ';');
         }
         return filtered;
     }
