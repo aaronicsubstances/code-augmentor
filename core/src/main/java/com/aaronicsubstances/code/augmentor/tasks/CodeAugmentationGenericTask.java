@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import com.aaronicsubstances.code.augmentor.models.CodeSnippetDescriptor;
 import com.aaronicsubstances.code.augmentor.models.GeneratedCode;
@@ -68,7 +69,7 @@ public class CodeAugmentationGenericTask {
 
             // fetch applicable generated code per aug code descriptor.
             List<List<Token>> parsedGeneratedCodes = new ArrayList<>();
-            List<String> sourceFileImports = new ArrayList<>();
+            List<Token> sourceFileImports = new ArrayList<>();
             for (CodeSnippetDescriptor snippetDescriptor : sourceFileDescriptor.getBodySnippets()) {
                 AugmentingCodeDescriptor augCodeDescriptor = snippetDescriptor.getAugmentingCodeDescriptor();
                 int augCodeIndex = augCodeDescriptor.getIndex();
@@ -84,9 +85,9 @@ public class CodeAugmentationGenericTask {
                         describeAugCodeSection(sourceCode, augCodeDescriptor, srcFile) + ":\n" +
                         genCode.getBodyContent());
                 }
-                List<String> headerImports;
+                List<Token> headerImports;
                 try {
-                    headerImports = parseHeaderImports(sourceFileDescriptor.getRelativePath(),
+                    headerImports = parseOutHeaderImports(sourceFileDescriptor.getRelativePath(),
                         genCode);
                 }
                 catch (ParserException ex) {
@@ -196,23 +197,30 @@ public class CodeAugmentationGenericTask {
         return tokens;
     }
 
-    private static List<String> parseHeaderImports(String relativePath, GeneratedCode genCode) {
+    private static List<Token> parseOutHeaderImports(String relativePath, GeneratedCode genCode) {
         String headerContent = genCode.getHeaderContent();
         if (headerContent == null) {
             return Arrays.asList();
         }
         
         List<Token> tokens = TaskUtils.parseSourceCode(relativePath, headerContent).parse();
-        List<String> headerImports = CodeGenerationRequestCreator.getNormalizedImportStatements(tokens);
+        List<Token> headerImports = tokens.stream()
+            .filter(x -> x.type == Token.TYPE_IMPORT_STATEMENT)
+            .collect(Collectors.toList());
         return headerImports;
     }
 
-    static List<String> filterImports(List<String> sourceFileImports, List<String> existingImports) {
+    static List<String> filterImports(List<Token> sourceFileImports, List<String> existingImports) {
         List<String> filtered = new ArrayList<>();
-        for (String imp : sourceFileImports) {
+        for (Token impToken : sourceFileImports) {
+            String imp = (String)impToken.value.get(Token.VALUE_KEY_IMPORT_STATEMENT);
             if (existingImports.contains(imp)) {
                 continue;
             }
+            // Don't process Kotlin "as" keyword when
+            // looking for wild card matches.
+            // Ignore imperfections with Kotlin backticks, as long as
+            // Java wilcard matches works perfectly fine.
             if (!imp.contains(" as ") && !imp.endsWith(".*")) {
                 boolean wildcardMatchFound = false;
                 for (String e : existingImports) {
@@ -228,8 +236,7 @@ public class CodeAugmentationGenericTask {
                     continue;
                 }
             }
-			// add back semi-colons. mandatory for Java, not a problem for Kotlin.
-            filtered.add(imp + ';');
+            filtered.add(impToken.text);
         }
         return filtered;
     }

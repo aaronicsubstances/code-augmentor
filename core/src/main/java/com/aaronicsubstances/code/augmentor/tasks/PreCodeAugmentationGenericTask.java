@@ -76,7 +76,14 @@ public class PreCodeAugmentationGenericTask {
 
             // use file extension to parse as Java/Kotlin code.
             TokenSupplier tokenSupplier = TaskUtils.parseSourceCode(relativePath, input);
-            List<Token> tokens = tokenSupplier.parse();
+            List<Token> tokens;
+            try {
+            tokens = tokenSupplier.parse();
+            }
+            catch (ParserException ex) {
+                throw new GenericTaskException("Invalid source code in " + srcFile,
+                    ex);
+            }
 
             // Reset receiver variables.
             for (List<AugmentingCode> specAugCodes : specAugCodesList) {

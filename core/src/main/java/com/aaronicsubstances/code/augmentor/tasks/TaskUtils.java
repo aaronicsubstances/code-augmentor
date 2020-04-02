@@ -57,7 +57,7 @@ public class TaskUtils {
             case "kt":
                 return new KotlinParser(input);
             default:            
-                throw new RuntimeException("Unexpected file extension in " + relativePath);
+                throw new GenericTaskException("Unexpected file extension in " + relativePath);
         }
     }
 
