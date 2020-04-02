@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.aaronicsubstances.code.augmentor.parsing.LexerSupport;
+import com.aaronicsubstances.code.augmentor.core.parsing.LexerSupport;
 
 import org.apache.tools.ant.BuildException;
 

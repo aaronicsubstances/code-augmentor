@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.aaronicsubstances.code.augmentor.tasks.PreCodeAugmentationGenericTask;
+import com.aaronicsubstances.code.augmentor.core.tasks.PreCodeAugmentationGenericTask;
 
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.DirectoryScanner;

@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.aaronicsubstances.code.augmentor.tasks.CodeAugmentationGenericTask;
+import com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTask;
 
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
