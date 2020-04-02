@@ -1,4 +1,4 @@
-package com.aaronicsubstances.code.augmentor.tasks;
+package com.aaronicsubstances.code.augmentor.ant;
 
 /**
  * SuffixSpec

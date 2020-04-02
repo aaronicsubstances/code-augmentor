@@ -1,4 +1,4 @@
-package com.aaronicsubstances.code.augmentor.tasks;
+package com.aaronicsubstances.code.augmentor.ant;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,14 +16,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.aaronicsubstances.code.augmentor.models.AugmentingCode;
-import com.aaronicsubstances.code.augmentor.models.CodeGenerationRequest;
-import com.aaronicsubstances.code.augmentor.models.PreCodeAugmentationResult;
-import com.aaronicsubstances.code.augmentor.models.SourceFileAugmentingCode;
-import com.aaronicsubstances.code.augmentor.models.SourceFileDescriptor;
-import com.aaronicsubstances.code.augmentor.parsing.ParserException;
-import com.aaronicsubstances.code.augmentor.parsing.Token;
-import com.aaronicsubstances.code.augmentor.parsing.TokenSupplier;
+import com.aaronicsubstances.code.augmentor.tasks.PreCodeAugmentationGenericTask;
 
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.DirectoryScanner;
@@ -170,7 +163,7 @@ public class PreCodeAugmentationTask extends Task {
 
         Instant endInstant = Instant.now();
         long timeElapsed = Duration.between(startInstant, endInstant).toMillis();
-        logVerbose("completed in %s ms", timeElapsed);
+        //logVerbose("completed in %s ms", timeElapsed);
     }
 
     private void _execute() throws Exception {
@@ -201,125 +194,8 @@ public class PreCodeAugmentationTask extends Task {
                 log(sourceFile.getPath());
             }
         }
-
-        PreCodeAugmentationResult prepResult = new PreCodeAugmentationResult();
-        prepResult.setGenCodeStartSuffix(genCodeStartSuffixes.get(0).getValue());
-        prepResult.setGenCodeEndSuffix(genCodeEndSuffixes.get(0).getValue());
-        Object resultWriter = prepResult.beginSerialize(parseResultsFile);
-
-        List<Object> codeGenRequestWriters = new ArrayList<>();
-        List<CodeGenerationRequest> codeGenRequests = new ArrayList<>();
-        for (CodeGenerationRequestSpecification spec : requestSpecList) {
-            CodeGenerationRequest codeGenRequest = new CodeGenerationRequest();
-            codeGenRequests.add(codeGenRequest);
-            Object requestWriter = codeGenRequest.beginSerialize(spec.getAugCodeDestFile());
-            codeGenRequestWriters.add(requestWriter);
-        }
-
-        List<List<String>> augCodeSuffixes = new ArrayList<>();
-        for (CodeGenerationRequestSpecification r : requestSpecList) {
-            augCodeSuffixes.add(r.getAugCodeSuffixes().stream().map(s -> s.getValue()).collect(Collectors.toList()));
-        } 
-        CodeGenerationRequestCreator codeGenerationRequestCreator =
-            new CodeGenerationRequestCreator(
-                this.genCodeStartSuffixes.stream().map(s -> s.getValue()).collect(Collectors.toList()),
-                this.genCodeEndSuffixes.stream().map(s -> s.getValue()).collect(Collectors.toList()),
-                this.embeddedStringDoubleSlashSuffixes.stream().map(s -> s.getValue()).collect(Collectors.toList()),
-                augCodeSuffixes);
-
-        List<List<AugmentingCode>> specAugCodesList = new ArrayList<>();
-        for (int i = 0; i < requestSpecList.size(); i++) {
-            specAugCodesList.add(new ArrayList<>());
-        }
-
-        Map<String, List<ParserException>> errorMap = null;
-
-        for (int i = 0; i < sourceFilenames.size(); i++) {
-            String relativePath = sourceFilenames.get(i);
-            File baseDir = baseDirs.get(i);
-            File srcFile = new File(baseDir, relativePath); 
-            logVerbose("Preparing %s", srcFile);
-            Instant startInstant = Instant.now();
-            String input = TaskUtils.readFile(srcFile, charset);
-            String inputHash = TaskUtils.calcHash(input, charset);
-
-            // use file extension to parse as Java/Kotlin code.
-            TokenSupplier tokenSupplier = TaskUtils.parseSourceCode(relativePath, input);
-            List<Token> tokens = tokenSupplier.parse();
-
-            // Reset receiver variables.
-            for (List<AugmentingCode> specAugCodes : specAugCodesList) {
-                specAugCodes.clear();
-            }
-
-            List<ParserException> errors = new ArrayList<>();
-        
-            SourceFileDescriptor s = codeGenerationRequestCreator.processSourceFile(
-                tokenSupplier.getInputSource(), tokens, specAugCodesList, errors);
-            if (s != null) {
-                if (errorMap == null) {
-                    // write out descriptor.
-                    s.setDir(baseDir.getPath());
-                    s.setRelativePath(relativePath);
-                    s.setContentHash(inputHash);
-                    s.serialize(resultWriter);
-
-                    // serialize aug codes
-                    for (int j = 0; j < requestSpecList.size(); j++) {
-                        Object requestWriter = codeGenRequestWriters.get(j);
-                        List<AugmentingCode> specAugCodes = specAugCodesList.get(j);
-                        if (specAugCodes.isEmpty()) {
-                            continue;
-                        }
-                        SourceFileAugmentingCode sourceFileAugCode = new SourceFileAugmentingCode(
-                            specAugCodes);
-                        sourceFileAugCode.setFileIndex(i);
-                        sourceFileAugCode.setRelativePath(s.getRelativePath());
-                        sourceFileAugCode.serialize(requestWriter);
-                    }
-                }
-            }
-            else {
-                // investigate errors.
-                if (errorMap == null) {
-                    errorMap = new LinkedHashMap<>();
-                }
-                log(String.format("%s error(s) encountered in %s", errors.size(), srcFile),
-                    Project.MSG_WARN);
-                errorMap.put(relativePath, errors);
-            }
-            
-            Instant endInstant = Instant.now();
-            long timeElapsed = Duration.between(startInstant, endInstant).toMillis();
-            logVerbose("done in %s ms", timeElapsed);
-        }
-
-        // close writers
-        prepResult.endSerialize(resultWriter);
-        for (int i = 0; i < codeGenRequests.size(); i++) {
-            CodeGenerationRequest codeGenRequest = codeGenRequests.get(i);
-            Object codeGenRequestWriter = codeGenRequestWriters.get(i);
-            codeGenRequest.endSerialize(codeGenRequestWriter);
-        }
-
-        // if there are errors, fail build
-        if (errorMap != null) { 
-            int errorCount = 0;
-            for (Map.Entry<String, List<ParserException>> sourceFileErrors : errorMap.entrySet()) {
-                String srcPath = sourceFileErrors.getKey();
-                List<ParserException> errors = sourceFileErrors.getValue();
-                for (ParserException error: errors) {
-                    log("Error in " + srcPath + ":" + error, Project.MSG_ERR);
-                    errorCount++;
-                }
-            }
-            throw new BuildException(errorCount + "error(s) encountered.");
-        }
-    }
-
-    private void logVerbose(String message, Object... args) {
-        if (verbose) {
-            log("[" + String.format(message, args) + "]", Project.MSG_VERBOSE);
-        }
+		
+        PreCodeAugmentationGenericTask genericTask = new PreCodeAugmentationGenericTask();
+		genericTask.execute();
     }
 }

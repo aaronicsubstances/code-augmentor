@@ -1,4 +1,4 @@
-package com.aaronicsubstances.code.augmentor.tasks;
+package com.aaronicsubstances.code.augmentor.ant;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -14,7 +14,7 @@ public class CodeGenerationRequestSpecification {
     private final List<SuffixSpec> augCodeSuffixes;
 
     public static SuffixSpec validateCommentMarkerSuffix(SuffixSpec suffix) {
-        if (TaskUtils.isNullOrEmpty(suffix.getValue())) {
+        if (suffix.getValue() == null || suffix.getValue().isEmpty()) {
             throw new BuildException("value attribute not specified.");
         }
         // Ensure suffix does not contain newlines.
