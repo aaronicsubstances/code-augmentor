@@ -37,7 +37,10 @@
         "startPos": 20,
         "endPos": 21,
         "lineNumber": 3,
-        "columnNumber": 4
+        "columnNumber": 4,
+        "value": {
+            "ws_reqd": true
+        }
     },
     {
         "type": 50,

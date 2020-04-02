@@ -18,6 +18,7 @@ public class Token {
     public static final int TYPE_OTHER = 50;
 
 	public static final String VALUE_KEY_IMPORT_STATEMENT = "import";
+	public static final String VALUE_KEY_WS_REQD = "ws_reqd";
 	
 	public final int type;
 	public final String text;

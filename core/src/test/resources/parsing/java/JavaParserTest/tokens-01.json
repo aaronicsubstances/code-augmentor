@@ -56,7 +56,10 @@
         "startPos": 87,
         "endPos": 88,
         "lineNumber": 6,
-        "columnNumber": 7
+        "columnNumber": 7,
+        "value": {
+            "ws_reqd" : true
+        }
     },
     {
         "type": 50,
@@ -72,7 +75,10 @@
         "startPos": 93,
         "endPos": 94,
         "lineNumber": 6,
-        "columnNumber": 13
+        "columnNumber": 13,
+        "value": {
+            "ws_reqd" : true
+        }
     },
     {
         "type": 50,
@@ -128,7 +134,10 @@
         "startPos": 113,
         "endPos": 114,
         "lineNumber": 7,
-        "columnNumber": 12
+        "columnNumber": 12,
+        "value": {
+            "ws_reqd" : true
+        }
     },
     {
         "type": 50,
@@ -144,7 +153,10 @@
         "startPos": 120,
         "endPos": 121,
         "lineNumber": 7,
-        "columnNumber": 19
+        "columnNumber": 19,
+        "value": {
+            "ws_reqd" : true
+        }
     },
     {
         "type": 50,
@@ -280,7 +292,10 @@
         "startPos": 184,
         "endPos": 185,
         "lineNumber": 10,
-        "columnNumber": 11
+        "columnNumber": 11,
+        "value": {
+            "ws_reqd" : true
+        }
     },
     {
         "type": 50,
@@ -296,7 +311,10 @@
         "startPos": 191,
         "endPos": 192,
         "lineNumber": 10,
-        "columnNumber": 18
+        "columnNumber": 18,
+        "value": {
+            "ws_reqd" : true
+        }
     },
     {
         "type": 50,
@@ -312,7 +330,10 @@
         "startPos": 197,
         "endPos": 198,
         "lineNumber": 10,
-        "columnNumber": 24
+        "columnNumber": 24,
+        "value": {
+            "ws_reqd" : true
+        }
     },
     {
         "type": 50,

@@ -105,8 +105,8 @@ public class CodeAugmentationGenericTask {
                 }
                 List<Token> tokens;
                 try {
-                    tokens = TaskUtils.parseSourceCode(sourceFileDescriptor.getRelativePath(), 
-                        genCode.getBodyContent()).parse();
+                    tokens = parseSourceCode(sourceFileDescriptor.getRelativePath(), 
+                        genCode.getBodyContent());
                 }
                 catch (ParserException ex) {
                     throw new GenericTaskException("Invalid generated code for " +
@@ -137,6 +137,7 @@ public class CodeAugmentationGenericTask {
             // Now merge generated code into source code.
             SourceCodeTransformer transformer = new SourceCodeTransformer(sourceCode);
             int headerPosInc = 0;
+            boolean changesDetected = false;
             for (int i = 0; i < generatedCodes.size(); i++) {
                 CodeSnippetDescriptor snippetDescriptor = sourceFileDescriptor.getBodySnippets().get(i);
                 AugmentingCodeDescriptor augCodeDescriptor = snippetDescriptor.getAugmentingCodeDescriptor();
@@ -146,9 +147,17 @@ public class CodeAugmentationGenericTask {
                 if (genCodeDescriptor != null) {
                     diff = transformer.addTransform(genCode, genCodeDescriptor.getStartPos(),
                         genCodeDescriptor.getEndPos());
+                    if (!changesDetected) {
+                        String prevGenCode = sourceCode.substring(genCodeDescriptor.getStartPos(), 
+                            genCodeDescriptor.getEndPos());
+                        if (!genCode.equals(prevGenCode)) {
+                            changesDetected = true;
+                        }
+                    }
                 }
                 else {
                     diff = transformer.addTransform(genCode, augCodeDescriptor.getEndPos());
+                    changesDetected = true;
                 }
                 if (headerImport != null && sourceFileDescriptor.getHeaderInsertPos() > augCodeDescriptor.getStartPos()) {
                     headerPosInc += diff;
@@ -157,8 +166,9 @@ public class CodeAugmentationGenericTask {
 
             String transformedCode = transformer.getTransformedText();
             File destFile = new File(destdir, sourceFileDescriptor.getRelativePath());
-            if (!sourceCode.equals(transformedCode)) {
+            if (changesDetected) {
                 if (generate) {
+                    // Only insert header if changes are to be made.
                     if (headerImport != null) {
                         StringBuilder s = new StringBuilder(transformedCode);
                         s.insert(sourceFileDescriptor.getHeaderInsertPos() +
@@ -246,7 +256,7 @@ public class CodeAugmentationGenericTask {
             AugmentingCodeDescriptor augmentingCodeDescriptor, boolean canIndent) {
         boolean annotatedWithSlashStar = augmentingCodeDescriptor.isAnnotatedWithSlashStar();
         String formattedCode;
-        if (annotatedWithSlashStar && !LexerSupport.NEW_LINE_REGEX.matcher(content).find()) {
+        if (annotatedWithSlashStar) {
             // use slash star
             formattedCode = "/*" + genCodeStart + "*/" + content +
                 "/*" + genCodeEnd + "*/";
@@ -258,6 +268,11 @@ public class CodeAugmentationGenericTask {
                 indent + "//" + genCodeEnd + newline;
         }
         return formattedCode;
+    }
+
+    private List<Token> parseSourceCode(String relativePath, String sourceCode) {
+        List<Token> tokens = TaskUtils.parseSourceCode(relativePath, sourceCode).parse();
+        return tokens;
     }
 
     private static List<String> parseHeaderImports(String relativePath, GeneratedCode genCode) {

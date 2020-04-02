@@ -93,7 +93,8 @@ public class JavaParser implements TokenSupplier {
         List<Token> parseResults = new ArrayList<>();
         int prevEndPos = -1;
         int lineNumber = 1;
-        for (PegToken t : tokenList) {
+        for (int tIndex = 0; tIndex < tokenList.size(); tIndex++) {
+            PegToken t = tokenList.get(tIndex);
             int type;
             switch (t.type) {
                 case PegToken.TYPE_DS_COMMENT:
@@ -139,7 +140,9 @@ public class JavaParser implements TokenSupplier {
             String text = originalInput.substring(originalStartPos, originalEndPos);
             Map<String, Object> value = null;
             if (t.importStatement != null) {
-                value = new HashMap<>();
+                if (value == null) {
+                    value = new HashMap<>();
+                }
                 StringBuilder importStatementStr = new StringBuilder();
                 for (IndexRange range : t.importStatement) {
                     // make sure to use transformed input, not original.
@@ -165,13 +168,60 @@ public class JavaParser implements TokenSupplier {
             retToken.value = value;
             parseResults.add(retToken);
 
-            if (prevEndPos != -1) {
+            if (prevEndPos == -1) {
+                assert retToken.startPos == 0;
+            }
+            else {
                 assert prevEndPos == retToken.startPos;
             }
             prevEndPos = retToken.endPos;
             int lineNumberInc = LexerSupport.calculateLineAndColumnNumbers(text, text.length())[0];
             lineNumber += lineNumberInc - 1;
         }
+
+        // determine which whitespace tokens are mandatory.
+        for (int tIndex = 0; tIndex < tokenList.size();) {
+            // whitespace tokens are mandatory if they appear in between two tokens of types
+            // id, keyword or number. PegToken types which match are quasi id, import or
+            // package.
+            PegToken currRawToken = tokenList.get(tIndex);
+            boolean wsDelimitingPossible = false;
+            if (currRawToken.type == PegToken.TYPE_QUASI_ID) {
+                wsDelimitingPossible = true;
+            }
+            if (wsDelimitingPossible) {
+                // scan ahead while only whitespace characters are seen.
+                int scIndex = tIndex + 1;
+                PegToken nextRawTokenOfInterest = null;
+                while (scIndex < tokenList.size()) {
+                    PegToken search = tokenList.get(scIndex);
+                    if (search.type != PegToken.TYPE_NON_NEWLINE_WS &&
+                            search.type != PegToken.TYPE_NEWLINE) {
+                        nextRawTokenOfInterest = search;
+                        break;
+                    }
+                    scIndex++;
+                }
+                // if we hit another quasi id, import or package.
+                if (nextRawTokenOfInterest != null) {
+                    if (nextRawTokenOfInterest.type == PegToken.TYPE_QUASI_ID ||
+                            nextRawTokenOfInterest.type == PegToken.TYPE_PACKAGE ||
+                            nextRawTokenOfInterest.type == PegToken.TYPE_IMPORT) {
+                        Token processedToken = parseResults.get(scIndex - 1);
+                        assert processedToken.type == Token.TYPE_NON_NEWLINE_WHITESPACE ||
+                                processedToken.type == Token.TYPE_NEWLINE;
+                        if (processedToken.value == null) {
+                            processedToken.value = new HashMap<>();
+                        }
+                        processedToken.value.put(Token.VALUE_KEY_WS_REQD, true);
+                        tIndex = scIndex;
+                        continue;
+                    }
+                }
+            }
+            tIndex++;
+        }
+
         return parseResults;
     }
 }

@@ -78,13 +78,19 @@ public class TestResourceLoader {
         public static class Value {
             @SerializedName("import")
             public String _import;
+            public boolean ws_reqd;
         }
 
         public Token toToken() {
             Token t = new Token(type, text, startPos, endPos, lineNumber);
             if (value != null) {
                 t.value = new HashMap<>();
-                t.value.put(Token.VALUE_KEY_IMPORT_STATEMENT, value._import);
+                if (value._import != null) {
+                    t.value.put(Token.VALUE_KEY_IMPORT_STATEMENT, value._import);
+                }
+                if (value.ws_reqd) {
+                    t.value.put(Token.VALUE_KEY_WS_REQD, true);
+                }
             }
             return t;
         }

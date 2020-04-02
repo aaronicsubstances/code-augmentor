@@ -91,7 +91,10 @@
         "startPos": 145,
         "endPos": 146,
         "lineNumber": 4,
-        "columnNumber": 6
+        "columnNumber": 6,
+        "value": {
+            "ws_reqd": true
+        }
     },
     {
         "type": 50,
@@ -123,7 +126,10 @@
         "startPos": 154,
         "endPos": 155,
         "lineNumber": 4,
-        "columnNumber": 15
+        "columnNumber": 15,
+        "value": {
+            "ws_reqd": true
+        }
     },
     {
         "type": 50,
@@ -211,7 +217,10 @@
         "startPos": 179,
         "endPos": 180,
         "lineNumber": 5,
-        "columnNumber": 8
+        "columnNumber": 8,
+        "value": {
+            "ws_reqd": true
+        }
     },
     {
         "type": 50,
