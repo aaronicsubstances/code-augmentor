@@ -28,7 +28,7 @@ public class PreCodeAugmentationGenericTaskTest {
         public String[] genCodeStartSuffixes, genCodeEndSuffixes, embeddedStringDoubleSlashSuffixes;
         public AugCodeSpec[] augCodeSuffixes;
 
-        public String parseResultsFile;
+        public String prepFile;
 
         public static class AugCodeSpec {
             public String file;
@@ -56,7 +56,7 @@ public class PreCodeAugmentationGenericTaskTest {
             task.getBaseDirs().add(tempDir);
         }
         
-        task.setParseResultsFile(new File(tempDir, taskSpec.parseResultsFile));
+        task.setPrepFile(new File(tempDir, taskSpec.prepFile));
 
         task.setAugCodeDestFiles(Arrays.asList(taskSpec.augCodeSuffixes).stream().
             map(x -> new File(tempDir, x.file)).collect(Collectors.toList()));
@@ -92,7 +92,7 @@ public class PreCodeAugmentationGenericTaskTest {
             fail("Unexpected errors: " + task.getAllErrors());
         }
         PreCodeAugmentationResult actualResult = PreCodeAugmentationResult.deserialize(
-            task.getParseResultsFile());
+            task.getPrepFile());
         // to enable easier testing, don't require dir (we won't know temp dir on every
         // host dev't machine), and content hash
         for (SourceFileDescriptor f : actualResult.getFileDescriptors()) {
@@ -100,7 +100,7 @@ public class PreCodeAugmentationGenericTaskTest {
             f.setContentHash(null);
         }
         assertEquals(actualResult, expResult, 
-            "Unexpected contents found in " + task.getParseResultsFile());
+            "Unexpected contents found in " + task.getPrepFile());
         for (int i = 0; i < task.getAugCodeDestFiles().size(); i++) {
             File f = task.getAugCodeDestFiles().get(i);
             CodeGenerationRequest expected = expectedRequests.get(i);

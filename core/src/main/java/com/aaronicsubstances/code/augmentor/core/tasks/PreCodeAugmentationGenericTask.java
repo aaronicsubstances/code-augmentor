@@ -31,7 +31,7 @@ public class PreCodeAugmentationGenericTask {
 
     private Charset charset;
     private List<File> augCodeDestFiles;
-    private File parseResultsFile;
+    private File prepFile;
 
     private final List<ParserException> allErrors = new ArrayList<>();
 
@@ -39,7 +39,7 @@ public class PreCodeAugmentationGenericTask {
         PreCodeAugmentationResult prepResult = new PreCodeAugmentationResult();
         prepResult.setGenCodeStartSuffix(genCodeStartSuffixes.get(0));
         prepResult.setGenCodeEndSuffix(genCodeEndSuffixes.get(0));
-        Object resultWriter = prepResult.beginSerialize(parseResultsFile);
+        Object resultWriter = prepResult.beginSerialize(prepFile);
 
         List<Object> codeGenRequestWriters = new ArrayList<>();
         List<CodeGenerationRequest> codeGenRequests = new ArrayList<>();
@@ -240,12 +240,12 @@ public class PreCodeAugmentationGenericTask {
         this.augCodeDestFiles = augCodeDestFiles;
     }
 
-    public File getParseResultsFile() {
-        return parseResultsFile;
+    public File getPrepFile() {
+        return prepFile;
     }
 
-    public void setParseResultsFile(File parseResultsFile) {
-        this.parseResultsFile = parseResultsFile;
+    public void setPrepFile(File prepFile) {
+        this.prepFile = prepFile;
     }
 
     public List<ParserException> getAllErrors() {

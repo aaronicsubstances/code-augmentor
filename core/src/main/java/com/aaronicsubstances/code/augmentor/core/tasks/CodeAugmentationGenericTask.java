@@ -31,9 +31,9 @@ public class CodeAugmentationGenericTask {
     private BiConsumer<Integer, Supplier<String>> logAppender;
     private Charset charset;
 
-    private File prepfile;
+    private File prepFile;
     private List<File> generatedCodeFiles;
-    private String srcDir;
+    private File srcDir;
     private File destDir;
     private String newline;
 
@@ -47,7 +47,7 @@ public class CodeAugmentationGenericTask {
         destSubDirNameMap.clear();;
 
         PreCodeAugmentationResult result = new PreCodeAugmentationResult();
-        Object resultReader = result.beginDeserialize(prepfile);
+        Object resultReader = result.beginDeserialize(prepFile);
 
         GeneratedCodeFetcher generatedCodeFetcher = new GeneratedCodeFetcher(generatedCodeFiles);
 
@@ -55,7 +55,7 @@ public class CodeAugmentationGenericTask {
         while ((sourceFileDescriptor = SourceFileDescriptor.deserialize(resultReader)) != null) {
             // use this for testing only. under normal circumstances dir should be set.
             if (sourceFileDescriptor.getDir() == null) {
-                sourceFileDescriptor.setDir(srcDir);
+                sourceFileDescriptor.setDir(srcDir.getPath());
             }
             File srcFile = new File(sourceFileDescriptor.getDir(),
                 sourceFileDescriptor.getRelativePath());
@@ -450,12 +450,12 @@ public class CodeAugmentationGenericTask {
         this.charset = charset;
     }
 
-    public File getPrepfile() {
-        return prepfile;
+    public File getPrepFile() {
+        return prepFile;
     }
 
-    public void setPrepfile(File prepfile) {
-        this.prepfile = prepfile;
+    public void setPrepFile(File prepFile) {
+        this.prepFile = prepFile;
     }
 
     public List<File> getGeneratedCodeFiles() {
@@ -466,11 +466,11 @@ public class CodeAugmentationGenericTask {
         this.generatedCodeFiles = generatedCodeFiles;
     }
 
-    public String getSrcDir() {
+    public File getSrcDir() {
         return srcDir;
     }
 
-    public void setSrcDir(String srcDir) {
+    public void setSrcDir(File srcDir) {
         this.srcDir = srcDir;
     }
 

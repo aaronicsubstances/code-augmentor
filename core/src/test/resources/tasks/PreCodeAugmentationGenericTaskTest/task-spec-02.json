@@ -3,7 +3,7 @@
 	"genCodeStartSuffixes" : [ "GS" ],
 	"genCodeEndSuffixes" : [ "GE" ],
 	"embeddedStringDoubleSlashSuffixes" : [ "ES:" ],
-	"parseResultsFile" : "task-spec-02-actual-prep.json",
+	"prepFile" : "task-spec-02-actual-prep.json",
 	"augCodeSuffixes" : [{
 		"file": "task-spec-02-actual-request-0.json",
 		"suffixes": [ "JS" ]

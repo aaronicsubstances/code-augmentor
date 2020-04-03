@@ -22,7 +22,7 @@ import org.testng.annotations.Test;
 public class CodeAugmentationGenericTaskTest {
 
     public static class TaskLite {
-        public String prepfile;
+        public String prepFile;
         public String[] generatedCodeFiles;
         public String destDir;
     }
@@ -38,14 +38,14 @@ public class CodeAugmentationGenericTaskTest {
 
         File TEMP_GEN_DIR = new File(FileUtils.getTempDirectory(), "code-augmentor-generated");
         TEMP_GEN_DIR.mkdir();
-        task.setSrcDir(TEMP_GEN_DIR.getPath());
+        task.setSrcDir(TEMP_GEN_DIR);
 
         // copy prep file to temp dir.
-        String contents = TestResourceLoader.loadResource(taskSpec.prepfile, 
+        String contents = TestResourceLoader.loadResource(taskSpec.prepFile, 
             CodeAugmentationGenericTaskTest.class);
-        File f = new File(TEMP_GEN_DIR, taskSpec.prepfile);
+        File f = new File(TEMP_GEN_DIR, taskSpec.prepFile);
         FileUtils.write(f, contents, task.getCharset());        
-        task.setPrepfile(f);
+        task.setPrepFile(f);
 
         // copy generated code files to temp dir.
         task.setGeneratedCodeFiles(new ArrayList<>());
@@ -69,7 +69,7 @@ public class CodeAugmentationGenericTaskTest {
     public void testExecute(String jsonPath, List<Integer> expectedChangeSetIndices) throws Exception {
         CodeAugmentationGenericTask task = deserialize(jsonPath);
         PreCodeAugmentationResult prepResult = PreCodeAugmentationResult.deserialize(
-            task.getPrepfile());
+            task.getPrepFile());
         List<String> expectedGeneratedCodes = new ArrayList<>();
         // transfer class path resources for original source files to
         // temp directory.
