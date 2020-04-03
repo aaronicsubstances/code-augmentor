@@ -4,25 +4,12 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.aaronicsubstances.code.augmentor.core.parsing.LexerSupport;
-
 import org.apache.tools.ant.BuildException;
 
 public class CodeGenerationRequestSpecification {
     private File augCodeDestFile; 
 
     private final List<SuffixSpec> augCodeSuffixes;
-
-    public static SuffixSpec validateCommentMarkerSuffix(SuffixSpec suffix) {
-        if (suffix.getValue() == null || suffix.getValue().isEmpty()) {
-            throw new BuildException("value attribute not specified.");
-        }
-        // Ensure suffix does not contain newlines.
-        if (LexerSupport.NEW_LINE_REGEX.matcher(suffix.getValue()).find()) {
-            throw new BuildException("Newline characters not acceptable in comment marker suffix");
-        }
-        return suffix;
-    }
 
     public CodeGenerationRequestSpecification() {
         augCodeSuffixes = new ArrayList<>();
@@ -45,10 +32,10 @@ public class CodeGenerationRequestSpecification {
     }
 
     public void addConfiguredAug_code_suffix(SuffixSpec suffix) {
-        suffix = validateCommentMarkerSuffix(suffix);
-        if (!augCodeSuffixes.contains(suffix)) {
-            augCodeSuffixes.add(suffix);
+        if (suffix.getValue() == null) {            
+            throw new BuildException("spec/aug_code_suffix[@value] attribute not specified.");
         }
+        augCodeSuffixes.add(suffix);
     }
 
 	public void validate() {

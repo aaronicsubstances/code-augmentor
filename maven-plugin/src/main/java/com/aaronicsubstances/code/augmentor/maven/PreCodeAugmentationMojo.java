@@ -4,7 +4,9 @@ import java.io.File;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
@@ -50,6 +52,23 @@ public class PreCodeAugmentationMojo extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
+        // Ensure uniqueness across comment suffixes.
+        Set<String> allSuffixes = new HashSet<>();
+        int totalSuffixCount = 0;
+        allSuffixes.addAll(Arrays.asList(embeddedStringDoubleSlashSuffixes));
+        totalSuffixCount += embeddedStringDoubleSlashSuffixes.length;
+        allSuffixes.addAll(Arrays.asList(genCodeStartSuffixes));
+        totalSuffixCount += genCodeStartSuffixes.length;
+        allSuffixes.addAll(Arrays.asList(genCodeEndSuffixes));
+        totalSuffixCount += genCodeEndSuffixes.length;
+        for (AugCodeSuffixSpec spec : augCodeSuffixSpecs) {
+            allSuffixes.addAll(Arrays.asList(spec.getSuffixes()));
+            totalSuffixCount += spec.getSuffixes().length;
+        }
+        if (totalSuffixCount != allSuffixes.size()) {
+            throw new MojoFailureException("Duplicates detected across comment marker suffixes");
+        }
+		
         Charset charset = Charset.forName(encoding);
         BiConsumer<Integer, Supplier<String>> logAppender = (logLevel, msgFunc) -> {
             switch (logLevel) {
@@ -83,6 +102,8 @@ public class PreCodeAugmentationMojo extends AbstractMojo {
                 relativePaths.add(includedFile);
             }
         }
+
+        getLog().info(String.format("Found %s file(s)", relativePaths.size()));
 
         PreCodeAugmentationGenericTask genericTask = new PreCodeAugmentationGenericTask();
         genericTask.setCharset(charset);

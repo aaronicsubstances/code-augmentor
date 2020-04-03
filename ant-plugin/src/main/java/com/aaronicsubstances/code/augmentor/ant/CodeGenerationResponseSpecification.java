@@ -4,9 +4,6 @@ import java.io.File;
 
 import org.apache.tools.ant.BuildException;
 
-/**
- * CodeGenerationResponseSpecification
- */
 public class CodeGenerationResponseSpecification {
     private File genCodeFile;
 
