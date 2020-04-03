@@ -6,7 +6,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -31,15 +33,18 @@ public class CodeAugmentationGenericTask {
 
     private File prepfile;
     private List<File> generatedCodeFiles;
-    private File destdir;
-    private boolean generate;
+    private String srcDir;
+    private File destDir;
     private String newline;
-    private File tempDir;
 
-    private boolean upToDate;
+    private final List<File> srcFiles = new ArrayList<>();
+    private final List<File> destFiles = new ArrayList<>();
+    private final Map<String, String> destSubDirNameMap  = new HashMap<>();
     
     public void execute() throws Exception {
-        upToDate = true;
+        srcFiles.clear();
+        destFiles.clear();
+        destSubDirNameMap.clear();;
 
         PreCodeAugmentationResult result = new PreCodeAugmentationResult();
         Object resultReader = result.beginDeserialize(prepfile);
@@ -48,8 +53,9 @@ public class CodeAugmentationGenericTask {
 
         SourceFileDescriptor sourceFileDescriptor;
         while ((sourceFileDescriptor = SourceFileDescriptor.deserialize(resultReader)) != null) {
+            // use this for testing only. under normal circumstances dir should be set.
             if (sourceFileDescriptor.getDir() == null) {
-                sourceFileDescriptor.setDir(tempDir.getPath());
+                sourceFileDescriptor.setDir(srcDir);
             }
             File srcFile = new File(sourceFileDescriptor.getDir(),
                 sourceFileDescriptor.getRelativePath());
@@ -162,27 +168,43 @@ public class CodeAugmentationGenericTask {
                 }                
             }
 
+            // Only insert header if changes are to be made.
             String transformedCode = transformer.getTransformedText();
-            File destFile = new File(destdir, sourceFileDescriptor.getRelativePath());
             if (changesDetected) {
-                if (generate) {
-                    // Only insert header if changes are to be made.
-                    if (headerImport != null) {
-                        StringBuilder s = new StringBuilder(transformedCode);
-                        s.insert(sourceFileDescriptor.getHeaderInsertPos() +
-                            headerPosInc, headerImport);
-                        transformedCode = s.toString();
+                if (headerImport != null) {
+                    StringBuilder s = new StringBuilder(transformedCode);
+                    s.insert(sourceFileDescriptor.getHeaderInsertPos() +
+                        headerPosInc, headerImport);
+                    transformedCode = s.toString();
+                }
+                String destSubDirName = destSubDirNameMap.get(sourceFileDescriptor.getDir());
+                if (destSubDirName == null) {
+                    String origDirName = new File(sourceFileDescriptor.getDir()).getName();
+                    // ensure uniqueness.
+                    if (!destSubDirNameMap.values().stream()
+                            .anyMatch(x -> x.equals(origDirName))) {
+                        destSubDirName = origDirName;
                     }
-                    TaskUtils.writeFile(destFile, charset, transformedCode);
+                    else {
+                        StringBuilder dirName = new StringBuilder(origDirName);
+                        int index = 1;
+                        dirName.append("-").append(index);
+                        while (destSubDirNameMap.values().stream()
+                                .anyMatch(x -> x.equals(dirName.toString()))) {   
+                            index++;
+                            dirName.setLength(origDirName.length());
+                            dirName.append("-").append(index);
+                        }
+                        destSubDirName = dirName.toString();
+                    }
+                    destSubDirNameMap.put(sourceFileDescriptor.getDir(), destSubDirName);
                 }
-                else {
-                    logWarn("Out of sync source files detected in %s. Regeneration required.",
-                        srcFile);
-                    upToDate = false;
-                }
-            }
-            else if (generate) {
-                TaskUtils.copyFile(srcFile, destFile);
+                File destSubDir = new File(destDir, destSubDirName);
+                destSubDir.mkdirs();
+                File destFile = new File(destSubDir, sourceFileDescriptor.getRelativePath());
+                TaskUtils.writeFile(destFile, charset, transformedCode);
+                srcFiles.add(srcFile);
+                destFiles.add(destFile);
             }
             
             Instant endInstant = Instant.now();
@@ -404,6 +426,7 @@ public class CodeAugmentationGenericTask {
         logAppender.accept(LOG_LEVEL_INFO, () -> String.format(format, args));        
     }
 
+    @SuppressWarnings("unused")
     private void logWarn(String format, Object... args) {
         if (logAppender == null) {
             return;
@@ -443,20 +466,20 @@ public class CodeAugmentationGenericTask {
         this.generatedCodeFiles = generatedCodeFiles;
     }
 
-    public File getDestdir() {
-        return destdir;
+    public String getSrcDir() {
+        return srcDir;
     }
 
-    public void setDestdir(File destdir) {
-        this.destdir = destdir;
+    public void setSrcDir(String srcDir) {
+        this.srcDir = srcDir;
     }
 
-    public boolean isGenerate() {
-        return generate;
+    public File getDestDir() {
+        return destDir;
     }
 
-    public void setGenerate(boolean generate) {
-        this.generate = generate;
+    public void setDestDir(File destDir) {
+        this.destDir = destDir;
     }
 
     public String getNewline() {
@@ -467,15 +490,15 @@ public class CodeAugmentationGenericTask {
         this.newline = newline;
     }
 
-    public File getTempDir() {
-        return tempDir;
+    public List<File> getSrcFiles() {
+        return srcFiles;
     }
 
-    public void setTempDir(File tempDir) {
-        this.tempDir = tempDir;
+    public List<File> getDestFiles() {
+        return destFiles;
     }
 
-    public boolean isUpToDate() {
-        return upToDate;
+    public Map<String, String> getDestSubDirNameMap() {
+        return destSubDirNameMap;
     }
 }

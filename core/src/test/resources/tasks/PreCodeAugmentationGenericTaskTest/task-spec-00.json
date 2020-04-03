@@ -5,7 +5,7 @@
 	"embeddedStringDoubleSlashSuffixes" : [ "ES" ],
 	"parseResultsFile" : "task-spec-00-actual-prep.json",
 	"augCodeSuffixes" : [{
-		"file": "task-spec-00-actual-request-0.zip",
+		"file": "task-spec-00-actual-request-0.json",
 		"suffixes": [ "JS" ]
 	}]
 }

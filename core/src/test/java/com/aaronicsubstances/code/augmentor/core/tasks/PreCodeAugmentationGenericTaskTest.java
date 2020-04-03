@@ -68,8 +68,6 @@ public class PreCodeAugmentationGenericTaskTest {
         task.setEmbeddedStringDoubleSlashSuffixes(Arrays.asList(
             taskSpec.embeddedStringDoubleSlashSuffixes));
 
-        task.setTempDir(tempDir);
-
         return task;
     }
 

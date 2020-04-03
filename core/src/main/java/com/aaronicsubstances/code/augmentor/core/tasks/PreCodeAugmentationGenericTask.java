@@ -32,7 +32,6 @@ public class PreCodeAugmentationGenericTask {
     private Charset charset;
     private List<File> augCodeDestFiles;
     private File parseResultsFile;
-    private File tempDir;
 
     private final List<ParserException> allErrors = new ArrayList<>();
 
@@ -96,16 +95,9 @@ public class PreCodeAugmentationGenericTask {
             if (s != null) {
                 // don't bother to serialize any further if there are
                 // previous errors.
+                int identifiedAugCodeCount = 0;
                 if (allErrors.isEmpty()) {
-                    // write out descriptor.
-                    s.setFileIndex(i);
-                    s.setDir(baseDir.getPath());
-                    s.setRelativePath(relativePath);
-                    s.setContentHash(inputHash);
-                    s.serialize(resultWriter);
-
                     // serialize aug codes
-                    int identifiedAugCodeCount = 0;
                     for (int j = 0; j < codeGenRequestWriters.size(); j++) {
                         Object requestWriter = codeGenRequestWriters.get(j);
                         List<AugmentingCode> specAugCodes = specAugCodesList.get(j);
@@ -116,13 +108,20 @@ public class PreCodeAugmentationGenericTask {
                         SourceFileAugmentingCode sourceFileAugCode = new SourceFileAugmentingCode(
                             specAugCodes);
                         sourceFileAugCode.setFileIndex(i);
-                        sourceFileAugCode.setRelativePath(s.getRelativePath());
+                        sourceFileAugCode.setRelativePath(relativePath);
                         sourceFileAugCode.serialize(requestWriter);
                     }
+                }
 
-                    if (identifiedAugCodeCount > 0) {
-                        logInfo("%s aug code(s) identified in %s", identifiedAugCodeCount, srcFile);
-                    }
+                if (identifiedAugCodeCount > 0) {
+                    logInfo("%s aug code(s) identified in %s", identifiedAugCodeCount, srcFile);
+
+                    // write out descriptor.
+                    s.setFileIndex(i);
+                    s.setDir(baseDir.getPath());
+                    s.setRelativePath(relativePath);
+                    s.setContentHash(inputHash);
+                    s.serialize(resultWriter);
                 }
             }
             else {
@@ -247,14 +246,6 @@ public class PreCodeAugmentationGenericTask {
 
     public void setParseResultsFile(File parseResultsFile) {
         this.parseResultsFile = parseResultsFile;
-    }
-
-    public File getTempDir() {
-        return tempDir;
-    }
-
-    public void setTempDir(File tempDir) {
-        this.tempDir = tempDir;
     }
 
     public List<ParserException> getAllErrors() {

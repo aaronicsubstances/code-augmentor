@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.core.TestResourceLoader;
@@ -23,7 +24,6 @@ public class CodeAugmentationGenericTaskTest {
     public static class TaskLite {
         public String prepfile;
         public String[] generatedCodeFiles;
-        public boolean generate;
         public String destDir;
     }
     
@@ -35,11 +35,10 @@ public class CodeAugmentationGenericTaskTest {
         CodeAugmentationGenericTask task = new CodeAugmentationGenericTask();
         task.setCharset(StandardCharsets.UTF_8);
         task.setNewline("\r\n");
-        task.setGenerate(taskSpec.generate);
 
         File TEMP_GEN_DIR = new File(FileUtils.getTempDirectory(), "code-augmentor-generated");
         TEMP_GEN_DIR.mkdir();
-        task.setTempDir(TEMP_GEN_DIR);
+        task.setSrcDir(TEMP_GEN_DIR.getPath());
 
         // copy prep file to temp dir.
         String contents = TestResourceLoader.loadResource(taskSpec.prepfile, 
@@ -59,17 +58,15 @@ public class CodeAugmentationGenericTaskTest {
         }
 
         if (taskSpec.destDir != null) {
-            task.setDestdir(new File(TEMP_GEN_DIR, taskSpec.destDir));
-            task.getDestdir().mkdir();
+            task.setDestDir(new File(FileUtils.getTempDirectory(), taskSpec.destDir));
+            task.getDestDir().mkdir();
         }
-
-        task.setTempDir(TEMP_GEN_DIR);
 
         return task;
     }
 
     @Test(dataProvider = "createTestExecuteData")
-    public void testExecute(String jsonPath, boolean expectedUpToDate) throws Exception {
+    public void testExecute(String jsonPath, List<Integer> expectedChangeSetIndices) throws Exception {
         CodeAugmentationGenericTask task = deserialize(jsonPath);
         PreCodeAugmentationResult prepResult = PreCodeAugmentationResult.deserialize(
             task.getPrepfile());
@@ -80,10 +77,10 @@ public class CodeAugmentationGenericTaskTest {
             assertNull(f.getDir());
             String contents = TestResourceLoader.loadResourceNewlinesNormalized(
                 f.getRelativePath(), getClass(), "\r\n");
-            FileUtils.write(new File(task.getTempDir(), f.getRelativePath()), contents, task.getCharset());
+            FileUtils.write(new File(task.getSrcDir(), f.getRelativePath()), contents, task.getCharset());
 
             // fetch expected generated codes.
-            if (task.isGenerate()) {
+            if (expectedChangeSetIndices.contains(f.getFileIndex())) {
                 String baseName = FilenameUtils.getBaseName(f.getRelativePath());
                 String ext = FilenameUtils.getExtension(f.getRelativePath());
                 String expGenGode = TestResourceLoader.loadResourceNewlinesNormalized(
@@ -92,25 +89,22 @@ public class CodeAugmentationGenericTaskTest {
             }
         }
         task.execute();
-        assertEquals(task.isUpToDate(), expectedUpToDate);
-        if (task.isGenerate()) {
-            for (int i = 0; i < prepResult.getFileDescriptors().size(); i++) {
-                String expected = expectedGeneratedCodes.get(i);
-                SourceFileDescriptor s = prepResult.getFileDescriptors().get(i);
-                File f = new File(task.getDestdir(), s.getRelativePath());
-                String actual = FileUtils.readFileToString(f, task.getCharset());            
-                assertEquals(actual, expected, "Unexpected contents found in " + f);
-            }
+        int actualChangeSetSize = task.getSrcFiles().size();
+        assertEquals(actualChangeSetSize, expectedChangeSetIndices.size());
+        for (int i = 0; i < actualChangeSetSize; i++) {
+            String expected = expectedGeneratedCodes.get(i);
+            File f = task.getDestFiles().get(i);
+            String actual = FileUtils.readFileToString(f, task.getCharset());            
+            assertEquals(actual, expected, "Unexpected contents found in " + f);
         }
     }
 
     @DataProvider
     public Object[][] createTestExecuteData() {
         return new Object[][]{
-            new Object[] { "task-spec-00.json", true },
-            new Object[] { "task-spec-00-1.json", true },
-            new Object[] { "task-spec-01.json", true },
-            new Object[] { "task-spec-02.json", true }
+            new Object[] { "task-spec-00.json", Arrays.asList() },
+            new Object[] { "task-spec-01.json", Arrays.asList(0, 1) },
+            new Object[] { "task-spec-02.json", Arrays.asList(0) }
         };
     }
 
