@@ -45,7 +45,6 @@ Usually, code duplication is frowned upon because it increases likelihood of err
 **The goal of *CodeAugmentor* is to compensate for challenges which result from hurriedly-developed code architectures**, such as code duplication, by
 
    * automating the process of synchronizing similar code sections in multiple places.
-   * providing a solution to the problem of comments becoming unsynchronized with their associated code sections after code changes.
    * enabling programmers to implement patterns which are much easier/less time consuming to do with code generation than with code (re)design.
    * enabling programmers to better maintain workarounds so such code sections can easily be migrated when superior alternatives arrive.
 
