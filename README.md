@@ -30,7 +30,7 @@ First, some observations:
 
    * In Robert Glass' "Facts and Fallacies of Software Engineering" book, he asserts that maintenance of code is mostly about implementing new software requirements, which translates into adding new code which has to work with the existing codebase.
 
-   * Agile methodologies (e.g.  https://www.agilealliance.org/resources/sessions/emergent-architecture-just-enough-just-in-time/) emphasize "emergent" or "serendipitous" architectures over waterfall/fully preplanned ones, in order to speed up the development of product releases to customers, and solicit feedback for subsequent iterations.
+tt   * Agile methodologies (e.g.  https://www.agilealliance.org/resources/sessions/emergent-architecture-just-enough-just-in-time/) emphasize "emergent" or "serendipitous" architectures over waterfall/fully preplanned ones, in order to speed up the development of product releases to customers, and solicit feedback for subsequent iterations.
 
 What all this means is that
 
@@ -59,11 +59,11 @@ Thus if a programmer encounters a situation in which the programming framework i
 By employing *CodeAugmentor*, one can develop a strategy of settling for a simpler workarouond, well documented, and possibly involving code duplication in which synchronization problem is catered for by *CodeAugmentor*. Then when a superior alternative arrive, it is easy to identify all affected code sections and update them in a way in which errors cannot elude the programmer or the compiler.
 
 
-## To Be Done
+## Work done and Work remaining
 
-First version is yet to be released. The vision is to develop Ant, Maven and Gradle plugins.
-
-Currently Java and Android are the supported platform targets. Depending on how this project evolves, .NET Core will be considered as well.
+   * Plugins have been developed for Ant, Maven and Gradle, but not yet published.
+   * Standalone command line application based on Ant plugin will be made available.
+   * Currently Java and Android are the supported platform targets. Depending on how this project evolves, .NET Core will be considered as well.
 
 ## Development Environment
 
