@@ -1,4 +1,4 @@
-package com.aaronicsubstances.code.augmentor.maven;
+package com.aaronicsubstances.code.augmentor.gradle;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -6,44 +6,35 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
-import java.util.Arrays;
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTask;
 import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
 
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
+import org.gradle.api.DefaultTask;
+import org.gradle.api.GradleException;
+import org.gradle.api.tasks.TaskAction;
 
 /**
  * Completes code generation.
  */
-@Mojo(name = "generate")
-public class CodeAugmentationMojo extends AbstractMojo {
-    @Parameter( defaultValue="${project.build.sourceEncoding}", readonly=true, required=true )
+public class CodeAugmentationTask extends DefaultTask {
     private String encoding;
     
-    @Parameter( required=true )
-    private File[] generatedCodeFiles;
+    private List<File> generatedCodeFiles;
 
-    @Parameter( required=true )
     private File prepFile;
 
-    @Parameter( required=true )
     private File destDir;
 
-    @Parameter
     private String newline;
 
-    @Parameter( defaultValue = "${project.build.directory}/code-augmentor-changes.txt")
     private File changeSetInfoFile;
 
-    @Override
-    public void execute() throws MojoExecutionException, MojoFailureException {
+    @TaskAction
+    public void execute() {
         Charset charset = Charset.forName(encoding);
         if (newline == null) {
             newline = System.lineSeparator();
@@ -51,18 +42,18 @@ public class CodeAugmentationMojo extends AbstractMojo {
         BiConsumer<Integer, Supplier<String>> logAppender = (logLevel, msgFunc) -> {
             switch (logLevel) {
                 case CodeAugmentationGenericTask.LOG_LEVEL_VERBOSE:
-                    if (getLog().isDebugEnabled()) {
-                        getLog().debug(msgFunc.get());
+                    if (getLogger().isDebugEnabled()) {
+                        getLogger().debug(msgFunc.get());
                     }
                     break;
                 case CodeAugmentationGenericTask.LOG_LEVEL_INFO:
-                    if (getLog().isInfoEnabled()) {
-                        getLog().info(msgFunc.get());
+                    if (getLogger().isInfoEnabled()) {
+                        getLogger().info(msgFunc.get());
                     }
                     break;
                 case CodeAugmentationGenericTask.LOG_LEVEL_WARN:
-                    if (getLog().isWarnEnabled()) {
-                        getLog().warn(msgFunc.get());
+                    if (getLogger().isWarnEnabled()) {
+                        getLogger().warn(msgFunc.get());
                     }
                     break;
             }
@@ -73,16 +64,16 @@ public class CodeAugmentationMojo extends AbstractMojo {
         genericTask.setNewline(newline);
         genericTask.setLogAppender(logAppender);
         genericTask.setPrepFile(prepFile);
-        genericTask.setGeneratedCodeFiles(Arrays.asList(generatedCodeFiles));
+        genericTask.setGeneratedCodeFiles(generatedCodeFiles);
         genericTask.setDestDir(destDir);
         try {
             genericTask.execute();
         }
         catch (GenericTaskException ex) {
-            throw new MojoExecutionException(ex.getMessage(), ex.getCause());
+            throw new GradleException(ex.getMessage(), ex.getCause());
         }
         catch (Exception ex) {
-            throw new MojoFailureException("General plugin error", ex);
+            throw new GradleException("General plugin error", ex);
         }
 
         // Write out change set info file.
@@ -95,24 +86,24 @@ public class CodeAugmentationMojo extends AbstractMojo {
             changeSetInfo.append(genericTask.getDestFiles().get(i).getAbsolutePath());
             changeSetInfo.append(System.lineSeparator());
         }
-		try (Writer fWriter = new OutputStreamWriter(new 
-				FileOutputStream(changeSetInfoFile), Charset.defaultCharset())) {
-			fWriter.write(changeSetInfo.toString());
-		}
+        try (Writer fWriter = new OutputStreamWriter(new 
+                FileOutputStream(changeSetInfoFile), Charset.defaultCharset())) {
+            fWriter.write(changeSetInfo.toString());
+        }
         catch (IOException ex) {
-            throw new MojoExecutionException("Failed to write change set information to " +
+            throw new GradleException("Failed to write change set information to " +
                 changeSetInfoFile, ex);
         }
 
         // fail build if there were changed files.
         if (!genericTask.getSrcFiles().isEmpty()) {
-            getLog().warn("The following file(s) out of sync " +
+            getLogger().warn("The following file(s) out of sync " +
                 "with generating code scripts:");
             for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {
-                getLog().warn(genericTask.getSrcFiles().get(i).getPath());
+                getLogger().warn(genericTask.getSrcFiles().get(i).getPath());
             }
 
-            throw new MojoExecutionException(
+            throw new GradleException(
                 genericTask.getSrcFiles().size() +
                 " file(s) out of sync " +
                 "with generating code scripts. Regeneration needed.");

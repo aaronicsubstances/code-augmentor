@@ -1,0 +1,40 @@
+plugins {
+	id 'java-gradle-plugin'
+	id 'maven-publish'
+}
+
+group = "com.aaronicsubstances"
+version = "1.0-SNAPSHOT"
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+compileJava.options.encoding = 'UTF-8'
+
+repositories {
+	jcenter()
+	mavenLocal()
+}
+
+dependencies {
+	implementation 'com.aaronicsubstances:codeaugmentor-core:1.0-SNAPSHOT'
+}
+
+gradlePlugin {
+    plugins {
+        simplePlugin {
+            id = 'com.aaronicsubstances.codeaugmentor'
+            implementationClass = 'com.aaronicsubstances.code.augmentor.gradle.CodeAugmentorPlugin'
+        }
+    }
+}
+
+publishing {
+	publications {
+		maven(MavenPublication) {
+			artifactId = 'codeaugmentor-gradle-plugin'
+			from components.java
+		}
+	}
+}
