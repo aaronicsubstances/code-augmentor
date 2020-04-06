@@ -18,7 +18,7 @@ repositories {
 }
 
 dependencies {
-	implementation 'com.aaronicsubstances:codeaugmentor-core:1.0-SNAPSHOT'
+	implementation 'com.aaronicsubstances:codeaugmentor-backlog:1.0-SNAPSHOT'
 }
 
 gradlePlugin {

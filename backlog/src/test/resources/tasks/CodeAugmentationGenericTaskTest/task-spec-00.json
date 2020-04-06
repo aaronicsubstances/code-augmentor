@@ -1,0 +1,5 @@
+{
+	"generatedCodeFiles" : [ "task-spec-00-response-0.json" ],
+	"prepFile" : "task-spec-00-prep.json",
+	"destDir"  : "dest-00"
+}

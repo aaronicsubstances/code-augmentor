@@ -1,0 +1,204 @@
+[
+	{
+		"lineNumber": 1,
+		"text": "/*\n *  (c) Aaronic Substances.\n */"
+	},
+	{
+		"lineNumber": 3,
+		"text": "\n"
+	},
+	{
+		"lineNumber": 4,
+		"text": "package com.aaronicsubstances;"
+	},
+	{
+		"lineNumber": 4,
+		"text": "\n"
+	},
+	{
+		"lineNumber": 5,
+		"text": "\n"
+	},
+	{
+		"lineNumber": 6,
+		"text": "import org.springframework.boot.SpringApplication;",
+		"value": "import org.springframework.boot.SpringApplication"
+	},
+	{
+		"lineNumber": 6,
+		"text": "\n"
+	},
+	{
+		"lineNumber": 7,
+		"text": "import org.springframework.boot.autoconfigure.SpringBootApplication;",
+		"value": "import org.springframework.boot.autoconfigure.SpringBootApplication"
+	},
+	{
+		"lineNumber": 7,
+		"text": "\n"
+	},
+	{
+		"lineNumber": 8,
+		"text": "\n"
+	},
+	{
+		"lineNumber": 9,
+		"text": "/**\n *\n * @author Aaron\n */"
+	},
+	{
+		"lineNumber": 12,
+		"text": "\n"
+	},
+	{
+		"lineNumber": 13,
+		"text": "@SpringBootApplication"
+	},
+	{
+		"lineNumber": 13,
+		"text": "\n"
+	},
+	{
+		"lineNumber": 14,
+		"text": "public"
+	},
+	{
+		"lineNumber": 14,
+		"text": " "
+	},
+	{
+		"lineNumber": 14,
+		"text": "class"
+	},
+	{
+		"lineNumber": 14,
+		"text": " "
+	},
+	{
+		"lineNumber": 14,
+		"text": "Application"
+	},
+	{
+		"lineNumber": 14,
+		"text": " "
+	},
+	{
+		"lineNumber": 14,
+		"text": "{"
+	},
+	{
+		"lineNumber": 14,
+		"text": "\n"
+	},
+	{
+		"lineNumber": 15,
+		"text": "\n"
+	},
+	{
+		"lineNumber": 16,
+		"text": "    "
+	},
+	{
+		"lineNumber": 16,
+		"text": "/**\n     * @param args the command line arguments\n     */"
+	},
+	{
+		"lineNumber": 18,
+		"text": "\n"
+	},
+	{
+		"lineNumber": 19,
+		"text": "    "
+	},
+	{
+		"lineNumber": 19,
+		"text": "public"
+	},
+	{
+		"lineNumber": 19,
+		"text": " "
+	},
+	{
+		"lineNumber": 19,
+		"text": "static"
+	},
+	{
+		"lineNumber": 19,
+		"text": " "
+	},
+	{
+		"lineNumber": 19,
+		"text": "void"
+	},
+	{
+		"lineNumber": 19,
+		"text": " "
+	},
+	{
+		"lineNumber": 19,
+		"text": "main(String[]"
+	},
+	{
+		"lineNumber": 19,
+		"text": " "
+	},
+	{
+		"lineNumber": 19,
+		"text": "args)"
+	},
+	{
+		"lineNumber": 19,
+		"text": " "
+	},
+	{
+		"lineNumber": 19,
+		"text": "{"
+	},
+	{
+		"lineNumber": 19,
+		"text": "\n"
+	},
+	{
+		"lineNumber": 20,
+		"text": "        "
+	},
+	{
+		"lineNumber": 20,
+		"text": "SpringApplication.run(Application.class,"
+	},
+	{
+		"lineNumber": 20,
+		"text": " "
+	},
+	{
+		"lineNumber": 20,
+		"text": "args)"
+	},
+	{
+		"lineNumber": 20,
+		"text": ";"
+	},
+	{
+		"lineNumber": 20,
+		"text": "\n"
+	},
+	{
+		"lineNumber": 21,
+		"text": "    "
+	},
+	{
+		"lineNumber": 21,
+		"text": "}"
+	},
+	{
+		"lineNumber": 21,
+		"text": "\n"
+	},
+	{
+		"lineNumber": 22,
+		"text": "}"
+	},
+	{
+		"lineNumber": 22,
+		"text": "\n"
+	}
+]

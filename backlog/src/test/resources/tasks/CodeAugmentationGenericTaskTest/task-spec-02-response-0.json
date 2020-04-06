@@ -1,0 +1,13 @@
+[
+	{
+		"file_index": 0,
+		"generated_codes": [{
+			"index" : 0,
+			"body" : "StringBuilder teaBag;\r\nprintln();"
+		},
+		{
+			"index" : 1,
+			"body" : "char f;"
+		}]
+	}
+]

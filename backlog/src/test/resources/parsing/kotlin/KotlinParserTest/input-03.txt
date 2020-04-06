@@ -1,0 +1,12 @@
+import org.`xampl`.Message // Message is accessible
+import org.test.Message as testMessage // testMessage stands for 'org.test.Message'
+
+class User(val name: String) {
+    var address: String = "unspecified"
+        set(value: String) {
+            println("""
+                Address was changed for $name:
+                "$field" -> "$value".""".trimIndent())
+            field = value
+        }
+}

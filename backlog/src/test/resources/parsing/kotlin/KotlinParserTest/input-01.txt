@@ -1,0 +1,14 @@
+import  com.aaronicsubstances.programmer.companion.utils.*
+
+/**
+ * /**/
+ */
+public class test {
+    private val name    = "around \"Nana\" place";
+    
+    // test2
+    public inner  class test2 {
+
+        
+    }
+}

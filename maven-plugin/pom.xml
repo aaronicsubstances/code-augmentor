@@ -16,7 +16,7 @@
   <dependencies>
 	<dependency>
 	  <groupId>com.aaronicsubstances</groupId>
-	  <artifactId>codeaugmentor-core</artifactId>
+	  <artifactId>codeaugmentor-backlog</artifactId>
 	  <version>1.0-SNAPSHOT</version>
 	</dependency>
 	

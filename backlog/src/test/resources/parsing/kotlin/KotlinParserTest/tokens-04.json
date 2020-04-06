@@ -1,0 +1,165 @@
+[
+    {
+        "type": 40,
+        "text": "#!kotlinc-jvm",
+        "startPos": 0,
+        "endPos": 13,
+        "lineNumber": 1,
+        "columnNumber": 1
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 13,
+        "endPos": 15,
+        "lineNumber": 1,
+        "columnNumber": 14
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 15,
+        "endPos": 17,
+        "lineNumber": 2,
+        "columnNumber": 1
+    },
+    {
+        "type": 50,
+        "text": "fun",
+        "startPos": 17,
+        "endPos": 20,
+        "lineNumber": 3,
+        "columnNumber": 1
+    },
+    {
+        "type": 12,
+        "text": " ",
+        "startPos": 20,
+        "endPos": 21,
+        "lineNumber": 3,
+        "columnNumber": 4,
+        "value": {
+            "ws_reqd": true
+        }
+    },
+    {
+        "type": 50,
+        "text": "main",
+        "startPos": 21,
+        "endPos": 25,
+        "lineNumber": 3,
+        "columnNumber": 5
+    },
+    {
+        "type": 50,
+        "text": "(",
+        "startPos": 25,
+        "endPos": 26,
+        "lineNumber": 3,
+        "columnNumber": 9
+    },
+    {
+        "type": 50,
+        "text": ")",
+        "startPos": 26,
+        "endPos": 27,
+        "lineNumber": 3,
+        "columnNumber": 10
+    },
+    {
+        "type": 12,
+        "text": " ",
+        "startPos": 27,
+        "endPos": 28,
+        "lineNumber": 3,
+        "columnNumber": 11  
+    },
+    {
+        "type": 50,
+        "text": "{",
+        "startPos": 28,
+        "endPos": 29,
+        "lineNumber": 3,
+        "columnNumber": 12
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 29,
+        "endPos": 31,
+        "lineNumber": 3,
+        "columnNumber": 13
+    },
+    {
+        "type": 12,
+        "text": "\t",
+        "startPos": 31,
+        "endPos": 32,
+        "lineNumber": 4,
+        "columnNumber": 1
+    },
+    {
+        "type": 50,
+        "text": "println",
+        "startPos": 32,
+        "endPos": 39,
+        "lineNumber": 4,
+        "columnNumber": 2
+    },
+    {
+        "type": 50,
+        "text": "(",
+        "startPos": 39,
+        "endPos": 40,
+        "lineNumber": 4,
+        "columnNumber": 9
+    },
+    {
+        "type": 50,
+        "text": "\"",
+        "startPos": 40,
+        "endPos": 41,
+        "lineNumber": 4,
+        "columnNumber": 10
+    },
+    {
+        "type": 20,
+        "text": "Hello World!",
+        "startPos": 41,
+        "endPos": 53,
+        "lineNumber": 4,
+        "columnNumber": 11
+    },
+    {
+        "type": 50,
+        "text": "\"",
+        "startPos": 53,
+        "endPos": 54,
+        "lineNumber": 4,
+        "columnNumber": 23
+    },
+    {
+        "type": 50,
+        "text": ")",
+        "startPos": 54,
+        "endPos": 55,
+        "lineNumber": 4,
+        "columnNumber": 24
+    },
+    {
+        "type": 10,
+        "text": "\r\n",
+        "startPos": 55,
+        "endPos": 57,
+        "lineNumber": 4,
+        "columnNumber": 25
+    },
+    {
+        "type": 50,
+        "text": "}",
+        "startPos": 57,
+        "endPos": 58,
+        "lineNumber": 5,
+        "columnNumber": 1
+    }
+]

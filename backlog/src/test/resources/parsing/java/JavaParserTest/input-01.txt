@@ -1,0 +1,14 @@
+import com.aaronicsubstances.programmer.companion.utils.*;
+
+/**
+ * test
+ */
+public class test {
+    private String name = "around \"Nana\" place";
+    
+    // test2
+    public static class te$t2 {
+
+        
+    }
+}
