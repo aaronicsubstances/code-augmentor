@@ -1,7 +1,5 @@
 package com.aaronicsubstances.code.augmentor.core.models;
 
-import java.io.BufferedReader;
-import java.io.PrintWriter;
 import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.core.persistence.PersistenceUtil;
@@ -38,25 +36,31 @@ public class SourceFileGeneratedCode {
     }
 
 	public void serialize(Object serializer) throws Exception {
-        PrintWriter writer = ((PersistenceUtil) serializer).getPrintWriter();
-        String s = PersistenceUtil.serializeCompactlyToJson(this);
-        writer.println(s);
+        PersistenceUtil persistenceUtil = (PersistenceUtil) serializer;
+        String json = PersistenceUtil.serializeCompactlyToJson(this);
+        persistenceUtil.println(json);
+        persistenceUtil.flush();
     }
 
 	public static SourceFileGeneratedCode deserialize(Object deserializer) throws Exception {
-        BufferedReader reader = ((PersistenceUtil) deserializer).getBufferedReader();
-        String line;
-        while ((line = reader.readLine()) != null) {
-            // to be lenient with code generators, ignore comments and blank lines.
-            line = line.trim();
-            if (line.startsWith("#") || line.isEmpty()) {
-                continue;
+        PersistenceUtil persistenceUtil = (PersistenceUtil) deserializer;
+        SourceFileGeneratedCode[] entireList = (SourceFileGeneratedCode[])persistenceUtil
+            .getContent();
+        SourceFileGeneratedCode obj = null;
+        if (entireList != null) {
+            int contentIndex = persistenceUtil.getContentIndex();
+            if (contentIndex < entireList.length) {
+                obj = entireList[contentIndex];
+                persistenceUtil.setContentIndex(contentIndex + 1);
             }
-            SourceFileGeneratedCode instance = PersistenceUtil.deserializeFromJson(line,
-                SourceFileGeneratedCode.class);
-            return instance;
         }
-        return null;
+        else {
+            String json = persistenceUtil.readLine();
+            if (json != null) {
+                obj = PersistenceUtil.deserializeFromJson(json, SourceFileGeneratedCode.class);
+            }
+        }        
+        return obj;
     }
 
     @Override

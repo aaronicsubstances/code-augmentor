@@ -4,9 +4,6 @@ import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.core.persistence.PersistenceUtil;
 import com.google.gson.annotations.SerializedName;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
-import com.google.gson.stream.JsonWriter;
 
 public class SourceFileDescriptor {
     @SerializedName("file_index")
@@ -88,19 +85,31 @@ public class SourceFileDescriptor {
         this.contentHash = contentHash;
     }
 
-    public void serialize(Object serializer) throws Exception {    
-        JsonWriter writer = ((PersistenceUtil) serializer).getJsonWriter();
-        PersistenceUtil.JSON_CONVERT.toJson(this, SourceFileDescriptor.class, writer);
-        writer.flush();
+    public void serialize(Object serializer) throws Exception {
+        PersistenceUtil persistenceUtil = (PersistenceUtil) serializer;
+        String json = PersistenceUtil.serializeCompactlyToJson(this);
+        persistenceUtil.println(json);
+        persistenceUtil.flush();
     }
 
     public static SourceFileDescriptor deserialize(Object deserializer) throws Exception {
-        JsonReader reader = ((PersistenceUtil) deserializer).getJsonReader();
-        if (reader.peek() == JsonToken.END_ARRAY) {
-            return null;
+        PersistenceUtil persistenceUtil = (PersistenceUtil) deserializer;
+        SourceFileDescriptor[] entireList = (SourceFileDescriptor[])persistenceUtil
+            .getContent();
+        SourceFileDescriptor obj = null;
+        if (entireList != null) {
+            int contentIndex = persistenceUtil.getContentIndex();
+            if (contentIndex < entireList.length) {
+                obj = entireList[contentIndex];
+                persistenceUtil.setContentIndex(contentIndex + 1);
+            }
         }
-        SourceFileDescriptor obj = PersistenceUtil.JSON_CONVERT.fromJson(reader, 
-            SourceFileDescriptor.class);
+        else {
+            String json = persistenceUtil.readLine();
+            if (json != null) {
+                obj = PersistenceUtil.deserializeFromJson(json, SourceFileDescriptor.class);
+            }
+        }        
         return obj;
     }
 

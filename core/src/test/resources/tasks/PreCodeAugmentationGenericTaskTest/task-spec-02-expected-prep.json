@@ -1,40 +1,37 @@
-{
-	"gen_code_start_suffix": "GS",
-	"gen_code_end_suffix": "GE",
-	"files": [
+{ "content_streaming_enabled": false, "gen_code_start_suffix": "GS", "gen_code_end_suffix": "GE" }
+[
+	{
+		"file_index": 0,
+		"rel_path": "task-spec-02-0.java",
+		"header_insert_pos": 292,
+		"imports": [
+			"import javax.ws.rs.GET", 
+			"import javax.ws.rs.Path",
+			"import javax.ws.rs.Produces", 
+			"import javax.ws.rs.core.MediaType",
+			"import org.springframework.stereotype.Component"
+		],
+		"snippets": [{
+			"augmenting_code": {
+				"index" : 0,
+				"start_pos" : 344,
+				"end_pos" : 419,
+				"indent" : null,
+				"slash_star": true
+			}
+		},
 		{
-			"file_index": 0,
-			"rel_path": "task-spec-02-0.java",
-			"header_insert_pos": 292,
-			"imports": [
-				"import javax.ws.rs.GET", 
-				"import javax.ws.rs.Path",
-				"import javax.ws.rs.Produces", 
-				"import javax.ws.rs.core.MediaType",
-				"import org.springframework.stereotype.Component"
-			],
-			"snippets": [{
-				"augmenting_code": {
-					"index" : 0,
-					"start_pos" : 344,
-					"end_pos" : 419,
-					"indent" : null,
-					"slash_star": true
-				}
+			"augmenting_code": {
+				"index" : 1,
+				"start_pos" : 1026,
+				"end_pos" : 1063,
+				"indent" : "\t",
+				"slash_star": false
 			},
-			{
-				"augmenting_code": {
-					"index" : 1,
-					"start_pos" : 1026,
-					"end_pos" : 1063,
-					"indent" : "\t",
-					"slash_star": false
-				},
-				"generated_code": {
-					"start_pos" : 1063,
-					"end_pos" : 1096
-				}
-			}]
-		}
-	]
-}
+			"generated_code": {
+				"start_pos" : 1063,
+				"end_pos" : 1096
+			}
+		}]
+	}
+]

@@ -15,6 +15,10 @@ public class CodeSnippetDescriptor {
         private String indent;
         @SerializedName("slash_star")
         private boolean annotatedWithSlashStar;
+        @SerializedName("ff_newline_start_pos")
+        private int ffNewlineStartPos;
+        @SerializedName("ff_newline_end_pos")
+        private int ffNewlineEndPos;
 
         public int getIndex() {
             return index;
@@ -62,6 +66,8 @@ public class CodeSnippetDescriptor {
             int result = 1;
             result = prime * result + (annotatedWithSlashStar ? 1231 : 1237);
             result = prime * result + endPos;
+            result = prime * result + ffNewlineEndPos;
+            result = prime * result + ffNewlineStartPos;
             result = prime * result + ((indent == null) ? 0 : indent.hashCode());
             result = prime * result + index;
             result = prime * result + startPos;
@@ -81,6 +87,10 @@ public class CodeSnippetDescriptor {
                 return false;
             if (endPos != other.endPos)
                 return false;
+            if (ffNewlineEndPos != other.ffNewlineEndPos)
+                return false;
+            if (ffNewlineStartPos != other.ffNewlineStartPos)
+                return false;
             if (indent == null) {
                 if (other.indent != null)
                     return false;
@@ -96,8 +106,24 @@ public class CodeSnippetDescriptor {
         @Override
         public String toString() {
             return "AugmentingCodeDescriptor{annotatedWithSlashStar=" + annotatedWithSlashStar + ", endPos=" + endPos
-                    + ", indent=" + indent + ", index=" + index + ", startPos="
-                    + startPos + "}";
+                    + ", ffNewlineEndPos=" + ffNewlineEndPos + ", ffNewlineStartPos=" + ffNewlineStartPos + ", indent="
+                    + indent + ", index=" + index + ", startPos=" + startPos + "}";
+        }
+
+        public int getFfNewlineStartPos() {
+            return ffNewlineStartPos;
+        }
+
+        public void setFfNewlineStartPos(int ffNewlineStartPos) {
+            this.ffNewlineStartPos = ffNewlineStartPos;
+        }
+
+        public int getFfNewlineEndPos() {
+            return ffNewlineEndPos;
+        }
+
+        public void setFfNewlineEndPos(int ffNewlineEndPos) {
+            this.ffNewlineEndPos = ffNewlineEndPos;
         }
     }
 

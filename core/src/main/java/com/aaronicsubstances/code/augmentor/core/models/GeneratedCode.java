@@ -11,6 +11,8 @@ public class GeneratedCode {
     private String headerContent;
     @SerializedName("body")
     private String bodyContent;
+    @SerializedName("indent")
+    private String indent;
 
     public int getIndex() {
         return index;
@@ -44,6 +46,14 @@ public class GeneratedCode {
         this.bodyContent = bodyContent;
     }
 
+    public String getIndent() {
+        return indent;
+    }
+
+    public void setIndent(String indent) {
+        this.indent = indent;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -51,6 +61,7 @@ public class GeneratedCode {
         result = prime * result + ((bodyContent == null) ? 0 : bodyContent.hashCode());
         result = prime * result + (error ? 1231 : 1237);
         result = prime * result + ((headerContent == null) ? 0 : headerContent.hashCode());
+        result = prime * result + ((indent == null) ? 0 : indent.hashCode());
         result = prime * result + index;
         return result;
     }
@@ -76,6 +87,11 @@ public class GeneratedCode {
                 return false;
         } else if (!headerContent.equals(other.headerContent))
             return false;
+        if (indent == null) {
+            if (other.indent != null)
+                return false;
+        } else if (!indent.equals(other.indent))
+            return false;
         if (index != other.index)
             return false;
         return true;
@@ -84,6 +100,6 @@ public class GeneratedCode {
     @Override
     public String toString() {
         return "GeneratedCode{bodyContent=" + bodyContent + ", error=" + error + ", headerContent=" + headerContent
-                + ", index=" + index + "}";
+                + ", indent=" + indent + ", index=" + index + "}";
     }
 }

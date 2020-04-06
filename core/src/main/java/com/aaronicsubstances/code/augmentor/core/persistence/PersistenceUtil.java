@@ -3,22 +3,19 @@ package com.aaronicsubstances.code.augmentor.core.persistence;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.Reader;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
 
 public class PersistenceUtil {
-    public static final Gson JSON_CONVERT = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson JSON_CONVERT = new GsonBuilder().setPrettyPrinting().create();
     private static final Gson JSON_CONVERT_COMPACT = new Gson();
 
 	public static String serializeCompactlyToJson(Object obj) {
 		return JSON_CONVERT_COMPACT.toJson(obj);
 	}
 
-	public static String serializeToJson(Object obj) {
+	public static String serializeFormattedToJson(Object obj) {
 		return JSON_CONVERT.toJson(obj);
 	}
 
@@ -26,77 +23,76 @@ public class PersistenceUtil {
 		return JSON_CONVERT.fromJson(s, cls);
 	}
 
-	public static <T> T deserializeFromJson(Reader rdr, Class<T> cls) {
-		return JSON_CONVERT.fromJson(rdr, cls);
-	}
-
-	public static boolean peekSerializedJsonForPerFile(BufferedReader bufRdr) throws IOException {		
-        // decide between per-line json or per-file json
-        boolean perFile = false;
-        bufRdr.mark(1);
-        int firstCh = bufRdr.read();
-        bufRdr.reset();
-        if (firstCh == '[') {
-            perFile = true;
-        }
-        return perFile;
-	}
-
     private final BufferedReader bufferedReader;
-    private final JsonReader jsonReader;
     private final PrintWriter printWriter;
-    private final JsonWriter jsonWriter;
     private final boolean closeWhenDone;
+    
+    private Object content;
+    private int contentIndex;
 
     public PersistenceUtil(BufferedReader reader, boolean closeWhenDone) {
         this.bufferedReader = reader;
-        this.jsonReader = null;
         this.printWriter = null;
-        this.jsonWriter = null;
-        this.closeWhenDone = closeWhenDone;
-    }
-
-    public PersistenceUtil(JsonReader reader, boolean closeWhenDone) {
-        this.bufferedReader = null;
-        this.jsonReader = reader;
-        this.printWriter = null;
-        this.jsonWriter = null;
         this.closeWhenDone = closeWhenDone;
     }
 
     public PersistenceUtil(PrintWriter writer, boolean closeWhenDone) {
         this.bufferedReader = null;
-        this.jsonReader = null;
         this.printWriter = writer;
-        this.jsonWriter = null;
         this.closeWhenDone = closeWhenDone;
     }
 
-    public PersistenceUtil(JsonWriter writer, boolean closeWhenDone) {
-        this.bufferedReader = null;
-        this.jsonReader = null;
-        this.printWriter = null;
-        this.jsonWriter = writer;
-        this.closeWhenDone = closeWhenDone;
+    public void println(String s) throws IOException {
+        printWriter.println(s);
     }
 
-    public BufferedReader getBufferedReader() {
-        return bufferedReader;
+    public void flush() throws Exception {
+        printWriter.flush();
     }
 
-    public JsonReader getJsonReader() {
-        return jsonReader;
+	public String readToEnd() throws IOException {
+        StringBuilder s = new StringBuilder();
+        char[] buf = new char[8192];
+        int len;
+        while ((len = bufferedReader.read(buf)) > 0) {
+            s.append(buf, 0, len);
+        }
+        return s.toString();
+	}
+
+    public String readLine() throws IOException {
+        return bufferedReader.readLine();
     }
 
-    public PrintWriter getPrintWriter() {
-        return printWriter;
-    }
-
-    public JsonWriter getJsonWriter() {
-        return jsonWriter;
+    public void close() throws IOException {
+        if (!closeWhenDone) {
+            return;
+        }
+        if (bufferedReader != null) {
+            bufferedReader.close();
+        }
+        if (printWriter != null) {
+            printWriter.close();
+        }
     }
 
     public boolean isCloseWhenDone() {
         return closeWhenDone;
+    }
+
+    public Object getContent() {
+        return content;
+    }
+
+    public void setContent(Object content) {
+        this.content = content;
+    }
+
+    public int getContentIndex() {
+        return contentIndex;
+    }
+
+    public void setContentIndex(int contentIndex) {
+        this.contentIndex = contentIndex;
     }
 }

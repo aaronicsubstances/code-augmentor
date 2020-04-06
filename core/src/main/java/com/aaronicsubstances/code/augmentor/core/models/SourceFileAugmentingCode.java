@@ -1,7 +1,5 @@
 package com.aaronicsubstances.code.augmentor.core.models;
 
-import java.io.BufferedReader;
-import java.io.PrintWriter;
 import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.core.persistence.PersistenceUtil;
@@ -47,20 +45,31 @@ public class SourceFileAugmentingCode {
     }
 
 	public void serialize(Object serializer) throws Exception {
-        PrintWriter writer = ((PersistenceUtil) serializer).getPrintWriter();
-        String s = PersistenceUtil.serializeCompactlyToJson(this);
-        writer.println(s);
+        PersistenceUtil persistenceUtil = (PersistenceUtil) serializer;
+        String json = PersistenceUtil.serializeCompactlyToJson(this);
+        persistenceUtil.println(json);
+        persistenceUtil.flush();
     }
 
 	public static SourceFileAugmentingCode deserialize(Object deserializer) throws Exception {
-        BufferedReader reader = ((PersistenceUtil) deserializer).getBufferedReader();
-        String line;
-        while ((line = reader.readLine()) != null) {
-            SourceFileAugmentingCode instance = PersistenceUtil.deserializeFromJson(line,
-                SourceFileAugmentingCode.class);
-            return instance;
+        PersistenceUtil persistenceUtil = (PersistenceUtil) deserializer;
+        SourceFileAugmentingCode[] entireList = (SourceFileAugmentingCode[])persistenceUtil
+            .getContent();
+        SourceFileAugmentingCode obj = null;
+        if (entireList != null) {
+            int contentIndex = persistenceUtil.getContentIndex();
+            if (contentIndex < entireList.length) {
+                obj = entireList[contentIndex];
+                persistenceUtil.setContentIndex(contentIndex + 1);
+            }
         }
-        return null;
+        else {
+            String json = persistenceUtil.readLine();
+            if (json != null) {
+                obj = PersistenceUtil.deserializeFromJson(json, SourceFileAugmentingCode.class);
+            }
+        }        
+        return obj;
     }
 
     @Override

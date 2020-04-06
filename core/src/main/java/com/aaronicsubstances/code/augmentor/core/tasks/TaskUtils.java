@@ -67,7 +67,7 @@ public class TaskUtils {
 
     public static String calcHash(String contents, Charset charset) throws NoSuchAlgorithmException {
         byte[] binaryContent = contents.getBytes(charset);
-        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        MessageDigest md = MessageDigest.getInstance("MD5");
         md.update(binaryContent);
         binaryContent = md.digest();
         String hash = Base64.getEncoder().encodeToString(binaryContent);

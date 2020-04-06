@@ -81,6 +81,7 @@ public class PersistenceTest {
                 PreCodeAugmentationResult instance = new PreCodeAugmentationResult(new ArrayList<>());
                 instance.setGenCodeStartSuffix(generateRandomString(randGen, false));
                 instance.setGenCodeEndSuffix(generateRandomString(randGen, false));
+                instance.setNewline(generateRandomString(randGen, true));
                 if (count > 0) {
                     int fileDescriptorListSize = randGen.nextInt(5);
                     for (int i = 0; i < fileDescriptorListSize; i++) {
@@ -91,14 +92,7 @@ public class PersistenceTest {
                         s.setFileIndex(i);
                         s.setRelativePath(generateRandomString(randGen, false));
                         s.setDir(generateRandomString(randGen, false));
-                        s.setHeaderInsertPos(randGen.nextInt());
                         s.setContentHash(generateRandomString(randGen, false));
-
-                        int importStatementListSize = randGen.nextInt(5);
-                        for (int j = 0; j < importStatementListSize; j++) {
-                            String imp = generateRandomString(randGen, true);
-                            s.getImportStatements().add(imp);
-                        }
 
                         int snippetListSize = randGen.nextInt(5);
                         for (int j = 0; j < snippetListSize; j++) {
@@ -182,6 +176,7 @@ public class PersistenceTest {
                             
                             codeSnippet.setIndex(i);
                             codeSnippet.setCommentSuffix(generateRandomString(randGen, false));
+                            codeSnippet.setIndent(randomIndent(randGen));
                             
                             int blockCount = randGen.nextInt(5);
                             for (int k = 0; k < blockCount; k++) {
@@ -264,9 +259,9 @@ public class PersistenceTest {
                             generatedCodeList.add(generatedCode);
 
                             generatedCode.setIndex(j);
+                            generatedCode.setIndent(randomIndent(randGen));
                             if (randGen.nextBoolean()) {
                                 generatedCode.setError(true);
-                                generatedCode.setHeaderContent(generateRandomString(randGen, true));
                             }
                             generatedCode.setBodyContent(generateRandomString(randGen, true));
                         }
@@ -289,8 +284,14 @@ public class PersistenceTest {
         c.setAugmentingCodeDescriptor(d);
         d.setStartPos(randGen.nextInt(1000));
         d.setEndPos(randGen.nextInt(1000));
-        d.setAnnotatedWithSlashStar(randGen.nextBoolean());
+        d.setFfNewlineStartPos(randGen.nextInt(1000));
+        d.setFfNewlineEndPos(randGen.nextInt(1000));
         d.setIndex(randGen.nextInt(200));
+        d.setIndent(randomIndent(randGen));
+        return c;
+    }
+    
+    static String randomIndent(Random randGen) {
         if (randGen.nextBoolean()) {
             if (randGen.nextBoolean()) {
                 int tabCount = randGen.nextInt(4);
@@ -298,14 +299,14 @@ public class PersistenceTest {
                 for (int i = 0; i < tabCount; i++) {
                     s.append("\t");
                 }
-                d.setIndent(s.toString());
+                return s.toString();
             }
             else {
-                d.setIndent(generateRandomString(randGen, false));
+                return generateRandomString(randGen, false);
             }
         }
-        return c;
-	}
+        return null;
+    }
 
     static String generateRandomString(Random randGen, boolean includeNewLine) {
         int length = randGen.nextInt(50);

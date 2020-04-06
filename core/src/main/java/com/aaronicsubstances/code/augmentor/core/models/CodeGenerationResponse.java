@@ -11,12 +11,18 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.core.persistence.PersistenceUtil;
+import com.google.gson.annotations.SerializedName;
 
 public class CodeGenerationResponse {
+
+    public static class Header {
+        @SerializedName("content_streaming_enabled")
+        Boolean contentStreamEnabled;
+    }
+    
     private List<SourceFileGeneratedCode> sourceFileGeneratedCodeList;
 
     public CodeGenerationResponse() {
@@ -40,25 +46,31 @@ public class CodeGenerationResponse {
         return beginSerialize(writer, true);
     }
 
-    public Object beginSerialize(Writer writer) {
+    public Object beginSerialize(Writer writer) throws Exception {
         return beginSerialize(writer, false);
     }
 
-    private PersistenceUtil beginSerialize(Writer stream, boolean closeStream) {
-        PrintWriter writer = new PrintWriter(stream, true);
-        return new PersistenceUtil(writer, closeStream);
+    private PersistenceUtil beginSerialize(Writer stream, boolean closeStream) throws Exception {
+        PersistenceUtil persistenceUtil= new PersistenceUtil(new PrintWriter(stream), closeStream);
+        printHeader(persistenceUtil, true);
+        return persistenceUtil;
+    }
+
+    private void printHeader(PersistenceUtil persistenceUtil, boolean contentStreamEnabled) 
+            throws Exception {
+        Header header = new Header();
+        header.contentStreamEnabled = contentStreamEnabled;
+        String headerString = PersistenceUtil.serializeCompactlyToJson(header);
+        persistenceUtil.println(headerString);
     }
 
     public void endSerialize(Object serializer) throws Exception {
         PersistenceUtil persistenceUtil = (PersistenceUtil) serializer;
-        PrintWriter writer = persistenceUtil.getPrintWriter();
         try {
-            writer.flush();
+            persistenceUtil.flush();
         }
         finally {
-            if (persistenceUtil.isCloseWhenDone()) {
-                writer.close();
-            }
+            persistenceUtil.close();
         }
     }
 
@@ -70,19 +82,18 @@ public class CodeGenerationResponse {
 	}
 
 	public void serialize(Writer stream, boolean serializeAllAsJson) throws Exception {
+        PersistenceUtil persistenceUtil = new PersistenceUtil(new PrintWriter(stream), false);
+        printHeader(persistenceUtil, !serializeAllAsJson);
         if (serializeAllAsJson) {
-            String json = PersistenceUtil.serializeToJson(sourceFileGeneratedCodeList);
-            stream.write(json);
-            stream.flush();
+            String json = PersistenceUtil.serializeFormattedToJson(sourceFileGeneratedCodeList);
+            persistenceUtil.println(json);
         }
         else {
-            PrintWriter writer = new PrintWriter(stream);
-            PersistenceUtil persistenceUtil = new PersistenceUtil(writer, false);
             for (SourceFileGeneratedCode s : sourceFileGeneratedCodeList) {
                 s.serialize(persistenceUtil);
             }
-            writer.flush();
         }
+        persistenceUtil.flush();
 	}
 
     public Object beginDeserialize(File file) throws Exception {
@@ -96,26 +107,33 @@ public class CodeGenerationResponse {
     }
 
     private PersistenceUtil beginDeserialize(Reader stream, boolean closeStream) throws Exception {
-        BufferedReader reader = new BufferedReader(stream);
-        boolean perFile = PersistenceUtil.peekSerializedJsonForPerFile(reader);
-        if (perFile) {
-            SourceFileGeneratedCode[] files = PersistenceUtil.deserializeFromJson(reader,
+        PersistenceUtil persistenceUtil = new PersistenceUtil(new BufferedReader(stream), 
+            closeStream);
+        boolean contentStreamEnabled = readHeader(persistenceUtil);
+        sourceFileGeneratedCodeList = new ArrayList<>();
+        if (!contentStreamEnabled) {            
+            String inputRemainder = persistenceUtil.readToEnd();
+            SourceFileGeneratedCode[] entireList = PersistenceUtil.deserializeFromJson(inputRemainder, 
                 SourceFileGeneratedCode[].class);
-            sourceFileGeneratedCodeList = Arrays.asList(files);
+            persistenceUtil.setContent(entireList);
         }
-        else {
-            sourceFileGeneratedCodeList = new ArrayList<>();
-        }
+        return persistenceUtil;
+    }
 
-        return new PersistenceUtil(reader, closeStream);
+    private boolean readHeader(PersistenceUtil persistenceUtil) throws Exception {
+        String headerString = persistenceUtil.readLine();
+        Header header = PersistenceUtil.deserializeFromJson(headerString, Header.class);
+        // enable content streaming by default.
+        boolean contentStreamEnabled = true;
+        if (header.contentStreamEnabled != null) {
+            contentStreamEnabled = header.contentStreamEnabled;
+        }
+        return contentStreamEnabled;
     }
 
     public void endDeserialize(Object deserializer) throws Exception {
         PersistenceUtil persistenceUtil = (PersistenceUtil) deserializer;
-        BufferedReader reader = persistenceUtil.getBufferedReader();
-        if (persistenceUtil.isCloseWhenDone()) {
-            reader.close();
-        }
+        persistenceUtil.close();
     }
 
     public static CodeGenerationResponse deserialize(File file) throws Exception {

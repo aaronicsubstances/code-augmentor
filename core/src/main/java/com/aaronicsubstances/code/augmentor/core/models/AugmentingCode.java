@@ -76,6 +76,8 @@ public class AugmentingCode {
     private List<Block> blocks;
     @SerializedName("comment_suffix")
     private String commentSuffix;
+    @SerializedName("indent")
+    private String indent;
 
     public AugmentingCode() {
     }
@@ -108,12 +110,21 @@ public class AugmentingCode {
         this.commentSuffix = commentSuffix;
     }
 
+    public String getIndent() {
+        return indent;
+    }
+
+    public void setIndent(String indent) {
+        this.indent = indent;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((blocks == null) ? 0 : blocks.hashCode());
         result = prime * result + ((commentSuffix == null) ? 0 : commentSuffix.hashCode());
+        result = prime * result + ((indent == null) ? 0 : indent.hashCode());
         result = prime * result + index;
         return result;
     }
@@ -137,6 +148,11 @@ public class AugmentingCode {
                 return false;
         } else if (!commentSuffix.equals(other.commentSuffix))
             return false;
+        if (indent == null) {
+            if (other.indent != null)
+                return false;
+        } else if (!indent.equals(other.indent))
+            return false;
         if (index != other.index)
             return false;
         return true;
@@ -144,7 +160,7 @@ public class AugmentingCode {
 
     @Override
     public String toString() {
-        return "AugmentingCode{blocks=" + blocks + ", commentSuffix=" + commentSuffix + 
-                ", index=" + index + "}";
+        return "AugmentingCode{blocks=" + blocks + ", commentSuffix=" + commentSuffix + ", indent=" + indent
+                + ", index=" + index + "}";
     }
 }
