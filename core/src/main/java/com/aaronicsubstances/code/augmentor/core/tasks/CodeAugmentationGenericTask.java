@@ -17,7 +17,6 @@ import com.aaronicsubstances.code.augmentor.core.models.PreCodeAugmentationResul
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.AugmentingCodeDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.GeneratedCodeDescriptor;
-import com.aaronicsubstances.code.augmentor.core.parsing.LexerSupport;
 
 public class CodeAugmentationGenericTask {
     public static final int LOG_LEVEL_VERBOSE = 1;
@@ -176,12 +175,12 @@ public class CodeAugmentationGenericTask {
     }
 
     static String indentCodeAndEnsureNewlineEnding(String code, String indent, String newline) {
-        if (indent != null && !indent.isEmpty()) {
-            List<String> splitCode = LexerSupport.splitIntoLines(code);
+        if (!TaskUtils.isEmpty(indent)) {
+            List<String> splitCode = TaskUtils.splitIntoLines(code);
             StringBuilder codeBuffer = new StringBuilder();
             for (int i = 0; i < splitCode.size(); i+=2) {
                 String line = splitCode.get(i);
-                if (!LexerSupport.isBlank(line)) {
+                if (!TaskUtils.isBlank(line)) {
                     codeBuffer.append(indent).append(line);
                 }
                 String terminator = splitCode.get(i + 1);
@@ -195,7 +194,7 @@ public class CodeAugmentationGenericTask {
         boolean endsWithNewline = false;
         if (!code.isEmpty()) {
             char lastChar = code.charAt(code.length() - 1);
-            if (LexerSupport.isNewLine(lastChar)) {
+            if (TaskUtils.isNewLine(lastChar)) {
                 endsWithNewline = true;
             }
         }
@@ -219,8 +218,8 @@ public class CodeAugmentationGenericTask {
 
     private static String describeAugCodeSection(String input, AugmentingCodeDescriptor augCodeDescriptor, 
             File srcFile) {
-        int lineNumber = LexerSupport.calculateLineAndColumnNumbers(input, 
-            augCodeDescriptor.getStartPos())[0];
+        int lineNumber = TaskUtils.calculateLineNumber(input, 
+            augCodeDescriptor.getStartPos());
         String msg = String.format("aug code section at line %s (index %s to %s) in %s", 
             lineNumber, augCodeDescriptor.getStartPos(), augCodeDescriptor.getEndPos(), srcFile);
         return msg;

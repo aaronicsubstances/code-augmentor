@@ -173,7 +173,7 @@ public class PersistenceTest {
                             codeSnippets.add(codeSnippet);
                             
                             codeSnippet.setIndex(i);
-                            codeSnippet.setCommentSuffix(generateRandomString(randGen, false));
+                            codeSnippet.setDirectiveMarker(generateRandomString(randGen, false));
                             codeSnippet.setIndent(randomIndent(randGen));
                             
                             int blockCount = randGen.nextInt(5);

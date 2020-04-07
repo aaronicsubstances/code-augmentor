@@ -106,9 +106,4 @@ public class CodeAugmentationGenericTaskTest {
             new Object[] { "task-spec-02.json", Arrays.asList(0) }
         };
     }
-
-    @Test
-    public void testExecuteForErrors() {
-        
-    }    
 }

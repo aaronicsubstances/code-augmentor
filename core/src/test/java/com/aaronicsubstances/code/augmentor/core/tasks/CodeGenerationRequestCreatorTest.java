@@ -19,9 +19,7 @@ import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.Au
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.GeneratedCodeDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileDescriptor;
 import com.aaronicsubstances.code.augmentor.core.parsing.ParserException;
-import com.aaronicsubstances.code.augmentor.core.parsing.ParserInputSource;
 import com.aaronicsubstances.code.augmentor.core.parsing.Token;
-import com.aaronicsubstances.code.augmentor.core.tasks.CodeGenerationRequestCreator.SuffixDescriptor;
 import com.google.gson.Gson;
 
 import org.testng.annotations.DataProvider;
@@ -29,49 +27,7 @@ import org.testng.annotations.Test;
 
 public class CodeGenerationRequestCreatorTest {
 
-    @Test(dataProvider = "createTestGetCommentContentWithoutSuffixData")
-    public void testGetCommentContentWithoutSuffix(Token t, String suffix, String expected) {
-        String actual = CodeGenerationRequestCreator.getCommentContentWithoutSuffix(t, suffix);
-        assertEquals(actual, expected);
-    }
-    
-    @DataProvider
-    public Object[][] createTestGetCommentContentWithoutSuffixData() {
-        return new Object[][]{
-            new Object[]{ new Token(Token.TYPE_SINGLE_LINE_COMMENT, "//a", 0, 0, 0), 
-                "", "a" },
-            new Object[]{ new Token(Token.TYPE_MULTI_LINE_COMMENT, "/*b*/", 0, 0, 0), 
-                "", "b" },
-            new Object[]{ new Token(Token.TYPE_SINGLE_LINE_COMMENT, "//a", 0, 0, 0), 
-                "a", "" },
-            new Object[]{ new Token(Token.TYPE_MULTI_LINE_COMMENT, "/*a*/", 0, 0, 0), 
-                "a", "" },
-            new Object[]{ new Token(Token.TYPE_SINGLE_LINE_COMMENT, "//a: print('yes')", 0, 0, 0), 
-                "a:", " print('yes')" },
-            new Object[]{ new Token(Token.TYPE_SINGLE_LINE_COMMENT, "//a: print('yes')", 0, 0, 0), 
-                "a: ", "print('yes')" },
-            new Object[]{ new Token(Token.TYPE_MULTI_LINE_COMMENT, "/*/\ncreateClassSnippet('TEST')\n*/", 0, 0, 0), 
-                "/", "\ncreateClassSnippet('TEST')\n" },
-        };
-    }
-    
-    @Test(dataProvider = "createTestGetCommentContentWithoutSuffixErrorData", 
-        expectedExceptions = Throwable.class)
-    public void testGetCommentContentWithoutSuffixForErrors(Token t, String suffix) {
-        CodeGenerationRequestCreator.getCommentContentWithoutSuffix(t, suffix);
-    }
-    
-    @DataProvider
-    public Object[][] createTestGetCommentContentWithoutSuffixErrorData() {
-        return new Object[][]{
-            new Object[]{ new Token(Token.TYPE_NON_NEWLINE_WHITESPACE, "//a", 0, 0, 0), 
-                "a" },
-            new Object[]{ new Token(Token.TYPE_NEWLINE, "/*a*/", 0, 0, 0), 
-                "a" }
-        };
-    }
-
-    @Test(dataProvider = "createTestGroupDoubleSlashReleventTokensData")
+    /*@Test(dataProvider = "createTestGroupDoubleSlashReleventTokensData")
     public void testGroupDoubleSlashReleventTokens(List<Token> tokens, List<List<Token>> expected) {
         List<List<Token>> actual = CodeGenerationRequestCreator.groupDoubleSlashReleventTokens(tokens);
         assertEquals(actual, expected);
@@ -114,74 +70,6 @@ public class CodeGenerationRequestCreatorTest {
             new Object[]{ fourthTokenList, fourthGroup },
             new Object[]{ fifthTokenList, fifthGroup },
             new Object[]{ sixthList, Arrays.asList(sixthList) }
-        };
-    }
-
-    @Test(dataProvider = "createTestCombineAndSortRelevantTokensData")
-    public void testCombineAndSortRelevantTokens(List<Token> tokens, List<List<Token>> groups,
-            List<Object> expected) {
-        List<Object> actual = CodeGenerationRequestCreator.combineAndSortRelevantTokens(tokens, groups);
-        assertEquals(actual, expected);
-    }
-
-    @DataProvider
-    public Object[][] createTestCombineAndSortRelevantTokensData() {
-        List<Token> tokens = Arrays.asList(newTokenWithStartPos(7), newTokenWithStartPos(20),
-            newTokenWithStartPos(99));
-        List<List<Token>> groups = Arrays.asList(
-            Arrays.asList(newTokenWithStartPos(3), newTokenWithStartPos(4),
-                newTokenWithStartPos(6)),                
-            Arrays.asList(newTokenWithStartPos(30), newTokenWithStartPos(40),
-                newTokenWithStartPos(52)));
-        List<Object> fourthExpected = Arrays.asList(
-            Arrays.asList(newTokenWithStartPos(3), newTokenWithStartPos(4),
-                newTokenWithStartPos(6)),
-            newTokenWithStartPos(7),
-            newTokenWithStartPos(20),
-            Arrays.asList(newTokenWithStartPos(30), newTokenWithStartPos(40),
-                newTokenWithStartPos(52)),
-            newTokenWithStartPos(99));
-        return new Object[][]{
-            new Object[]{ Arrays.asList(), Arrays.asList(), Arrays.asList() },
-            new Object[]{ tokens, Arrays.asList(), tokens },
-            new Object[]{ Arrays.asList(), groups, groups },
-            new Object[]{ tokens, groups, fourthExpected }
-        };
-    }
-
-    @Test(dataProvider = "createTestGetSuffixDescriptorData")
-    public void testGetSuffixDescriptor(Token t, SuffixDescriptor expected) {
-        CodeGenerationRequestCreator instance = createInstance();
-        SuffixDescriptor actual = instance.getSuffixDescriptor(t);
-        assertEquals(actual, expected);
-    }
-
-    @DataProvider
-    public Object[][] createTestGetSuffixDescriptorData() {
-        return new Object[][]{
-            new Object[]{ new Token(Token.TYPE_SINGLE_LINE_COMMENT, "//ES3", 0, 0, 0), 
-                new SuffixDescriptor("ES", 
-                CodeGenerationRequestCreator.SUFFIX_TYPE_EMB_STRING, -1) },
-            new Object[]{ new Token(Token.TYPE_MULTI_LINE_COMMENT, "/*GS5+*/", 0, 0, 0),
-                new SuffixDescriptor("GS", 
-                CodeGenerationRequestCreator.SUFFIX_TYPE_GEN_CODE_START, -1) },
-            new Object[]{ new Token(Token.TYPE_SINGLE_LINE_COMMENT, "//GE", 0, 0, 0),
-                new SuffixDescriptor("GE", 
-                CodeGenerationRequestCreator.SUFFIX_TYPE_GEN_CODE_END, -1) },
-            new Object[]{ new Token(Token.TYPE_MULTI_LINE_COMMENT, "/*H***/", 0, 0, 0), null },
-            new Object[]{ new Token(Token.TYPE_MULTI_LINE_COMMENT, "/*JS6*/", 0, 0, 0),
-                new SuffixDescriptor("JS", 
-                CodeGenerationRequestCreator.SUFFIX_TYPE_AUG_CODE, 0) },
-            new Object[]{ new Token(Token.TYPE_SINGLE_LINE_COMMENT, "//PY30#", 0, 0, 0),
-                new SuffixDescriptor("PY30", 
-                CodeGenerationRequestCreator.SUFFIX_TYPE_AUG_CODE, 1) },
-            new Object[]{ new Token(Token.TYPE_MULTI_LINE_COMMENT, "/*PY3#*/", 0, 0, 0),
-                new SuffixDescriptor("PY", 
-                CodeGenerationRequestCreator.SUFFIX_TYPE_AUG_CODE, 1) },
-            new Object[]{ new Token(Token.TYPE_SINGLE_LINE_COMMENT, "//PY30#", 0, 0, 0),
-                new SuffixDescriptor("PY30", 
-                CodeGenerationRequestCreator.SUFFIX_TYPE_AUG_CODE, 1) },
-            new Object[]{ new Token(Token.TYPE_NEWLINE, "\n", 0, 0, 0), null }
         };
     }
 
@@ -283,20 +171,6 @@ public class CodeGenerationRequestCreatorTest {
             new Object[]{ fifthGroup, "", createAugCode("JS", new Block(" println\n(\n", false),
                 new Block("{\n'value': true\n}", true), new Block("\n);\n println()", false)), }
         };
-    }
-
-    @Test
-    public void testGetSlashStarRelevantTokens() {
-        List<Token> expected = Arrays.asList(
-            newToken(5, "/*JS println(\"Hello World from JS-star\")\r\n" +
-                "var i = 3 + new Date(); \r\n" +
-                "...etc*/", 59, "0", 3, null, null)
-        );
-        String s = TestResourceLoader.loadResource("tokens-for-relevance.json", getClass());
-        List<Token> sourceTokens = fetchTokens(s);
-        CodeGenerationRequestCreator instance = createInstance();
-        List<Token> actual = instance.getSlashStarRelevantTokens(sourceTokens);
-        assertEquals(actual, expected);
     }
 
     @Test
@@ -460,7 +334,7 @@ public class CodeGenerationRequestCreatorTest {
 
     private static AugmentingCode createAugCode(int index, String suffix, Block... blocks) {        
         AugmentingCode augCode = new AugmentingCode(Arrays.asList(blocks));
-        augCode.setCommentSuffix(suffix);
+        augCode.setDirectiveMarker(suffix);
         augCode.setIndex(index);
         return augCode;
     }
@@ -595,5 +469,5 @@ public class CodeGenerationRequestCreatorTest {
         int endPos = startPos + text.length();
         Token token = new Token(type, text, startPos, endPos, lineNumber);
         return token;
-    }
+    }*/
 }

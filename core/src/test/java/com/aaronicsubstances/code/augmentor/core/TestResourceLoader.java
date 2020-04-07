@@ -8,8 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.aaronicsubstances.code.augmentor.core.parsing.LexerSupport;
 import com.aaronicsubstances.code.augmentor.core.parsing.Token;
+import com.aaronicsubstances.code.augmentor.core.tasks.TaskUtils;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 
@@ -43,7 +43,7 @@ public class TestResourceLoader {
 	public static String loadResourceNewlinesNormalized(String path,
 			Class<?> cls, String newLine) {
         String text = loadResource(path, cls);
-        List<String> splitText = LexerSupport.splitIntoLines(text);
+        List<String> splitText = TaskUtils.splitIntoLines(text);
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < splitText.size(); i+=2) {
             String line = splitText.get(i);
@@ -58,16 +58,16 @@ public class TestResourceLoader {
         return newText;
 	}
     
-    public static List<Token> deserializeTokens(int i, Class<?> cls) {
+    /*public static List<Token> deserializeTokens(int i, Class<?> cls) {
         String path = String.format("tokens-%02d.json", i);
         String text = TestResourceLoader.loadResource(path, cls);
         Gson gson = new Gson();
         TokenLike[] tokens = gson.fromJson(text, TokenLike[].class);
         
         return Arrays.stream(tokens).map(t -> t.toToken()).collect(Collectors.toList());
-    }
+    }*/
 
-    public static class TokenLike {
+    /*public static class TokenLike {
         public int type;
         public String text;
         public int startPos;
@@ -94,5 +94,5 @@ public class TestResourceLoader {
             }
             return t;
         }
-    }
+    }*/
 }

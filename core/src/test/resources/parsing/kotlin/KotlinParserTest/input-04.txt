@@ -1,5 +1,0 @@
-#!kotlinc-jvm
-
-fun main() {
-	println("Hello World!")
-}

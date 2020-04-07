@@ -1,14 +1,8 @@
 package com.aaronicsubstances.code.augmentor.core.tasks;
 
+import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import com.aaronicsubstances.code.augmentor.core.models.AugmentingCode;
 import com.aaronicsubstances.code.augmentor.core.models.AugmentingCode.Block;
@@ -17,196 +11,54 @@ import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.Au
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.GeneratedCodeDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileDescriptor;
 import com.aaronicsubstances.code.augmentor.core.parsing.ParserException;
-import com.aaronicsubstances.code.augmentor.core.parsing.ParserInputSource;
 import com.aaronicsubstances.code.augmentor.core.parsing.Token;
 
-/**
- * CodeGenerationRequestCreator
- */
 public class CodeGenerationRequestCreator {
-    static final int SUFFIX_TYPE_GEN_CODE_START = 10;
-    static final int SUFFIX_TYPE_GEN_CODE_END = 11;
-    static final int SUFFIX_TYPE_EMB_STRING = 21;
-    static final int SUFFIX_TYPE_AUG_CODE = 31;
-    static final String TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR = "suffix_descriptor";
-    static final String TOKEN_ATTRIBUTE_INDEX_IN_SOURCE = "index_in_source";
-    static final String TOKEN_ATTRIBUTE_INDENT = "indent";
-    static final String TOKEN_ATTRIBUTE_FF_NEWLINE = "ff_newline";
+    static final int TOKEN_TYPE_DIRECTIVE = 1;
+    static final int TOKEN_TYPE_BLANK = 2;
+    static final int TOKEN_TYPE_OTHER = 3;
 
-    public static class SuffixDescriptor implements Comparable<SuffixDescriptor> {
-        public final String suffix;
-        public final int suffixType;
-        public final int augCodeSpecIndex;
+    static final int DIRECTIVE_TYPE_GEN_CODE_START = 1;
+    static final int DIRECTIVE_TYPE_GEN_CODE_END = 2;
+    static final int DIRECTIVE_TYPE_EMB_STRING = 3;
+    static final int DIRECTIVE_TYPE_AUG_CODE = 4;
+    static final int DIRECTIVE_TYPE_ENABLE_SCAN = 5;
+    static final int DIRECTIVE_TYPE_DISABLE_SCAN = 6;
 
-        public SuffixDescriptor(String suffix) {
-            this(suffix, -1, -1);
-        }
-
-        public SuffixDescriptor(String suffix, int suffixType, int augCodeSpecIndex) {
-            this.suffix = suffix;
-            this.suffixType = suffixType;
-            this.augCodeSpecIndex = augCodeSpecIndex;
-        }
-
-        @Override
-        public int compareTo(SuffixDescriptor o) {
-            return suffix.compareTo(o.suffix);
-        }
-
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + augCodeSpecIndex;
-            result = prime * result + ((suffix == null) ? 0 : suffix.hashCode());
-            result = prime * result + suffixType;
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            SuffixDescriptor other = (SuffixDescriptor) obj;
-            if (augCodeSpecIndex != other.augCodeSpecIndex)
-                return false;
-            if (suffix == null) {
-                if (other.suffix != null)
-                    return false;
-            } else if (!suffix.equals(other.suffix))
-                return false;
-            if (suffixType != other.suffixType)
-                return false;
-            return true;
-        }
-
-        @Override
-        public String toString() {
-            return "SuffixDescriptor{augCodeSpecIndex=" + augCodeSpecIndex + ", suffix=" + suffix + ", suffixType="
-                    + suffixType + "}";
-        }
-    }
-
-    private final List<SuffixDescriptor> suffixDescriptors;
-    private final Pattern DOUBLE_SLASH_PATTERN;
-    private final Pattern SLASH_STAR_PATTERN;
+    private List<String> genCodeStartDirectives;
+    private List<String> genCodeEndDirectives;
+    private List<String> embeddedStringDirectives;
+    private List<List<String>> augCodeDirectiveSets;
+    private List<String> enableScanDirectives;
+    private List<String> disableScanDirectives;
 
     public CodeGenerationRequestCreator(
-            List<String> genCodeStartSuffixes,
-            List<String> genCodeEndSuffixes,
-            List<String> embeddedStringDoubleSlashSuffixes,
-            List<List<String>> requestSpecList) {
-        suffixDescriptors = new ArrayList<SuffixDescriptor>();
-        List<String> doubleSlashSuffixes = new ArrayList<>();
-        List<String> slashStarSuffixes = new ArrayList<>();
-
-        // add suffixes for beginning of generated code.
-        for (String s : genCodeStartSuffixes) {
-            suffixDescriptors.add(new SuffixDescriptor(s, SUFFIX_TYPE_GEN_CODE_START, -1));            
-            doubleSlashSuffixes.add(s);
-            slashStarSuffixes.add(s);
-        }
-
-        // add suffixes for end of generated code.
-        for (String s : genCodeEndSuffixes) {
-            suffixDescriptors.add(new SuffixDescriptor(s, SUFFIX_TYPE_GEN_CODE_END, -1));
-            doubleSlashSuffixes.add(s);
-            slashStarSuffixes.add(s);
-        }
-
-        // add suffixes for embedded code
-        for (String s : embeddedStringDoubleSlashSuffixes) {
-            suffixDescriptors.add(new SuffixDescriptor(s, SUFFIX_TYPE_EMB_STRING, -1));
-            doubleSlashSuffixes.add(s);
-        }
-
-        // add suffixes for augmenting code.
-        for (int i = 0; i < requestSpecList.size(); i++) {
-            List<String> spec = requestSpecList.get(i);
-            for (String s : spec) {
-                suffixDescriptors.add(new SuffixDescriptor(s, SUFFIX_TYPE_AUG_CODE, i));
-                doubleSlashSuffixes.add(s);
-                slashStarSuffixes.add(s);
-            }
-        }
-
-        // sort so that binary search can be used.
-        suffixDescriptors.sort(null);
-
-        // reverse sort prior to regex creation to ensure if
-        // there are clash of prefix matches, longer one always wins.
-        Comparator<String> reverseSorter = (s1, s2) -> s2.compareTo(s1);
-        doubleSlashSuffixes.sort(reverseSorter);
-        slashStarSuffixes.sort(reverseSorter);
-
-        StringBuilder doubleSlashRegex = new StringBuilder();
-        for (String s : doubleSlashSuffixes) {
-            if (doubleSlashRegex.length() > 0) {
-                doubleSlashRegex.append("|");
-            }
-            doubleSlashRegex.append(Pattern.quote(s));
-        }
-        doubleSlashRegex.insert(0, "^(");
-        doubleSlashRegex.append(")");
-        DOUBLE_SLASH_PATTERN = Pattern.compile(doubleSlashRegex.toString());
-        
-        StringBuilder slashStartRegex = new StringBuilder();
-        for (String s : slashStarSuffixes) {
-            if (slashStartRegex.length() > 0) {
-                slashStartRegex.append("|");
-            }
-            slashStartRegex.append(Pattern.quote(s));
-        }
-        slashStartRegex.insert(0, "^(");
-        slashStartRegex.append(")");
-        SLASH_STAR_PATTERN = Pattern.compile(slashStartRegex.toString());
+            List<String> genCodeStartDirectives,
+            List<String> genCodeEndDirectives,
+            List<String> embeddedStringDirectives,
+            List<List<String>> augCodeDirectiveSets, 
+            List<String> enableScanDirectives, 
+            List<String> disableScanDirectives) {
+        this.genCodeStartDirectives = genCodeStartDirectives;
+        this.genCodeEndDirectives = genCodeEndDirectives;
+        this.embeddedStringDirectives = embeddedStringDirectives;
+        this.augCodeDirectiveSets = augCodeDirectiveSets;
+        this.enableScanDirectives = enableScanDirectives;
+        this.disableScanDirectives = disableScanDirectives;
     }
 
-    SuffixDescriptor getSuffixDescriptor(Token t) {
-        Matcher regexMatcher;
-        if (t.type == Token.TYPE_SINGLE_LINE_COMMENT) {
-            regexMatcher = DOUBLE_SLASH_PATTERN.matcher(getCommentContentWithoutSuffix(t, ""));
-        }
-        else if (t.type == Token.TYPE_MULTI_LINE_COMMENT) {
-            regexMatcher = SLASH_STAR_PATTERN.matcher(getCommentContentWithoutSuffix(t, ""));
-        }
-        else {
-            return null;
-        }
-        if (regexMatcher.find()) {
-            int idx = Collections.binarySearch(suffixDescriptors, new SuffixDescriptor(
-                regexMatcher.group(1)));
-            assert idx >= 0;
-            SuffixDescriptor suffixDesc = suffixDescriptors.get(idx);
-            return suffixDesc;
-        }
-        else {
-            return null;
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    public SourceFileDescriptor processSourceFile(
-            ParserInputSource inputSource, List<Token> sourceTokens,
-            List<List<AugmentingCode>> specAugCodesList, List<ParserException> errors) {
-        int runningIndex = 0;
+    public void processSourceFile(SourceFileDescriptor sourceDescriptor, String source,
+            List<List<AugmentingCode>> specAugCodesList, List<ParserException> errors) {        
+        // 1. first, tokenize source code and mark out all directive tokens.
+        List<Token> tokens = tokenizeSource(source);
         
-        // 1. first get all slash star comments relevant as aug code.
-        List<Token> slashStarRelevantTokens = getSlashStarRelevantTokens(sourceTokens);
-
-        // 2. next, get all double slash comments relevant as aug code or emb string.
-        List<Token> doubleSlashRelevantTokens = getDoubleSlashReleventTokens(sourceTokens);
+        // 2. next, identify aug code sections.
+        List<List<Token>> augCodeSections = identifyAugCodeSections(tokens);
         
-        // 3. group and validate double slash relevant tokens. slash star relevant tokens
-        //    are valid already.
-        List<List<Token>> doubleSlashRelevantTokenGroups = groupDoubleSlashReleventTokens(
-            doubleSlashRelevantTokens);
-        for (List<Token> relevantTokenGroup : doubleSlashRelevantTokenGroups) {
-            ParserException error = validateDoubleSlashRelevantTokenGroup(relevantTokenGroup, inputSource);
+        // 3. validate aug code sections.
+        for (List<Token> augCodeSection : augCodeSections) {
+            ParserException error = validateAugCodeSection(augCodeSection,
+                sourceDescriptor);
             if (error != null) {
                 if (errors == null) {
                     throw error;
@@ -215,307 +67,187 @@ public class CodeGenerationRequestCreator {
             }
         }
 
-        // 4. If there are no validation errors,
-        //    combine slash star and double slash aug codes, and sort them.
+        // 4a. If there are no validation errors,
         if (errors != null && !errors.isEmpty()) {
-            return null;
+            return;
         }
-        List<Object> combined = combineAndSortRelevantTokens(slashStarRelevantTokens, 
-            doubleSlashRelevantTokenGroups);
 
-        // 5. generate aug code blocks and associated descriptors
+        // 4b. generate aug code blocks and associated descriptors
         List<CodeSnippetDescriptor> bodySnippets = new ArrayList<>();
-        for (Object o : combined) {
-            AugmentingCodeDescriptor augCodeDescriptor;
-            GeneratedCodeDescriptor genCodeDescriptor;
-            AugmentingCode augmentingCode;
-            int augCodeSpecIndex;
-            if (o instanceof List<?>) {
-                List<Token> doubleSlashGroup = (List<Token>)o;
-                Token firstToken = doubleSlashGroup.get(0);
-                Token lastToken = doubleSlashGroup.get(doubleSlashGroup.size() - 1);
-                
-                // a. create aug code descriptor.
-                augCodeDescriptor = new AugmentingCodeDescriptor();
-                augCodeDescriptor.setStartPos(firstToken.startPos);
-                augCodeDescriptor.setEndPos(lastToken.endPos);
+        for (int i = 0; i < augCodeSections.size(); i++) {
+            List<Token> augCodeSection = augCodeSections.get(i);
+            Token firstToken = augCodeSection.get(0);
+            Token lastToken = augCodeSection.get(augCodeSection.size() - 1);
+            
+            // a. create aug code descriptor.
+            AugmentingCodeDescriptor augCodeDescriptor = new AugmentingCodeDescriptor();
+            augCodeDescriptor.setIndex(i);
+            augCodeDescriptor.setStartPos(firstToken.startPos);
+            augCodeDescriptor.setEndPos(lastToken.endPos);
+            augCodeDescriptor.setHasNewlineEnding(lastToken.newline != null);
+            String indent = augCodeSection.stream().map(x -> x.indent)
+                .min((x, y) -> new Integer(x.length()).compareTo(y.length())).get();
+            augCodeDescriptor.setIndent(indent);
 
-                // b. create gen code descriptor.
-                Map<String, Object> tokenAttributes = (Map<String, Object>)lastToken.value;
-                int tokenIndex = (int)tokenAttributes.get(TOKEN_ATTRIBUTE_INDEX_IN_SOURCE);
-                genCodeDescriptor = createGeneratedCodeDescriptor(sourceTokens, tokenIndex + 1,
-                    false);
+            // b. create gen code descriptor.
+            GeneratedCodeDescriptor genCodeDescriptor = createGeneratedCodeDescriptor(tokens, 
+                lastToken.index);
 
-                // c. create aug code and set indent.
-                tokenAttributes = (Map<String, Object>)firstToken.value;
-                SuffixDescriptor suffixDescriptor = (SuffixDescriptor)tokenAttributes.get(TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR);
-                StringBuilder indentBuilder = new StringBuilder();
-                augmentingCode = createDoubleSlashAugCode(doubleSlashGroup, indentBuilder);
-                augCodeDescriptor.setIndent(indentBuilder.toString());                  
-                augCodeSpecIndex = suffixDescriptor.augCodeSpecIndex;
-            }
-            else {
-                Token starSlashSingle = (Token)o;
-
-                // a. create aug code descriptor.
-                augCodeDescriptor = new AugmentingCodeDescriptor();
-                augCodeDescriptor.setAnnotatedWithSlashStar(true);
-                augCodeDescriptor.setStartPos(starSlashSingle.startPos);
-                augCodeDescriptor.setEndPos(starSlashSingle.endPos);
-
-                // b. create gen code descriptor.
-                Map<String, Object> tokenAttributes = starSlashSingle.value;
-                int tokenIndex = (int)tokenAttributes.get(TOKEN_ATTRIBUTE_INDEX_IN_SOURCE);
-                genCodeDescriptor = createGeneratedCodeDescriptor(sourceTokens, tokenIndex + 1,
-                    true);
-
-                // c. create aug code.
-                SuffixDescriptor suffixDescriptor = (SuffixDescriptor)tokenAttributes.get(TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR);
-                Block blockSingle = new Block();
-                String content = getCommentContentWithoutSuffix(starSlashSingle, 
-                    suffixDescriptor.suffix);
-                blockSingle.setContent(content);
-                augmentingCode = new AugmentingCode(Arrays.asList(blockSingle));
-                augmentingCode.setCommentSuffix(suffixDescriptor.suffix);
-                augCodeSpecIndex = suffixDescriptor.augCodeSpecIndex;
-            }
-
-            augCodeDescriptor.setIndex(runningIndex);
             CodeSnippetDescriptor bodySnippet = new CodeSnippetDescriptor();
             bodySnippet.setAugmentingCodeDescriptor(augCodeDescriptor);
             bodySnippet.setGeneratedCodeDescriptor(genCodeDescriptor);
             bodySnippets.add(bodySnippet);
+
+            // c. create aug code.
+            List<Block> blocks = createAugmentingCodeBlocks(augCodeSection);
+            AugmentingCode augmentingCode = new AugmentingCode(blocks);
+            augmentingCode.setIndex(i);
+            augmentingCode.setIndent(augCodeDescriptor.getIndent());
+            augmentingCode.setDirectiveMarker(firstToken.directiveMarker);
             
-            augmentingCode.setIndex(runningIndex);
-            List<AugmentingCode> applicableAugCodeList = specAugCodesList.get(augCodeSpecIndex);
+            List<AugmentingCode> applicableAugCodeList = specAugCodesList.get(
+                firstToken.augCodeSpecIndex);
             applicableAugCodeList.add(augmentingCode);
-
-            runningIndex++;
         }
 
-        SourceFileDescriptor sourceDescriptor = new SourceFileDescriptor(bodySnippets);
-        return sourceDescriptor;
+        sourceDescriptor.setBodySnippets(bodySnippets);;
     }
 
-    List<Token> getSlashStarRelevantTokens(List<Token> sourceTokens) {
+    List<Token> tokenizeSource(String source) {
+        List<String> splitSource = TaskUtils.splitIntoLines(source);
         List<Token> tokens = new ArrayList<>();
-        for (int i = 0; i < sourceTokens.size(); i++) {
-            Token t = sourceTokens.get(i);
-            if (t.type == Token.TYPE_MULTI_LINE_COMMENT) {
-                SuffixDescriptor suffixDescriptor = getSuffixDescriptor(t);
-                if (suffixDescriptor != null && suffixDescriptor.suffixType == SUFFIX_TYPE_AUG_CODE) {
-                    Map<String, Object> tokenAttributes = new HashMap<>();
-                    tokenAttributes.put(TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR, suffixDescriptor);
-                    tokenAttributes.put(TOKEN_ATTRIBUTE_INDEX_IN_SOURCE, i);
-                    assert t.value == null;
-                    t.value = tokenAttributes;
-                    tokens.add(t);
-                }
+        int startPos = 0;
+        for (int i = 0; i < splitSource.size(); i+=2) {
+            String line = splitSource.get(i);
+            String terminator = splitSource.get(i + 1);
+            String lineWithoutIndent = line.trim();
+            Token t = null;
+            if (lineWithoutIndent.isEmpty()) {
+                t = new Token(TOKEN_TYPE_BLANK);
             }
-        }
-        return tokens;
-    }
-
-    List<Token> getDoubleSlashReleventTokens(List<Token> sourceTokens) {
-        List<Token> tokens = new ArrayList<>();
-        boolean skipDslashSearch = false;
-        StringBuilder indentBuilder = new StringBuilder();
-        for (int i = 0; i < sourceTokens.size(); i++) {            
-            Token t = sourceTokens.get(i);
-            if (t.type == Token.TYPE_NEWLINE) {
-                skipDslashSearch = false;
-                indentBuilder.setLength(0);
-                continue;
-            }
-            else if (skipDslashSearch) {
-                continue;
-            }
-
-            if (t.type == Token.TYPE_NON_NEWLINE_WHITESPACE) {
-                indentBuilder.append(t.text);
-            }
-            else if (t.type == Token.TYPE_SINGLE_LINE_COMMENT) {
-                SuffixDescriptor suffixDescriptor = getSuffixDescriptor(t);
-                if (suffixDescriptor != null && 
-                        suffixDescriptor.suffixType != SUFFIX_TYPE_GEN_CODE_START &&
-                        suffixDescriptor.suffixType != SUFFIX_TYPE_GEN_CODE_END) {
-                    Map<String, Object> tokenAttributes = new HashMap<>();
-                    tokenAttributes.put(TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR, suffixDescriptor);
-                    tokenAttributes.put(TOKEN_ATTRIBUTE_INDEX_IN_SOURCE, i);
-                    tokenAttributes.put(TOKEN_ATTRIBUTE_INDENT, indentBuilder.toString());
-                    if (i + 1 < sourceTokens.size()) {
-                        Token ffNewline = sourceTokens.get(i + 1);
-                        assert ffNewline.type == Token.TYPE_NEWLINE;
-                        tokenAttributes.put(TOKEN_ATTRIBUTE_FF_NEWLINE, ffNewline);
-                    }
-                    assert t.value == null;
-                    t.value = tokenAttributes;
-                    tokens.add(t);
-                }
-                else {
-                    skipDslashSearch = true;
-                }
-            }
-            else {
-                skipDslashSearch = true;
-            }
-        } 
-        return tokens;
-    }
-
-    GeneratedCodeDescriptor createGeneratedCodeDescriptor(List<Token> sourceTokens, 
-            int startIndex, boolean isSlashStar) {
-        // search for gen code start.
-        int found = -1;
-        int i = startIndex;
-        for (; i < sourceTokens.size(); i++) {
-            Token t = sourceTokens.get(i);
-            // only tolerate whitespace as the only different token to expect,
-            // not even gen code end.
-            if (t.type == Token.TYPE_NON_NEWLINE_WHITESPACE ||
-                    t.type == Token.TYPE_NEWLINE) {
-                continue;
-            }
-            // don't bother checking if relevant tokens other than gen code start or 
-            // end are encountered.
-            if (t.value == null) {
-                SuffixDescriptor suffixDescriptor = getSuffixDescriptor(t);
-                if (suffixDescriptor != null && 
-                        suffixDescriptor.suffixType == SUFFIX_TYPE_GEN_CODE_START) {
-                    found = t.type;
-                }
-            }
-            break;
-        }
-
-        if (found != -1) {
-            // search for gen code end.
-            i++;
-            for (; i < sourceTokens.size(); i++) {
-                Token t = sourceTokens.get(i);
-                if (t.value != null) {
-                    // relevant tokens other than gen code end 
-                    // are encountered. conclude not found.
-                    break;
-                }
-                SuffixDescriptor suffixDescriptor = getSuffixDescriptor(t);
-                if (suffixDescriptor == null) {
-                    continue;
-                }
-                if (suffixDescriptor.suffixType == SUFFIX_TYPE_GEN_CODE_END && t.type == found) {
-                    GeneratedCodeDescriptor generatedCodeDescriptor = new GeneratedCodeDescriptor();
-                    generatedCodeDescriptor.setStartPos(sourceTokens.get(startIndex).startPos);
-                    generatedCodeDescriptor.setEndPos(t.endPos);
-                    // consume following new line if double slash comment.
-                    if (t.type == Token.TYPE_SINGLE_LINE_COMMENT && 
-                            i + 1 < sourceTokens.size()) {
-                        Token nextToken = sourceTokens.get(i + 1);
-                        assert nextToken.type == Token.TYPE_NEWLINE;
-                        generatedCodeDescriptor.setEndPos(nextToken.endPos);
-                    }
-                    return generatedCodeDescriptor;
-                }
-                else {
-                    // either gen code start encountered, or gen code end encountered but of a 
-                    // different commment style: conclude not found.
-                    break;
-                }
-            }
-        }
-
-        // Ensure terminating newline is removed for double slash comments
-        // by treating them like generated code.
-        // This enables us to always make sure to insert a new line before
-        // inserting generated code.
-        if (!isSlashStar && startIndex < sourceTokens.size()) {
-            Token t = sourceTokens.get(startIndex);
-            GeneratedCodeDescriptor generatedCodeDescriptor = new GeneratedCodeDescriptor();
-            generatedCodeDescriptor.setStartPos(t.startPos);
-            generatedCodeDescriptor.setEndPos(t.endPos);
-            return generatedCodeDescriptor;
-        }
-
-        return null;
-    }
-
-    static ParserException validateDoubleSlashRelevantTokenGroup(
-            List<Token> tokenGroup, 
-            ParserInputSource inputSource) {
-        Token token = tokenGroup.get(0);
-        SuffixDescriptor suffixDescriptor = (SuffixDescriptor)token.value.get(TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR);
-        if (suffixDescriptor.suffixType == SUFFIX_TYPE_AUG_CODE) {
-            int expectedAugCodeSpecIndex = suffixDescriptor.augCodeSpecIndex;
-            for (int i = 1; i < tokenGroup.size(); i++) {
-                token = tokenGroup.get(i);
-                suffixDescriptor = (SuffixDescriptor)token.value.get(TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR);
-                switch (suffixDescriptor.suffixType) {
-                    case SUFFIX_TYPE_EMB_STRING:
+            if (t == null) {
+                for (String d : genCodeStartDirectives) {
+                    if (lineWithoutIndent.startsWith(d)) {
+                        t = createToken(DIRECTIVE_TYPE_GEN_CODE_START, d,  line);
                         break;
-                    default:
-                        assert suffixDescriptor.suffixType == SUFFIX_TYPE_AUG_CODE;
-                        if (expectedAugCodeSpecIndex != suffixDescriptor.augCodeSpecIndex) {
-                            return inputSource.createAbortException("Different augmenting comment marker suffixes in same section not allowed", token);
+                    }
+                }
+            }
+            if (t == null) {
+                for (String d : genCodeEndDirectives) {
+                    if (lineWithoutIndent.startsWith(d)) {
+                        t = createToken(DIRECTIVE_TYPE_GEN_CODE_END, d, line);
+                        break;
+                    }
+                }
+            }
+            if (t == null) {
+                for (String d : embeddedStringDirectives) {
+                    if (lineWithoutIndent.startsWith(d)) {
+                        t = createToken(DIRECTIVE_TYPE_EMB_STRING, d, line);
+                        break;
+                    }
+                }
+            }
+            if (t == null && enableScanDirectives != null) {
+                for (String d : enableScanDirectives) {
+                    if (lineWithoutIndent.startsWith(d)) {
+                        t = createToken(DIRECTIVE_TYPE_ENABLE_SCAN, d, line);
+                        break;
+                    }
+                }
+            }
+            if (t == null && disableScanDirectives != null) {
+                for (String d : disableScanDirectives) {
+                    if (lineWithoutIndent.startsWith(d)) {
+                        t = createToken(DIRECTIVE_TYPE_DISABLE_SCAN, d, line);
+                        break;
+                    }
+                }
+            }
+            if (t == null) {
+                for (int j = 0; t == null && j < augCodeDirectiveSets.size(); j++) {
+                    List<String> augCodeDirectives = augCodeDirectiveSets.get(j);
+                    for (String d : augCodeDirectives) {
+                        if (lineWithoutIndent.startsWith(d)) {
+                            t = createToken(DIRECTIVE_TYPE_AUG_CODE, d, line);
+                            t.augCodeSpecIndex = j;
+                            break;
                         }
+                    }
                 }
             }
-        }
-        else {
-            assert suffixDescriptor.suffixType == SUFFIX_TYPE_EMB_STRING;
-            return inputSource.createAbortException("Embedded string comment marker suffix cannot start an augmenting code section", token);
-        }
-        return null;
-    }
-
-    @SuppressWarnings("unchecked")
-    static List<Object> combineAndSortRelevantTokens(List<Token> slashStarRelevantTokens,
-            List<List<Token>> doubleSlashRelevantTokenGroups) {
-        List<Object> combined = new ArrayList<>();
-        combined.addAll(slashStarRelevantTokens);
-        combined.addAll(doubleSlashRelevantTokenGroups);
-        // sort by startPos rather than lineNumber,
-        // since multiple slash star tokens can occupy same line.
-        Collections.sort(combined, new Comparator<Object>() {
-
-            @Override
-            public int compare(Object o1, Object o2) {
-                Token t1, t2;
-                if (o1 instanceof List<?>) {
-                    t1 = ((List<Token>)o1).get(0);
-                }
-                else {
-                    t1 = (Token)o1;
-                }
-                if (o2 instanceof List<?>) {
-                    t2 = ((List<Token>)o2).get(0);
-                }
-                else {
-                    t2 = (Token)o2;
-                }
-                if (t1.startPos < t2.startPos) {
-                    return -1;
-                }
-                if (t1.startPos > t2.startPos) {
-                    return 1;
-                }
-                return 0;
+            if (t == null) {
+                // token must be of some other type.
+                t = new Token(TOKEN_TYPE_OTHER);
             }
-        });
-        return combined;
+            t.text = line;
+            if (terminator != null) {
+                t.text += terminator;
+                t.newline = terminator;
+            }
+            t.startPos = startPos;
+            t.endPos = startPos + t.text.length();
+            // collapse (line, terminator) pair from split source
+            // to single index.
+            t.index = i / 2;
+            t.lineNumber = t.index + 1;
+            
+            tokens.add(t);
+
+            startPos = t.endPos;
+        }
+        return tokens;
     }
 
-    static List<List<Token>> groupDoubleSlashReleventTokens(List<Token> tokens) {
+    private Token createToken(int directiveType, String directiveMarker, String line) {
+        Token t = new Token(TOKEN_TYPE_DIRECTIVE);
+        t.directiveType = directiveType; 
+        t.directiveMarker = directiveMarker;
+        int dIndex = line.indexOf(directiveMarker);
+        t.indent = line.substring(0, dIndex);
+        t.directiveContent = line.substring(dIndex + directiveMarker.length());
+        return t;
+    }
+
+    static List<List<Token>> identifyAugCodeSections(List<Token> tokens) {        
         List<List<Token>> groups = new ArrayList<>();
+        boolean scanEnabled = true;
         // group tokens which strictly follow each other consecutively in line numbers.
-        int expectedLineNumber = tokens.isEmpty() ? 0 : tokens.get(0).lineNumber;
+        int expectedLineNumber = 0;
         List<Token> currentGroup = new ArrayList<>();
         for (Token t : tokens) {
-            if (t.lineNumber != expectedLineNumber) {
-                assert !currentGroup.isEmpty();
-                groups.add(currentGroup);
-                currentGroup = new ArrayList<>();
+            if (!scanEnabled) {
+                if (t.directiveType == DIRECTIVE_TYPE_ENABLE_SCAN) {
+                    scanEnabled = true;
+                }
+                continue;
             }
-            currentGroup.add(t);
-            expectedLineNumber = t.lineNumber + 1;
+            switch (t.directiveType) {
+                case DIRECTIVE_TYPE_AUG_CODE:
+                case DIRECTIVE_TYPE_EMB_STRING:
+                    if (expectedLineNumber == 0 || expectedLineNumber == t.lineNumber) {
+                        expectedLineNumber = t.lineNumber + 1;
+                    }
+                    else {
+                        assert !currentGroup.isEmpty();
+                        groups.add(currentGroup);
+                        currentGroup = new ArrayList<>();
+                        expectedLineNumber = 0;
+                    }
+                    currentGroup.add(t);
+                    break;
+                default:
+                    if (!currentGroup.isEmpty()) {
+                        groups.add(currentGroup);
+                        currentGroup = new ArrayList<>();
+                        expectedLineNumber = 0;
+                    }
+                    if (t.directiveType == DIRECTIVE_TYPE_DISABLE_SCAN) {
+                        scanEnabled = false;
+                    }                    
+                    break;
+            }
         }
         if (!currentGroup.isEmpty()) {
             groups.add(currentGroup);
@@ -523,61 +255,101 @@ public class CodeGenerationRequestCreator {
         return groups;
     }
 
-    static AugmentingCode createDoubleSlashAugCode(
-            List<Token> doubleSlashGroup, StringBuilder indentReceiver) {
-        AugmentingCode augCode = new AugmentingCode();
-
-        /*
-         * Set minimum indent and consolidate with new lines.
-         */
-
-        String[] contentLines = new String[doubleSlashGroup.size()];
-        boolean[] stringifyStatuses = new boolean[doubleSlashGroup.size()];
-        String[] terminatingNewLines = new String[doubleSlashGroup.size()];
-
-        for (int i = 0; i < doubleSlashGroup.size(); i++) {
-            Token t = doubleSlashGroup.get(i);
-            Map<String, Object> tokenAttributes = t.value;
-
-            // set minimum indent.
-            String indent = (String)tokenAttributes.get(TOKEN_ATTRIBUTE_INDENT);
-            if (i == 0 || indent.length() < indentReceiver.length()) {
-                indentReceiver.setLength(0);
-                indentReceiver.append(indent);
-            }
-
-            // set values intended ultimately for block properties
-            SuffixDescriptor suffixDescriptor = (SuffixDescriptor)tokenAttributes.get(
-                TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR);            
-            contentLines[i] = getCommentContentWithoutSuffix(t, suffixDescriptor.suffix);
-            if (suffixDescriptor.suffixType == SUFFIX_TYPE_EMB_STRING) {
-                stringifyStatuses[i] = true;
-            }
-            else {
-                if (augCode.getCommentSuffix() == null) { 
-                    augCode.setCommentSuffix(suffixDescriptor.suffix);
+    static ParserException validateAugCodeSection(
+            List<Token> tokenGroup, 
+            SourceFileDescriptor sourceDescriptor) {
+        Token token = tokenGroup.get(0);
+        if (token.directiveType == DIRECTIVE_TYPE_AUG_CODE) {
+            int expectedAugCodeSpecIndex = token.augCodeSpecIndex;
+            for (int i = 1; i < tokenGroup.size(); i++) {
+                token = tokenGroup.get(i);
+                switch (token.directiveType) {
+                    case DIRECTIVE_TYPE_EMB_STRING:
+                        break;
+                    default:
+                        assert token.directiveType == DIRECTIVE_TYPE_AUG_CODE;
+                        if (expectedAugCodeSpecIndex != token.augCodeSpecIndex) {
+                            return createParserException("Different augmenting code directives in " +
+                                "same section not allowed", token, sourceDescriptor);
+                        }
                 }
             }
-            
-            // Fetch new lines terminating comments for use in next step.
-            Token ffNewline = (Token)tokenAttributes.get(TOKEN_ATTRIBUTE_FF_NEWLINE);
-            if (ffNewline != null) {
-                terminatingNewLines[i] = ffNewline.text;
+        }
+        else {
+            assert token.directiveType == DIRECTIVE_TYPE_EMB_STRING;
+            return createParserException("Embedded string directive cannot start an " +
+                "augmenting code section", token, sourceDescriptor);
+        }
+        return null;
+    }
+
+    private static ParserException createParserException(String errorMessage, Token token,
+            SourceFileDescriptor sourceDescriptor) {
+        String fullMessage = String.format("in %s at line %s: %s\n\n%s",
+            new File(sourceDescriptor.getDir(), sourceDescriptor.getRelativePath()),
+            token.lineNumber, errorMessage, token.text);
+        return new ParserException(fullMessage);
+    }
+
+    GeneratedCodeDescriptor createGeneratedCodeDescriptor(List<Token> sourceTokens, 
+            int augCodeEndIndex) {
+        // search for gen code start.
+        int startIndex = -1;
+        for (int i = augCodeEndIndex + 1; i < sourceTokens.size(); i++) {
+            Token t = sourceTokens.get(i);
+            // only tolerate blank lines as the only different token to expect,
+            // not even gen code end.
+            if (t.type == TOKEN_TYPE_BLANK) {
+                continue;
+            }
+            if (t.directiveType == DIRECTIVE_TYPE_GEN_CODE_START) {
+                startIndex = i;
+            }
+            break;
+        }
+
+        if (startIndex != -1) {
+            // search for gen code end.
+            for (int i = startIndex + 1; i < sourceTokens.size(); i++) {
+                Token t = sourceTokens.get(i);
+                // skip any non-directives found.
+                if (t.type != TOKEN_TYPE_DIRECTIVE) {
+                    continue;
+                }
+                if (t.directiveType == DIRECTIVE_TYPE_GEN_CODE_END) {
+                    // span of generated code excludes directive markers.
+                    // it starts from just after the start directive marker,
+                    // and ends just before the end directive marker. 
+                    GeneratedCodeDescriptor generatedCodeDescriptor = new GeneratedCodeDescriptor();
+                    generatedCodeDescriptor.setStartPos(sourceTokens.get(startIndex).endPos);
+                    generatedCodeDescriptor.setEndPos(t.startPos);
+                    return generatedCodeDescriptor;
+                }
+                else {
+                    // different directive encountered. conclude as if there is
+                    // no generated code section.
+                    break;
+                }
             }
         }
 
-        // 2. consolidate
+        return null;
+    }
+
+    static List<Block> createAugmentingCodeBlocks(List<Token> augCodeSection) {
+        // Consolidate tokens
         List<Block> blocks = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
         Block lastBlock = new Block(); // first block definitely not stringified.
         blocks.add(lastBlock);
-        for (int i = 0; i < contentLines.length; i++) {
-            String contentLine = contentLines[i];
-            boolean stringify = stringifyStatuses[i];
+        for (int i = 0; i < augCodeSection.size(); i++) {
+            Token t = augCodeSection.get(i);
+            String contentLine = t.directiveContent;
+            boolean stringify = t.directiveType == DIRECTIVE_TYPE_EMB_STRING;
             
             if (lastBlock.isStringify() == stringify) {
                 if (i > 0) {
-                    sb.append(terminatingNewLines[i - 1]);
+                    sb.append(augCodeSection.get(i - 1).newline);
                 }
                 sb.append(contentLine);
             }
@@ -589,7 +361,7 @@ public class CodeGenerationRequestCreator {
                 if (stringify) {
                     // let outgoing raw aug code section have
                     // trailing newline.
-                    sb.append(terminatingNewLines[i]);
+                    sb.append(augCodeSection.get(i - 1).newline);
                 }
                 lastBlock.setContent(sb.toString());
 
@@ -601,7 +373,7 @@ public class CodeGenerationRequestCreator {
                 if (!stringify) {
                     // let incoming raw aug code section have preceding
                     // newline.
-                    sb.append(terminatingNewLines[i]);
+                    sb.append(augCodeSection.get(i - 1).newline);
                 }
                 sb.append(contentLine);
             }
@@ -609,18 +381,6 @@ public class CodeGenerationRequestCreator {
 
         // complete last block.
         lastBlock.setContent(sb.toString());
-
-        augCode.setBlocks(blocks);
-        return augCode;
-    }
-
-    static String getCommentContentWithoutSuffix(Token t, String suffix) {
-        if (t.type == Token.TYPE_MULTI_LINE_COMMENT) {
-            return t.text.substring(("/*" + suffix).length(), t.text.length() - "*/".length());
-        }
-        else {
-            assert t.type == Token.TYPE_SINGLE_LINE_COMMENT;
-            return t.text.substring(("//" + suffix).length());
-        }
+        return blocks;
     }
 }

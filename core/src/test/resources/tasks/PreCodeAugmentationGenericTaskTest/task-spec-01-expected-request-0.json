@@ -5,10 +5,11 @@
 		"rel_path": "task-spec-01-0.java",
 		"augmenting_codes": [{
 			"index" : 0,
-			"comment_suffix" : "JS",
+			"directive_marker" : "//JS",
+			"indent": "",
 			"blocks" : [{
 				"stringify" : false,
-				"content" : " println(\"Hello World from JS-star\")\r\nvar i = 3 + new Date(); \r\n...etc"
+				"content" : " println(\"Hello World from JS-star\")\r\n var i = 3 + new Date(); \r\n ...etc*/"
 			}]
 		}]
 	},
@@ -17,18 +18,11 @@
 		"rel_path": "task-spec-01-1.java",
 		"augmenting_codes": [{
 			"index" : 0,
-			"comment_suffix" : "JS",
+			"directive_marker" : "//JS",
+			"indent": "",
 			"blocks" : [{
 				"stringify" : false,
 				"content" : " println(\"World\")"
-			}]
-		},
-		{
-			"index" : 1,
-			"comment_suffix" : "JS",
-			"blocks" : [{
-				"stringify" : false,
-				"content" : " println(\"Hello World from JS-star\")\r\nvar i = 3 + new Date(); \r\n...etc"
 			}]
 		}]
 	}

@@ -1,4 +1,4 @@
-{ "content_streaming_enabled": false, "gen_code_start_suffix": "//GS", "gen_code_end_suffix": "//GE" }
+{ "content_streaming_enabled": false, "gen_code_start_directive": "//GS", "gen_code_end_directive": "//GE" }
 [
 	{
 		"file_index": 0,

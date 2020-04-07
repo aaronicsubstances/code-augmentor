@@ -13,8 +13,6 @@ public class CodeSnippetDescriptor {
         private int endPos = 0;
         @SerializedName("indent")
         private String indent;
-        @SerializedName("slash_star")
-        private boolean annotatedWithSlashStar;
         @SerializedName("has_newline_ending")
         private boolean hasNewlineEnding;
 
@@ -50,14 +48,6 @@ public class CodeSnippetDescriptor {
             this.indent = indent;
         }
 
-        public boolean isAnnotatedWithSlashStar() {
-            return annotatedWithSlashStar;
-        }
-
-        public void setAnnotatedWithSlashStar(boolean annotatedWithSlashStar) {
-            this.annotatedWithSlashStar = annotatedWithSlashStar;
-        }
-
 		public boolean getHasNewlineEnding() {
 			return hasNewlineEnding;
 		}
@@ -70,7 +60,6 @@ public class CodeSnippetDescriptor {
         public int hashCode() {
             final int prime = 31;
             int result = 1;
-            result = prime * result + (annotatedWithSlashStar ? 1231 : 1237);
             result = prime * result + endPos;
             result = prime * result + (hasNewlineEnding ? 1231 : 1237);
             result = prime * result + ((indent == null) ? 0 : indent.hashCode());
@@ -88,8 +77,6 @@ public class CodeSnippetDescriptor {
             if (getClass() != obj.getClass())
                 return false;
             AugmentingCodeDescriptor other = (AugmentingCodeDescriptor) obj;
-            if (annotatedWithSlashStar != other.annotatedWithSlashStar)
-                return false;
             if (endPos != other.endPos)
                 return false;
             if (hasNewlineEnding != other.hasNewlineEnding)
@@ -108,7 +95,7 @@ public class CodeSnippetDescriptor {
 
         @Override
         public String toString() {
-            return "AugmentingCodeDescriptor{annotatedWithSlashStar=" + annotatedWithSlashStar + ", endPos=" + endPos
+            return "AugmentingCodeDescriptor{endPos=" + endPos
                     + ", hasNewlineEnding=" + hasNewlineEnding + ", indent=" + indent + ", index=" + index
                     + ", startPos=" + startPos + "}";
         }

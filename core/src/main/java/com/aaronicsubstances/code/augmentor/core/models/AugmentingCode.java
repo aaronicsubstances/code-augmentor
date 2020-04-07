@@ -74,8 +74,8 @@ public class AugmentingCode {
     private int index;
     @SerializedName("blocks")
     private List<Block> blocks;
-    @SerializedName("comment_suffix")
-    private String commentSuffix;
+    @SerializedName("directive_marker")
+    private String directiveMarker;
     @SerializedName("indent")
     private String indent;
 
@@ -102,12 +102,12 @@ public class AugmentingCode {
         this.blocks = blocks;
     }
 
-    public String getCommentSuffix() {
-        return commentSuffix;
+    public String getDirectiveMarker() {
+        return directiveMarker;
     }
 
-    public void setCommentSuffix(String commentSuffix) {
-        this.commentSuffix = commentSuffix;
+    public void setDirectiveMarker(String directiveMarker) {
+        this.directiveMarker = directiveMarker;
     }
 
     public String getIndent() {
@@ -123,7 +123,7 @@ public class AugmentingCode {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((blocks == null) ? 0 : blocks.hashCode());
-        result = prime * result + ((commentSuffix == null) ? 0 : commentSuffix.hashCode());
+        result = prime * result + ((directiveMarker == null) ? 0 : directiveMarker.hashCode());
         result = prime * result + ((indent == null) ? 0 : indent.hashCode());
         result = prime * result + index;
         return result;
@@ -143,10 +143,10 @@ public class AugmentingCode {
                 return false;
         } else if (!blocks.equals(other.blocks))
             return false;
-        if (commentSuffix == null) {
-            if (other.commentSuffix != null)
+        if (directiveMarker == null) {
+            if (other.directiveMarker != null)
                 return false;
-        } else if (!commentSuffix.equals(other.commentSuffix))
+        } else if (!directiveMarker.equals(other.directiveMarker))
             return false;
         if (indent == null) {
             if (other.indent != null)
@@ -160,7 +160,7 @@ public class AugmentingCode {
 
     @Override
     public String toString() {
-        return "AugmentingCode{blocks=" + blocks + ", commentSuffix=" + commentSuffix + ", indent=" + indent
+        return "AugmentingCode{blocks=" + blocks + ", directiveMarker=" + directiveMarker + ", indent=" + indent
                 + ", index=" + index + "}";
     }
 }

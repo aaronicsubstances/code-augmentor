@@ -14,9 +14,9 @@ org.springframework.stereotype.Component/*GS*/;
  * @author Aaron
  *///GE
 
-@Component/*JS println("Hello World from JS-star")
-var i = 3 + new Date();
-...etc*/
+ //JS*println("Hello World from JS-star")
+  //JS*var i = 3 + new Date();
+   //JS*...etc
 @Path("vision-members/api/v1")
 @Produces(MediaType.TEXT_PLAIN)
 public //GE
@@ -51,8 +51,9 @@ Object getSmsConfig()/*GS*/ {
 	//JS println( 
 	//ES:World
 		//JS )
-		/*GS*/
+		//GS*/
         return /*GE*/smsConfigJson;
+ //GE
     }
     
     @GET
@@ -63,3 +64,4 @@ Object getSmsConfig()/*GS*/ {
         return updateConfigJson;
     }
 }
+	//JS-

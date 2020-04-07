@@ -15,30 +15,32 @@ import com.aaronicsubstances.code.augmentor.core.models.PreCodeAugmentationResul
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileAugmentingCode;
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileDescriptor;
 import com.aaronicsubstances.code.augmentor.core.parsing.ParserException;
-import com.aaronicsubstances.code.augmentor.core.parsing.Token;
-import com.aaronicsubstances.code.augmentor.core.parsing.TokenSupplier;
 
 public class PreCodeAugmentationGenericTask {
     public static final int LOG_LEVEL_VERBOSE = 1;
     public static final int LOG_LEVEL_INFO = 2;
     public static final int LOG_LEVEL_WARN = 3;
-    private BiConsumer<Integer, Supplier<String>> logAppender;
 
+    // input properties
+    private BiConsumer<Integer, Supplier<String>> logAppender;
     private List<String> relativePaths;
     private List<File> baseDirs;
-    private List<String> genCodeStartSuffixes, genCodeEndSuffixes, embeddedStringDoubleSlashSuffixes;
-    private List<List<String>> augCodeSuffixes;
-
+    private List<String> genCodeStartDirectives;
+    private List<String> genCodeEndDirectives;
+    private List<String> embeddedStringDirectives;
+    private List<String> enableScanDirectives, disableScanDirectives;
+    private List<List<String>> augCodeDirectives;
     private Charset charset;
     private List<File> augCodeDestFiles;
     private File prepFile;
 
+    // output properties
     private final List<ParserException> allErrors = new ArrayList<>();
 
     public void execute() throws Exception {
         PreCodeAugmentationResult prepResult = new PreCodeAugmentationResult();
-        prepResult.setGenCodeStartDirective(genCodeStartSuffixes.get(0));
-        prepResult.setGenCodeEndDirective(genCodeEndSuffixes.get(0));
+        prepResult.setGenCodeStartDirective(genCodeStartDirectives.get(0));
+        prepResult.setGenCodeEndDirective(genCodeEndDirectives.get(0));
         Object resultWriter = prepResult.beginSerialize(prepFile);
 
         List<Object> codeGenRequestWriters = new ArrayList<>();
@@ -52,13 +54,15 @@ public class PreCodeAugmentationGenericTask {
          
         CodeGenerationRequestCreator codeGenerationRequestCreator =
             new CodeGenerationRequestCreator(
-                genCodeStartSuffixes,
-                genCodeEndSuffixes,
-                embeddedStringDoubleSlashSuffixes,
-                augCodeSuffixes);
+                genCodeStartDirectives,
+                genCodeEndDirectives,
+                embeddedStringDirectives,
+                augCodeDirectives,
+                enableScanDirectives,
+                disableScanDirectives);
 
         List<List<AugmentingCode>> specAugCodesList = new ArrayList<>();
-        for (int i = 0; i < augCodeSuffixes.size(); i++) {
+        for (int i = 0; i < augCodeDirectives.size(); i++) {
             specAugCodesList.add(new ArrayList<>());
         }
 
@@ -73,26 +77,20 @@ public class PreCodeAugmentationGenericTask {
             String input = TaskUtils.readFile(srcFile, charset);
             String inputHash = TaskUtils.calcHash(input, charset);
 
-            // use file extension to parse as Java/Kotlin code.
-            TokenSupplier tokenSupplier = TaskUtils.parseSourceCode(relativePath, input);
-            List<Token> tokens;
-            try {
-            tokens = tokenSupplier.parse();
-            }
-            catch (ParserException ex) {
-                throw new GenericTaskException("Invalid source code in " + srcFile,
-                    ex);
-            }
-
             // Reset receiver variables.
             for (List<AugmentingCode> specAugCodes : specAugCodesList) {
                 specAugCodes.clear();
             }
             List<ParserException> errors = new ArrayList<>();
         
-            SourceFileDescriptor s = codeGenerationRequestCreator.processSourceFile(
-                tokenSupplier.getInputSource(), tokens, specAugCodesList, errors);
-            if (s != null) {
+            SourceFileDescriptor s = new SourceFileDescriptor();
+            s.setFileIndex(i);
+            s.setDir(baseDir.getPath());
+            s.setRelativePath(relativePath);
+            s.setContentHash(inputHash);
+            codeGenerationRequestCreator.processSourceFile(s,
+                input, specAugCodesList, errors);
+            if (errors.isEmpty()) {
                 // don't bother to serialize any further if there are
                 // previous errors.
                 int identifiedAugCodeCount = 0;
@@ -117,20 +115,11 @@ public class PreCodeAugmentationGenericTask {
                     logInfo("%s aug code(s) identified in %s", identifiedAugCodeCount, srcFile);
 
                     // write out descriptor.
-                    s.setFileIndex(i);
-                    s.setDir(baseDir.getPath());
-                    s.setRelativePath(relativePath);
-                    s.setContentHash(inputHash);
                     s.serialize(resultWriter);
                 }
             }
             else {
                 logWarn("%s error(s) encountered in %s", errors.size(), srcFile);
-                for (ParserException e : errors) {
-                    allErrors.add(new ParserException(e.getMessage(), e.getCause(),
-                        e.getLineNumber(), e.getColumnNumber(), e.getSnippet(),
-                        baseDir, relativePath));
-                }
             }
             
             Instant endInstant = Instant.now();
@@ -192,38 +181,6 @@ public class PreCodeAugmentationGenericTask {
         this.baseDirs = baseDirs;
     }
 
-    public List<String> getGenCodeStartSuffixes() {
-        return genCodeStartSuffixes;
-    }
-
-    public void setGenCodeStartSuffixes(List<String> genCodeStartSuffixes) {
-        this.genCodeStartSuffixes = genCodeStartSuffixes;
-    }
-
-    public List<String> getGenCodeEndSuffixes() {
-        return genCodeEndSuffixes;
-    }
-
-    public void setGenCodeEndSuffixes(List<String> genCodeEndSuffixes) {
-        this.genCodeEndSuffixes = genCodeEndSuffixes;
-    }
-
-    public List<String> getEmbeddedStringDoubleSlashSuffixes() {
-        return embeddedStringDoubleSlashSuffixes;
-    }
-
-    public void setEmbeddedStringDoubleSlashSuffixes(List<String> embeddedStringDoubleSlashSuffixes) {
-        this.embeddedStringDoubleSlashSuffixes = embeddedStringDoubleSlashSuffixes;
-    }
-
-    public List<List<String>> getAugCodeSuffixes() {
-        return augCodeSuffixes;
-    }
-
-    public void setAugCodeSuffixes(List<List<String>> augCodeSuffixes) {
-        this.augCodeSuffixes = augCodeSuffixes;
-    }
-
     public Charset getCharset() {
         return charset;
     }
@@ -246,6 +203,54 @@ public class PreCodeAugmentationGenericTask {
 
     public void setPrepFile(File prepFile) {
         this.prepFile = prepFile;
+    }
+
+    public List<String> getGenCodeStartDirectives() {
+        return genCodeStartDirectives;
+    }
+
+    public void setGenCodeStartDirectives(List<String> genCodeStartDirectives) {
+        this.genCodeStartDirectives = genCodeStartDirectives;
+    }
+
+    public List<String> getGenCodeEndDirectives() {
+        return genCodeEndDirectives;
+    }
+
+    public void setGenCodeEndDirectives(List<String> genCodeEndDirectives) {
+        this.genCodeEndDirectives = genCodeEndDirectives;
+    }
+
+    public List<String> getEmbeddedStringDirectives() {
+        return embeddedStringDirectives;
+    }
+
+    public void setEmbeddedStringDirectives(List<String> embeddedStringDirectives) {
+        this.embeddedStringDirectives = embeddedStringDirectives;
+    }
+
+    public List<String> getEnableScanDirectives() {
+        return enableScanDirectives;
+    }
+
+    public void setEnableScanDirectives(List<String> enableScanDirectives) {
+        this.enableScanDirectives = enableScanDirectives;
+    }
+
+    public List<String> getDisableScanDirectives() {
+        return disableScanDirectives;
+    }
+
+    public void setDisableScanDirectives(List<String> disableScanDirectives) {
+        this.disableScanDirectives = disableScanDirectives;
+    }
+
+    public List<List<String>> getAugCodeDirectives() {
+        return augCodeDirectives;
+    }
+
+    public void setAugCodeDirectives(List<List<String>> augCodeDirectives) {
+        this.augCodeDirectives = augCodeDirectives;
     }
 
     public List<ParserException> getAllErrors() {

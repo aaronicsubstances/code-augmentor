@@ -19,9 +19,9 @@ import com.google.gson.annotations.SerializedName;
 public class PreCodeAugmentationResult {
 
     public static class Header {
-        @SerializedName("gen_code_start_suffix")
+        @SerializedName("gen_code_start_directive")
         String genCodeStartDirective;
-        @SerializedName("gen_code_end_suffix")
+        @SerializedName("gen_code_end_directive")
         String genCodeEndDirective;
         @SerializedName("content_streaming_enabled")
         Boolean contentStreamEnabled;

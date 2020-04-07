@@ -1,11 +1,11 @@
 {
 	"relativePaths" : [ "task-spec-00-0.java", "task-spec-00-1.java" ],
-	"genCodeStartSuffixes" : [ "GS" ],
-	"genCodeEndSuffixes" : [ "GE" ],
-	"embeddedStringDoubleSlashSuffixes" : [ "ES" ],
+	"genCodeStartDirectives" : [ "//GS" ],
+	"genCodeEndDirectives" : [ "//GE" ],
+	"embeddedStringDirectives" : [ "//ES" ],
 	"prepFile" : "task-spec-00-actual-prep.json",
-	"augCodeSuffixes" : [{
+	"augCodeDirectives" : [{
 		"file": "task-spec-00-actual-request-0.json",
-		"suffixes": [ "JS" ]
+		"directives": [ "//JS" ]
 	}]
 }

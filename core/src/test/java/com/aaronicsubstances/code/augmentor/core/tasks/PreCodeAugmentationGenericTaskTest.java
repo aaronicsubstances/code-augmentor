@@ -25,14 +25,14 @@ public class PreCodeAugmentationGenericTaskTest {
 
     public static class TaskLite {
         public String[] relativePaths;
-        public String[] genCodeStartSuffixes, genCodeEndSuffixes, embeddedStringDoubleSlashSuffixes;
-        public AugCodeSpec[] augCodeSuffixes;
+        public String[] genCodeStartDirectives, genCodeEndDirectives, embeddedStringDirectives;
+        public AugCodeSpec[] augCodeDirectives;
 
         public String prepFile;
 
         public static class AugCodeSpec {
             public String file;
-            public String[] suffixes;
+            public String[] directives;
         }
     }
     
@@ -58,15 +58,15 @@ public class PreCodeAugmentationGenericTaskTest {
         
         task.setPrepFile(new File(tempDir, taskSpec.prepFile));
 
-        task.setAugCodeDestFiles(Arrays.asList(taskSpec.augCodeSuffixes).stream().
+        task.setAugCodeDestFiles(Arrays.asList(taskSpec.augCodeDirectives).stream().
             map(x -> new File(tempDir, x.file)).collect(Collectors.toList()));
-        task.setAugCodeSuffixes(Arrays.asList(taskSpec.augCodeSuffixes).stream().
-            map(x -> Arrays.asList(x.suffixes)).collect(Collectors.toList()));
+        task.setAugCodeDirectives(Arrays.asList(taskSpec.augCodeDirectives).stream().
+            map(x -> Arrays.asList(x.directives)).collect(Collectors.toList()));
 
-        task.setGenCodeStartSuffixes(Arrays.asList(taskSpec.genCodeStartSuffixes));
-        task.setGenCodeEndSuffixes(Arrays.asList(taskSpec.genCodeEndSuffixes));
-        task.setEmbeddedStringDoubleSlashSuffixes(Arrays.asList(
-            taskSpec.embeddedStringDoubleSlashSuffixes));
+        task.setGenCodeStartDirectives(Arrays.asList(taskSpec.genCodeStartDirectives));
+        task.setGenCodeEndDirectives(Arrays.asList(taskSpec.genCodeEndDirectives));
+        task.setEmbeddedStringDirectives(Arrays.asList(
+            taskSpec.embeddedStringDirectives));
 
         return task;
     }
@@ -117,9 +117,4 @@ public class PreCodeAugmentationGenericTaskTest {
             new Object[] { "task-spec-02.json" }
         };
     }
-
-    @Test
-    public void testExecuteForErrors() {
-        
-    }    
 }

@@ -12,24 +12,114 @@ import java.io.Writer;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Base64;
-
-import com.aaronicsubstances.code.augmentor.core.parsing.TokenSupplier;
-import com.aaronicsubstances.code.augmentor.core.parsing.java.JavaParser;
-import com.aaronicsubstances.code.augmentor.core.parsing.kotlin.KotlinParser;
+import java.util.List;
 
 /**
  * Exposes helper methods for generic tasks
  */
 public class TaskUtils {
 
-    public static String getFileExt(String path) {
-        int index = path.lastIndexOf(".");
-        if (index != -1) {
-            return path.substring(index + 1);
+    /**
+     * Splits a string into lines.
+     * @param text string to split.
+     * @return list of lines without line terminators, alternating in pairs with their line terminators.
+     * If text doesn't end with a new line, then the last item is null.
+     */
+	public static List<String> splitIntoLines(String text) {
+        List<String> splitText = new ArrayList<>();
+        int lastEndIdx = 0;
+        int[] temp = new int[2];
+        while (true) {
+            locateNewline(text, lastEndIdx, temp);
+            int idx = temp[0];
+            if (idx == -1) {
+                break;
+            }
+            int newlineLen = temp[1];
+            int endIdx = idx + newlineLen;
+            String precedingLine = text.substring(lastEndIdx, idx);
+            String terminatingNewline = text.substring(idx, endIdx);
+            splitText.add(precedingLine);
+            splitText.add(terminatingNewline);
+            lastEndIdx = endIdx;
         }
-        return "";
+        if (lastEndIdx < text.length()) {
+            splitText.add(text.substring(lastEndIdx));
+            splitText.add(null);
+        }
+        return splitText;
+	}
+
+    /**
+     * Calculates line number given a position in a string.
+     * 
+     * @param s source code text.
+     * @param position position in s.
+     * 
+     * @return line number.
+     */
+	public static int calculateLineNumber(String content, int position) {
+		int lineNr = 1; // NB: line number starts from 1.
+        int lastEndIdx = 0;
+        int[] temp = new int[2];
+        while (true) {
+            locateNewline(content, lastEndIdx, temp);
+            int idx = temp[0];
+            if (idx == -1) {
+                break;
+            }
+            int newlineLen = temp[1];
+            int endIdx = idx + newlineLen;
+            if (endIdx > position) {
+                break;
+            }
+            lastEndIdx = endIdx;
+            lineNr++;
+        }
+        return lineNr;
     }
+    
+    private static void locateNewline(String content, int start, int[] receipt) {
+        boolean winLn = false;
+        int idx = content.indexOf("\r\n", start);
+        if (idx != -1) {
+            winLn = true;
+        }
+        int idx2 = content.indexOf('\n', start);
+        if (idx == -1) {
+            idx = idx2;
+            winLn = false;
+        }
+        else if (idx2 != -1 && idx2 < idx) {
+            idx = idx2;
+            winLn = false;
+        }
+        int idx3 = content.indexOf('\r', start);
+        if (idx == -1) {
+            idx = idx3;
+            winLn = false;
+        }
+        else if (idx3 != -1 && idx3 < idx) {
+            idx = idx3;
+            winLn = false;
+        }
+        receipt[0] = idx;
+        receipt[1] = winLn ? 2 : 1;
+    }
+
+	public static boolean isNewLine(char ch) {
+		return ch == '\r' || ch == '\n';
+	}
+
+	public static boolean isEmpty(String s) {
+		return s == null || s.isEmpty();
+	}
+
+	public static boolean isBlank(String s) {
+		return s == null || s.trim().isEmpty();
+	}
 
     public static String readFile(File srcFile, Charset charset) throws IOException {
         ByteArrayOutputStream outStream = new ByteArrayOutputStream();
@@ -45,19 +135,6 @@ public class TaskUtils {
     public static void writeFile(File destFile, Charset charset, String contents) throws IOException {
         try (Writer writer = new OutputStreamWriter(new FileOutputStream(destFile), charset)) {
             writer.write(contents);
-        }
-    }
-
-    public static TokenSupplier parseSourceCode(String relativePath, String input) {
-        // use file extension to parse as Java/Kotlin code.
-        String fileExt = getFileExt(relativePath);
-        switch (fileExt) {
-            case "java":
-                return new JavaParser(input);
-            case "kt":
-                return new KotlinParser(input);
-            default:            
-                throw new GenericTaskException("Unexpected file extension in " + relativePath);
         }
     }
 
