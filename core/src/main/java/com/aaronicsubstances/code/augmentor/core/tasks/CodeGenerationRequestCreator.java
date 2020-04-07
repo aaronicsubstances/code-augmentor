@@ -53,7 +53,8 @@ public class CodeGenerationRequestCreator {
         List<Token> tokens = tokenizeSource(source);
         
         // 2. next, identify aug code sections.
-        List<List<Token>> augCodeSections = identifyAugCodeSections(tokens);
+        List<List<Token>> augCodeSections = identifyAugCodeSections(tokens, sourceDescriptor, 
+            errors);
         
         // 3. validate aug code sections.
         for (List<Token> augCodeSection : augCodeSections) {
@@ -84,7 +85,6 @@ public class CodeGenerationRequestCreator {
             augCodeDescriptor.setIndex(i);
             augCodeDescriptor.setStartPos(firstToken.startPos);
             augCodeDescriptor.setEndPos(lastToken.endPos);
-            augCodeDescriptor.setHasNewlineEnding(lastToken.newline != null);
             String indent = augCodeSection.stream().map(x -> x.indent)
                 .min((x, y) -> new Integer(x.length()).compareTo(y.length())).get();
             augCodeDescriptor.setIndent(indent);
@@ -210,7 +210,8 @@ public class CodeGenerationRequestCreator {
         return t;
     }
 
-    static List<List<Token>> identifyAugCodeSections(List<Token> tokens) {        
+    static List<List<Token>> identifyAugCodeSections(List<Token> tokens,
+            SourceFileDescriptor sourceDescriptor, List<ParserException> errors) { 
         List<List<Token>> groups = new ArrayList<>();
         boolean scanEnabled = true;
         // group tokens which strictly follow each other consecutively in line numbers.
@@ -222,6 +223,22 @@ public class CodeGenerationRequestCreator {
                     scanEnabled = true;
                 }
                 continue;
+            }
+            if (t.directiveType == DIRECTIVE_TYPE_AUG_CODE || 
+                    t.directiveType == DIRECTIVE_TYPE_EMB_STRING ||
+                    t.directiveType == DIRECTIVE_TYPE_GEN_CODE_START ||
+                    t.directiveType == DIRECTIVE_TYPE_GEN_CODE_END) {
+                // ensure newline ending.
+                if (t.newline == null) {
+                    ParserException error = createParserException("Aug/Gen code directives must end with a newline", 
+                        t, sourceDescriptor);
+                    if (errors != null) {
+                        errors.add(error);
+                    }
+                    else {
+                        throw error;
+                    }
+                }
             }
             switch (t.directiveType) {
                 case DIRECTIVE_TYPE_AUG_CODE:
@@ -245,7 +262,7 @@ public class CodeGenerationRequestCreator {
                     }
                     if (t.directiveType == DIRECTIVE_TYPE_DISABLE_SCAN) {
                         scanEnabled = false;
-                    }                    
+                    }  
                     break;
             }
         }
@@ -317,12 +334,12 @@ public class CodeGenerationRequestCreator {
                     continue;
                 }
                 if (t.directiveType == DIRECTIVE_TYPE_GEN_CODE_END) {
-                    // span of generated code excludes directive markers.
-                    // it starts from just after the start directive marker,
-                    // and ends just before the end directive marker. 
+                    Token st = sourceTokens.get(startIndex);
                     GeneratedCodeDescriptor generatedCodeDescriptor = new GeneratedCodeDescriptor();
-                    generatedCodeDescriptor.setStartPos(sourceTokens.get(startIndex).endPos);
-                    generatedCodeDescriptor.setEndPos(t.startPos);
+                    generatedCodeDescriptor.setStartDirectiveStartPos(st.startPos);
+                    generatedCodeDescriptor.setStartDirectiveEndPos(st.endPos);
+                    generatedCodeDescriptor.setEndDirectiveStartPos(t.startPos);
+                    generatedCodeDescriptor.setEndDirectiveEndPos(t.endPos);
                     return generatedCodeDescriptor;
                 }
                 else {

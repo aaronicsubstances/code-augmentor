@@ -8,12 +8,13 @@
 				"index" : 0,
 				"start_pos" : 510,
 				"end_pos" : 598,
-				"indent" : "",
-				"has_newline_ending": true
+				"indent" : ""
 			},
 			"generated_code": {
-				"start_pos" : 616,
-				"end_pos" : 722
+				"start_directive_start_pos" : 606,
+				"start_directive_end_pos" : 616,
+				"end_directive_start_pos" : 722,
+				"end_directive_end_pos" : 747
 			}
 		}]
 	},
@@ -25,8 +26,7 @@
 				"index" : 0,
 				"start_pos" : 799,
 				"end_pos" : 822,
-				"indent" : "",
-				"has_newline_ending": true
+				"indent" : ""
 			}
 		}]
 	}

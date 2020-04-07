@@ -120,6 +120,7 @@ public class PreCodeAugmentationGenericTask {
             }
             else {
                 logWarn("%s error(s) encountered in %s", errors.size(), srcFile);
+                allErrors.addAll(errors);
             }
             
             Instant endInstant = Instant.now();

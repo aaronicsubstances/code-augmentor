@@ -13,8 +13,6 @@ public class CodeSnippetDescriptor {
         private int endPos = 0;
         @SerializedName("indent")
         private String indent;
-        @SerializedName("has_newline_ending")
-        private boolean hasNewlineEnding;
 
         public int getIndex() {
             return index;
@@ -48,20 +46,11 @@ public class CodeSnippetDescriptor {
             this.indent = indent;
         }
 
-		public boolean getHasNewlineEnding() {
-			return hasNewlineEnding;
-		}
-
-		public void setHasNewlineEnding(boolean hasNewlineEnding) {
-			this.hasNewlineEnding = hasNewlineEnding;
-		}
-
         @Override
         public int hashCode() {
             final int prime = 31;
             int result = 1;
             result = prime * result + endPos;
-            result = prime * result + (hasNewlineEnding ? 1231 : 1237);
             result = prime * result + ((indent == null) ? 0 : indent.hashCode());
             result = prime * result + index;
             result = prime * result + startPos;
@@ -79,8 +68,6 @@ public class CodeSnippetDescriptor {
             AugmentingCodeDescriptor other = (AugmentingCodeDescriptor) obj;
             if (endPos != other.endPos)
                 return false;
-            if (hasNewlineEnding != other.hasNewlineEnding)
-                return false;
             if (indent == null) {
                 if (other.indent != null)
                     return false;
@@ -96,47 +83,72 @@ public class CodeSnippetDescriptor {
         @Override
         public String toString() {
             return "AugmentingCodeDescriptor{endPos=" + endPos
-                    + ", hasNewlineEnding=" + hasNewlineEnding + ", indent=" + indent + ", index=" + index
+                    + ", indent=" + indent + ", index=" + index
                     + ", startPos=" + startPos + "}";
         }
     }
 
     public static class GeneratedCodeDescriptor {
-        @SerializedName("start_pos")
-        private int startPos = 0;
-        @SerializedName("end_pos")
-        private int endPos = 0;
+        @SerializedName("start_directive_start_pos")
+        private int startDirectiveStartPos = 0;
+        @SerializedName("start_directive_end_pos")
+        private int startDirectiveEndPos = 0;
+        @SerializedName("end_directive_start_pos")
+        private int endDirectiveStartPos = 0;
+        @SerializedName("end_directive_end_pos")
+        private int endDirectiveEndPos = 0;
 
         public GeneratedCodeDescriptor() {
 		}
 
-        public GeneratedCodeDescriptor(int startPos, int endPos) {
-            this.startPos = startPos;
-            this.endPos = endPos;
+        public GeneratedCodeDescriptor(int startDirectiveStartPos, int startDirectiveEndPos,
+                int endDirectiveStartPos, int endDirectiveEndPos) {
+            this.startDirectiveStartPos = startDirectiveStartPos;
+            this.startDirectiveEndPos = startDirectiveEndPos;
+            this.endDirectiveStartPos = endDirectiveStartPos;
+            this.endDirectiveEndPos = endDirectiveEndPos;
 		}
 
-		public int getStartPos() {
-            return startPos;
+        public int getStartDirectiveStartPos() {
+            return startDirectiveStartPos;
         }
 
-        public void setStartPos(int startPos) {
-            this.startPos = startPos;
+        public void setStartDirectiveStartPos(int startDirectiveStartPos) {
+            this.startDirectiveStartPos = startDirectiveStartPos;
         }
 
-        public int getEndPos() {
-            return endPos;
+        public int getStartDirectiveEndPos() {
+            return startDirectiveEndPos;
         }
 
-        public void setEndPos(int endPos) {
-            this.endPos = endPos;
+        public void setStartDirectiveEndPos(int startDirectiveEndPos) {
+            this.startDirectiveEndPos = startDirectiveEndPos;
+        }
+
+        public int getEndDirectiveStartPos() {
+            return endDirectiveStartPos;
+        }
+
+        public void setEndDirectiveStartPos(int endDirectiveStartPos) {
+            this.endDirectiveStartPos = endDirectiveStartPos;
+        }
+
+        public int getEndDirectiveEndPos() {
+            return endDirectiveEndPos;
+        }
+
+        public void setEndDirectiveEndPos(int endDirectiveEndPos) {
+            this.endDirectiveEndPos = endDirectiveEndPos;
         }
 
         @Override
         public int hashCode() {
             final int prime = 31;
             int result = 1;
-            result = prime * result + endPos;
-            result = prime * result + startPos;
+            result = prime * result + endDirectiveEndPos;
+            result = prime * result + endDirectiveStartPos;
+            result = prime * result + startDirectiveEndPos;
+            result = prime * result + startDirectiveStartPos;
             return result;
         }
 
@@ -149,16 +161,22 @@ public class CodeSnippetDescriptor {
             if (getClass() != obj.getClass())
                 return false;
             GeneratedCodeDescriptor other = (GeneratedCodeDescriptor) obj;
-            if (endPos != other.endPos)
+            if (endDirectiveEndPos != other.endDirectiveEndPos)
                 return false;
-            if (startPos != other.startPos)
+            if (endDirectiveStartPos != other.endDirectiveStartPos)
+                return false;
+            if (startDirectiveEndPos != other.startDirectiveEndPos)
+                return false;
+            if (startDirectiveStartPos != other.startDirectiveStartPos)
                 return false;
             return true;
         }
 
         @Override
         public String toString() {
-            return "GeneratedCodeDescriptor{endPos=" + endPos + ", startPos=" + startPos + "}";
+            return "GeneratedCodeDescriptor{endDirectiveEndPos=" + endDirectiveEndPos + ", endDirectiveStartPos="
+                    + endDirectiveStartPos + ", startDirectiveEndPos=" + startDirectiveEndPos
+                    + ", startDirectiveStartPos=" + startDirectiveStartPos + "}";
         }
     }
     

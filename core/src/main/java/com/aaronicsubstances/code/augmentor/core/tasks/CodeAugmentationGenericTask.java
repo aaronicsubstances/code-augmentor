@@ -70,6 +70,7 @@ public class CodeAugmentationGenericTask {
 
             // fetch applicable generated code per aug code descriptor.
             List<String> generatedCodes = new ArrayList<>();
+            List<int[]> replacementRanges = new ArrayList<>();
             for (CodeSnippetDescriptor snippetDescriptor : sourceFileDescriptor.getBodySnippets()) {
                 AugmentingCodeDescriptor augCodeDescriptor = snippetDescriptor.getAugmentingCodeDescriptor();
                 int augCodeIndex = augCodeDescriptor.getIndex();
@@ -82,50 +83,70 @@ public class CodeAugmentationGenericTask {
                     throw new GenericTaskException("Could not find generated code for " +
                         describeAugCodeSection(sourceCode, augCodeDescriptor, srcFile));
                 }
+                if (genCode.isSkipped()) {
+                    logWarn("Skipped generation of code for %s",
+                        describeAugCodeSection(sourceCode, augCodeDescriptor, srcFile));
+                    continue;
+                }
                 if (genCode.isError()) {
                     throw new GenericTaskException("Generation of code failed for " +
                         describeAugCodeSection(sourceCode, augCodeDescriptor, srcFile) + ":\n" +
                         genCode.getBodyContent());
                 }
+
+                int[] replacementRange = determineReplacementRange(snippetDescriptor,
+                    genCode);
+                replacementRanges.add(replacementRange);
+
+                String formattedGenCode = ensureEndingNewline(genCode.getBodyContent(),
+                    newline);
                 String indent = getEffectiveIndent(augCodeDescriptor, genCode);
-                String formattedGenCode = indentCodeAndEnsureNewlineEnding(genCode.getBodyContent(),
-                    indent, newline);
-                if (snippetDescriptor.getGeneratedCodeDescriptor() == null) {
-                    formattedGenCode = wrapInGeneratedCodeDirectives(formattedGenCode, 
-                        result.getGenCodeStartDirective(), result.getGenCodeEndDirective(),
-                        augCodeDescriptor.getHasNewlineEnding(),
-                        indent, newline);
+                if (!TaskUtils.isEmpty(indent)) {
+                    formattedGenCode = indentCode(formattedGenCode, indent);
+                }
+                if (replacementRange == null) {
+                    // employ default behaviour of ensuring generated code
+                    // occurs within directive markers. 
+                    if (snippetDescriptor.getGeneratedCodeDescriptor() == null) {
+                        formattedGenCode = wrapInGeneratedCodeDirectives(formattedGenCode, 
+                            result.getGenCodeStartDirective(), result.getGenCodeEndDirective(),
+                            indent, newline);
+                    }
                 }
                 generatedCodes.add(formattedGenCode);
             }
 
             // Now merge generated code into source code.
             SourceCodeTransformer transformer = new SourceCodeTransformer(sourceCode);
-            boolean changesDetected = false;
             for (int i = 0; i < generatedCodes.size(); i++) {
-                CodeSnippetDescriptor snippetDescriptor = sourceFileDescriptor.getBodySnippets().get(i);
-                AugmentingCodeDescriptor augCodeDescriptor = snippetDescriptor.getAugmentingCodeDescriptor();
-                GeneratedCodeDescriptor genCodeDescriptor = snippetDescriptor.getGeneratedCodeDescriptor();
                 String genCode = generatedCodes.get(i);
-                if (genCodeDescriptor != null) {
-                    transformer.addTransform(genCode, genCodeDescriptor.getStartPos(),
-                        genCodeDescriptor.getEndPos());
-                    if (!changesDetected) {
-                        String prevGenCode = sourceCode.substring(genCodeDescriptor.getStartPos(), 
-                            genCodeDescriptor.getEndPos());
-						if (!genCode.equals(prevGenCode)) {
-							changesDetected = true;
-						}
-                    }
+                // use replacement range if specified.
+                int[] replacementRange = replacementRanges.get(i);
+                if (replacementRange != null) {        
+                    // expected for advanced usage only.            
+                    transformer.addTransform(genCode, replacementRange[0], replacementRange[1]);
                 }
                 else {
-                    transformer.addTransform(genCode, augCodeDescriptor.getEndPos());
-                    changesDetected = true;
+                    // resort to default behaviour
+                    CodeSnippetDescriptor snippetDescriptor = sourceFileDescriptor.getBodySnippets().get(i);
+                    GeneratedCodeDescriptor genCodeDescriptor = snippetDescriptor.getGeneratedCodeDescriptor();
+                    if (genCodeDescriptor != null) {                    
+                        // by default range of generated code excludes directive markers.
+                        // it starts from just after the start directive marker,
+                        // and ends just before the end directive marker.
+                        int genCodeStartPos = genCodeDescriptor.getStartDirectiveEndPos();
+                        int genCodeEndPos = genCodeDescriptor.getEndDirectiveStartPos(); 
+                        transformer.addTransform(genCode, genCodeStartPos, genCodeEndPos);
+                    }
+                    else {
+                        AugmentingCodeDescriptor augCodeDescriptor = snippetDescriptor.getAugmentingCodeDescriptor();
+                        transformer.addTransform(genCode, augCodeDescriptor.getEndPos());
+                    }
                 }
             }
 
             String transformedCode = transformer.getTransformedText();
-            if (changesDetected) {
+            if (!sourceCode.equals(transformedCode)) {
                 String destSubDirName = destSubDirNameMap.get(sourceFileDescriptor.getDir());
                 if (destSubDirName == null) {
                     String origDirName = new File(sourceFileDescriptor.getDir()).getName();
@@ -166,6 +187,45 @@ public class CodeAugmentationGenericTask {
         generatedCodeFetcher.close();
     }
 
+    static int[] determineReplacementRange(CodeSnippetDescriptor snippetDescriptor, 
+            GeneratedCode genCode) {
+        if (!genCode.isReplaceGenCodeDirectives() && !genCode.isReplaceAugCodeDirectives()) {
+            return null;
+        }
+        AugmentingCodeDescriptor augCodeDescriptor = snippetDescriptor.getAugmentingCodeDescriptor();
+        GeneratedCodeDescriptor genCodeDescriptor = snippetDescriptor.getGeneratedCodeDescriptor();
+        if (genCode.isReplaceAugCodeDirectives()) {
+            int[] replacementRange = new int[]{ augCodeDescriptor.getStartPos(),
+                augCodeDescriptor.getEndPos() };
+            if (genCode.isReplaceGenCodeDirectives() && genCodeDescriptor != null) {
+                replacementRange[1] = genCodeDescriptor.getEndDirectiveEndPos();
+            }
+            return replacementRange;
+        }                   
+        else if (genCode.isReplaceGenCodeDirectives()) {
+            if (genCodeDescriptor != null) {
+                int[] replacementRange = new int[]{ augCodeDescriptor.getEndPos(),
+                    genCodeDescriptor.getEndDirectiveEndPos() };
+                return replacementRange;
+            }
+        }
+        return null;
+    }
+
+    static String ensureEndingNewline(String code, String newline) {
+        boolean genCodeEndsWithNewline = false;
+        if (!code.isEmpty()) {
+            char lastChar = code.charAt(code.length() - 1);
+            if (TaskUtils.isNewLine(lastChar)) {
+                genCodeEndsWithNewline = true;
+            }
+        }
+        if (!genCodeEndsWithNewline) {
+            code += newline;
+        }
+        return code;
+    }
+
     private static String getEffectiveIndent(AugmentingCodeDescriptor augCodeDescriptor, GeneratedCode genCode) {
         String indent = genCode.getIndent();
         if (indent == null) {
@@ -174,44 +234,30 @@ public class CodeAugmentationGenericTask {
         return indent;
     }
 
-    static String indentCodeAndEnsureNewlineEnding(String code, String indent, String newline) {
-        if (!TaskUtils.isEmpty(indent)) {
-            List<String> splitCode = TaskUtils.splitIntoLines(code);
-            StringBuilder codeBuffer = new StringBuilder();
-            for (int i = 0; i < splitCode.size(); i+=2) {
-                String line = splitCode.get(i);
-                if (!TaskUtils.isBlank(line)) {
-                    codeBuffer.append(indent).append(line);
-                }
-                String terminator = splitCode.get(i + 1);
-                if (terminator == null) {
-                    break;
-                }
-                codeBuffer.append(terminator);
+    static String indentCode(String code, String indent) {
+        List<String> splitCode = TaskUtils.splitIntoLines(code);
+        StringBuilder codeBuffer = new StringBuilder();
+        for (int i = 0; i < splitCode.size(); i+=2) {
+            String line = splitCode.get(i);
+            if (!TaskUtils.isBlank(line)) {
+                codeBuffer.append(indent).append(line);
             }
-            code = codeBuffer.toString();
-        }
-        boolean endsWithNewline = false;
-        if (!code.isEmpty()) {
-            char lastChar = code.charAt(code.length() - 1);
-            if (TaskUtils.isNewLine(lastChar)) {
-                endsWithNewline = true;
+            String terminator = splitCode.get(i + 1);
+            if (terminator == null) {
+                break;
             }
+            codeBuffer.append(terminator);
         }
-        if (!endsWithNewline) {
-            code += newline;
-        }
-        return code;
+        return codeBuffer.toString();
     }
 
-    private String wrapInGeneratedCodeDirectives(String code, String genCodeStartDirective,
-            String genCodeEndDirective, boolean augCodeHasNewlineEnding, 
+    static String wrapInGeneratedCodeDirectives(String code, String genCodeStartDirective,
+            String genCodeEndDirective,
             String indent, String newline) {
         if (indent == null) {
             indent = "";
         }
-        return (augCodeHasNewlineEnding ? "" : newline) +
-            indent + genCodeStartDirective + newline +
+        return indent + genCodeStartDirective + newline +
             code +
             indent + genCodeEndDirective + newline;
     }
@@ -220,8 +266,7 @@ public class CodeAugmentationGenericTask {
             File srcFile) {
         int lineNumber = TaskUtils.calculateLineNumber(input, 
             augCodeDescriptor.getStartPos());
-        String msg = String.format("aug code section at line %s (index %s to %s) in %s", 
-            lineNumber, augCodeDescriptor.getStartPos(), augCodeDescriptor.getEndPos(), srcFile);
+        String msg = String.format("in %s at line %s", srcFile, lineNumber);
         return msg;
     }
 
@@ -240,7 +285,6 @@ public class CodeAugmentationGenericTask {
         logAppender.accept(LOG_LEVEL_INFO, () -> String.format(format, args));        
     }
 
-    @SuppressWarnings("unused")
     private void logWarn(String format, Object... args) {
         if (logAppender == null) {
             return;

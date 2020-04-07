@@ -264,9 +264,10 @@ public class PersistenceTest {
 
                             generatedCode.setIndex(j);
                             generatedCode.setIndent(randomIndent(randGen));
-                            if (randGen.nextBoolean()) {
-                                generatedCode.setError(true);
-                            }
+                            generatedCode.setError(randGen.nextBoolean());
+                            generatedCode.setSkipped(randGen.nextBoolean());
+                            generatedCode.setReplaceAugCodeDirectives(randGen.nextBoolean());
+                            generatedCode.setReplaceGenCodeDirectives(randGen.nextBoolean());
                             generatedCode.setBodyContent(generateRandomString(randGen, true));
                         }
                     }
@@ -280,15 +281,16 @@ public class PersistenceTest {
         CodeSnippetDescriptor c = new CodeSnippetDescriptor();
         if (randGen.nextBoolean()) {
             GeneratedCodeDescriptor g = new GeneratedCodeDescriptor();
-            g.setStartPos(randGen.nextInt(1000));
-            g.setEndPos(randGen.nextInt(1000));
+            g.setStartDirectiveStartPos(randGen.nextInt(1000));
+            g.setStartDirectiveEndPos(randGen.nextInt(1000));
+            g.setEndDirectiveStartPos(randGen.nextInt(1000));
+            g.setEndDirectiveEndPos(randGen.nextInt(1000));
             c.setGeneratedCodeDescriptor(g);
         }
         AugmentingCodeDescriptor d = new AugmentingCodeDescriptor();
         c.setAugmentingCodeDescriptor(d);
         d.setStartPos(randGen.nextInt(1000));
         d.setEndPos(randGen.nextInt(1000));
-        d.setHasNewlineEnding(randGen.nextBoolean());
         d.setIndex(randGen.nextInt(200));
         d.setIndent(randomIndent(randGen));
         return c;

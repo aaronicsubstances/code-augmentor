@@ -12,7 +12,10 @@ public class SourceCodeTransformer {
     }
 
     public void addTransform(String replacement, int startPos) {
-        addTransform(replacement, startPos, startPos);
+        transformedText.insert(positionAdjustment + startPos, replacement);
+        positionAdjustment += replacement.length();
+        // alternatively,
+        //addTransform(replacement, startPos, startPos);
     }
     
     public void addTransform(String replacement, int startPos, int endPos) {

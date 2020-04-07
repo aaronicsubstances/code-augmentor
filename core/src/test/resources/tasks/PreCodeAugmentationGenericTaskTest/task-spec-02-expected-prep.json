@@ -8,8 +8,7 @@
 				"index" : 0,
 				"start_pos" : 334,
 				"end_pos" : 425,
-				"indent" : " ",
-				"has_newline_ending": true
+				"indent" : " "
 			}
 		},
 		{
@@ -17,21 +16,21 @@
 				"index" : 1,
 				"start_pos" : 1029,
 				"end_pos" : 1069,
-				"indent" : "\t",
-				"has_newline_ending": true
+				"indent" : "\t"
 			},
 			"generated_code": {
-				"start_pos" : 1079,
-				"end_pos" : 1116
+				"start_directive_start_pos" : 1069,
+				"start_directive_end_pos" : 1079,
+				"end_directive_start_pos" : 1116,
+				"end_directive_end_pos" : 1123
 			}
 		},
 		{
 			"augmenting_code": {
 				"index" : 2,
 				"start_pos" : 1337,
-				"end_pos" : 1343,
-				"indent" : "\t",
-				"has_newline_ending": false
+				"end_pos" : 1345,
+				"indent" : "\t"
 			}
 		}]
 	}

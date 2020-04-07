@@ -11,6 +11,12 @@ public class GeneratedCode {
     private String bodyContent;
     @SerializedName("indent")
     private String indent;
+    @SerializedName("skipped")
+    private boolean skipped;
+    @SerializedName("replace_aug_code_directives")
+    private boolean replaceAugCodeDirectives;
+    @SerializedName("replace_gen_code_directives")
+    private boolean replaceGenCodeDirectives;
 
     public int getIndex() {
         return index;
@@ -44,6 +50,30 @@ public class GeneratedCode {
         this.indent = indent;
     }
 
+    public boolean isSkipped() {
+        return skipped;
+    }
+
+    public void setSkipped(boolean skipped) {
+        this.skipped = skipped;
+    }
+
+    public boolean isReplaceAugCodeDirectives() {
+        return replaceAugCodeDirectives;
+    }
+
+    public void setReplaceAugCodeDirectives(boolean replaceAugCodeDirectives) {
+        this.replaceAugCodeDirectives = replaceAugCodeDirectives;
+    }
+
+    public boolean isReplaceGenCodeDirectives() {
+        return replaceGenCodeDirectives;
+    }
+
+    public void setReplaceGenCodeDirectives(boolean replaceGenCodeDirectives) {
+        this.replaceGenCodeDirectives = replaceGenCodeDirectives;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -52,6 +82,9 @@ public class GeneratedCode {
         result = prime * result + (error ? 1231 : 1237);
         result = prime * result + ((indent == null) ? 0 : indent.hashCode());
         result = prime * result + index;
+        result = prime * result + (replaceAugCodeDirectives ? 1231 : 1237);
+        result = prime * result + (replaceGenCodeDirectives ? 1231 : 1237);
+        result = prime * result + (skipped ? 1231 : 1237);
         return result;
     }
 
@@ -78,12 +111,19 @@ public class GeneratedCode {
             return false;
         if (index != other.index)
             return false;
+        if (replaceAugCodeDirectives != other.replaceAugCodeDirectives)
+            return false;
+        if (replaceGenCodeDirectives != other.replaceGenCodeDirectives)
+            return false;
+        if (skipped != other.skipped)
+            return false;
         return true;
     }
 
     @Override
     public String toString() {
-        return "GeneratedCode{bodyContent=" + bodyContent + ", error=" + error +
-                ", indent=" + indent + ", index=" + index + "}";
+        return "GeneratedCode{bodyContent=" + bodyContent + ", error=" + error + ", indent=" + indent + ", index="
+                + index + ", replaceAugCodeDirectives=" + replaceAugCodeDirectives + ", replaceGenCodeDirectives="
+                + replaceGenCodeDirectives + ", skipped=" + skipped + "}";
     }
 }
