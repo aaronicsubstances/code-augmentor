@@ -18,22 +18,21 @@ import com.aaronicsubstances.code.augmentor.core.models.SourceFileDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.AugmentingCodeDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.GeneratedCodeDescriptor;
 import com.aaronicsubstances.code.augmentor.core.parsing.LexerSupport;
-import com.aaronicsubstances.code.augmentor.core.parsing.ParserException;
-import com.aaronicsubstances.code.augmentor.core.parsing.Token;
 
 public class CodeAugmentationGenericTask {
     public static final int LOG_LEVEL_VERBOSE = 1;
     public static final int LOG_LEVEL_INFO = 2;
     public static final int LOG_LEVEL_WARN = 3;
+
+    // input properties.
     private BiConsumer<Integer, Supplier<String>> logAppender;
     private Charset charset;
-
     private File prepFile;
     private List<File> generatedCodeFiles;
     private File srcDir;
     private File destDir;
-    private String newline;
 
+    // output properties
     private final List<File> srcFiles = new ArrayList<>();
     private final List<File> destFiles = new ArrayList<>();
     private final Map<String, String> destSubDirNameMap  = new HashMap<>();
@@ -41,7 +40,7 @@ public class CodeAugmentationGenericTask {
     public void execute() throws Exception {
         srcFiles.clear();
         destFiles.clear();
-        destSubDirNameMap.clear();;
+        destSubDirNameMap.clear();
 
         PreCodeAugmentationResult result = new PreCodeAugmentationResult();
         Object resultReader = result.beginDeserialize(prepFile);
@@ -71,13 +70,15 @@ public class CodeAugmentationGenericTask {
             generatedCodeFetcher.prepareForFile(sourceFileDescriptor.getFileIndex());
 
             // fetch applicable generated code per aug code descriptor.
-            List<List<Token>> parsedGeneratedCodes = new ArrayList<>();
+            List<String> generatedCodes = new ArrayList<>();
             for (CodeSnippetDescriptor snippetDescriptor : sourceFileDescriptor.getBodySnippets()) {
                 AugmentingCodeDescriptor augCodeDescriptor = snippetDescriptor.getAugmentingCodeDescriptor();
                 int augCodeIndex = augCodeDescriptor.getIndex();
 
+                StringBuilder newlineReceiver = new StringBuilder();
                 GeneratedCode genCode = generatedCodeFetcher.getGeneratedCode(sourceFileDescriptor.getFileIndex(), 
-                    augCodeIndex);
+                    augCodeIndex, newlineReceiver);
+                String newline = newlineReceiver.toString();
                 if (genCode == null) {
                     throw new GenericTaskException("Could not find generated code for " +
                         describeAugCodeSection(sourceCode, augCodeDescriptor, srcFile));
@@ -87,52 +88,39 @@ public class CodeAugmentationGenericTask {
                         describeAugCodeSection(sourceCode, augCodeDescriptor, srcFile) + ":\n" +
                         genCode.getBodyContent());
                 }
-                List<Token> tokens;
-                try {
-                    tokens = parseSourceCode(sourceFileDescriptor.getRelativePath(), 
-                        genCode.getBodyContent());
+                String indent = getEffectiveIndent(augCodeDescriptor, genCode);
+                String formattedGenCode = indentCodeAndEnsureNewlineEnding(genCode.getBodyContent(),
+                    indent, newline);
+                if (snippetDescriptor.getGeneratedCodeDescriptor() == null) {
+                    formattedGenCode = wrapInGeneratedCodeDirectives(formattedGenCode, 
+                        result.getGenCodeStartDirective(), result.getGenCodeEndDirective(),
+                        augCodeDescriptor.getHasNewlineEnding(),
+                        indent, newline);
                 }
-                catch (ParserException ex) {
-                    throw new GenericTaskException("Invalid generated code for " +
-                        describeAugCodeSection(sourceCode, augCodeDescriptor, srcFile), 
-                        ex);
-                }
-                boolean canIndent = canIndentCode(augCodeDescriptor, tokens);
-                if (canIndent) {
-                    tokens = indentCode(tokens, augCodeDescriptor.getIndent());
-                }
-                tokens = wrapInGeneratedCodeComments(tokens, 
-                    result.getGenCodeStartSuffix(), result.getGenCodeEndSuffix(),
-                    augCodeDescriptor, canIndent);
-                parsedGeneratedCodes.add(tokens);
+                generatedCodes.add(formattedGenCode);
             }
 
             // Now merge generated code into source code.
             SourceCodeTransformer transformer = new SourceCodeTransformer(sourceCode);
             boolean changesDetected = false;
-            for (int i = 0; i < parsedGeneratedCodes.size(); i++) {
+            for (int i = 0; i < generatedCodes.size(); i++) {
                 CodeSnippetDescriptor snippetDescriptor = sourceFileDescriptor.getBodySnippets().get(i);
                 AugmentingCodeDescriptor augCodeDescriptor = snippetDescriptor.getAugmentingCodeDescriptor();
                 GeneratedCodeDescriptor genCodeDescriptor = snippetDescriptor.getGeneratedCodeDescriptor();
-                List<Token> parsedGenCode = parsedGeneratedCodes.get(i);
-                StringBuilder genCode = new StringBuilder(); 
-                for (Token t : parsedGenCode) {
-                    genCode.append(t.text);
-                }
+                String genCode = generatedCodes.get(i);
                 if (genCodeDescriptor != null) {
-					String genCodeStr = genCode.toString();
-                    transformer.addTransform(genCodeStr, genCodeDescriptor.getStartPos(),
+                    transformer.addTransform(genCode, genCodeDescriptor.getStartPos(),
                         genCodeDescriptor.getEndPos());
                     if (!changesDetected) {
                         String prevGenCode = sourceCode.substring(genCodeDescriptor.getStartPos(), 
                             genCodeDescriptor.getEndPos());
-						if (!genCodeStr.equals(prevGenCode)) {
+						if (!genCode.equals(prevGenCode)) {
 							changesDetected = true;
 						}
                     }
                 }
                 else {
-                    transformer.addTransform(genCode.toString(), augCodeDescriptor.getEndPos());
+                    transformer.addTransform(genCode, augCodeDescriptor.getEndPos());
                     changesDetected = true;
                 }
             }
@@ -179,106 +167,54 @@ public class CodeAugmentationGenericTask {
         generatedCodeFetcher.close();
     }
 
-    private List<Token> parseSourceCode(String relativePath, String sourceCode) {
-        List<Token> tokens = TaskUtils.parseSourceCode(relativePath, sourceCode).parse();
-        return tokens;
+    private static String getEffectiveIndent(AugmentingCodeDescriptor augCodeDescriptor, GeneratedCode genCode) {
+        String indent = genCode.getIndent();
+        if (indent == null) {
+            indent = augCodeDescriptor.getIndent();
+        }
+        return indent;
     }
 
-    private static boolean canIndentCode(AugmentingCodeDescriptor augCodeDescriptor, List<Token> tokens) {
-        if (TaskUtils.isNullOrEmpty(augCodeDescriptor.getIndent())) {
-            return false;
-        }
-        for (Token token : tokens) {
-            if (token.type == Token.TYPE_LITERAL_STRING_CONTENT) {
-                if (LexerSupport.NEW_LINE_REGEX.matcher(token.text).find()) {
-                    return false;
+    static String indentCodeAndEnsureNewlineEnding(String code, String indent, String newline) {
+        if (indent != null && !indent.isEmpty()) {
+            List<String> splitCode = LexerSupport.splitIntoLines(code);
+            StringBuilder codeBuffer = new StringBuilder();
+            for (int i = 0; i < splitCode.size(); i+=2) {
+                String line = splitCode.get(i);
+                if (!LexerSupport.isBlank(line)) {
+                    codeBuffer.append(indent).append(line);
                 }
+                String terminator = splitCode.get(i + 1);
+                if (terminator == null) {
+                    break;
+                }
+                codeBuffer.append(terminator);
+            }
+            code = codeBuffer.toString();
+        }
+        boolean endsWithNewline = false;
+        if (!code.isEmpty()) {
+            char lastChar = code.charAt(code.length() - 1);
+            if (LexerSupport.isNewLine(lastChar)) {
+                endsWithNewline = true;
             }
         }
-        return true;
+        if (!endsWithNewline) {
+            code += newline;
+        }
+        return code;
     }
 
-    static List<Token> indentCode(List<Token> codeTokens, String indent) {
-        List<Token> indentedCodeTokens = new ArrayList<>();
-        Token indentToken = new Token(Token.TYPE_NON_NEWLINE_WHITESPACE, indent, 
-            0, 0, 0);
-        indentedCodeTokens.add(indentToken);
-        for (int i = 0; i < codeTokens.size(); i++) {
-            Token t = codeTokens.get(i);
-            indentedCodeTokens.add(t);
-            // add indent after newlines, unless newline is the last token in source code.
-            if (t.type == Token.TYPE_NEWLINE && i + 1 < codeTokens.size()) {
-                indentToken = new Token(Token.TYPE_NON_NEWLINE_WHITESPACE, indent, 
-                    0, 0, 0); 
-                indentedCodeTokens.add(indentToken);
-            }
+    private String wrapInGeneratedCodeDirectives(String code, String genCodeStartDirective,
+            String genCodeEndDirective, boolean augCodeHasNewlineEnding, 
+            String indent, String newline) {
+        if (indent == null) {
+            indent = "";
         }
-        return indentedCodeTokens;
-    }
-
-    private List<Token> wrapInGeneratedCodeComments(List<Token> contentTokens, 
-            String genCodeStartSuffix, String genCodeEndSuffix,
-            AugmentingCodeDescriptor augmentingCodeDescriptor, boolean canIndent) {
-        List<Token> wrappedContentTokens = new ArrayList<>();
-        if (augmentingCodeDescriptor.isAnnotatedWithSlashStar()) {
-            // use slash star
-            String commentStart = "/*" + genCodeStartSuffix + "*/";
-            Token genCodeStart = new Token(Token.TYPE_MULTI_LINE_COMMENT, 
-                commentStart, 0, 0, 0);
-            wrappedContentTokens.add(genCodeStart);
-
-            wrappedContentTokens.addAll(contentTokens);
-
-            String commentEnd = "/*" + genCodeEndSuffix + "*/";
-            Token genCodeEnd = new Token(Token.TYPE_MULTI_LINE_COMMENT,
-                commentEnd, 0, 0, 0);
-            wrappedContentTokens.add(genCodeEnd);
-        }
-        else {
-            //use double slashes
-
-            // always add a first new line since newlines ending double slashes are always
-            // included in generated code range.
-            Token newlineToken = new Token(Token.TYPE_NEWLINE, newline, 
-                0, 0, 0); 
-            wrappedContentTokens.add(newlineToken);
-
-            if (canIndent) {
-                Token indentToken = new Token(Token.TYPE_NON_NEWLINE_WHITESPACE,
-                    augmentingCodeDescriptor.getIndent(), 
-                    0, 0, 0); 
-                wrappedContentTokens.add(indentToken);
-            }
-
-            String commentStart = "//" + genCodeStartSuffix;
-            Token genCodeStart = new Token(Token.TYPE_SINGLE_LINE_COMMENT, 
-                commentStart, 0, 0, 0);
-            wrappedContentTokens.add(genCodeStart);
-            newlineToken = new Token(Token.TYPE_NEWLINE, newline, 
-                0, 0, 0); 
-            wrappedContentTokens.add(newlineToken);
-
-            wrappedContentTokens.addAll(contentTokens);
-            newlineToken = new Token(Token.TYPE_NEWLINE, newline, 
-                0, 0, 0);
-
-            wrappedContentTokens.add(newlineToken);
-            if (canIndent) {
-                Token indentToken = new Token(Token.TYPE_NON_NEWLINE_WHITESPACE,
-                    augmentingCodeDescriptor.getIndent(), 
-                    0, 0, 0); 
-                wrappedContentTokens.add(indentToken);
-            }
-
-            String commentEnd = "//" + genCodeEndSuffix;
-            Token genCodeEnd = new Token(Token.TYPE_SINGLE_LINE_COMMENT,
-                commentEnd, 0, 0, 0);
-            wrappedContentTokens.add(genCodeEnd);
-            newlineToken = new Token(Token.TYPE_NEWLINE, newline, 
-                0, 0, 0);
-            wrappedContentTokens.add(newlineToken);
-        }
-        return wrappedContentTokens;
+        return (augCodeHasNewlineEnding ? "" : newline) +
+            indent + genCodeStartDirective + newline +
+            code +
+            indent + genCodeEndDirective + newline;
     }
 
     private static String describeAugCodeSection(String input, AugmentingCodeDescriptor augCodeDescriptor, 
@@ -359,14 +295,6 @@ public class CodeAugmentationGenericTask {
 
     public void setDestDir(File destDir) {
         this.destDir = destDir;
-    }
-
-    public String getNewline() {
-        return newline;
-    }
-
-    public void setNewline(String newline) {
-        this.newline = newline;
     }
 
     public List<File> getSrcFiles() {

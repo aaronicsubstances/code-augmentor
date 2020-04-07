@@ -42,15 +42,11 @@ Object/*GS*/ /*GS*/getSmsScript()//GE
     /*GS*/@Path("sms-config")//GS
 
 //JS println("World")
-//GS
+    //GS*/
 StringBuilder teaBag;
 println();
-//GE
-    /*GS*/public Object //JS println("Hello")
-getSmsConfig()/*JS println("Hello World from JS-star")
-var i = 3 + new Date(); 
-...etc*//*GS*/char f;/*GE*/ {
-/*GE*/        String//H
+//GE*/        
+String//H
 //H
  smsConfigJson = System.getenv("vision.sms-config")//GE
 ;/*GE*/

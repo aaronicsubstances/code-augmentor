@@ -34,7 +34,6 @@ public class CodeAugmentationGenericTaskTest {
         
         CodeAugmentationGenericTask task = new CodeAugmentationGenericTask();
         task.setCharset(StandardCharsets.UTF_8);
-        task.setNewline("\r\n");
 
         File TEMP_GEN_DIR = new File(FileUtils.getTempDirectory(), "code-augmentor-generated");
         TEMP_GEN_DIR.mkdir();

@@ -8,6 +8,8 @@ import com.google.gson.annotations.SerializedName;
 public class SourceFileGeneratedCode {
     @SerializedName("file_index")
     private int fileIndex;
+    @SerializedName("newline")
+    private String newline;
     @SerializedName("generated_codes")
     private List<GeneratedCode> generatedCodeList;
 
@@ -25,6 +27,14 @@ public class SourceFileGeneratedCode {
 
     public void setFileIndex(int fileIndex) {
         this.fileIndex = fileIndex;
+    }
+
+    public String getNewline() {
+        return newline;
+    }
+
+    public void setNewline(String newline) {
+        this.newline = newline;
     }
 
     public List<GeneratedCode> getGeneratedCodeList() {
@@ -69,6 +79,7 @@ public class SourceFileGeneratedCode {
         int result = 1;
         result = prime * result + fileIndex;
         result = prime * result + ((generatedCodeList == null) ? 0 : generatedCodeList.hashCode());
+        result = prime * result + ((newline == null) ? 0 : newline.hashCode());
         return result;
     }
 
@@ -88,12 +99,17 @@ public class SourceFileGeneratedCode {
                 return false;
         } else if (!generatedCodeList.equals(other.generatedCodeList))
             return false;
+        if (newline == null) {
+            if (other.newline != null)
+                return false;
+        } else if (!newline.equals(other.newline))
+            return false;
         return true;
     }
 
     @Override
     public String toString() {
-        return "SourceFileGeneratedCode{fileIndex=" + fileIndex 
-            + ", generatedCodeList=" + generatedCodeList + "}";
+        return "SourceFileGeneratedCode{fileIndex=" + fileIndex + ", generatedCodeList=" + generatedCodeList
+                + ", newline=" + newline + "}";
     }
 }

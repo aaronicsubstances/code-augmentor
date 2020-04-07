@@ -16,8 +16,7 @@ org.springframework.stereotype.Component/*GS*/;
 
 @Component/*JS println("Hello World from JS-star")
 var i = 3 + new Date();
-...etc*//*GS*/StringBuilder teaBag;
-println();/*GE*/
+...etc*/
 @Path("vision-members/api/v1")
 @Produces(MediaType.TEXT_PLAIN)
 public //GE
@@ -52,10 +51,10 @@ Object getSmsConfig()/*GS*/ {
 	//JS println( 
 	//ES:World
 		//JS )
-	//GS
-	char f;
-	//GE
-smsConfigJson;
+		//GS*/
+		char f;
+		//GE*/
+		smsConfigJson;
     }
     
     @GET

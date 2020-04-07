@@ -6,7 +6,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 import com.aaronicsubstances.code.augmentor.core.parsing.LexerSupport;
@@ -44,16 +43,17 @@ public class TestResourceLoader {
 	public static String loadResourceNewlinesNormalized(String path,
 			Class<?> cls, String newLine) {
         String text = loadResource(path, cls);
-        Matcher m = LexerSupport.NEW_LINE_REGEX.matcher(text);
-        StringBuffer sb = new StringBuffer();
-        String replacement = Matcher.quoteReplacement(newLine);
-        while (m.find()) {
-            if (m.group().equals(newLine)) {
-                continue;
+        List<String> splitText = LexerSupport.splitIntoLines(text);
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < splitText.size(); i+=2) {
+            String line = splitText.get(i);
+            sb.append(line);
+            String terminator = splitText.get(i + 1);
+            if (terminator == null) {
+                break;
             }
-            m.appendReplacement(sb, replacement);
+            sb.append(newLine);
         }
-        m.appendTail(sb);
         String newText = sb.toString();
         return newText;
 	}

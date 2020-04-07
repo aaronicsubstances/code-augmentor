@@ -20,18 +20,15 @@ public class PreCodeAugmentationResult {
 
     public static class Header {
         @SerializedName("gen_code_start_suffix")
-        String genCodeStartSuffix;
+        String genCodeStartDirective;
         @SerializedName("gen_code_end_suffix")
-        String genCodeEndSuffix;
-        @SerializedName("newline")
-        String newline;
+        String genCodeEndDirective;
         @SerializedName("content_streaming_enabled")
         Boolean contentStreamEnabled;
     }
 
-    private String genCodeStartSuffix;
-    private String genCodeEndSuffix;
-    private String newline;
+    private String genCodeStartDirective;
+    private String genCodeEndDirective;
 
     private List<SourceFileDescriptor> fileDescriptors;
 
@@ -50,20 +47,20 @@ public class PreCodeAugmentationResult {
         this.fileDescriptors = fileDescriptors;
     }
 
-    public String getGenCodeStartSuffix() {
-        return genCodeStartSuffix;
+    public String getGenCodeStartDirective() {
+        return genCodeStartDirective;
     }
 
-    public void setGenCodeStartSuffix(String genCodeStartSuffix) {
-        this.genCodeStartSuffix = genCodeStartSuffix;
+    public void setGenCodeStartDirective(String genCodeStartDirective) {
+        this.genCodeStartDirective = genCodeStartDirective;
     }
 
-    public String getGenCodeEndSuffix() {
-        return genCodeEndSuffix;
+    public String getGenCodeEndDirective() {
+        return genCodeEndDirective;
     }
 
-    public void setGenCodeEndSuffix(String genCodeEndSuffix) {
-        this.genCodeEndSuffix = genCodeEndSuffix;
+    public void setGenCodeEndDirective(String genCodeEndDirective) {
+        this.genCodeEndDirective = genCodeEndDirective;
     }
 
     public Object beginSerialize(File file) throws Exception {        
@@ -86,9 +83,8 @@ public class PreCodeAugmentationResult {
     private void printHeader(PersistenceUtil persistenceUtil, boolean contentStreamEnabled) 
             throws Exception {        
         Header header = new Header();
-        header.genCodeStartSuffix = genCodeStartSuffix;
-        header.genCodeEndSuffix = genCodeEndSuffix;
-        header.newline = newline;
+        header.genCodeStartDirective = genCodeStartDirective;
+        header.genCodeEndDirective = genCodeEndDirective;
         header.contentStreamEnabled = contentStreamEnabled;
         String headerString = PersistenceUtil.serializeCompactlyToJson(header);
         persistenceUtil.println(headerString);
@@ -152,9 +148,8 @@ public class PreCodeAugmentationResult {
     private boolean readHeader(PersistenceUtil persistenceUtil) throws Exception {
         String headerString = persistenceUtil.readLine();
         Header header = PersistenceUtil.deserializeFromJson(headerString, Header.class);
-        genCodeStartSuffix = header.genCodeStartSuffix;
-        genCodeEndSuffix = header.genCodeEndSuffix;
-        newline = header.newline;
+        genCodeStartDirective = header.genCodeStartDirective;
+        genCodeEndDirective = header.genCodeEndDirective;
         // enable content streaming by default.
         boolean contentStreamEnabled = true;
         if (header.contentStreamEnabled != null) {
@@ -190,22 +185,13 @@ public class PreCodeAugmentationResult {
         return instance;
 	}
 
-    public String getNewline() {
-        return newline;
-    }
-
-    public void setNewline(String newline) {
-        this.newline = newline;
-    }
-
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((fileDescriptors == null) ? 0 : fileDescriptors.hashCode());
-        result = prime * result + ((genCodeEndSuffix == null) ? 0 : genCodeEndSuffix.hashCode());
-        result = prime * result + ((genCodeStartSuffix == null) ? 0 : genCodeStartSuffix.hashCode());
-        result = prime * result + ((newline == null) ? 0 : newline.hashCode());
+        result = prime * result + ((genCodeEndDirective == null) ? 0 : genCodeEndDirective.hashCode());
+        result = prime * result + ((genCodeStartDirective == null) ? 0 : genCodeStartDirective.hashCode());
         return result;
     }
 
@@ -223,27 +209,22 @@ public class PreCodeAugmentationResult {
                 return false;
         } else if (!fileDescriptors.equals(other.fileDescriptors))
             return false;
-        if (genCodeEndSuffix == null) {
-            if (other.genCodeEndSuffix != null)
+        if (genCodeEndDirective == null) {
+            if (other.genCodeEndDirective != null)
                 return false;
-        } else if (!genCodeEndSuffix.equals(other.genCodeEndSuffix))
+        } else if (!genCodeEndDirective.equals(other.genCodeEndDirective))
             return false;
-        if (genCodeStartSuffix == null) {
-            if (other.genCodeStartSuffix != null)
+        if (genCodeStartDirective == null) {
+            if (other.genCodeStartDirective != null)
                 return false;
-        } else if (!genCodeStartSuffix.equals(other.genCodeStartSuffix))
-            return false;
-        if (newline == null) {
-            if (other.newline != null)
-                return false;
-        } else if (!newline.equals(other.newline))
+        } else if (!genCodeStartDirective.equals(other.genCodeStartDirective))
             return false;
         return true;
     }
 
     @Override
     public String toString() {
-        return "PreCodeAugmentationResult{fileDescriptors=" + fileDescriptors + ", genCodeEndSuffix="
-                + genCodeEndSuffix + ", genCodeStartSuffix=" + genCodeStartSuffix + ", newline=" + newline + "}";
+        return "PreCodeAugmentationResult{fileDescriptors=" + fileDescriptors + ", genCodeEndDirective="
+                + genCodeEndDirective + ", genCodeStartDirective=" + genCodeStartDirective + "}";
     }
 }

@@ -1,4 +1,4 @@
-{ "content_streaming_enabled": false }
+{ "content_streaming_enabled": false, "newline": "\r\n" }
 [
 	{
 		"file_index": 0,

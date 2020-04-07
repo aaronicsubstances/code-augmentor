@@ -79,9 +79,8 @@ public class PersistenceTest {
             @Override
             public Object[] next() {
                 PreCodeAugmentationResult instance = new PreCodeAugmentationResult(new ArrayList<>());
-                instance.setGenCodeStartSuffix(generateRandomString(randGen, false));
-                instance.setGenCodeEndSuffix(generateRandomString(randGen, false));
-                instance.setNewline(generateRandomString(randGen, true));
+                instance.setGenCodeStartDirective(generateRandomString(randGen, false));
+                instance.setGenCodeEndDirective(generateRandomString(randGen, false));
                 if (count > 0) {
                     int fileDescriptorListSize = randGen.nextInt(5);
                     for (int i = 0; i < fileDescriptorListSize; i++) {
@@ -245,6 +244,9 @@ public class PersistenceTest {
             public Object[] next() {
                 List<SourceFileGeneratedCode> files = new ArrayList<>();
                 CodeGenerationResponse instance = new CodeGenerationResponse(files);
+                if (randGen.nextBoolean()) {
+                    instance.setNewline(generateRandomString(randGen, true));
+                }
                 if (count > 0) {
                     int fileListSize = randGen.nextInt(5);
                     for (int i = 0; i < fileListSize; i++) {
@@ -252,6 +254,9 @@ public class PersistenceTest {
                         SourceFileGeneratedCode file = new SourceFileGeneratedCode(generatedCodeList);
                         files.add(file);
                         file.setFileIndex(i);
+                        if (randGen.nextBoolean()) {
+                            file.setNewline(generateRandomString(randGen, true));
+                        }
                         int generatedCodeListSize = randGen.nextInt(5);
                         for (int j = 0; j < generatedCodeListSize; j++) {
                             GeneratedCode generatedCode = new GeneratedCode();
@@ -283,8 +288,7 @@ public class PersistenceTest {
         c.setAugmentingCodeDescriptor(d);
         d.setStartPos(randGen.nextInt(1000));
         d.setEndPos(randGen.nextInt(1000));
-        d.setFfNewlineStartPos(randGen.nextInt(1000));
-        d.setFfNewlineEndPos(randGen.nextInt(1000));
+        d.setHasNewlineEnding(randGen.nextBoolean());
         d.setIndex(randGen.nextInt(200));
         d.setIndent(randomIndent(randGen));
         return c;

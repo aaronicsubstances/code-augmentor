@@ -1,6 +1,8 @@
 package com.aaronicsubstances.code.augmentor.core.parsing;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -10,6 +12,28 @@ import java.util.regex.Pattern;
 public class LexerSupport {
     public static final int EOF = -1;
     public static final Pattern NEW_LINE_REGEX = Pattern.compile("\r\n|\r|\n");
+
+	public static List<String> splitIntoLines(String text) {
+		Matcher m = NEW_LINE_REGEX.matcher(text);
+        List<String> splitText = new ArrayList<>();
+        int start = 0;
+        while (m.find(start)) {
+            String precedingLine = text.substring(start, m.start());
+            String terminatingNewline = m.group();
+            splitText.add(precedingLine);
+            splitText.add(terminatingNewline);
+            start = m.end();
+        }
+        if (start < text.length()) {
+            splitText.add(text.substring(start));
+            splitText.add(null);
+        }
+        return splitText;
+	}
+
+	public static boolean isBlank(String s) {
+		return s == null || s.trim().isEmpty();
+	}
     
     /**
      * Calculates line and column numbers given a position in a string.

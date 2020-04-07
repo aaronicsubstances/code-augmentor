@@ -56,37 +56,31 @@ public class GeneratedCodeFetcher {
         }
     }
 
-	public GeneratedCode getGeneratedCode(int fileIndex, int augCodeIndex) throws Exception {
+    public GeneratedCode getGeneratedCode(int fileIndex, int augCodeIndex, 
+            StringBuilder newlineReceiver) throws Exception {
         GeneratedCode nextGenCode = null;
 		for (int i = 0; i < lastFetches.size(); i++) {
-            Optional<GeneratedCode> genCodeOpt = null;
-            // check whether codeGenRes already has all generated codes loaded.
-            // used during testing, and in theory can be used when it is
-            // deemed not to be a problem for memory.
             CodeGenerationResponse codeGenRes = codeGenerationResponses.get(i);
-            if (!codeGenRes.getSourceFileGeneratedCodeList().isEmpty()) {
-                genCodeOpt = codeGenRes.getSourceFileGeneratedCodeList()
-                    .stream().filter(x -> x.getFileIndex() == fileIndex)
-                    .flatMap(x -> x.getGeneratedCodeList().stream())
-                    .filter(x -> x.getIndex() == augCodeIndex).findFirst();
-            }
-            else {
-                SourceFileGeneratedCode fileGenCode = lastFetches.get(i);
-                if (fileGenCode != null && fileGenCode.getFileIndex() == fileIndex) {
-                    genCodeOpt = fileGenCode.getGeneratedCodeList()
-                        .stream().filter(x -> x.getIndex() == augCodeIndex).findFirst();
+            SourceFileGeneratedCode fileGenCode = lastFetches.get(i);
+            if (fileGenCode != null && fileGenCode.getFileIndex() == fileIndex) {
+                Optional<GeneratedCode> genCodeOpt = fileGenCode.getGeneratedCodeList()
+                    .stream().filter(x -> x.getIndex() == augCodeIndex).findFirst();
+                    
+                if (genCodeOpt.isPresent()) {
+                    nextGenCode = genCodeOpt.get();
+                    if (fileGenCode.getNewline() != null) {
+                        newlineReceiver.append(fileGenCode.getNewline());
+                    }
+                    else if (codeGenRes.getNewline() != null) {
+                        newlineReceiver.append(codeGenRes.getNewline());
+                    }
+                    else {
+                        newlineReceiver.append(System.lineSeparator());
+                    }
+                    break;
                 }
             }
-            if (genCodeOpt != null && genCodeOpt.isPresent()) {
-                nextGenCode = genCodeOpt.get();
-                break;
-            }
         }
-        /*if (nextGenCode == null) {
-            System.out.println("codeGenerationResponses for (" + fileIndex + ", " + augCodeIndex + "): " + 
-                codeGenerationResponses);
-            System.out.println("lastFetches: " + lastFetches);
-        }*/
         return nextGenCode;
 	}
 }

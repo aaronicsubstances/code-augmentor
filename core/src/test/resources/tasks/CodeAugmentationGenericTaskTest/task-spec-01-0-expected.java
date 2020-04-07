@@ -26,9 +26,13 @@ public//JS println("World")
 //GS
         //GS
 return /*GS*/sendSmsScript;/*GS*/
-/*JS println("Hello World from JS-star")
-var i = 3 + new Date(); 
-...etc*//*GS*/String tea; int foo;/*GE*/    }
+//JS println("Hello World from JS-star")
+//JS var i = 3 + new Date(); 
+//JS ...etc
+//GS
+String tea; int foo;
+//GE
+}
     
     @GET//GS
 

@@ -19,10 +19,13 @@ import com.google.gson.annotations.SerializedName;
 public class CodeGenerationResponse {
 
     public static class Header {
+        @SerializedName("newline")
+        String newline;
         @SerializedName("content_streaming_enabled")
         Boolean contentStreamEnabled;
     }
     
+    private String newline;
     private List<SourceFileGeneratedCode> sourceFileGeneratedCodeList;
 
     public CodeGenerationResponse() {
@@ -30,6 +33,14 @@ public class CodeGenerationResponse {
 
     public CodeGenerationResponse(List<SourceFileGeneratedCode> sourceFileGeneratedCodeList) {
         this.sourceFileGeneratedCodeList = sourceFileGeneratedCodeList;
+    }
+
+    public String getNewline() {
+        return newline;
+    }
+
+    public void setNewline(String newline) {
+        this.newline = newline;
     }
 
     public List<SourceFileGeneratedCode> getSourceFileGeneratedCodeList() {
@@ -59,6 +70,7 @@ public class CodeGenerationResponse {
     private void printHeader(PersistenceUtil persistenceUtil, boolean contentStreamEnabled) 
             throws Exception {
         Header header = new Header();
+        header.newline = newline;
         header.contentStreamEnabled = contentStreamEnabled;
         String headerString = PersistenceUtil.serializeCompactlyToJson(header);
         persistenceUtil.println(headerString);
@@ -123,6 +135,7 @@ public class CodeGenerationResponse {
     private boolean readHeader(PersistenceUtil persistenceUtil) throws Exception {
         String headerString = persistenceUtil.readLine();
         Header header = PersistenceUtil.deserializeFromJson(headerString, Header.class);
+        newline = header.newline;
         // enable content streaming by default.
         boolean contentStreamEnabled = true;
         if (header.contentStreamEnabled != null) {
@@ -162,6 +175,7 @@ public class CodeGenerationResponse {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
+        result = prime * result + ((newline == null) ? 0 : newline.hashCode());
         result = prime * result + ((sourceFileGeneratedCodeList == null) ? 0 : sourceFileGeneratedCodeList.hashCode());
         return result;
     }
@@ -175,6 +189,11 @@ public class CodeGenerationResponse {
         if (getClass() != obj.getClass())
             return false;
         CodeGenerationResponse other = (CodeGenerationResponse) obj;
+        if (newline == null) {
+            if (other.newline != null)
+                return false;
+        } else if (!newline.equals(other.newline))
+            return false;
         if (sourceFileGeneratedCodeList == null) {
             if (other.sourceFileGeneratedCodeList != null)
                 return false;
@@ -185,6 +204,7 @@ public class CodeGenerationResponse {
 
     @Override
     public String toString() {
-        return "CodeGenerationResponse{sourceFileGeneratedCodeList=" + sourceFileGeneratedCodeList + "}";
+        return "CodeGenerationResponse{newline=" + newline + ", sourceFileGeneratedCodeList="
+                + sourceFileGeneratedCodeList + "}";
     }
 }

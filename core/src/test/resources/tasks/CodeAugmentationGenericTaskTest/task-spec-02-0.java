@@ -51,8 +51,10 @@ Object getSmsConfig()/*GS*/ {
 	//JS println( 
 	//ES:World
 		//JS )
-		/*GS*/
-        return /*GE*/smsConfigJson;
+		//GS*/
+        return 
+		//GE*/
+		smsConfigJson;
     }
     
     @GET

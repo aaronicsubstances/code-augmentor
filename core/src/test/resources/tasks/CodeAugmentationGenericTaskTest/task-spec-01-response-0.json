@@ -1,10 +1,9 @@
-{ "content_streaming_enabled": false }
+{ "content_streaming_enabled": false, "newline": "\r\n" }
 [
 	{
 		"file_index": 0,
 		"generated_codes": [{
 			"index" : 0,
-			"header" : "import java.util.random.*;",
 			"body" : "String tea; int foo;"
 		}]
 	},
@@ -13,10 +12,6 @@
 		"generated_codes": [{
 			"index" : 0,
 			"body" : "StringBuilder teaBag;\r\nprintln();"
-		},
-		{
-			"index" : 1,
-			"body" : "char f;"
 		}]
 	}
 ]

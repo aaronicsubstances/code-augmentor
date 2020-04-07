@@ -37,8 +37,8 @@ public class PreCodeAugmentationGenericTask {
 
     public void execute() throws Exception {
         PreCodeAugmentationResult prepResult = new PreCodeAugmentationResult();
-        prepResult.setGenCodeStartSuffix(genCodeStartSuffixes.get(0));
-        prepResult.setGenCodeEndSuffix(genCodeEndSuffixes.get(0));
+        prepResult.setGenCodeStartDirective(genCodeStartSuffixes.get(0));
+        prepResult.setGenCodeEndDirective(genCodeEndSuffixes.get(0));
         Object resultWriter = prepResult.beginSerialize(prepFile);
 
         List<Object> codeGenRequestWriters = new ArrayList<>();
