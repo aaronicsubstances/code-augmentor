@@ -1,7 +1,5 @@
 package com.aaronicsubstances.vision.members//GE
-;
-import java.util.random.*;
-//GE
+;//GE
 ;
 //GE
 

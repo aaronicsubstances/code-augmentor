@@ -85,8 +85,7 @@ public class PersistenceTest {
                 if (count > 0) {
                     int fileDescriptorListSize = randGen.nextInt(5);
                     for (int i = 0; i < fileDescriptorListSize; i++) {
-                        SourceFileDescriptor s = new SourceFileDescriptor(new ArrayList<>(), 
-                            new ArrayList<>());
+                        SourceFileDescriptor s = new SourceFileDescriptor(new ArrayList<>());
                         instance.getFileDescriptors().add(s);
 
                         s.setFileIndex(i);

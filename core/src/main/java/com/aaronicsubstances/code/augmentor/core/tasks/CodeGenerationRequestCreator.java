@@ -293,13 +293,7 @@ public class CodeGenerationRequestCreator {
             runningIndex++;
         }
 
-        // 6. finally determine header section boundaries and contents.
-        List<String> normalizedImports = getNormalizedImportStatements(sourceTokens);
-        int headerSnippet = determineHeaderSnippetDescriptor(sourceTokens);
-
-        SourceFileDescriptor sourceDescriptor = new SourceFileDescriptor(
-            normalizedImports, bodySnippets);
-        sourceDescriptor.setHeaderInsertPos(headerSnippet);
+        SourceFileDescriptor sourceDescriptor = new SourceFileDescriptor(bodySnippets);
         return sourceDescriptor;
     }
 
@@ -618,38 +612,6 @@ public class CodeGenerationRequestCreator {
 
         augCode.setBlocks(blocks);
         return augCode;
-    }
-
-    static List<String> getNormalizedImportStatements(List<Token> sourceTokens) {
-        List<String> normalizedImports = new ArrayList<>();
-        int i = 0;
-        while (i < sourceTokens.size()) {
-            Token t = sourceTokens.get(i);
-            if (t.type == Token.TYPE_IMPORT_STATEMENT) {
-                Map<String, Object> tokenAttributes = t.value;
-                String importStatement = (String)tokenAttributes.get(
-                    Token.VALUE_KEY_IMPORT_STATEMENT);
-                normalizedImports.add(importStatement);
-            }
-            i++;
-        }
-        return normalizedImports;
-    }
-
-    static int determineHeaderSnippetDescriptor(List<Token> sourceTokens) {
-        // place just after imports, package or shebang.
-        for (int i = sourceTokens.size() - 1; i >= 0; i--) {
-            Token t = sourceTokens.get(i);
-            switch (t.type) {
-                case Token.TYPE_SHEBANG:
-                case Token.TYPE_PACKAGE_STATEMENT:
-                case Token.TYPE_IMPORT_STATEMENT:                    
-                    return t.endPos;
-                default:
-                    break;
-            }
-        }
-        return 0;
     }
 
     static String getCommentContentWithoutSuffix(Token t, String suffix) {

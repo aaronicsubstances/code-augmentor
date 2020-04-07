@@ -8,13 +8,13 @@ The *CodeAugmentor* tool generates code for a programmer in such  a way that it 
 Technically, the tool has two parts: one part which resembles a preprocessor (such as the C/C++ preprocessor), and another part which resembles a linter (such as ESLint). However there are important differences: 
 
    * Like a preprocessor, one part of *CodeAugmentor* is concerned with code generation. Unlike a preprocessor, this part always has to be triggered manually by the programmer through batch scripts, outside of the automated build process.
-   * *CodeAugmentor* enables the programmer to employ a full blown scripting language of the programmer's choice to generate code. Hence there is no need to learn any preprocessor directives; besides, scripting languages have more power.
+   * *CodeAugmentor* enables the programmer to employ a full blown scripting language of the programmer's choice to generate code. Hence there is no need to learn any dedicated preprocessor language; besides, scripting languages have more power.
    * *CodeAugmentor* modifies source files in place, unlike the C/C++ preprocessor which generates source files to be used in subsequent compilation steps "under the hood".
    * Like a linter, the other part of *CodeAugmentor* is concerened with running checks on code without modifying it. This enables straightforward integration of this part with build tools, as hooking a custom step into most build tools is far easier if the step doesn't modify anything.
    * If ESLlint complains, it generally requires programmer to manually fix the code to appease it. *CodeAugmentor* however, specifies the automated step to execute if it complains, in order to appease it.
 
 The workflow of the programmer using this tool may be exemplified in the following manner:
-   * Code to be generated into source files is written in comments using another (or possibly the same) language.
+   * Code to be generated into source files is written into single-line comments using another (or possibly the same) language.
    * Programmer writes code generator scripts in a related directory, and hooks it up to *CodeAugmentor*.
    * *CodeAugmentor* is integrated into build process (e.g after compilation, before transpilation) to check whether source files need to be regenerated.
    * During build, *CodeAugmentor* may report that certain source files need regeneration, and cause build to fail. It would have generated the newer source files into a temporary location.

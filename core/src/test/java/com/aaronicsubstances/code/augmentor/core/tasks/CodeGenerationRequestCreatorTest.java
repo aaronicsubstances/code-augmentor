@@ -286,16 +286,6 @@ public class CodeGenerationRequestCreatorTest {
     }
 
     @Test
-    public void testGetNormalizedImportStatements() {
-        List<String> expected = Arrays.asList("import org.springframework.boot.SpringApplication",
-            "import org.springframework.boot.autoconfigure.SpringBootApplication");
-        String s = TestResourceLoader.loadResource("tokens-for-import.json", getClass());
-        List<Token> sourceTokens = fetchTokens(s);
-        List<String> actual = CodeGenerationRequestCreator.getNormalizedImportStatements(sourceTokens);
-        assertEquals(actual, expected);
-    }
-
-    @Test
     public void testGetSlashStarRelevantTokens() {
         List<Token> expected = Arrays.asList(
             newToken(5, "/*JS println(\"Hello World from JS-star\")\r\n" +
@@ -385,25 +375,13 @@ public class CodeGenerationRequestCreatorTest {
 
     @DataProvider
     public Object[][] createTestProcessSourceFileData() {
-        List<String> importStatements1 = Arrays.asList(
-            "import org.springframework.boot.SpringApplication", 
-            "import org.springframework.boot.autoconfigure.SpringBootApplication");
-        SourceFileDescriptor first = new SourceFileDescriptor(importStatements1,
-            new ArrayList<>());
-        first.setHeaderInsertPos(186);
-        List<String> importStatements2and3 = Arrays.asList(
-            "import javax.ws.rs.GET", 
-            "import javax.ws.rs.Path",
-            "import javax.ws.rs.Produces",
-            "import javax.ws.rs.core.MediaType",
-            "import org.springframework.stereotype.Component");
+        SourceFileDescriptor first = new SourceFileDescriptor(new ArrayList<>());
         List<CodeSnippetDescriptor> bodySnippets2 = Arrays.asList(
             new CodeSnippetDescriptor(createAugCodeDescriptor(true, null, 728, 804, 0), null),
             new CodeSnippetDescriptor(createAugCodeDescriptor(false, "    ", 1042, 1063, 1),
                 new GeneratedCodeDescriptor(1063, 1065))
         );
-        SourceFileDescriptor second = new SourceFileDescriptor(importStatements2and3, bodySnippets2);
-        second.setHeaderInsertPos(268);
+        SourceFileDescriptor second = new SourceFileDescriptor(bodySnippets2);
         List<AugmentingCode> secondJs = Arrays.asList(
             createAugCode(0, "JS", new Block(
                 " println(\"Hello World from JS-star\")\r\n" +
@@ -420,8 +398,7 @@ public class CodeGenerationRequestCreatorTest {
             new CodeSnippetDescriptor(createAugCodeDescriptor(false, "        ", 560, 581, 2),
                 new GeneratedCodeDescriptor(581, 583))
         );
-        SourceFileDescriptor third = new SourceFileDescriptor(importStatements2and3, bodySnippets3);
-        third.setHeaderInsertPos(300);
+        SourceFileDescriptor third = new SourceFileDescriptor(bodySnippets3);
         List<AugmentingCode> thirdJs = Arrays.asList(
             createAugCode(0, "JS", new Block(
                 " println(\"Hello World from JS-star\")\r\n" +

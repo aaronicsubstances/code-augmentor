@@ -7,8 +7,6 @@ public class GeneratedCode {
     private int index;
     @SerializedName("error")
     private boolean error;
-    @SerializedName("header")
-    private String headerContent;
     @SerializedName("body")
     private String bodyContent;
     @SerializedName("indent")
@@ -28,14 +26,6 @@ public class GeneratedCode {
 
     public void setError(boolean error) {
         this.error = error;
-    }
-
-    public String getHeaderContent() {
-        return headerContent;
-    }
-
-    public void setHeaderContent(String headerContent) {
-        this.headerContent = headerContent;
     }
 
     public String getBodyContent() {
@@ -60,7 +50,6 @@ public class GeneratedCode {
         int result = 1;
         result = prime * result + ((bodyContent == null) ? 0 : bodyContent.hashCode());
         result = prime * result + (error ? 1231 : 1237);
-        result = prime * result + ((headerContent == null) ? 0 : headerContent.hashCode());
         result = prime * result + ((indent == null) ? 0 : indent.hashCode());
         result = prime * result + index;
         return result;
@@ -82,11 +71,6 @@ public class GeneratedCode {
             return false;
         if (error != other.error)
             return false;
-        if (headerContent == null) {
-            if (other.headerContent != null)
-                return false;
-        } else if (!headerContent.equals(other.headerContent))
-            return false;
         if (indent == null) {
             if (other.indent != null)
                 return false;
@@ -99,7 +83,7 @@ public class GeneratedCode {
 
     @Override
     public String toString() {
-        return "GeneratedCode{bodyContent=" + bodyContent + ", error=" + error + ", headerContent=" + headerContent
-                + ", indent=" + indent + ", index=" + index + "}";
+        return "GeneratedCode{bodyContent=" + bodyContent + ", error=" + error +
+                ", indent=" + indent + ", index=" + index + "}";
     }
 }

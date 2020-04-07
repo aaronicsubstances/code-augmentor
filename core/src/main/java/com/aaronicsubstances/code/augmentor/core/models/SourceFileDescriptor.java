@@ -12,10 +12,6 @@ public class SourceFileDescriptor {
     private String dir;
     @SerializedName("rel_path")
     private String relativePath;
-    @SerializedName("imports")
-    private List<String> importStatements;
-    @SerializedName("header_insert_pos")
-    private int headerInsertPos;
     @SerializedName("snippets")
     private List<CodeSnippetDescriptor> bodySnippets;
     private String contentHash;
@@ -23,9 +19,7 @@ public class SourceFileDescriptor {
     public SourceFileDescriptor() {
     }
 
-    public SourceFileDescriptor(List<String> importStatements, 
-            List<CodeSnippetDescriptor> bodySnippets) {
-        this.importStatements = importStatements;
+    public SourceFileDescriptor(List<CodeSnippetDescriptor> bodySnippets) {
         this.bodySnippets = bodySnippets;
     }
 
@@ -51,22 +45,6 @@ public class SourceFileDescriptor {
 
     public void setRelativePath(String relativePath) {
         this.relativePath = relativePath;
-    }
-
-    public List<String> getImportStatements() {
-        return importStatements;
-    }
-
-    public void setImportStatements(List<String> importStatements) {
-        this.importStatements = importStatements;
-    }
-
-    public int getHeaderInsertPos() {
-        return headerInsertPos;
-    }
-
-    public void setHeaderInsertPos(int headerInsertPos) {
-        this.headerInsertPos = headerInsertPos;
     }
 
     public List<CodeSnippetDescriptor> getBodySnippets() {
@@ -120,8 +98,6 @@ public class SourceFileDescriptor {
         result = prime * result + ((bodySnippets == null) ? 0 : bodySnippets.hashCode());
         result = prime * result + ((contentHash == null) ? 0 : contentHash.hashCode());
         result = prime * result + ((dir == null) ? 0 : dir.hashCode());
-        result = prime * result + headerInsertPos;
-        result = prime * result + ((importStatements == null) ? 0 : importStatements.hashCode());
         result = prime * result + ((relativePath == null) ? 0 : relativePath.hashCode());
         return result;
     }
@@ -150,13 +126,6 @@ public class SourceFileDescriptor {
                 return false;
         } else if (!dir.equals(other.dir))
             return false;
-        if (headerInsertPos != other.headerInsertPos)
-            return false;
-        if (importStatements == null) {
-            if (other.importStatements != null)
-                return false;
-        } else if (!importStatements.equals(other.importStatements))
-            return false;
         if (relativePath == null) {
             if (other.relativePath != null)
                 return false;
@@ -168,7 +137,6 @@ public class SourceFileDescriptor {
     @Override
     public String toString() {
         return "SourceFileDescriptor{bodySnippets=" + bodySnippets + ", contentHash=" + contentHash + ", dir=" + dir
-                + ", headerInsertPos=" + headerInsertPos + ", importStatements=" + importStatements + ", relativePath="
-                + relativePath + "}";
+                + ", relativePath=" + relativePath + "}";
     }
 }

@@ -5,14 +5,11 @@ import java.nio.charset.Charset;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode;
@@ -75,7 +72,6 @@ public class CodeAugmentationGenericTask {
 
             // fetch applicable generated code per aug code descriptor.
             List<List<Token>> parsedGeneratedCodes = new ArrayList<>();
-            List<Token> sourceFileImports = new ArrayList<>();
             for (CodeSnippetDescriptor snippetDescriptor : sourceFileDescriptor.getBodySnippets()) {
                 AugmentingCodeDescriptor augCodeDescriptor = snippetDescriptor.getAugmentingCodeDescriptor();
                 int augCodeIndex = augCodeDescriptor.getIndex();
@@ -90,16 +86,6 @@ public class CodeAugmentationGenericTask {
                     throw new GenericTaskException("Generation of code failed for " +
                         describeAugCodeSection(sourceCode, augCodeDescriptor, srcFile) + ":\n" +
                         genCode.getBodyContent());
-                }
-                List<Token> headerImports;
-                try {
-                    headerImports = parseOutHeaderImports(sourceFileDescriptor.getRelativePath(),
-                        genCode);
-                }
-                catch (ParserException ex) {
-                    throw new GenericTaskException("Invalid generated header code for " +
-                        describeAugCodeSection(sourceCode, augCodeDescriptor, srcFile), 
-                        ex);
                 }
                 List<Token> tokens;
                 try {
@@ -119,21 +105,10 @@ public class CodeAugmentationGenericTask {
                     result.getGenCodeStartSuffix(), result.getGenCodeEndSuffix(),
                     augCodeDescriptor, canIndent);
                 parsedGeneratedCodes.add(tokens);
-                sourceFileImports.addAll(headerImports);
-            }
-
-            // identify new imports.
-            String headerImport = null;
-            if (!sourceFileImports.isEmpty()) {
-                headerImport = String.join(newline, filterImports(sourceFileImports, 
-                    sourceFileDescriptor.getImportStatements()));
-                // surround with newlines.
-                headerImport = newline + headerImport + newline;
             }
 
             // Now merge generated code into source code.
             SourceCodeTransformer transformer = new SourceCodeTransformer(sourceCode);
-            int headerPosInc = 0;
             boolean changesDetected = false;
             for (int i = 0; i < parsedGeneratedCodes.size(); i++) {
                 CodeSnippetDescriptor snippetDescriptor = sourceFileDescriptor.getBodySnippets().get(i);
@@ -144,39 +119,26 @@ public class CodeAugmentationGenericTask {
                 for (Token t : parsedGenCode) {
                     genCode.append(t.text);
                 }
-                int diff;
                 if (genCodeDescriptor != null) {
 					String genCodeStr = genCode.toString();
-                    diff = transformer.addTransform(genCodeStr, genCodeDescriptor.getStartPos(),
+                    transformer.addTransform(genCodeStr, genCodeDescriptor.getStartPos(),
                         genCodeDescriptor.getEndPos());
                     if (!changesDetected) {
                         String prevGenCode = sourceCode.substring(genCodeDescriptor.getStartPos(), 
                             genCodeDescriptor.getEndPos());
 						if (!genCodeStr.equals(prevGenCode)) {
-							if (isSignificantlyDifferent(parsedGenCode, prevGenCode)) {
-								changesDetected = true;
-							}
+							changesDetected = true;
 						}
                     }
                 }
                 else {
-                    diff = transformer.addTransform(genCode.toString(), augCodeDescriptor.getEndPos());
+                    transformer.addTransform(genCode.toString(), augCodeDescriptor.getEndPos());
                     changesDetected = true;
                 }
-                if (headerImport != null && sourceFileDescriptor.getHeaderInsertPos() > augCodeDescriptor.getStartPos()) {
-                    headerPosInc += diff;
-                }                
             }
 
-            // Only insert header if changes are to be made.
             String transformedCode = transformer.getTransformedText();
             if (changesDetected) {
-                if (headerImport != null) {
-                    StringBuilder s = new StringBuilder(transformedCode);
-                    s.insert(sourceFileDescriptor.getHeaderInsertPos() +
-                        headerPosInc, headerImport);
-                    transformedCode = s.toString();
-                }
                 String destSubDirName = destSubDirNameMap.get(sourceFileDescriptor.getDir());
                 if (destSubDirName == null) {
                     String origDirName = new File(sourceFileDescriptor.getDir()).getName();
@@ -220,50 +182,6 @@ public class CodeAugmentationGenericTask {
     private List<Token> parseSourceCode(String relativePath, String sourceCode) {
         List<Token> tokens = TaskUtils.parseSourceCode(relativePath, sourceCode).parse();
         return tokens;
-    }
-
-    private static List<Token> parseOutHeaderImports(String relativePath, GeneratedCode genCode) {
-        String headerContent = genCode.getHeaderContent();
-        if (headerContent == null) {
-            return Arrays.asList();
-        }
-        
-        List<Token> tokens = TaskUtils.parseSourceCode(relativePath, headerContent).parse();
-        List<Token> headerImports = tokens.stream()
-            .filter(x -> x.type == Token.TYPE_IMPORT_STATEMENT)
-            .collect(Collectors.toList());
-        return headerImports;
-    }
-
-    static List<String> filterImports(List<Token> sourceFileImports, List<String> existingImports) {
-        List<String> filtered = new ArrayList<>();
-        for (Token impToken : sourceFileImports) {
-            String imp = (String)impToken.value.get(Token.VALUE_KEY_IMPORT_STATEMENT);
-            if (existingImports.contains(imp)) {
-                continue;
-            }
-            // Don't process Kotlin "as" keyword when
-            // looking for wild card matches.
-            // Ignore imperfections with Kotlin backticks, as long as
-            // Java wilcard matches works perfectly fine.
-            if (!imp.contains(" as ") && !imp.endsWith(".*")) {
-                boolean wildcardMatchFound = false;
-                for (String e : existingImports) {
-                    if (e.endsWith(".*")) {
-                        String ePrefix = e.substring(0, e.length() - ".*".length());
-                        if (imp.equals(ePrefix)) {
-                            wildcardMatchFound = true;
-                            break;
-                        }
-                    }
-                }
-                if (wildcardMatchFound) {
-                    continue;
-                }
-            }
-            filtered.add(impToken.text);
-        }
-        return filtered;
     }
 
     private static boolean canIndentCode(AugmentingCodeDescriptor augCodeDescriptor, List<Token> tokens) {
@@ -361,45 +279,6 @@ public class CodeAugmentationGenericTask {
             wrappedContentTokens.add(newlineToken);
         }
         return wrappedContentTokens;
-    }
-
-    static boolean isSignificantlyDifferent(List<Token> parsedGenCode, String prevGenCode) {
-        // build regex out of parsedGenCode and match against prevGenCode
-        StringBuilder regexBuilder = new StringBuilder();
-        for (int tIndex = 0; tIndex < parsedGenCode.size(); tIndex++) {
-            Token t = parsedGenCode.get(tIndex);
-            // exclude from generic whitespace newlines which terminate double slash comments
-            // and Kotlin shebang first line
-            boolean ordinaryNewline = false;
-            if (t.type == Token.TYPE_NEWLINE) {
-                if (tIndex == 0) {
-                    ordinaryNewline = true;
-                }
-                else {
-                    Token prevToken = parsedGenCode.get(tIndex - 1);
-                    if (prevToken.type != Token.TYPE_SINGLE_LINE_COMMENT &&
-                            prevToken.type != Token.TYPE_SHEBANG) {
-                        ordinaryNewline = true;
-                    }
-                }
-            }
-            if (t.type == Token.TYPE_NON_NEWLINE_WHITESPACE ||
-                    ordinaryNewline) {
-                regexBuilder.append("\\s");
-                if (t.value != null && Boolean.TRUE.equals(t.value.get(Token.VALUE_KEY_WS_REQD))) {
-                    regexBuilder.append("+");
-                }
-                else {
-                    regexBuilder.append("*");
-                }
-            }
-            else {
-                regexBuilder.append(Pattern.quote(t.text));
-            }
-        }
-        Pattern regex = Pattern.compile(regexBuilder.toString());
-        boolean similar = regex.matcher(prevGenCode).matches();
-        return !similar;
     }
 
     private static String describeAugCodeSection(String input, AugmentingCodeDescriptor augCodeDescriptor, 
