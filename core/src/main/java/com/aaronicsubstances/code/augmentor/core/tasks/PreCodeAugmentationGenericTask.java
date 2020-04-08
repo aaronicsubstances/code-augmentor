@@ -93,9 +93,9 @@ public class PreCodeAugmentationGenericTask {
             if (errors.isEmpty()) {
                 // don't bother to serialize any further if there are
                 // previous errors.
-                int identifiedAugCodeCount = 0;
                 if (allErrors.isEmpty()) {
                     // serialize aug codes
+                    int identifiedAugCodeCount = 0;
                     for (int j = 0; j < codeGenRequestWriters.size(); j++) {
                         Object requestWriter = codeGenRequestWriters.get(j);
                         List<AugmentingCode> specAugCodes = specAugCodesList.get(j);
@@ -108,13 +108,13 @@ public class PreCodeAugmentationGenericTask {
                         sourceFileAugCode.setRelativePath(relativePath);
                         sourceFileAugCode.serialize(requestWriter);
                     }
-                }
 
-                if (identifiedAugCodeCount > 0) {
-                    logInfo("%s aug code(s) identified in %s", identifiedAugCodeCount, srcFile);
-
-                    // write out descriptor.
-                    s.serialize(resultWriter);
+                    if (identifiedAugCodeCount > 0) {
+                        logInfo("%s aug code(s) identified in %s", identifiedAugCodeCount, srcFile);
+    
+                        // write out descriptor.
+                        s.serialize(resultWriter);
+                    }
                 }
             } else {
                 logWarn("%s error(s) encountered in %s", errors.size(), srcFile);

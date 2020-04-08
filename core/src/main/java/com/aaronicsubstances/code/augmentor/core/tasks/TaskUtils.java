@@ -14,6 +14,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.List;
 
 import com.google.gson.JsonArray;
@@ -134,6 +135,21 @@ public class TaskUtils {
         catch (JsonParseException ex) {
             return false;
         }
+    }
+
+    public static String modifyNameToBeAbsent(Collection<String> names, String originalName) {
+        if (!names.contains(originalName)) {
+            return originalName;
+        }
+        StringBuilder modifiedName = new StringBuilder(originalName);
+        int index = 1;
+        modifiedName.append("-").append(index);
+        while (names.contains(originalName)) {   
+            index++;
+            modifiedName.setLength(originalName.length());
+            modifiedName.append("-").append(index);
+        }
+        return modifiedName.toString();
     }
 
     public static String readFile(File srcFile, Charset charset) throws IOException {

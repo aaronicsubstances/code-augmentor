@@ -149,24 +149,9 @@ public class CodeAugmentationGenericTask {
             if (!sourceCode.equals(transformedCode)) {
                 String destSubDirName = destSubDirNameMap.get(sourceFileDescriptor.getDir());
                 if (destSubDirName == null) {
-                    String origDirName = new File(sourceFileDescriptor.getDir()).getName();
-                    // ensure uniqueness.
-                    if (!destSubDirNameMap.values().stream()
-                            .anyMatch(x -> x.equals(origDirName))) {
-                        destSubDirName = origDirName;
-                    }
-                    else {
-                        StringBuilder dirName = new StringBuilder(origDirName);
-                        int index = 1;
-                        dirName.append("-").append(index);
-                        while (destSubDirNameMap.values().stream()
-                                .anyMatch(x -> x.equals(dirName.toString()))) {   
-                            index++;
-                            dirName.setLength(origDirName.length());
-                            dirName.append("-").append(index);
-                        }
-                        destSubDirName = dirName.toString();
-                    }
+                    destSubDirName = new File(sourceFileDescriptor.getDir()).getName();
+                    destSubDirName = TaskUtils.modifyNameToBeAbsent(
+                        destSubDirNameMap.values(), destSubDirName);
                     destSubDirNameMap.put(sourceFileDescriptor.getDir(), destSubDirName);
                 }
                 File destSubDir = new File(destDir, destSubDirName);
@@ -226,7 +211,7 @@ public class CodeAugmentationGenericTask {
         return code;
     }
 
-    private static String getEffectiveIndent(AugmentingCodeDescriptor augCodeDescriptor, GeneratedCode genCode) {
+    static String getEffectiveIndent(AugmentingCodeDescriptor augCodeDescriptor, GeneratedCode genCode) {
         String indent = genCode.getIndent();
         if (indent == null) {
             indent = augCodeDescriptor.getIndent();

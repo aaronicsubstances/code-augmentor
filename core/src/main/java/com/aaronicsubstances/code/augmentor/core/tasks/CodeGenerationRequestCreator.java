@@ -3,6 +3,7 @@ package com.aaronicsubstances.code.augmentor.core.tasks;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.aaronicsubstances.code.augmentor.core.models.AugmentingCode;
 import com.aaronicsubstances.code.augmentor.core.models.AugmentingCode.Block;
@@ -111,18 +112,28 @@ public class CodeGenerationRequestCreator {
 
             // d. validate data-driven string block as valid JSON array.
             if (augmentingCode.isDataDriven()) {
-                assert blocks.size() == 2;
-                boolean isValidJsonArray = TaskUtils.isValidJsonArray(blocks.get(1).getContent());
-                if (!isValidJsonArray) {
-                    Token embStrTokenStart = augCodeSection.get(1);
+                if (blocks.size() != 2) {                    
                     ParserException error = createParserException(
-                        "Embedded string section of data-driven augmenting code must be a " +
-                        "valid JSON Array", 
-                        embStrTokenStart, sourceDescriptor);
+                        "Missing embedded string section of data-driven augmenting code.", 
+                        firstToken, sourceDescriptor);
                     if (errors == null) {
                         throw error;
                     }
                     errors.add(error);
+                }
+                else {
+                    boolean isValidJsonArray = TaskUtils.isValidJsonArray(blocks.get(1).getContent());
+                    if (!isValidJsonArray) {
+                        Token embStrTokenStart = augCodeSection.get(1);
+                        ParserException error = createParserException(
+                            "Embedded string section of data-driven augmenting code must be a " +
+                            "valid JSON array", 
+                            embStrTokenStart, sourceDescriptor);
+                        if (errors == null) {
+                            throw error;
+                        }
+                        errors.add(error);
+                    }
                 }
             }
             
@@ -147,74 +158,83 @@ public class CodeGenerationRequestCreator {
                 t = new Token(TOKEN_TYPE_BLANK);
             }
             if (t == null) {
+                // Pick longest token out of all candidate
+                // directive tokens.
+                List<Token> candidateTokens = new ArrayList<>();
                 for (String d : genCodeStartDirectives) {
                     if (lineWithoutIndent.startsWith(d)) {
-                        t = createToken(DIRECTIVE_TYPE_GEN_CODE_START, d,  line);
+                        candidateTokens.add(createToken(DIRECTIVE_TYPE_GEN_CODE_START, d, line));
                         break;
                     }
                 }
-            }
-            if (t == null) {
+                
                 for (String d : genCodeEndDirectives) {
                     if (lineWithoutIndent.startsWith(d)) {
-                        t = createToken(DIRECTIVE_TYPE_GEN_CODE_END, d, line);
+                        candidateTokens.add(createToken(DIRECTIVE_TYPE_GEN_CODE_END, d, line));
                         break;
                     }
                 }
-            }
-            if (t == null) {
+                
                 for (String d : embeddedStringDirectives) {
                     if (lineWithoutIndent.startsWith(d)) {
-                        t = createToken(DIRECTIVE_TYPE_EMB_STRING, d, line);
+                        candidateTokens.add(createToken(DIRECTIVE_TYPE_EMB_STRING, d, line));
                         break;
                     }
                 }
-            }
-            if (t == null && enableScanDirectives != null) {
-                for (String d : enableScanDirectives) {
-                    if (lineWithoutIndent.startsWith(d)) {
-                        t = createToken(DIRECTIVE_TYPE_ENABLE_SCAN, d, line);
-                        break;
+                
+                if (enableScanDirectives != null) {
+                    for (String d : enableScanDirectives) {
+                        if (lineWithoutIndent.startsWith(d)) {
+                            candidateTokens.add(createToken(DIRECTIVE_TYPE_ENABLE_SCAN, d, line));
+                            break;
+                        }
                     }
                 }
-            }
-            if (t == null && disableScanDirectives != null) {
-                for (String d : disableScanDirectives) {
-                    if (lineWithoutIndent.startsWith(d)) {
-                        t = createToken(DIRECTIVE_TYPE_DISABLE_SCAN, d, line);
-                        break;
+                
+                if (disableScanDirectives != null) {
+                    for (String d : disableScanDirectives) {
+                        if (lineWithoutIndent.startsWith(d)) {
+                            candidateTokens.add(createToken(DIRECTIVE_TYPE_DISABLE_SCAN, d, line));
+                            break;
+                        }
                     }
                 }
-            }
-            if (t == null) {
-                for (int j = 0; t == null && j < dataDrivenAugCodeDirectiveSets.size(); j++) {
+                
+                outer1: for (int j = 0; j < dataDrivenAugCodeDirectiveSets.size(); j++) {
                     List<String> augCodeDirectives = dataDrivenAugCodeDirectiveSets.get(j);
                     if (augCodeDirectives == null) {
                         continue;
                     }
                     for (String d : augCodeDirectives) {
                         if (lineWithoutIndent.startsWith(d)) {
-                            t = createToken(DIRECTIVE_TYPE_AUG_CODE, d, line);
-                            t.augCodeSpecIndex = j;
-                            break;
+                            Token c = createToken(DIRECTIVE_TYPE_AUG_CODE, d, line);
+                            c.augCodeSpecIndex = j;
+                            candidateTokens.add(c);
+                            break outer1;
                         }
                     }
                 }
-            }
-            if (t == null) {
-                for (int j = 0; t == null && j < uncheckedAugCodeDirectiveSets.size(); j++) {
+                
+                outer2: for (int j = 0; j < uncheckedAugCodeDirectiveSets.size(); j++) {
                     List<String> augCodeDirectives = uncheckedAugCodeDirectiveSets.get(j);
                     if (augCodeDirectives == null) {
                         continue;
                     }
                     for (String d : augCodeDirectives) {
                         if (lineWithoutIndent.startsWith(d)) {
-                            t = createToken(DIRECTIVE_TYPE_AUG_CODE, d, line);
-                            t.augCodeSpecIndex = j;
-                            t.uncheckedAugCodeDirective = true;
-                            break;
+                            Token c = createToken(DIRECTIVE_TYPE_AUG_CODE, d, line);
+                            c.augCodeSpecIndex = j;
+                            c.uncheckedAugCodeDirective = true;
+                            candidateTokens.add(c);
+                            break outer2;
                         }
                     }
+                }
+
+                Optional<Token> tOpt = candidateTokens.stream().max(
+                    (x, y) -> new Integer(x.text.length()).compareTo(y.text.length()));
+                if (tOpt.isPresent()) {
+                    t = tOpt.get();
                 }
             }
             if (t == null) {
@@ -238,16 +258,6 @@ public class CodeGenerationRequestCreator {
             startPos = t.endPos;
         }
         return tokens;
-    }
-
-    private Token createToken(int directiveType, String directiveMarker, String line) {
-        Token t = new Token(TOKEN_TYPE_DIRECTIVE);
-        t.directiveType = directiveType; 
-        t.directiveMarker = directiveMarker;
-        int dIndex = line.indexOf(directiveMarker);
-        t.indent = line.substring(0, dIndex);
-        t.directiveContent = line.substring(dIndex + directiveMarker.length());
-        return t;
     }
 
     static List<List<Token>> identifyAugCodeSections(List<Token> tokens,
@@ -313,8 +323,7 @@ public class CodeGenerationRequestCreator {
         return groups;
     }
 
-    static ParserException validateAugCodeSection(
-            List<Token> tokenGroup, 
+    static ParserException validateAugCodeSection(List<Token> tokenGroup, 
             SourceFileDescriptor sourceDescriptor) {
         Token token = tokenGroup.get(0);
         if (token.directiveType == DIRECTIVE_TYPE_AUG_CODE) {
@@ -354,15 +363,7 @@ public class CodeGenerationRequestCreator {
         return null;
     }
 
-    private static ParserException createParserException(String errorMessage, Token token,
-            SourceFileDescriptor sourceDescriptor) {
-        String fullMessage = String.format("in %s at line %s: %s\n\n%s",
-            new File(sourceDescriptor.getDir(), sourceDescriptor.getRelativePath()),
-            token.lineNumber, errorMessage, token.text);
-        return new ParserException(fullMessage);
-    }
-
-    GeneratedCodeDescriptor createGeneratedCodeDescriptor(List<Token> sourceTokens, 
+    static GeneratedCodeDescriptor createGeneratedCodeDescriptor(List<Token> sourceTokens, 
             int augCodeEndIndex) {
         // search for gen code start.
         int startIndex = -1;
@@ -441,5 +442,26 @@ public class CodeGenerationRequestCreator {
         // complete last block.
         lastBlock.setContent(sb.toString());
         return blocks;
+    }
+
+    private static Token createToken(int directiveType, String directiveMarker, String line) {
+        Token t = new Token(TOKEN_TYPE_DIRECTIVE);
+        t.directiveType = directiveType; 
+        t.directiveMarker = directiveMarker;
+        int dIndex = line.indexOf(directiveMarker);
+        t.indent = line.substring(0, dIndex);
+        t.directiveContent = line.substring(dIndex + directiveMarker.length());
+        // set text even though we don't have newline, so search 
+        // for directive token with max length can work.
+        t.text = line;
+        return t;
+    }
+
+    private static ParserException createParserException(String errorMessage, Token token,
+            SourceFileDescriptor sourceDescriptor) {
+        String fullMessage = String.format("in %s at line %s: %s\n\n%s",
+            new File(sourceDescriptor.getDir(), sourceDescriptor.getRelativePath()),
+            token.lineNumber, errorMessage, token.text);
+        return new ParserException(fullMessage);
     }
 }
