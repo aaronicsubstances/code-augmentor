@@ -26,7 +26,7 @@ import com.aaronicsubstances.code.augmentor.core.parsing.peg.extras.UnicodeBmpNo
 public class JavaParser implements TokenSupplier {
     private final ParserInputSource inputSource;
     private final JavaPegParser pegParser;
-	private final String semanticInput;
+    private final String semanticInput;
 
     public JavaParser(String input) {
         // use two stage transformation.

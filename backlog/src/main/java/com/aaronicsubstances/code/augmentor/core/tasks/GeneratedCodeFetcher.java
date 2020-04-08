@@ -26,7 +26,7 @@ public class GeneratedCodeFetcher {
         lastFetches = new ArrayList<>();
     }
 
-	public void close() throws Exception {        
+    public void close() throws Exception {        
         for (int i = 0; i < codeGenerationResponses.size(); i++) {
             CodeGenerationResponse instance = codeGenerationResponses.get(i);
             Object codeGenRespRdr = codeGenerationResponseReaders.get(i);
@@ -56,9 +56,9 @@ public class GeneratedCodeFetcher {
         }
     }
 
-	public GeneratedCode getGeneratedCode(int fileIndex, int augCodeIndex) throws Exception {
+    public GeneratedCode getGeneratedCode(int fileIndex, int augCodeIndex) throws Exception {
         GeneratedCode nextGenCode = null;
-		for (int i = 0; i < lastFetches.size(); i++) {
+        for (int i = 0; i < lastFetches.size(); i++) {
             Optional<GeneratedCode> genCodeOpt = null;
             // check whether codeGenRes already has all generated codes loaded.
             // used during testing, and in theory can be used when it is
@@ -88,5 +88,5 @@ public class GeneratedCodeFetcher {
             System.out.println("lastFetches: " + lastFetches);
         }*/
         return nextGenCode;
-	}
+    }
 }

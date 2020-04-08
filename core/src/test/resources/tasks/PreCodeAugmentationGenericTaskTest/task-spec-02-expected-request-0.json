@@ -18,7 +18,7 @@
 			"indent": "\t",
 			"blocks" : [{
 				"stringify" : false,
-				"content" : " println( \r\n"
+				"content" : " println( "
 			},
 			{
 				"stringify" : true,
@@ -26,16 +26,21 @@
 			},
 			{
 				"stringify" : false,
-				"content" : "\r\n )"
+				"content" : " )"
 			}]
 		},
 		{
 			"index" : 2,
-			"directive_marker" : "//JS",
+			"directive_marker" : "//DD",
 			"indent": "\t",
+            "is_data_driven": true,
 			"blocks" : [{
 				"stringify" : false,
-				"content" : "-"
+				"content" : " print"
+			},
+            {
+				"stringify" : true,
+				"content" : "[]"
 			}]
 		}]
 	}

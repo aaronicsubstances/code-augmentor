@@ -27,7 +27,7 @@ public class ParserInputSourceTest {
             parseException.getMessage());
     }
 
-    private static String loadInput(String path, Class<?> class1) {		
+    private static String loadInput(String path, Class<?> class1) {        
         if (path.contains("mac")) {
             return TestResourceLoader.loadResourceNewlinesNormalized(path, class1, "\r");
         }
@@ -38,9 +38,9 @@ public class ParserInputSourceTest {
             // assume unix.
             return TestResourceLoader.loadResourceNewlinesNormalized(path, class1, "\n");
         }
-	}
+    }
 
-	@DataProvider
+    @DataProvider
     public Object[][] createTestCreateAbortExceptionData() {
         Token eofToken = new Token();
         Token macToken = new Token(1, null, 26, 31, 3);

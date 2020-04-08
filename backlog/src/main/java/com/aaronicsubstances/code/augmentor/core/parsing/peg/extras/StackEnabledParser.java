@@ -193,7 +193,7 @@ public class StackEnabledParser extends Parser<StackEnabledParsingContext> {
         String log = String.format("%s[%s] Failed to match rule '%s' at pos %s: %s",
             indent, LOG_LEVEL_NAME_TRACE, ruleName, currPos, errorMsg);
         traceLog.accept(log);
-	}
+    }
 
     private void endLogSuccess(String ruleName, LogDecision logDecision) {
         if (logDecision.logEndSuccessVerbosely) { 

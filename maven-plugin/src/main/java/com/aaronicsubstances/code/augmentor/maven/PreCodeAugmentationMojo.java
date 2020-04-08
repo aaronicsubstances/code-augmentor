@@ -68,7 +68,7 @@ public class PreCodeAugmentationMojo extends AbstractMojo {
         if (totalSuffixCount != allSuffixes.size()) {
             throw new MojoFailureException("Duplicates detected across comment marker suffixes");
         }
-		
+        
         Charset charset = Charset.forName(encoding);
         BiConsumer<Integer, Supplier<String>> logAppender = (logLevel, msgFunc) -> {
             switch (logLevel) {

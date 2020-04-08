@@ -37,13 +37,13 @@ public class SourceFileGeneratedCode {
         this.generatedCodeList = generatedCodeList;
     }
 
-	public void serialize(Object serializer) throws Exception {
+    public void serialize(Object serializer) throws Exception {
         PrintWriter writer = ((PersistenceUtil) serializer).getPrintWriter();
         String s = PersistenceUtil.serializeCompactlyToJson(this);
         writer.println(s);
     }
 
-	public static SourceFileGeneratedCode deserialize(Object deserializer) throws Exception {
+    public static SourceFileGeneratedCode deserialize(Object deserializer) throws Exception {
         BufferedReader reader = ((PersistenceUtil) deserializer).getBufferedReader();
         String line;
         while ((line = reader.readLine()) != null) {

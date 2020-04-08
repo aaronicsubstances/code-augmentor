@@ -14,23 +14,23 @@ public class PersistenceUtil {
     public static final Gson JSON_CONVERT = new GsonBuilder().setPrettyPrinting().create();
     private static final Gson JSON_CONVERT_COMPACT = new Gson();
 
-	public static String serializeCompactlyToJson(Object obj) {
-		return JSON_CONVERT_COMPACT.toJson(obj);
-	}
+    public static String serializeCompactlyToJson(Object obj) {
+        return JSON_CONVERT_COMPACT.toJson(obj);
+    }
 
-	public static String serializeToJson(Object obj) {
-		return JSON_CONVERT.toJson(obj);
-	}
+    public static String serializeToJson(Object obj) {
+        return JSON_CONVERT.toJson(obj);
+    }
 
-	public static <T> T deserializeFromJson(String s, Class<T> cls) {
-		return JSON_CONVERT.fromJson(s, cls);
-	}
+    public static <T> T deserializeFromJson(String s, Class<T> cls) {
+        return JSON_CONVERT.fromJson(s, cls);
+    }
 
-	public static <T> T deserializeFromJson(Reader rdr, Class<T> cls) {
-		return JSON_CONVERT.fromJson(rdr, cls);
-	}
+    public static <T> T deserializeFromJson(Reader rdr, Class<T> cls) {
+        return JSON_CONVERT.fromJson(rdr, cls);
+    }
 
-	public static boolean peekSerializedJsonForPerFile(BufferedReader bufRdr) throws IOException {		
+    public static boolean peekSerializedJsonForPerFile(BufferedReader bufRdr) throws IOException {        
         // decide between per-line json or per-file json
         boolean perFile = false;
         bufRdr.mark(1);
@@ -40,7 +40,7 @@ public class PersistenceUtil {
             perFile = true;
         }
         return perFile;
-	}
+    }
 
     private final BufferedReader bufferedReader;
     private final JsonReader jsonReader;

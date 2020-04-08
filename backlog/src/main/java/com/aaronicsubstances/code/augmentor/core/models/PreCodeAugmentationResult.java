@@ -155,7 +155,7 @@ public class PreCodeAugmentationResult {
         }
     }
 
-	public static PreCodeAugmentationResult deserialize(Reader reader) throws Exception {
+    public static PreCodeAugmentationResult deserialize(Reader reader) throws Exception {
         PreCodeAugmentationResult instance = new PreCodeAugmentationResult();
         Object deserializer = instance.beginDeserialize(reader);
         try {
@@ -168,7 +168,7 @@ public class PreCodeAugmentationResult {
             instance.endDeserialize(deserializer);
         }
         return instance;
-	}
+    }
 
     @Override
     public int hashCode() {

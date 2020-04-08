@@ -25,24 +25,27 @@ public class CodeGenerationRequestCreator {
     static final int DIRECTIVE_TYPE_ENABLE_SCAN = 5;
     static final int DIRECTIVE_TYPE_DISABLE_SCAN = 6;
 
-    private List<String> genCodeStartDirectives;
-    private List<String> genCodeEndDirectives;
-    private List<String> embeddedStringDirectives;
-    private List<List<String>> augCodeDirectiveSets;
-    private List<String> enableScanDirectives;
-    private List<String> disableScanDirectives;
+    private final List<String> genCodeStartDirectives;
+    private final List<String> genCodeEndDirectives;
+    private final List<String> embeddedStringDirectives;
+    private final List<List<String>> dataDrivenAugCodeDirectiveSets;
+    private final List<List<String>> uncheckedAugCodeDirectiveSets;
+    private final List<String> enableScanDirectives;
+    private final List<String> disableScanDirectives;
 
     public CodeGenerationRequestCreator(
             List<String> genCodeStartDirectives,
             List<String> genCodeEndDirectives,
             List<String> embeddedStringDirectives,
-            List<List<String>> augCodeDirectiveSets, 
+            List<List<String>> dataDrivenAugCodeDirectiveSets,
+            List<List<String>> uncheckedAugCodeDirectiveSets,
             List<String> enableScanDirectives, 
             List<String> disableScanDirectives) {
         this.genCodeStartDirectives = genCodeStartDirectives;
         this.genCodeEndDirectives = genCodeEndDirectives;
         this.embeddedStringDirectives = embeddedStringDirectives;
-        this.augCodeDirectiveSets = augCodeDirectiveSets;
+        this.dataDrivenAugCodeDirectiveSets = dataDrivenAugCodeDirectiveSets;
+        this.uncheckedAugCodeDirectiveSets = uncheckedAugCodeDirectiveSets;
         this.enableScanDirectives = enableScanDirectives;
         this.disableScanDirectives = disableScanDirectives;
     }
@@ -104,13 +107,31 @@ public class CodeGenerationRequestCreator {
             augmentingCode.setIndex(i);
             augmentingCode.setIndent(augCodeDescriptor.getIndent());
             augmentingCode.setDirectiveMarker(firstToken.directiveMarker);
+            augmentingCode.setDataDriven(!firstToken.uncheckedAugCodeDirective);
+
+            // d. validate data-driven string block as valid JSON array.
+            if (augmentingCode.isDataDriven()) {
+                assert blocks.size() == 2;
+                boolean isValidJsonArray = TaskUtils.isValidJsonArray(blocks.get(1).getContent());
+                if (!isValidJsonArray) {
+                    Token embStrTokenStart = augCodeSection.get(1);
+                    ParserException error = createParserException(
+                        "Embedded string section of data-driven augmenting code must be a " +
+                        "valid JSON Array", 
+                        embStrTokenStart, sourceDescriptor);
+                    if (errors == null) {
+                        throw error;
+                    }
+                    errors.add(error);
+                }
+            }
             
             List<AugmentingCode> applicableAugCodeList = specAugCodesList.get(
                 firstToken.augCodeSpecIndex);
             applicableAugCodeList.add(augmentingCode);
         }
 
-        sourceDescriptor.setBodySnippets(bodySnippets);;
+        sourceDescriptor.setBodySnippets(bodySnippets);
     }
 
     List<Token> tokenizeSource(String source) {
@@ -166,12 +187,31 @@ public class CodeGenerationRequestCreator {
                 }
             }
             if (t == null) {
-                for (int j = 0; t == null && j < augCodeDirectiveSets.size(); j++) {
-                    List<String> augCodeDirectives = augCodeDirectiveSets.get(j);
+                for (int j = 0; t == null && j < dataDrivenAugCodeDirectiveSets.size(); j++) {
+                    List<String> augCodeDirectives = dataDrivenAugCodeDirectiveSets.get(j);
+                    if (augCodeDirectives == null) {
+                        continue;
+                    }
                     for (String d : augCodeDirectives) {
                         if (lineWithoutIndent.startsWith(d)) {
                             t = createToken(DIRECTIVE_TYPE_AUG_CODE, d, line);
                             t.augCodeSpecIndex = j;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (t == null) {
+                for (int j = 0; t == null && j < uncheckedAugCodeDirectiveSets.size(); j++) {
+                    List<String> augCodeDirectives = uncheckedAugCodeDirectiveSets.get(j);
+                    if (augCodeDirectives == null) {
+                        continue;
+                    }
+                    for (String d : augCodeDirectives) {
+                        if (lineWithoutIndent.startsWith(d)) {
+                            t = createToken(DIRECTIVE_TYPE_AUG_CODE, d, line);
+                            t.augCodeSpecIndex = j;
+                            t.uncheckedAugCodeDirective = true;
                             break;
                         }
                     }
@@ -230,7 +270,8 @@ public class CodeGenerationRequestCreator {
                     t.directiveType == DIRECTIVE_TYPE_GEN_CODE_END) {
                 // ensure newline ending.
                 if (t.newline == null) {
-                    ParserException error = createParserException("Aug/Gen code directives must end with a newline", 
+                    ParserException error = createParserException(
+                        "Augmenting or generated code directives must end with a newline", 
                         t, sourceDescriptor);
                     if (errors != null) {
                         errors.add(error);
@@ -278,6 +319,7 @@ public class CodeGenerationRequestCreator {
         Token token = tokenGroup.get(0);
         if (token.directiveType == DIRECTIVE_TYPE_AUG_CODE) {
             int expectedAugCodeSpecIndex = token.augCodeSpecIndex;
+            boolean expectedUncheckedStatus = token.uncheckedAugCodeDirective;
             for (int i = 1; i < tokenGroup.size(); i++) {
                 token = tokenGroup.get(i);
                 switch (token.directiveType) {
@@ -285,10 +327,22 @@ public class CodeGenerationRequestCreator {
                         break;
                     default:
                         assert token.directiveType == DIRECTIVE_TYPE_AUG_CODE;
-                        if (expectedAugCodeSpecIndex != token.augCodeSpecIndex) {
-                            return createParserException("Different augmenting code directives in " +
-                                "same section not allowed", token, sourceDescriptor);
+                        if (expectedUncheckedStatus != token.uncheckedAugCodeDirective) {
+                            return createParserException("Mixing data-driven and unchecked " +
+                                "augmenting code directives not allowed.", 
+                                token, sourceDescriptor);
                         }
+                        if (expectedUncheckedStatus) {
+                            if (expectedAugCodeSpecIndex != token.augCodeSpecIndex) {
+                                return createParserException("Different augmenting code directives in " +
+                                    "same section not allowed", token, sourceDescriptor);
+                            }
+                        }
+                        else {
+                            return createParserException("Data-driven augmenting code directive can " +
+                                "only start a section", token, sourceDescriptor);
+                        }
+                        break;
                 }
             }
         }
@@ -365,21 +419,14 @@ public class CodeGenerationRequestCreator {
             boolean stringify = t.directiveType == DIRECTIVE_TYPE_EMB_STRING;
             
             if (lastBlock.isStringify() == stringify) {
+                // Add new lines to content lines, with requirement that no section
+                // has either preceding or trailing new line.
                 if (i > 0) {
                     sb.append(augCodeSection.get(i - 1).newline);
                 }
                 sb.append(contentLine);
             }
             else {
-                // Add new lines to content lines, with requirement that
-                // 1. first section should not have preceding new line.
-                // 2. last section should not have terminating new line.
-                // 3. sections to be stringified should neither have preceding or trailing new lines.
-                if (stringify) {
-                    // let outgoing raw aug code section have
-                    // trailing newline.
-                    sb.append(augCodeSection.get(i - 1).newline);
-                }
                 lastBlock.setContent(sb.toString());
 
                 // reset for use with next block.
@@ -387,11 +434,6 @@ public class CodeGenerationRequestCreator {
                 lastBlock.setStringify(stringify);
                 blocks.add(lastBlock);
                 sb.setLength(0);
-                if (!stringify) {
-                    // let incoming raw aug code section have preceding
-                    // newline.
-                    sb.append(augCodeSection.get(i - 1).newline);
-                }
                 sb.append(contentLine);
             }
         }

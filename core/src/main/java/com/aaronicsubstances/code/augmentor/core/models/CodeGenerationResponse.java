@@ -86,14 +86,14 @@ public class CodeGenerationResponse {
         }
     }
 
-	public void serialize(File file, boolean serializeAllAsJson) throws Exception {        
+    public void serialize(File file, boolean serializeAllAsJson) throws Exception {        
         try (Writer writer = new OutputStreamWriter(new FileOutputStream(file),
                 StandardCharsets.UTF_8)) {
             serialize(writer, serializeAllAsJson);
         }
-	}
+    }
 
-	public void serialize(Writer stream, boolean serializeAllAsJson) throws Exception {
+    public void serialize(Writer stream, boolean serializeAllAsJson) throws Exception {
         PersistenceUtil persistenceUtil = new PersistenceUtil(new PrintWriter(stream), false);
         printHeader(persistenceUtil, !serializeAllAsJson);
         if (serializeAllAsJson) {
@@ -106,7 +106,7 @@ public class CodeGenerationResponse {
             }
         }
         persistenceUtil.flush();
-	}
+    }
 
     public Object beginDeserialize(File file) throws Exception {
         Reader reader = new InputStreamReader(new FileInputStream(file),

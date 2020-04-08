@@ -33,6 +33,7 @@ public class PreCodeAugmentationGenericTaskTest {
         public static class AugCodeSpec {
             public String file;
             public String[] directives;
+            public String[] uncheckedDirectives;
         }
     }
     
@@ -58,10 +59,12 @@ public class PreCodeAugmentationGenericTaskTest {
         
         task.setPrepFile(new File(tempDir, taskSpec.prepFile));
 
-        task.setAugCodeDestFiles(Arrays.asList(taskSpec.augCodeDirectives).stream().
-            map(x -> new File(tempDir, x.file)).collect(Collectors.toList()));
-        task.setAugCodeDirectives(Arrays.asList(taskSpec.augCodeDirectives).stream().
-            map(x -> Arrays.asList(x.directives)).collect(Collectors.toList()));
+        task.setAugCodeProcessingSpecs(Arrays.asList(taskSpec.augCodeDirectives).stream()
+            .map(x -> new AugCodeProcessingSpec(
+                x.directives == null ? null : Arrays.asList(x.directives),
+                x.uncheckedDirectives == null ? null : Arrays.asList(x.uncheckedDirectives), 
+                new File(tempDir, x.file)))
+            .collect(Collectors.toList()));
 
         task.setGenCodeStartDirectives(Arrays.asList(taskSpec.genCodeStartDirectives));
         task.setGenCodeEndDirectives(Arrays.asList(taskSpec.genCodeEndDirectives));
@@ -79,7 +82,7 @@ public class PreCodeAugmentationGenericTaskTest {
         PreCodeAugmentationResult expResult = PreCodeAugmentationResult.deserialize(
             new StringReader(expectedPrepFileContents));
         List<CodeGenerationRequest> expectedRequests = new ArrayList<>(); 
-        for (int i = 0; i < task.getAugCodeDestFiles().size(); i++) {
+        for (int i = 0; i < task.getAugCodeProcessingSpecs().size(); i++) {
             String reqPath = jsonPath.replace(".json",
                 "-expected-request-" + i + ".json");
             String contents = TestResourceLoader.loadResource(
@@ -101,8 +104,8 @@ public class PreCodeAugmentationGenericTaskTest {
         }
         assertEquals(actualResult, expResult, 
             "Unexpected contents found in " + task.getPrepFile());
-        for (int i = 0; i < task.getAugCodeDestFiles().size(); i++) {
-            File f = task.getAugCodeDestFiles().get(i);
+        for (int i = 0; i < task.getAugCodeProcessingSpecs().size(); i++) {
+            File f = task.getAugCodeProcessingSpecs().get(i).getDestFile();
             CodeGenerationRequest expected = expectedRequests.get(i);
             CodeGenerationRequest actual = CodeGenerationRequest.deserialize(f);
             assertEquals(actual, expected, "Unexpected contents found in " + f);

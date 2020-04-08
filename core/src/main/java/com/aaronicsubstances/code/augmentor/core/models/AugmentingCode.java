@@ -78,6 +78,8 @@ public class AugmentingCode {
     private String directiveMarker;
     @SerializedName("indent")
     private String indent;
+    @SerializedName("is_data_driven")
+    private boolean dataDriven;
 
     public AugmentingCode() {
     }
@@ -118,11 +120,20 @@ public class AugmentingCode {
         this.indent = indent;
     }
 
+    public boolean isDataDriven() {
+        return dataDriven;
+    }
+
+    public void setDataDriven(boolean dataDriven) {
+        this.dataDriven = dataDriven;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((blocks == null) ? 0 : blocks.hashCode());
+        result = prime * result + (dataDriven ? 1231 : 1237);
         result = prime * result + ((directiveMarker == null) ? 0 : directiveMarker.hashCode());
         result = prime * result + ((indent == null) ? 0 : indent.hashCode());
         result = prime * result + index;
@@ -143,6 +154,8 @@ public class AugmentingCode {
                 return false;
         } else if (!blocks.equals(other.blocks))
             return false;
+        if (dataDriven != other.dataDriven)
+            return false;
         if (directiveMarker == null) {
             if (other.directiveMarker != null)
                 return false;
@@ -160,7 +173,7 @@ public class AugmentingCode {
 
     @Override
     public String toString() {
-        return "AugmentingCode{blocks=" + blocks + ", directiveMarker=" + directiveMarker + ", indent=" + indent
-                + ", index=" + index + "}";
+        return "AugmentingCode{blocks=" + blocks + ", dataDriven=" + dataDriven + ", directiveMarker="
+                + directiveMarker + ", indent=" + indent + ", index=" + index + "}";
     }
 }

@@ -38,12 +38,12 @@ public class CodeGenerationRequestSpecification {
         augCodeSuffixes.add(suffix);
     }
 
-	public void validate() {
+    public void validate() {
         if (augCodeDestFile == null) {
             throw new BuildException("spec[@aug_code_file] attribute is required");
         }
         if (augCodeSuffixes.isEmpty()) {
             throw new BuildException("at least 1 nested spec/aug_code_suffix element is required");
         }
-	}
+    }
 }

@@ -2,24 +2,25 @@ package com.aaronicsubstances.code.augmentor.core.parsing;
 
 public class Token {
     public final int type;
-	public String text;
-	public int startPos;
-	public int endPos;
+    public String text;
+    public int startPos;
+    public int endPos;
     public int lineNumber;
     public int index;
 
-	public int directiveType;
+    public int directiveType;
     public int augCodeSpecIndex;
     public String indent;
     public String directiveMarker;
     public String directiveContent;
     public String newline;
+	public boolean uncheckedAugCodeDirective;
 
-	public Token(int type) {
+    public Token(int type) {
         this.type = type;
-	}
+    }
 
-	@Override
+    @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
@@ -28,13 +29,14 @@ public class Token {
         result = prime * result + ((directiveMarker == null) ? 0 : directiveMarker.hashCode());
         result = prime * result + directiveType;
         result = prime * result + endPos;
-        result = prime * result + ((newline == null) ? 0 : newline.hashCode());
         result = prime * result + ((indent == null) ? 0 : indent.hashCode());
         result = prime * result + index;
         result = prime * result + lineNumber;
+        result = prime * result + ((newline == null) ? 0 : newline.hashCode());
         result = prime * result + startPos;
         result = prime * result + ((text == null) ? 0 : text.hashCode());
         result = prime * result + type;
+        result = prime * result + (uncheckedAugCodeDirective ? 1231 : 1237);
         return result;
     }
 
@@ -63,11 +65,6 @@ public class Token {
             return false;
         if (endPos != other.endPos)
             return false;
-        if (newline == null) {
-            if (other.newline != null)
-                return false;
-        } else if (!newline.equals(other.newline))
-            return false;
         if (indent == null) {
             if (other.indent != null)
                 return false;
@@ -76,6 +73,11 @@ public class Token {
         if (index != other.index)
             return false;
         if (lineNumber != other.lineNumber)
+            return false;
+        if (newline == null) {
+            if (other.newline != null)
+                return false;
+        } else if (!newline.equals(other.newline))
             return false;
         if (startPos != other.startPos)
             return false;
@@ -86,6 +88,8 @@ public class Token {
             return false;
         if (type != other.type)
             return false;
+        if (uncheckedAugCodeDirective != other.uncheckedAugCodeDirective)
+            return false;
         return true;
     }
 
@@ -93,7 +97,8 @@ public class Token {
     public String toString() {
         return "Token{augCodeSpecIndex=" + augCodeSpecIndex + ", directiveContent=" + directiveContent
                 + ", directiveMarker=" + directiveMarker + ", directiveType=" + directiveType + ", endPos=" + endPos
-                + ", newline=" + newline + ", indent=" + indent + ", index=" + index + ", lineNumber="
-                + lineNumber + ", startPos=" + startPos + ", text=" + text + ", type=" + type + "}";
+                + ", indent=" + indent + ", index=" + index + ", lineNumber=" + lineNumber + ", newline=" + newline
+                + ", startPos=" + startPos + ", text=" + text + ", type=" + type + ", uncheckedAugCodeDirective="
+                + uncheckedAugCodeDirective + "}";
     }
 }

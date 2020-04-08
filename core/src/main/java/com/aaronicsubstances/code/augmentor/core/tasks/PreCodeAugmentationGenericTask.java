@@ -29,9 +29,8 @@ public class PreCodeAugmentationGenericTask {
     private List<String> genCodeEndDirectives;
     private List<String> embeddedStringDirectives;
     private List<String> enableScanDirectives, disableScanDirectives;
-    private List<List<String>> augCodeDirectives;
+    private List<AugCodeProcessingSpec> augCodeProcessingSpecs;
     private Charset charset;
-    private List<File> augCodeDestFiles;
     private File prepFile;
 
     // output properties
@@ -45,24 +44,26 @@ public class PreCodeAugmentationGenericTask {
 
         List<Object> codeGenRequestWriters = new ArrayList<>();
         List<CodeGenerationRequest> codeGenRequests = new ArrayList<>();
-        for (File augCodeDestFile : augCodeDestFiles) {
+        for (AugCodeProcessingSpec augCodeSpec : augCodeProcessingSpecs) {
             CodeGenerationRequest codeGenRequest = new CodeGenerationRequest();
             codeGenRequests.add(codeGenRequest);
-            Object requestWriter = codeGenRequest.beginSerialize(augCodeDestFile);
+            Object requestWriter = codeGenRequest.beginSerialize(augCodeSpec.getDestFile());
             codeGenRequestWriters.add(requestWriter);
         }
-         
-        CodeGenerationRequestCreator codeGenerationRequestCreator =
-            new CodeGenerationRequestCreator(
-                genCodeStartDirectives,
-                genCodeEndDirectives,
-                embeddedStringDirectives,
-                augCodeDirectives,
-                enableScanDirectives,
-                disableScanDirectives);
+
+        List<List<String>> dataDrivenAugCodeDirectives = new ArrayList<>();
+        List<List<String>> uncheckedAugCodeDirectives = new ArrayList<>();
+        for (AugCodeProcessingSpec augCodeSpec : augCodeProcessingSpecs) {
+            dataDrivenAugCodeDirectives.add(augCodeSpec.getDataDrivenDirectives());
+            uncheckedAugCodeDirectives.add(augCodeSpec.getUncheckedDirectives());
+        }
+        CodeGenerationRequestCreator codeGenerationRequestCreator = new CodeGenerationRequestCreator(
+                genCodeStartDirectives, genCodeEndDirectives, embeddedStringDirectives, 
+                dataDrivenAugCodeDirectives, uncheckedAugCodeDirectives,
+                enableScanDirectives, disableScanDirectives);
 
         List<List<AugmentingCode>> specAugCodesList = new ArrayList<>();
-        for (int i = 0; i < augCodeDirectives.size(); i++) {
+        for (int i = 0; i < augCodeProcessingSpecs.size(); i++) {
             specAugCodesList.add(new ArrayList<>());
         }
 
@@ -71,7 +72,7 @@ public class PreCodeAugmentationGenericTask {
         for (int i = 0; i < relativePaths.size(); i++) {
             String relativePath = relativePaths.get(i);
             File baseDir = baseDirs.get(i);
-            File srcFile = new File(baseDir, relativePath); 
+            File srcFile = new File(baseDir, relativePath);
             logVerbose("Preparing %s", srcFile);
             Instant startInstant = Instant.now();
             String input = TaskUtils.readFile(srcFile, charset);
@@ -82,14 +83,13 @@ public class PreCodeAugmentationGenericTask {
                 specAugCodes.clear();
             }
             List<ParserException> errors = new ArrayList<>();
-        
+
             SourceFileDescriptor s = new SourceFileDescriptor();
             s.setFileIndex(i);
             s.setDir(baseDir.getPath());
             s.setRelativePath(relativePath);
             s.setContentHash(inputHash);
-            codeGenerationRequestCreator.processSourceFile(s,
-                input, specAugCodesList, errors);
+            codeGenerationRequestCreator.processSourceFile(s, input, specAugCodesList, errors);
             if (errors.isEmpty()) {
                 // don't bother to serialize any further if there are
                 // previous errors.
@@ -103,8 +103,7 @@ public class PreCodeAugmentationGenericTask {
                             continue;
                         }
                         identifiedAugCodeCount += specAugCodes.size();
-                        SourceFileAugmentingCode sourceFileAugCode = new SourceFileAugmentingCode(
-                            specAugCodes);
+                        SourceFileAugmentingCode sourceFileAugCode = new SourceFileAugmentingCode(specAugCodes);
                         sourceFileAugCode.setFileIndex(i);
                         sourceFileAugCode.setRelativePath(relativePath);
                         sourceFileAugCode.serialize(requestWriter);
@@ -117,12 +116,11 @@ public class PreCodeAugmentationGenericTask {
                     // write out descriptor.
                     s.serialize(resultWriter);
                 }
-            }
-            else {
+            } else {
                 logWarn("%s error(s) encountered in %s", errors.size(), srcFile);
                 allErrors.addAll(errors);
             }
-            
+
             Instant endInstant = Instant.now();
             long timeElapsed = Duration.between(startInstant, endInstant).toMillis();
             logVerbose("done in %s ms", timeElapsed);
@@ -190,14 +188,6 @@ public class PreCodeAugmentationGenericTask {
         this.charset = charset;
     }
 
-    public List<File> getAugCodeDestFiles() {
-        return augCodeDestFiles;
-    }
-
-    public void setAugCodeDestFiles(List<File> augCodeDestFiles) {
-        this.augCodeDestFiles = augCodeDestFiles;
-    }
-
     public File getPrepFile() {
         return prepFile;
     }
@@ -246,12 +236,12 @@ public class PreCodeAugmentationGenericTask {
         this.disableScanDirectives = disableScanDirectives;
     }
 
-    public List<List<String>> getAugCodeDirectives() {
-        return augCodeDirectives;
+    public List<AugCodeProcessingSpec> getAugCodeProcessingSpecs() {
+        return augCodeProcessingSpecs;
     }
 
-    public void setAugCodeDirectives(List<List<String>> augCodeDirectives) {
-        this.augCodeDirectives = augCodeDirectives;
+    public void setAugCodeProcessingSpecs(List<AugCodeProcessingSpec> augCodeProcessingSpecs) {
+        this.augCodeProcessingSpecs = augCodeProcessingSpecs;
     }
 
     public List<ParserException> getAllErrors() {

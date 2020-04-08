@@ -3,27 +3,32 @@
 
 ## Description
 
-The *CodeAugmentor* tool generates code for a programmer in such  a way that it appears to the rest of the build process that the programmer typed it himself. This enables tactics in a programmer's toolbox that can be leveraged to maintain fragile or aging code architecture and still deliver expected quality guarantees to stakeholders. 
+The *CodeAugmentor* tool generates code for a programmer in such a way that it appears to the rest of the build process that the programmer typed it himself. This enables tactics in a programmer's toolbox that can be leveraged to maintain an emergent, fragile or aging software architecture and still deliver expected quality guarantees to stakeholders.
 
-Technically, the tool has two parts: one part which resembles a preprocessor (such as the C/C++ preprocessor), and another part which resembles a linter (such as ESLint). However there are important differences: 
+To accomplish this, **data-driven programming** mindset is neccesary. From Eric Raymond's [The Art of Unix Programming](https://homepage.cs.uri.edu/~thenry/resources/unix_art/ch09s01.html) book, this alternative definition of the term "data-driven programming" is intended:
 
-   * Like a preprocessor, one part of *CodeAugmentor* is concerned with code generation. Unlike a preprocessor, this part always has to be triggered manually by the programmer through batch scripts, outside of the automated build process.
-   * *CodeAugmentor* enables the programmer to employ a full blown scripting language of the programmer's choice to generate code. Hence there is no need to learn any dedicated preprocessor language; besides, scripting languages have more power.
-   * *CodeAugmentor* modifies source files in place, unlike the C/C++ preprocessor which generates source files to be used in subsequent compilation steps "under the hood".
-   * Like a linter, the other part of *CodeAugmentor* is concerened with running checks on code without modifying it. This enables straightforward integration of this part with build tools, as hooking a custom step into most build tools is far easier if the step doesn't modify anything.
-   * If ESLlint complains, it generally requires programmer to manually fix the code to appease it. *CodeAugmentor* however, specifies the automated step to execute if it complains, in order to appease it.
+> When doing data-driven programming, one clearly distinguishes code from the data structures on which it acts, and designs both so that one can make changes to the logic of the program by editing not the code but the data structure.
+
+The tool heavily relies on JSON as the standard data exchange format of choice.
+
+Operationally, the tool has two aspects: one part which resembles a preprocessor (such as the C/C++ preprocessor), and another part which resembles a linter (such as ESLint). However there are important differences: 
+
+   * Like a preprocessor, one part of *CodeAugmentor* is concerned with code generation. This part however, always has to be triggered manually by the programmer through batch scripts, outside of the automated build process.
+   * *CodeAugmentor* enables the programmer to employ JSON and any full blown scripting language of the programmer's choice to generate code. Hence there is no need to learn any dedicated preprocessor language.
+   * *CodeAugmentor* modifies source files in place, unlike the C/C++ preprocessor which generates source files to be used in subsequent compilation steps "under the hood". This ensures error reporting and debugging work as usual, given that the source code handed over to compiler/transpiler/runtime is the same one that the programmer knows.
+   * Like a linter, the other part of *CodeAugmentor* runs checks on code without modifying it. This enables straightforward integration of this part with build tools, as hooking a custom step into most build tools is far easier if the step doesn't modify any source code.
 
 The workflow of the programmer using this tool may be exemplified in the following manner:
-   * Code to be generated into source files is written into single-line comments using another (or possibly the same) language.
-   * Programmer writes code generator scripts in a related directory, and hooks it up to *CodeAugmentor*.
-   * *CodeAugmentor* is integrated into build process (e.g after compilation, before transpilation) to check whether source files need to be regenerated.
-   * During build, *CodeAugmentor* may report that certain source files need regeneration, and cause build to fail. It would have generated the newer source files into a temporary location.
-   * Programmer manually runs *CodeAugmentor* to overwrite the source files with the generated ones by copying them over from temporary location. *Overwriting out-of-date source files with newer ones from temporary location is the programmer's responsibility*, but batch scripts make it easier and even provide ability to list changed files (like git status), and view diffs of source files about to be changed (like git diff).
-   * Build process is triggered again, and this time *CodeAugmentor* doesn't complain, confirming that source files are now in sync with code generated by programmer's scripts.
+   1. Code to be generated into source files is written into single-line comments  as JSON.
+   2. Programmer writes code generator scripts in a related directory, and hooks it up to *CodeAugmentor*.
+   3. *CodeAugmentor* is integrated into build process (during compilation, during transpilation, or at runtime initialization) to check whether source files need to be regenerated.
+   4. During build, *CodeAugmentor* may report that certain source files need regeneration, and cause build to fail. It would have generated the newer source files into a temporary location.
+   5. Programmer manually runs *CodeAugmentor* to overwrite the source files with the generated ones by copying them over from temporary location. *Overwriting out-of-date source files with newer ones from temporary location is the programmer's responsibility*, but batch scripts make it easier and even provide ability to list changed files (like git status), and view diffs of source files about to be changed (like git diff).
+   6. Build process is triggered again, and this time *CodeAugmentor* doesn't complain, confirming that source files are now in sync with code generated by programmer's scripts.
 
 ## Background
 
-The motivation for this tool is to support fragile or aging code architectures and maintain expected levels of code quality.
+The motivation for this tool is to support emergent, fragile or aging software architectures and maintain expected levels of code quality.
 
 First, some observations:
 
@@ -31,7 +36,7 @@ First, some observations:
 
    * In Robert Glass' "Facts and Fallacies of Software Engineering" book, he asserts that maintenance of code is mostly about implementing new software requirements, which translates into adding new code which has to work with the existing codebase.
 
-tt   * Agile methodologies (e.g.  https://www.agilealliance.org/resources/sessions/emergent-architecture-just-enough-just-in-time/) emphasize "emergent" or "serendipitous" architectures over waterfall/fully preplanned ones, in order to speed up the development of product releases to customers, and solicit feedback for subsequent iterations.
+   * Agile methodologies (e.g.  https://www.agilealliance.org/resources/sessions/emergent-architecture-just-enough-just-in-time/) emphasize "emergent" or "serendipitous" architectures over waterfall/fully preplanned ones, in order to speed up the development of product releases to customers, and solicit feedback for subsequent iterations.
 
 What all this means is that
 
@@ -43,27 +48,27 @@ What all this means is that
 
 Usually, code duplication is frowned upon because it increases likelihood of errors, threatens reliablity and hence quality of code. 
 
-**The goal of *CodeAugmentor* is to compensate for challenges which result from hurriedly-developed code architectures**, such as code duplication, by
+**The goal of *CodeAugmentor* is to compensate for the cost of passing over waterfall software architectures** (such as code duplication), by employing **data-driven programming** techniques. These techinques aim to have a single point of truth (SPOT) data specification from which a number of related code sections can be generated. Many possiblities for code quality improvement become possible. For example, the programmer can:
 
-   * automating the process of synchronizing similar code sections in multiple places.
-   * enabling programmers to implement patterns which are much easier/less time consuming to do with code generation than with code (re)design.
-   * enabling programmers to better maintain workarounds so such code sections can easily be migrated when superior alternatives arrive.
+   * automate the process of synchronizing similar code sections in multiple places.
+   * implement patterns which are much easier/less time consuming to do with code generation than with code (re)design.
+   * better maintain workarounds which can easily be updated/migrated when superior alternatives arrive.
 
 The last point deserves some explanation. In the modern day development of software, programming languages, libraries, frameworks and even platforms (such as Android) are "works in progress" (meaning they evolve in response to usage patterns by developers).
 
-   * Android has changed quite drastically since its inception, and continues to change. Its recent introduction of LiveData and ViewModel libraries are just few examples of significant introductions meant to steer the development community in a certain direction (by the way, those two libraries were Google's response to the problem of Android fragment interaction with async calls/requests).
-   * Programming languages nowadays keep on copying features from one another. C#.NET is the archetype of this behaviour, but other mainstream languages including its chief statically typed competitor Java all try to incorporate language features from others which they deem helpful.
-   * Java is often criticized as been too verbose, and hence there are many occasions where one has to employ object-oriented design in a competent way to prevent Java code from becoming verbose or overly complex (by the way, this project is particularly aimed at Java developers).
+   * Android has changed quite drastically since its inception, and continues to change. Its introduction of LiveData and ViewModel libraries are just few examples of significant introductions meant to steer the development community in a certain direction (by the way, those two libraries were Google's response to the problem of Android fragment interaction with async calls/requests).
+   * Programming languages nowadays evolve in part by copying features from each another. In the past Java was a popular exception, but now all the popular 10 languages try to incorporate language features from others which they deem helpful.
+   * Java is often criticized as been too verbose, and hence there are many occasions where one has to employ object-oriented design in a competent way to prevent Java code from becoming verbose or overly complex (by the way, this project will particularly be helpful to Java developers).
 
 Thus if a programmer encounters a situation in which the programming framework is missing something, or makes implementing something unnecessarily tedious, it may be not be in the long-term interest of the programmer to craft a comprehensive solution to the problem. The larger community or company backing that framework may also notice the problem and develop a more elegant solution, and any workaround will likely have to be changed.
 
-By employing *CodeAugmentor*, one can develop a strategy of settling for a simpler workaround, well documented, and possibly involving code duplication in which synchronization problem is catered for by *CodeAugmentor*. Then when a superior alternative arrive, it is easy to identify all affected code sections and update them in a way in which errors cannot elude the programmer or the compiler.
+By employing *CodeAugmentor*, one can develop a strategy of settling for a simpler workaround, well documented, and involving code generation in which synchronization problem is catered for by *CodeAugmentor*. Then when a superior alternative arrive, it is easy to identify all affected code sections and update them in a way in which errors cannot elude the programmer.
 
 
 ## Artifacts to be published
  
-   * Standalone command line application will be published for use with any programming language, with the requirement of a Java Virtual Machine. 
-   * Plugins will be published for Ant, Maven and Gradle, for easier integration into Java and Android IDEs.
+   * Standalone command line application will be published for use with any programming language, with the requirement of a Java 8+ Virtual Machine. 
+   * Plugins will be published for Ant, Maven and Gradle, for easier integration with Java and Android IDEs.
 
 ## Development Environment
 

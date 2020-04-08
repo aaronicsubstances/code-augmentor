@@ -40,8 +40,8 @@ public class TestResourceLoader {
         }
     }
 
-	public static String loadResourceNewlinesNormalized(String path,
-			Class<?> cls, String newLine) {
+    public static String loadResourceNewlinesNormalized(String path,
+            Class<?> cls, String newLine) {
         String text = loadResource(path, cls);
         List<String> splitText = TaskUtils.splitIntoLines(text);
         StringBuilder sb = new StringBuilder();
@@ -56,7 +56,7 @@ public class TestResourceLoader {
         }
         String newText = sb.toString();
         return newText;
-	}
+    }
     
     /*public static List<Token> deserializeTokens(int i, Class<?> cls) {
         String path = String.format("tokens-%02d.json", i);

@@ -112,7 +112,7 @@ public class PersistenceTest {
         };
     }
 
-	@Test(dataProvider = "createTestCodeGenerationRequestPersistenceData")
+    @Test(dataProvider = "createTestCodeGenerationRequestPersistenceData")
     public void testCodeGenerationRequestPersistence(int index, CodeGenerationRequest expected,
             boolean serializeAllAsJson, boolean stream) throws Exception {
         // first, serialize
@@ -305,7 +305,7 @@ public class PersistenceTest {
             }
         }
         return c;
-	}
+    }
 
     static String generateRandomString(Random randGen, boolean includeNewLine) {
         int length = randGen.nextInt(50);

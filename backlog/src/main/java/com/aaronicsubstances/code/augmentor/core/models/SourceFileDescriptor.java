@@ -80,11 +80,11 @@ public class SourceFileDescriptor {
         this.bodySnippets = bodySnippets;
     }
 
-	public String getContentHash() {
+    public String getContentHash() {
         return contentHash;
     }
 
-	public void setContentHash(String contentHash) {
+    public void setContentHash(String contentHash) {
         this.contentHash = contentHash;
     }
 

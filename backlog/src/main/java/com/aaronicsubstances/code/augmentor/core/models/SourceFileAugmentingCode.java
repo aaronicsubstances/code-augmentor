@@ -46,13 +46,13 @@ public class SourceFileAugmentingCode {
         this.augmentingCodeList = augmentingCodeList;
     }
 
-	public void serialize(Object serializer) throws Exception {
+    public void serialize(Object serializer) throws Exception {
         PrintWriter writer = ((PersistenceUtil) serializer).getPrintWriter();
         String s = PersistenceUtil.serializeCompactlyToJson(this);
         writer.println(s);
     }
 
-	public static SourceFileAugmentingCode deserialize(Object deserializer) throws Exception {
+    public static SourceFileAugmentingCode deserialize(Object deserializer) throws Exception {
         BufferedReader reader = ((PersistenceUtil) deserializer).getBufferedReader();
         String line;
         while ((line = reader.readLine()) != null) {

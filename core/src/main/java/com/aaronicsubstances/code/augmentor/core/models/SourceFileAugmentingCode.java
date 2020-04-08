@@ -44,14 +44,14 @@ public class SourceFileAugmentingCode {
         this.augmentingCodeList = augmentingCodeList;
     }
 
-	public void serialize(Object serializer) throws Exception {
+    public void serialize(Object serializer) throws Exception {
         PersistenceUtil persistenceUtil = (PersistenceUtil) serializer;
         String json = PersistenceUtil.serializeCompactlyToJson(this);
         persistenceUtil.println(json);
         persistenceUtil.flush();
     }
 
-	public static SourceFileAugmentingCode deserialize(Object deserializer) throws Exception {
+    public static SourceFileAugmentingCode deserialize(Object deserializer) throws Exception {
         PersistenceUtil persistenceUtil = (PersistenceUtil) deserializer;
         SourceFileAugmentingCode[] entireList = (SourceFileAugmentingCode[])persistenceUtil
             .getContent();

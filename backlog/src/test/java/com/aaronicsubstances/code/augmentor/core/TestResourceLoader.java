@@ -41,8 +41,8 @@ public class TestResourceLoader {
         }
     }
 
-	public static String loadResourceNewlinesNormalized(String path,
-			Class<?> cls, String newLine) {
+    public static String loadResourceNewlinesNormalized(String path,
+            Class<?> cls, String newLine) {
         String text = loadResource(path, cls);
         Matcher m = LexerSupport.NEW_LINE_REGEX.matcher(text);
         StringBuffer sb = new StringBuffer();
@@ -56,7 +56,7 @@ public class TestResourceLoader {
         m.appendTail(sb);
         String newText = sb.toString();
         return newText;
-	}
+    }
     
     public static List<Token> deserializeTokens(int i, Class<?> cls) {
         String path = String.format("tokens-%02d.json", i);

@@ -95,10 +95,10 @@ public class CodeAugmentationMojo extends AbstractMojo {
             changeSetInfo.append(genericTask.getDestFiles().get(i).getAbsolutePath());
             changeSetInfo.append(System.lineSeparator());
         }
-		try (Writer fWriter = new OutputStreamWriter(new 
-				FileOutputStream(changeSetInfoFile), Charset.defaultCharset())) {
-			fWriter.write(changeSetInfo.toString());
-		}
+        try (Writer fWriter = new OutputStreamWriter(new 
+                FileOutputStream(changeSetInfoFile), Charset.defaultCharset())) {
+            fWriter.write(changeSetInfo.toString());
+        }
         catch (IOException ex) {
             throw new MojoExecutionException("Failed to write change set information to " +
                 changeSetInfoFile, ex);

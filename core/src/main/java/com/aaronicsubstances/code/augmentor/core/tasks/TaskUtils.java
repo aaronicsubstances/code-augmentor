@@ -16,6 +16,11 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
+
 /**
  * Exposes helper methods for generic tasks
  */
@@ -27,7 +32,7 @@ public class TaskUtils {
      * @return list of lines without line terminators, alternating in pairs with their line terminators.
      * If text doesn't end with a new line, then the last item is null.
      */
-	public static List<String> splitIntoLines(String text) {
+    public static List<String> splitIntoLines(String text) {
         List<String> splitText = new ArrayList<>();
         int lastEndIdx = 0;
         int[] temp = new int[2];
@@ -50,7 +55,7 @@ public class TaskUtils {
             splitText.add(null);
         }
         return splitText;
-	}
+    }
 
     /**
      * Calculates line number given a position in a string.
@@ -60,8 +65,8 @@ public class TaskUtils {
      * 
      * @return line number.
      */
-	public static int calculateLineNumber(String content, int position) {
-		int lineNr = 1; // NB: line number starts from 1.
+    public static int calculateLineNumber(String content, int position) {
+        int lineNr = 1; // NB: line number starts from 1.
         int lastEndIdx = 0;
         int[] temp = new int[2];
         while (true) {
@@ -109,17 +114,27 @@ public class TaskUtils {
         receipt[1] = winLn ? 2 : 1;
     }
 
-	public static boolean isNewLine(char ch) {
-		return ch == '\r' || ch == '\n';
-	}
+    public static boolean isNewLine(char ch) {
+        return ch == '\r' || ch == '\n';
+    }
 
-	public static boolean isEmpty(String s) {
-		return s == null || s.isEmpty();
-	}
+    public static boolean isEmpty(String s) {
+        return s == null || s.isEmpty();
+    }
 
-	public static boolean isBlank(String s) {
-		return s == null || s.trim().isEmpty();
-	}
+    public static boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty();
+    }
+
+    public static boolean isValidJsonArray(String s) {
+        try {
+            JsonElement json = JsonParser.parseString(s);
+            return json instanceof JsonArray;
+        }
+        catch (JsonParseException ex) {
+            return false;
+        }
+    }
 
     public static String readFile(File srcFile, Charset charset) throws IOException {
         ByteArrayOutputStream outStream = new ByteArrayOutputStream();
@@ -155,11 +170,11 @@ public class TaskUtils {
         }
     }
 
-	public static void copyFile(File srcFile, File destFile) throws IOException {
+    public static void copyFile(File srcFile, File destFile) throws IOException {
         try (InputStream inputStream = new FileInputStream(srcFile)) {
             try (OutputStream outputStream = new FileOutputStream(destFile)) {
                 copyStream(inputStream, outputStream);
             }
         }
-	}
+    }
 }

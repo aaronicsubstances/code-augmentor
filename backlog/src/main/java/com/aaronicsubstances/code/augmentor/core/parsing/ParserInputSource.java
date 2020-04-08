@@ -9,8 +9,8 @@ import com.aaronicsubstances.code.augmentor.core.parsing.peg.PositionInfo;
 public class ParserInputSource {
     private String input;
     private int position;
-	
-	private ParserInputSource embeddedInputSource;
+    
+    private ParserInputSource embeddedInputSource;
     private SourceMap sourceMap;
 
     /**
@@ -42,22 +42,22 @@ public class ParserInputSource {
     public void setPosition(int position) {
         this.position = position;
     }
-	
-	public ParserInputSource getEmbeddedInputSource() {
-		return embeddedInputSource;
-	}
-	
-	public void setEmbeddedInputSource(ParserInputSource embeddedInputSource) {
-		this.embeddedInputSource = embeddedInputSource;
-	}
-	
+    
+    public ParserInputSource getEmbeddedInputSource() {
+        return embeddedInputSource;
+    }
+    
+    public void setEmbeddedInputSource(ParserInputSource embeddedInputSource) {
+        this.embeddedInputSource = embeddedInputSource;
+    }
+    
     public SourceMap getSourceMap() {
-		return sourceMap;
-	}
-	
+        return sourceMap;
+    }
+    
     public void setSourceMap(SourceMap sourceMap) {
-		this.sourceMap = sourceMap;
-	}
+        this.sourceMap = sourceMap;
+    }
 
     /**
      * Intended to be used for parsing Java code, and to cater for similar situations, in which
@@ -73,10 +73,10 @@ public class ParserInputSource {
      * @return original input string. 
      */
     public String fixInputCoordinates(int[] inputCoordinates) {
-		return fixInputCoordinates(inputCoordinates, null);
+        return fixInputCoordinates(inputCoordinates, null);
     }
 
-	public String fixInputCoordinates(int[] inputCoordinates, String targetInput) {
+    public String fixInputCoordinates(int[] inputCoordinates, String targetInput) {
         // Yes, use identity comparison rather than equivalence.
         if (input == targetInput) {
             return input;
@@ -93,7 +93,7 @@ public class ParserInputSource {
             return embeddedInputSource.fixInputCoordinates(inputCoordinates);
         }
         return input;
-	}
+    }
 
     /**
      * Generates an appropriate parser exception message with embedded error 

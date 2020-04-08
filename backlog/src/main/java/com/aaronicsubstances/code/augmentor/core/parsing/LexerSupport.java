@@ -78,9 +78,9 @@ public class LexerSupport {
                 ch == '\f' || ch == '\u000b';
     }
 
-	public static boolean isNewLine(int ch) {
-		return ch == '\r' || ch == '\n';
-	}
+    public static boolean isNewLine(int ch) {
+        return ch == '\r' || ch == '\n';
+    }
     
     /**
      * Determines whether ch is a digit (0-9).

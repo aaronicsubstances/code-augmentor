@@ -26,7 +26,7 @@ public class GeneratedCodeFetcher {
         lastFetches = new ArrayList<>();
     }
 
-	public void close() throws Exception {        
+    public void close() throws Exception {        
         for (int i = 0; i < codeGenerationResponses.size(); i++) {
             CodeGenerationResponse instance = codeGenerationResponses.get(i);
             Object codeGenRespRdr = codeGenerationResponseReaders.get(i);
@@ -59,7 +59,7 @@ public class GeneratedCodeFetcher {
     public GeneratedCode getGeneratedCode(int fileIndex, int augCodeIndex, 
             StringBuilder newlineReceiver) throws Exception {
         GeneratedCode nextGenCode = null;
-		for (int i = 0; i < lastFetches.size(); i++) {
+        for (int i = 0; i < lastFetches.size(); i++) {
             CodeGenerationResponse codeGenRes = codeGenerationResponses.get(i);
             SourceFileGeneratedCode fileGenCode = lastFetches.get(i);
             if (fileGenCode != null && fileGenCode.getFileIndex() == fileIndex) {
@@ -82,5 +82,5 @@ public class GeneratedCodeFetcher {
             }
         }
         return nextGenCode;
-	}
+    }
 }

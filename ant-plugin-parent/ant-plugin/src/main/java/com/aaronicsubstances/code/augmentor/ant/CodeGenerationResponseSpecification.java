@@ -15,9 +15,9 @@ public class CodeGenerationResponseSpecification {
         this.genCodeFile = f;
     }
 
-	public void validate() {
+    public void validate() {
         if (genCodeFile == null) {
             throw new BuildException("spec[@gen_code_file] attribute is required");
         }
-	}    
+    }    
 }

@@ -11,17 +11,17 @@ public class PersistenceUtil {
     private static final Gson JSON_CONVERT = new GsonBuilder().setPrettyPrinting().create();
     private static final Gson JSON_CONVERT_COMPACT = new Gson();
 
-	public static String serializeCompactlyToJson(Object obj) {
-		return JSON_CONVERT_COMPACT.toJson(obj);
-	}
+    public static String serializeCompactlyToJson(Object obj) {
+        return JSON_CONVERT_COMPACT.toJson(obj);
+    }
 
-	public static String serializeFormattedToJson(Object obj) {
-		return JSON_CONVERT.toJson(obj);
-	}
+    public static String serializeFormattedToJson(Object obj) {
+        return JSON_CONVERT.toJson(obj);
+    }
 
-	public static <T> T deserializeFromJson(String s, Class<T> cls) {
-		return JSON_CONVERT.fromJson(s, cls);
-	}
+    public static <T> T deserializeFromJson(String s, Class<T> cls) {
+        return JSON_CONVERT.fromJson(s, cls);
+    }
 
     private final BufferedReader bufferedReader;
     private final PrintWriter printWriter;
@@ -50,7 +50,7 @@ public class PersistenceUtil {
         printWriter.flush();
     }
 
-	public String readToEnd() throws IOException {
+    public String readToEnd() throws IOException {
         StringBuilder s = new StringBuilder();
         char[] buf = new char[8192];
         int len;
@@ -58,7 +58,7 @@ public class PersistenceUtil {
             s.append(buf, 0, len);
         }
         return s.toString();
-	}
+    }
 
     public String readLine() throws IOException {
         return bufferedReader.readLine();

@@ -128,9 +128,9 @@ public class CodeAugmentationTask extends Task {
             changeSetInfo.append(System.lineSeparator());
         }
         try (Writer fWriter = new OutputStreamWriter(new 
-				FileOutputStream(changeSetInfoFile), Charset.defaultCharset())) {
-			fWriter.write(changeSetInfo.toString());
-		}
+                FileOutputStream(changeSetInfoFile), Charset.defaultCharset())) {
+            fWriter.write(changeSetInfo.toString());
+        }
         catch (IOException ex) {
             throw new BuildException("Failed to write change set information to " +
                 changeSetInfoFile, ex);

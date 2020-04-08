@@ -99,7 +99,7 @@ public class CodeSnippetDescriptor {
         private int endDirectiveEndPos = 0;
 
         public GeneratedCodeDescriptor() {
-		}
+        }
 
         public GeneratedCodeDescriptor(int startDirectiveStartPos, int startDirectiveEndPos,
                 int endDirectiveStartPos, int endDirectiveEndPos) {
@@ -107,7 +107,7 @@ public class CodeSnippetDescriptor {
             this.startDirectiveEndPos = startDirectiveEndPos;
             this.endDirectiveStartPos = endDirectiveStartPos;
             this.endDirectiveEndPos = endDirectiveEndPos;
-		}
+        }
 
         public int getStartDirectiveStartPos() {
             return startDirectiveStartPos;

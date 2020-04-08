@@ -45,14 +45,14 @@ public class SourceFileGeneratedCode {
         this.generatedCodeList = generatedCodeList;
     }
 
-	public void serialize(Object serializer) throws Exception {
+    public void serialize(Object serializer) throws Exception {
         PersistenceUtil persistenceUtil = (PersistenceUtil) serializer;
         String json = PersistenceUtil.serializeCompactlyToJson(this);
         persistenceUtil.println(json);
         persistenceUtil.flush();
     }
 
-	public static SourceFileGeneratedCode deserialize(Object deserializer) throws Exception {
+    public static SourceFileGeneratedCode deserialize(Object deserializer) throws Exception {
         PersistenceUtil persistenceUtil = (PersistenceUtil) deserializer;
         SourceFileGeneratedCode[] entireList = (SourceFileGeneratedCode[])persistenceUtil
             .getContent();

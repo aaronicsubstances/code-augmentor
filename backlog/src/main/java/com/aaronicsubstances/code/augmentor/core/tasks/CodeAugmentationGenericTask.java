@@ -146,17 +146,17 @@ public class CodeAugmentationGenericTask {
                 }
                 int diff;
                 if (genCodeDescriptor != null) {
-					String genCodeStr = genCode.toString();
+                    String genCodeStr = genCode.toString();
                     diff = transformer.addTransform(genCodeStr, genCodeDescriptor.getStartPos(),
                         genCodeDescriptor.getEndPos());
                     if (!changesDetected) {
                         String prevGenCode = sourceCode.substring(genCodeDescriptor.getStartPos(), 
                             genCodeDescriptor.getEndPos());
-						if (!genCodeStr.equals(prevGenCode)) {
-							if (isSignificantlyDifferent(parsedGenCode, prevGenCode)) {
-								changesDetected = true;
-							}
-						}
+                        if (!genCodeStr.equals(prevGenCode)) {
+                            if (isSignificantlyDifferent(parsedGenCode, prevGenCode)) {
+                                changesDetected = true;
+                            }
+                        }
                     }
                 }
                 else {

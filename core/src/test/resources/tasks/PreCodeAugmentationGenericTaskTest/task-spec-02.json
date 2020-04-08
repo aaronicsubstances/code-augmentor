@@ -6,6 +6,7 @@
 	"prepFile" : "task-spec-02-actual-prep.json",
 	"augCodeDirectives" : [{
 		"file": "task-spec-02-actual-request-0.json",
-		"directives": [ "//JS" ]
+		"directives": [ "//DD" ],
+        "uncheckedDirectives": [ "//JS" ]
 	}]
 }

@@ -57,7 +57,7 @@ public class PreCodeAugmentationTask extends DefaultTask {
         if (totalSuffixCount != allSuffixes.size()) {
             throw new GradleException("Duplicates detected across comment marker suffixes");
         }
-		
+        
         Charset charset = Charset.forName(encoding);
         BiConsumer<Integer, Supplier<String>> logAppender = (logLevel, msgFunc) -> {
             switch (logLevel) {

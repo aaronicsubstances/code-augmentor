@@ -104,7 +104,7 @@ public class PersistenceTest {
         };
     }
 
-	@Test(dataProvider = "createTestCodeGenerationRequestPersistenceData")
+    @Test(dataProvider = "createTestCodeGenerationRequestPersistenceData")
     public void testCodeGenerationRequestPersistence(int index, CodeGenerationRequest expected,
             boolean serializeAllAsJson, boolean stream) throws Exception {
         // first, serialize
@@ -175,6 +175,7 @@ public class PersistenceTest {
                             codeSnippet.setIndex(i);
                             codeSnippet.setDirectiveMarker(generateRandomString(randGen, false));
                             codeSnippet.setIndent(randomIndent(randGen));
+                            codeSnippet.setDataDriven(randGen.nextBoolean());
                             
                             int blockCount = randGen.nextInt(5);
                             for (int k = 0; k < blockCount; k++) {

@@ -82,11 +82,11 @@ public class TaskUtils {
         }
     }
 
-	public static void copyFile(File srcFile, File destFile) throws IOException {
+    public static void copyFile(File srcFile, File destFile) throws IOException {
         try (InputStream inputStream = new FileInputStream(srcFile)) {
             try (OutputStream outputStream = new FileOutputStream(destFile)) {
                 copyStream(inputStream, outputStream);
             }
         }
-	}
+    }
 }

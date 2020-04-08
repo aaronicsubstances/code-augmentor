@@ -75,7 +75,7 @@ public class KotlinParser implements TokenSupplier {
         pegParser.setVerbose(verbose);
     }
 
-	@Override
+    @Override
     public List<Token> parse() {
         List<PegToken> tokenList;
         try {
