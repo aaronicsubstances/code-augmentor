@@ -150,4 +150,51 @@ public class TaskUtilsTest {
             new Object[]{ "_", false }
         };
     }
+
+    @Test(dataProvider = "createTestIsValidJsonArrayData")
+    public void testIsValidJsonArray(String s, boolean expected) {
+        boolean actual = TaskUtils.isValidJsonArray(s);
+        assertEquals(actual, expected);
+    }
+
+    @DataProvider
+    public Object[][] createTestIsValidJsonArrayData() {
+        return new Object[][] {
+            { "", false },
+            { "[", false },
+            { "]", false },
+            { "[]{}", false },
+            { "{}", false },
+            { "\"yes\"", false },
+            { "null", false },
+            { "20", false },
+            { "true", false },
+            { "k", false },
+            { " []", true },
+            { " [1, 3, null, '3']", true },
+            { "[]", true },
+            { "[{}]", true },
+            { "[\n]", true },
+            { "[]\n", true }
+        };
+    }
+
+    @Test(dataProvider = "createTestModifyNameToBeAbsentData")
+    public void testModifyNameToBeAbsent(List<String> names, String originalName,
+            String expected) {
+        String actual = TaskUtils.modifyNameToBeAbsent(names, originalName);
+        assertEquals(actual, expected);
+    }
+
+    @DataProvider
+    public Object[][] createTestModifyNameToBeAbsentData() {
+        return new Object[][]{
+            { Arrays.asList(), "nay", "nay" },
+            { Arrays.asList(), "", "" },
+            { Arrays.asList("nay"), "nay", "nay-1" },
+            { Arrays.asList("so", "hi", "hi-1"), "hi", "hi-2" },
+            { Arrays.asList(""), "", "-1" },
+            { Arrays.asList("sand", "sand-1", "sand-2"), "sand-1", "sand-1-1" }
+        };
+    }
 }

@@ -144,7 +144,7 @@ public class TaskUtils {
         StringBuilder modifiedName = new StringBuilder(originalName);
         int index = 1;
         modifiedName.append("-").append(index);
-        while (names.contains(originalName)) {   
+        while (names.contains(modifiedName.toString())) {
             index++;
             modifiedName.setLength(originalName.length());
             modifiedName.append("-").append(index);

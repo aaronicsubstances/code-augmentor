@@ -3,15 +3,9 @@ package com.aaronicsubstances.code.augmentor.core;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import com.aaronicsubstances.code.augmentor.core.parsing.Token;
 import com.aaronicsubstances.code.augmentor.core.tasks.TaskUtils;
-import com.google.gson.Gson;
-import com.google.gson.annotations.SerializedName;
 
 import org.apache.commons.io.IOUtils;
 
@@ -57,42 +51,4 @@ public class TestResourceLoader {
         String newText = sb.toString();
         return newText;
     }
-    
-    /*public static List<Token> deserializeTokens(int i, Class<?> cls) {
-        String path = String.format("tokens-%02d.json", i);
-        String text = TestResourceLoader.loadResource(path, cls);
-        Gson gson = new Gson();
-        TokenLike[] tokens = gson.fromJson(text, TokenLike[].class);
-        
-        return Arrays.stream(tokens).map(t -> t.toToken()).collect(Collectors.toList());
-    }*/
-
-    /*public static class TokenLike {
-        public int type;
-        public String text;
-        public int startPos;
-        public int endPos;
-        public int lineNumber;
-        public Value value;
-
-        public static class Value {
-            @SerializedName("import")
-            public String _import;
-            public boolean ws_reqd;
-        }
-
-        public Token toToken() {
-            Token t = new Token(type, text, startPos, endPos, lineNumber);
-            if (value != null) {
-                t.value = new HashMap<>();
-                if (value._import != null) {
-                    t.value.put(Token.VALUE_KEY_IMPORT_STATEMENT, value._import);
-                }
-                if (value.ws_reqd) {
-                    t.value.put(Token.VALUE_KEY_WS_REQD, true);
-                }
-            }
-            return t;
-        }
-    }*/
 }

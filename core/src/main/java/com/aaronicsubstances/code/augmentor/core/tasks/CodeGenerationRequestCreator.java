@@ -109,31 +109,20 @@ public class CodeGenerationRequestCreator {
             augmentingCode.setIndent(augCodeDescriptor.getIndent());
             augmentingCode.setDirectiveMarker(firstToken.directiveMarker);
             augmentingCode.setDataDriven(!firstToken.uncheckedAugCodeDirective);
-
+            
             // d. validate data-driven string block as valid JSON array.
             if (augmentingCode.isDataDriven()) {
-                if (blocks.size() != 2) {                    
+                boolean isValidJsonArray = TaskUtils.isValidJsonArray(blocks.get(1).getContent());
+                if (!isValidJsonArray) {
+                    Token embStrTokenStart = augCodeSection.get(1);
                     ParserException error = createParserException(
-                        "Missing embedded string section of data-driven augmenting code.", 
-                        firstToken, sourceDescriptor);
+                        "Embedded string section of data-driven augmenting code must be a " +
+                        "valid JSON array", 
+                        embStrTokenStart, sourceDescriptor);
                     if (errors == null) {
                         throw error;
                     }
                     errors.add(error);
-                }
-                else {
-                    boolean isValidJsonArray = TaskUtils.isValidJsonArray(blocks.get(1).getContent());
-                    if (!isValidJsonArray) {
-                        Token embStrTokenStart = augCodeSection.get(1);
-                        ParserException error = createParserException(
-                            "Embedded string section of data-driven augmenting code must be a " +
-                            "valid JSON array", 
-                            embStrTokenStart, sourceDescriptor);
-                        if (errors == null) {
-                            throw error;
-                        }
-                        errors.add(error);
-                    }
                 }
             }
             
@@ -295,29 +284,35 @@ public class CodeGenerationRequestCreator {
                 case DIRECTIVE_TYPE_AUG_CODE:
                 case DIRECTIVE_TYPE_EMB_STRING:
                     if (expectedLineNumber == 0 || expectedLineNumber == t.lineNumber) {
-                        expectedLineNumber = t.lineNumber + 1;
+                        // all's well. don't create a new group before adding token.
                     }
                     else {
+                        // line number is not what's expected.
+                        // create a new group, before adding token.
                         assert !currentGroup.isEmpty();
                         groups.add(currentGroup);
                         currentGroup = new ArrayList<>();
-                        expectedLineNumber = 0;
                     }
                     currentGroup.add(t);
+                    expectedLineNumber = t.lineNumber + 1;
                     break;
                 default:
                     if (!currentGroup.isEmpty()) {
+                        // Expected aug/emb directive but found something else. 
+                        // Create new group.
                         groups.add(currentGroup);
                         currentGroup = new ArrayList<>();
+                        // set to 0 so a new aug/emb token is definitely added. 
                         expectedLineNumber = 0;
                     }
                     if (t.directiveType == DIRECTIVE_TYPE_DISABLE_SCAN) {
                         scanEnabled = false;
-                    }  
+                    }
                     break;
             }
         }
         if (!currentGroup.isEmpty()) {
+            // Create final group.
             groups.add(currentGroup);
         }
         return groups;
@@ -352,6 +347,15 @@ public class CodeGenerationRequestCreator {
                                 "only start a section", token, sourceDescriptor);
                         }
                         break;
+                }
+            }
+
+            // ensure data-driven aug code section has an embedded string token.
+            if (!expectedUncheckedStatus) {
+                if (tokenGroup.size() < 2) {                    
+                    return createParserException(
+                        "Missing embedded string section of data-driven augmenting code.", 
+                        tokenGroup.get(0), sourceDescriptor);
                 }
             }
         }
@@ -459,9 +463,12 @@ public class CodeGenerationRequestCreator {
 
     private static ParserException createParserException(String errorMessage, Token token,
             SourceFileDescriptor sourceDescriptor) {
-        String fullMessage = String.format("in %s at line %s: %s\n\n%s",
-            new File(sourceDescriptor.getDir(), sourceDescriptor.getRelativePath()),
+        String fullMessage = String.format("at line %s: %s\n\n%s",
             token.lineNumber, errorMessage, token.text);
-        return new ParserException(fullMessage);
+        if (sourceDescriptor != null) {
+            fullMessage = "in " + new File(sourceDescriptor.getDir(),
+                sourceDescriptor.getRelativePath()) + " " + fullMessage;
+        }
+        return new ParserException(token.lineNumber, fullMessage);
     }
 }

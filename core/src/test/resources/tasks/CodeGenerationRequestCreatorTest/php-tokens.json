@@ -1,0 +1,74 @@
+[
+    {
+        "text": ""
+    },
+    {
+        "text": "<?php "
+    },
+    {
+        "text": "  "
+    },
+    {
+        "text": "namespace Geeks; "
+    },
+    {
+        "text": "//GS"
+    },
+    {
+        "text": "  "
+    },
+    {
+        "text": "//GS"
+    },
+    {
+        "text": "class GFG { "
+    },
+    {
+        "text": "//GE"
+    },
+    {
+        "text": "    static public function demo() { "
+    },
+    {
+        "text": "        print \"GeeksForGeeks\n\"; "
+    },
+    {
+        "text": "    } "
+    },
+    {
+        "text": "//-7 println(\"Hello\")"
+    },
+    {
+        "text": "} "
+    },
+    {
+        "text": "//-2 println( "
+    },
+    {
+        "text": "//ES World"
+    },
+    {
+        "text": "//-2 )"
+    },
+    {
+        "text": "  "
+    },
+    {
+        "text": "call_user_func(__NAMESPACE__ .'\\GFG::demo');  "
+    },
+    {
+        "text": "  "
+    },
+    {
+        "text": "// Another way of declaration "
+    },
+    {
+        "text": "call_user_func(array(__NAMESPACE__ .'\\GFG', 'demo'));  "
+    },
+    {
+        "text": "  "
+    },
+    {
+        "text": "?> "
+    }
+]
