@@ -1,6 +1,7 @@
 package com.aaronicsubstances.code.augmentor.core.tasks;
 
 import java.io.File;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -15,12 +16,29 @@ public class GeneratedCodeFetcher {
     private final List<SourceFileGeneratedCode> lastFetches;
 
     public GeneratedCodeFetcher(List<File> generatedCodeFiles) throws Exception {
+        this(generatedCodeFiles.toArray());
+    }
+
+    /**
+     * For testing purposes.
+     * @param codeGenerationResponseSources array of files or strings.
+     * @throws Exception
+     */
+    GeneratedCodeFetcher(Object[] codeGenerationResponseSources) throws Exception {
         this.codeGenerationResponses = new ArrayList<>();
         this.codeGenerationResponseReaders = new ArrayList<>();
-        for (File f : generatedCodeFiles) {
+        for (Object codeGenerationResponseSource : codeGenerationResponseSources) {
             CodeGenerationResponse instance = new CodeGenerationResponse();
             codeGenerationResponses.add(instance);
-            Object codeGenRespRdr = instance.beginDeserialize(f);
+            Object codeGenRespRdr;
+            if (codeGenerationResponseSource instanceof File) {
+                codeGenRespRdr = instance.beginDeserialize((File) codeGenerationResponseSource);
+            }
+            else {
+                // must be string for testing purposes.
+                String serializedSource = (String) codeGenerationResponseSource;
+                codeGenRespRdr = instance.beginDeserialize(new StringReader(serializedSource));
+            }
             codeGenerationResponseReaders.add(codeGenRespRdr);
         }
         lastFetches = new ArrayList<>();
@@ -75,7 +93,7 @@ public class GeneratedCodeFetcher {
                         newlineReceiver.append(codeGenRes.getNewline());
                     }
                     else {
-                        newlineReceiver.append(System.lineSeparator());
+                        newlineReceiver.setLength(0);
                     }
                     break;
                 }

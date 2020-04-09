@@ -80,7 +80,6 @@ public class CodeAugmentationGenericTask {
                 StringBuilder newlineReceiver = new StringBuilder();
                 GeneratedCode genCode = generatedCodeFetcher.getGeneratedCode(sourceFileDescriptor.getFileIndex(), 
                     augCodeIndex, newlineReceiver);
-                String newline = newlineReceiver.toString();
                 if (genCode == null) {
                     throw new GenericTaskException("Could not find generated code for " +
                         describeAugCodeSection(sourceCode, augCodeDescriptor, srcFile));
@@ -99,6 +98,11 @@ public class CodeAugmentationGenericTask {
                 int[] replacementRange = determineReplacementRange(snippetDescriptor,
                     genCode);
                 replacementRanges.add(replacementRange);
+
+                String newline = System.lineSeparator();
+                if (newlineReceiver.length() > 0) {
+                    newline = newlineReceiver.toString();
+                }
 
                 String formattedGenCode = ensureEndingNewline(genCode.getBodyContent(),
                     newline);

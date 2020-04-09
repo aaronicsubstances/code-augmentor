@@ -27,10 +27,7 @@ public class CodeGenerationRequestCreator {
             ParserException error = validateAugCodeSection(augCodeSection,
                 srcFile);
             if (error != null) {
-                if (errors == null) {
-                    throw error;
-                }
-                errors.add(error);
+                saveOrThrowError(error, errors);
             }
         }
 
@@ -84,10 +81,7 @@ public class CodeGenerationRequestCreator {
                             "Embedded JSON section of augmenting code is not " +
                             "valid.",
                             blockStartToken, srcFile);
-                        if (errors == null) {
-                            throw error;
-                        }
-                        errors.add(error);
+                        saveOrThrowError(error, errors);
                     }
                 }
             }
@@ -131,12 +125,7 @@ public class CodeGenerationRequestCreator {
                         ParserException error = createParserException(
                             "Generated code section must end with a newline", 
                             t, srcFile);
-                        if (errors != null) {
-                            errors.add(error);
-                        }
-                        else {
-                            throw error;
-                        }
+                        saveOrThrowError(error, errors);
                     }
                 }
                 continue;
@@ -150,12 +139,7 @@ public class CodeGenerationRequestCreator {
                     ParserException error = createParserException(
                         "Augmenting code section must end with a newline", 
                         t, srcFile);
-                    if (errors != null) {
-                        errors.add(error);
-                    }
-                    else {
-                        throw error;
-                    }
+                    saveOrThrowError(error, errors);
                 }
             }
             switch (t.type) {
@@ -336,5 +320,12 @@ public class CodeGenerationRequestCreator {
             fullMessage = "in " + srcFile + " " + fullMessage;
         }
         return new ParserException(token.lineNumber, fullMessage);
+    }
+
+    private static void saveOrThrowError(ParserException error, List<ParserException> errors) {
+        if (errors == null) {
+            throw error;
+        }
+        errors.add(error);
     }
 }
