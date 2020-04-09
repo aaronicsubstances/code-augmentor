@@ -1,4 +1,4 @@
-package com.aaronicsubstances.code.augmentor.core.parsing;
+package com.aaronicsubstances.code.augmentor.core.util;
 
 /**
  * Exception thrown during course of parsing operations.

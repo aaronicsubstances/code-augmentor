@@ -25,7 +25,8 @@ public class PreCodeAugmentationGenericTaskTest {
 
     public static class TaskLite {
         public String[] relativePaths;
-        public String[] genCodeStartDirectives, genCodeEndDirectives, embeddedStringDirectives;
+        public String[] genCodeStartDirectives, genCodeEndDirectives;
+        public String[] embeddedStringDirectives, embeddedJsonDirectives;
         public AugCodeSpec[] augCodeDirectives;
 
         public String prepFile;
@@ -33,7 +34,6 @@ public class PreCodeAugmentationGenericTaskTest {
         public static class AugCodeSpec {
             public String file;
             public String[] directives;
-            public String[] uncheckedDirectives;
         }
     }
     
@@ -60,21 +60,21 @@ public class PreCodeAugmentationGenericTaskTest {
         task.setPrepFile(new File(tempDir, taskSpec.prepFile));
 
         task.setAugCodeProcessingSpecs(Arrays.asList(taskSpec.augCodeDirectives).stream()
-            .map(x -> new AugCodeProcessingSpec(
-                x.directives == null ? null : Arrays.asList(x.directives),
-                x.uncheckedDirectives == null ? null : Arrays.asList(x.uncheckedDirectives), 
-                new File(tempDir, x.file)))
+            .map(x -> new AugCodeProcessingSpec(new File(tempDir, x.file),
+                Arrays.asList(x.directives)))
             .collect(Collectors.toList()));
 
         task.setGenCodeStartDirectives(Arrays.asList(taskSpec.genCodeStartDirectives));
         task.setGenCodeEndDirectives(Arrays.asList(taskSpec.genCodeEndDirectives));
         task.setEmbeddedStringDirectives(Arrays.asList(
             taskSpec.embeddedStringDirectives));
+        task.setEmbeddedJsonDirectives(Arrays.asList(
+            taskSpec.embeddedJsonDirectives));
 
         return task;
     }
 
-    @Test(dataProvider = "createTestExecuteData")
+    //@Test(dataProvider = "createTestExecuteData")
     public void testExecute(String jsonPath) throws Exception {
         PreCodeAugmentationGenericTask task = deserialize(jsonPath);
         String expectedPrepFileContents = TestResourceLoader.loadResource(

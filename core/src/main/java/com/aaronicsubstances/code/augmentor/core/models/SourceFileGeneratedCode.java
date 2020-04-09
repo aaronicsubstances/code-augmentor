@@ -2,7 +2,7 @@ package com.aaronicsubstances.code.augmentor.core.models;
 
 import java.util.List;
 
-import com.aaronicsubstances.code.augmentor.core.persistence.PersistenceUtil;
+import com.aaronicsubstances.code.augmentor.core.util.PersistenceUtil;
 import com.google.gson.annotations.SerializedName;
 
 public class SourceFileGeneratedCode {

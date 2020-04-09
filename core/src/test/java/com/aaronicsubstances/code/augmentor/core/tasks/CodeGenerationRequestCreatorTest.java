@@ -4,9 +4,7 @@ import static org.testng.Assert.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.aaronicsubstances.code.augmentor.core.TestResourceLoader;
@@ -15,9 +13,9 @@ import com.aaronicsubstances.code.augmentor.core.models.AugmentingCode.Block;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.AugmentingCodeDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.GeneratedCodeDescriptor;
-import com.aaronicsubstances.code.augmentor.core.models.SourceFileDescriptor;
-import com.aaronicsubstances.code.augmentor.core.parsing.ParserException;
-import com.aaronicsubstances.code.augmentor.core.parsing.Token;
+import com.aaronicsubstances.code.augmentor.core.util.ParserException;
+import com.aaronicsubstances.code.augmentor.core.util.SourceCodeTokenizerTest;
+import com.aaronicsubstances.code.augmentor.core.util.Token;
 import com.google.gson.Gson;
 
 import org.testng.annotations.DataProvider;
@@ -25,22 +23,15 @@ import org.testng.annotations.Test;
 
 public class CodeGenerationRequestCreatorTest {
 
-    /*@Test(dataProvider = "createTestProcessSourceFileData")
-    public void testProcessSourceFile(String sourceName, SourceFileDescriptor expected,
+    //@Test(dataProvider = "createTestProcessSourceFileData")
+    public void testProcessSourceFile(String sourceName, List<CodeSnippetDescriptor> expected,
             List<AugmentingCode> expectedAug1,
             List<AugmentingCode> expectedAug2) {
-        String s = TestResourceLoader.loadResource(sourceName, getClass());
-        List<Token> sourceTokens = fetchTokens(s);
-        StringBuilder input = new StringBuilder(); 
-        for (Token t : sourceTokens) {
-            input.append(t.text);
-        }
-        ParserInputSource inputSource = new ParserInputSource(input.toString());
+        List<Token> sourceTokens = SourceCodeTokenizerTest.fetchTokens(sourceName);
         List<List<AugmentingCode>> specAugCodesList = Arrays.asList(new ArrayList<>(),
             new ArrayList<>());
-        CodeGenerationRequestCreator instance = createInstance();
-        SourceFileDescriptor actual = instance.processSourceFile(inputSource, sourceTokens, 
-            specAugCodesList, null);
+        List<CodeSnippetDescriptor> actual = CodeGenerationRequestCreator.processSourceFile( 
+            sourceTokens, null, specAugCodesList, null);
         assertEquals(actual, expected);
         assertEquals(specAugCodesList.get(0), expectedAug1);
         assertEquals(specAugCodesList.get(1), expectedAug2);
@@ -48,237 +39,76 @@ public class CodeGenerationRequestCreatorTest {
 
     @DataProvider
     public Object[][] createTestProcessSourceFileData() {
-        SourceFileDescriptor first = new SourceFileDescriptor(new ArrayList<>());
+        List<CodeSnippetDescriptor> first = new ArrayList<>();
+
         List<CodeSnippetDescriptor> bodySnippets2 = Arrays.asList(
-            new CodeSnippetDescriptor(createAugCodeDescriptor(true, null, 728, 804, 0), null),
-            new CodeSnippetDescriptor(createAugCodeDescriptor(false, "    ", 1042, 1063, 1),
-                new GeneratedCodeDescriptor(1063, 1065))
+            new CodeSnippetDescriptor(createAugCodeDescriptor(null, 728, 804, 0), null),
+            new CodeSnippetDescriptor(createAugCodeDescriptor("    ", 1042, 1063, 1), 
+                new GeneratedCodeDescriptor(0, 0, 0, 0))
         );
-        SourceFileDescriptor second = new SourceFileDescriptor(bodySnippets2);
         List<AugmentingCode> secondJs = Arrays.asList(
-            createAugCode(0, "JS", new Block(
+            createAugCode(null, 0, "JS", new Block(
                 " println(\"Hello World from JS-star\")\r\n" +
             "var i = 3 + new Date(); \r\n" +
-            "...etc", false)),
-            createAugCode(1, "JS", new Block(" println(\"Hello\")", false))
+            "...etc", false, false)),
+            createAugCode(" ", 1, "JS", new Block(" println(\"Hello\")", false, false))
         );
 
         // Data for 3rd test
         List<CodeSnippetDescriptor> bodySnippets3 = Arrays.asList(
-            new CodeSnippetDescriptor(createAugCodeDescriptor(true, null, 59, 135, 0), null),
-            new CodeSnippetDescriptor(createAugCodeDescriptor(false, "", 493, 514, 1),
-                new GeneratedCodeDescriptor(514, 516)),
-            new CodeSnippetDescriptor(createAugCodeDescriptor(false, "        ", 560, 581, 2),
-                new GeneratedCodeDescriptor(581, 583))
+            new CodeSnippetDescriptor(createAugCodeDescriptor(null, 59, 135, 0), null),
+            new CodeSnippetDescriptor(createAugCodeDescriptor("", 493, 514, 1),
+                new GeneratedCodeDescriptor(600, 610, 630, 640)),
+            new CodeSnippetDescriptor(createAugCodeDescriptor("        ", 560, 581, 2), null)
         );
-        SourceFileDescriptor third = new SourceFileDescriptor(bodySnippets3);
         List<AugmentingCode> thirdJs = Arrays.asList(
-            createAugCode(0, "JS", new Block(
+            createAugCode(null, 0, "JS", new Block(
                 " println(\"Hello World from JS-star\")\r\n" +
             "var i = 3 + new Date(); \r\n" +
-            "...etc", false)),
-            createAugCode(1, "JS", new Block(" println(\"World\")", false)),
-            createAugCode(2, "JS", new Block(" println(\"Hello\")", false))
+            "...etc", false, false)),
+            createAugCode(" ", 1, "JS", new Block(" println(\"World\")", false, false)),
+            createAugCode(null, 2, "JS", new Block(" println(\"Hello\")", false, false))
         );
         return new Object[][]{
             new Object[]{ "tokens-for-import.json", 
                 first, Arrays.asList(), Arrays.asList() },
             new Object[]{ "tokens-for-generated-code-descriptor.json", 
-                second, secondJs, Arrays.asList() },
+                bodySnippets2, secondJs, Arrays.asList() },
             new Object[]{ "tokens-for-relevance.json", 
-                third, thirdJs, Arrays.asList() }
+                bodySnippets3, thirdJs, Arrays.asList() }
         };
     }
 
-    private static CodeGenerationRequestCreator createInstance() {
-        List<String> genCodeStartSuffixes = Arrays.asList("GS");
-        List<String> genCodeEndSuffixes = Arrays.asList("GE");
-        List<String> embeddedStringDoubleSlashSuffixes = Arrays.asList("ES");
-        List<List<String>> requestSpecList = Arrays.asList(
-            Arrays.asList("JS"), Arrays.asList("PY", "PY30")
-        );
-        CodeGenerationRequestCreator instance = new CodeGenerationRequestCreator(
-            genCodeStartSuffixes, genCodeEndSuffixes,
-            embeddedStringDoubleSlashSuffixes, requestSpecList);
-        return instance;
-    }
-
-    private static SuffixDescriptor createSuffixDescriptor(String suffixDescStr) {
-        int suffixType, augCodeSpecIndex = -1;
-        if (suffixDescStr.equals("GE")) {
-            suffixType = CodeGenerationRequestCreator.SUFFIX_TYPE_GEN_CODE_END;
-        }
-        else if (suffixDescStr.equals("GS")) {
-            suffixType = CodeGenerationRequestCreator.SUFFIX_TYPE_GEN_CODE_START;
-        }
-        else if (suffixDescStr.equals("ES")) {
-            suffixType = CodeGenerationRequestCreator.SUFFIX_TYPE_EMB_STRING;
-        }
-        else if (suffixDescStr.equals("JS")) {
-            suffixType = CodeGenerationRequestCreator.SUFFIX_TYPE_AUG_CODE;
-            augCodeSpecIndex = 0;
-        }
-        else {
-            suffixType = CodeGenerationRequestCreator.SUFFIX_TYPE_AUG_CODE;
-            augCodeSpecIndex = Integer.parseInt(suffixDescStr);
-        }
-        SuffixDescriptor suffixDescriptor = new SuffixDescriptor(
-            augCodeSpecIndex != -1 ? "JS" : suffixDescStr, suffixType, augCodeSpecIndex);
-        return suffixDescriptor;
-    }
-
-    private static AugmentingCode createAugCode(String suffix, Block... blocks) {        
-        return createAugCode(0, suffix, blocks);
-    }
-
-    private static AugmentingCode createAugCode(int index, String suffix, Block... blocks) {        
+    private static AugmentingCode createAugCode(String indent, int index, String directiveMarker,
+            Block... blocks) {        
         AugmentingCode augCode = new AugmentingCode(Arrays.asList(blocks));
-        augCode.setDirectiveMarker(suffix);
+        augCode.setDirectiveMarker(directiveMarker);
         augCode.setIndex(index);
+        augCode.setIndent(indent != null ? indent : "");
         return augCode;
     }
 
     private static AugmentingCodeDescriptor createAugCodeDescriptor(
-            boolean isSlashStar, String indent, int startPos, int endPos, int index) {        
+            String indent, int startPos, int endPos, int index) {        
         AugmentingCodeDescriptor augCodeDesc = new AugmentingCodeDescriptor();
-        augCodeDesc.setAnnotatedWithSlashStar(isSlashStar);
-        augCodeDesc.setIndent(indent);
+        augCodeDesc.setIndent(indent != null ? indent : "");
         augCodeDesc.setStartPos(startPos);
         augCodeDesc.setEndPos(endPos);
         augCodeDesc.setIndex(index);
         return augCodeDesc;
     }
 
-    private static List<Token> fetchTokens(String s) {
-        TokenLite[] ts = new Gson().fromJson(s, TokenLite[].class);
-        List<Token> tokens = new ArrayList<>();
-        int startPos = 0;
-        for (TokenLite t : ts) {
-            Token token = newToken(t.lineNumber, t.text, startPos);
-            if (t.value != null) {
-                token.value = new HashMap<>();
-                token.value.put(Token.VALUE_KEY_IMPORT_STATEMENT, t.value);
-            }
-            tokens.add(token);
-            startPos = token.endPos;
-        }
-        return tokens;
-    }
-
-    private static Token newToken(int lineNumber, String suffixDescStr) {        
-        SuffixDescriptor suffixDescriptor = createSuffixDescriptor(suffixDescStr);
-        Map<String, Object> tokenAttributes = new HashMap<>();
-        tokenAttributes.put(CodeGenerationRequestCreator.TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR,
-            suffixDescriptor);
-        // assume single char per line.
-        int startPos = (lineNumber - 1) * 2;
-        int endPos = startPos + 2;
-        Token t = new Token(0, null, startPos, endPos, lineNumber);
-        t.value = tokenAttributes;
-        return t;
-    }
-
-    private static Token newToken(int lineNumber, String suffixDescStr, 
-            String indent, String comment) {
-        Map<String, Object> tokenAttributes = new HashMap<>();
-        SuffixDescriptor suffixDescriptor = createSuffixDescriptor(suffixDescStr);
-        tokenAttributes.put(CodeGenerationRequestCreator.TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR,
-            suffixDescriptor);
-        tokenAttributes.put(CodeGenerationRequestCreator.TOKEN_ATTRIBUTE_INDENT,
-            indent);
-        tokenAttributes.put(CodeGenerationRequestCreator.TOKEN_ATTRIBUTE_FF_NEWLINE,
-            new Token(Token.TYPE_NEWLINE, "\n", 0, 0, lineNumber));
-        Token t = new Token(Token.TYPE_SINGLE_LINE_COMMENT, comment, 0, 0, 
-            lineNumber);
-        t.value = tokenAttributes;
-        return t;
-    }
-
-    private static Token newToken(int lineNumber, String text, int startPos,
-            String suffixDescStr, int tokenIndex,
-            String indent, Token ffNewline) {
-        Map<String, Object> tokenAttributes = new HashMap<>();
-        SuffixDescriptor suffixDescriptor = createSuffixDescriptor(suffixDescStr);
-        tokenAttributes.put(CodeGenerationRequestCreator.TOKEN_ATTRIBUTE_SUFFIX_DESCRIPTOR,
-            suffixDescriptor);
-        tokenAttributes.put(CodeGenerationRequestCreator.TOKEN_ATTRIBUTE_INDEX_IN_SOURCE,
-            tokenIndex);
-        if (indent != null) {
-            tokenAttributes.put(CodeGenerationRequestCreator.TOKEN_ATTRIBUTE_INDENT,
-                indent);
-        }
-        if (ffNewline != null) {
-            tokenAttributes.put(CodeGenerationRequestCreator.TOKEN_ATTRIBUTE_FF_NEWLINE,
-                ffNewline);
-        }
-        Token t = newToken(lineNumber, text, startPos);
-        t.value = tokenAttributes;
-        return t;
-    }
-
-    private static Token newTokenWithLnNum(int lineNumber) {
-        return new Token(0, null, 0, 0, lineNumber);
-    }
-
-    private static Token newTokenWithStartPos(int startPos) {
-        return new Token(0, null, startPos, 0, 0);
-    }
-
-    static class TokenLite {
-        int lineNumber;
-        String text;
-        String value;
-    }
-
-    private static Token newToken(int lineNumber, String text, int startPos) {
-        int type;
-        switch (text) {
-            case "\r\n":
-            case "\n":
-                type = Token.TYPE_NEWLINE;
-                break;
-            default:
-                if (text.startsWith("#!")) {
-                    type = Token.TYPE_SHEBANG;
-                }
-                else if (text.startsWith("package")) {
-                    type = Token.TYPE_PACKAGE_STATEMENT;
-                }
-                else if (text.startsWith("import")) {
-                    type = Token.TYPE_IMPORT_STATEMENT;
-                }
-                else if (text.startsWith("//")) {
-                    type = Token.TYPE_SINGLE_LINE_COMMENT;
-                }
-                else if (text.startsWith("/*")) {
-                    type = Token.TYPE_MULTI_LINE_COMMENT;
-                }
-                else if (text.startsWith(" ")) {
-                    type = Token.TYPE_NON_NEWLINE_WHITESPACE;
-                }
-                else if (text.startsWith("\"") && text.length() > 1) {
-                    type = Token.TYPE_LITERAL_STRING_CONTENT;
-                    text = text.substring(1, text.length() - 1);
-                }
-                else {
-                    type = Token.TYPE_OTHER;
-                }
-                break;
-        }
-        int endPos = startPos + text.length();
-        Token token = new Token(type, text, startPos, endPos, lineNumber);
-        return token;
-    }*/
-
     @Test(dataProvider = "createTestIdentifyAugCodeSectionsData")
-    public void testIdentifyAugCodeSections(List<Token> tokens, List<List<Token>> expected) {
-        List<List<Token>> actual = CodeGenerationRequestCreator.identifyAugCodeSections(tokens,
-            null, null);
-        assertEquals(actual, expected);
+    public void testIdentifyAugCodeSections(TestArgWrapper tokens, TestArgWrapper expected) {
+        List<List<Token>> actual = CodeGenerationRequestCreator.identifyAugCodeSections(
+            tokens.tokens, null, null);
+        assertEquals(actual, expected.tokenGroups);
     }
 
     @DataProvider
     public Object[][] createTestIdentifyAugCodeSectionsData() {
+        // test with initial data excluding enable/disable scans, or
+        // generated code sections.
         List<Token> secondTokenList = Arrays.asList(
             newTokenWithLnNum(1, "//00"), newTokenWithLnNum(3, "//01"),
             newTokenWithLnNum(5, "//01"), newTokenWithLnNum(7, "//01"));
@@ -316,45 +146,76 @@ public class CodeGenerationRequestCreatorTest {
         List<Token> sixthList = Arrays.asList(
             newTokenWithLnNum(10, "//01"));
 
-        // test enable/disable scans
+        // test disable scan.
         List<Token> seventhList = new ArrayList<>(fifthTokenList);
         seventhList.add(0, newTokenWithLnNum(1, "//--"));
 
+        // test that generated code section doesn't recognize
+        // disable/enable scans.
         List<Token> eighthList = new ArrayList<>(fifthTokenList);
-        eighthList.add(newTokenWithLnNum(21, "//--"));
-        eighthList.add(newTokenWithLnNum(22, "//ES"));
+        eighthList.add(newTokenWithLnNum(21, "//GS"));
+        eighthList.add(newTokenWithLnNum(22, "//--"));
+        eighthList.add(newTokenWithLnNum(23, "//GE"));
+        eighthList.add(newTokenWithLnNum(24, "//ES"));
 
+        List<List<Token>> eighthGroup = Arrays.asList(
+            Arrays.asList(
+                newTokenWithLnNum(10, "//00")),
+            Arrays.asList(
+                newTokenWithLnNum(12, "//01"), newTokenWithLnNum(13, "//ES")), 
+            Arrays.asList(
+                newTokenWithLnNum(15, "//01"), newTokenWithLnNum(16, "//01")),            
+            Arrays.asList(
+                newTokenWithLnNum(20, "//00")),
+            Arrays.asList(
+                newTokenWithLnNum(24, "//ES")));
+        
+        // test that disable/enable scans don't recognize generated code section.
         List<Token> ninthTokenList = Arrays.asList(
-            newTokenWithLnNum(10, "//01"), newTokenWithLnNum(11, "//--"),
-            newTokenWithLnNum(12, "//01"), newTokenWithLnNum(13, "//++"),
-            newTokenWithLnNum(14, "//GE"), newTokenWithLnNum(15, "//03"));
+            newTokenWithLnNum(10, "//--"), newTokenWithLnNum(11, "//01"),
+            newTokenWithLnNum(12, "//--"), newTokenWithLnNum(13, "//01"),
+            newTokenWithLnNum(14, "//GS"), newTokenWithLnNum(15, "//GE"),
+            newTokenWithLnNum(22, "//02"), newTokenWithLnNum(33, "//01"),
+            newTokenWithLnNum(36, "//++"), newTokenWithLnNum(37, "//01"),
+            newTokenWithLnNum(38, "//++"), newTokenWithLnNum(39, "//03"));
         List<List<Token>> ninthGroup = Arrays.asList(
+            Arrays.asList(
+                newTokenWithLnNum(37, "//01")),
+            Arrays.asList(
+                newTokenWithLnNum(39, "//03")));
+ 
+        List<Token> tenthTokenList = Arrays.asList(
+            newTokenWithLnNum(10, "//01"), newTokenWithLnNum(11, "//--"),
+            newTokenWithLnNum(12, "//GS"), newTokenWithLnNum(13, "//++"),
+            newTokenWithLnNum(14, "//GE"), newTokenWithLnNum(15, "//03"));
+        List<List<Token>> tenthGroup = Arrays.asList(
             Arrays.asList(
                 newTokenWithLnNum(10, "//01")),
             Arrays.asList(
                 newTokenWithLnNum(15, "//03")));
 
+        TestArgWrapper tArg = new TestArgWrapper();
         return new Object[][] {
-            { Arrays.asList(), Arrays.asList() },
-            { secondTokenList, 
-                secondTokenList.stream()
+            { tArg.wrapTokens(Arrays.asList()), tArg.wrapTokenGroups(Arrays.asList()) },
+            { tArg.wrapTokens(secondTokenList), tArg.wrapTokenGroups(secondTokenList.stream()
                     .map(t -> Arrays.asList(t))
-                    .collect(Collectors.toList()), },
-            { thirdTokenList, Arrays.asList(thirdTokenList) },
-            { fourthTokenList, fourthGroup },
-            { fifthTokenList, fifthGroup },
-            { sixthList, Arrays.asList(sixthList) },
-            { seventhList, Arrays.asList() },
-            { eighthList, fifthGroup },
-            { ninthTokenList, ninthGroup }
+                    .collect(Collectors.toList())), },
+            { tArg.wrapTokens(thirdTokenList), tArg.wrapTokenGroups(Arrays.asList(thirdTokenList)) },
+            { tArg.wrapTokens(fourthTokenList), tArg.wrapTokenGroups(fourthGroup) },
+            { tArg.wrapTokens(fifthTokenList), tArg.wrapTokenGroups(fifthGroup) },
+            { tArg.wrapTokens(sixthList), tArg.wrapTokenGroups(Arrays.asList(sixthList)) },
+            { tArg.wrapTokens(seventhList), tArg.wrapTokenGroups(Arrays.asList()) },
+            { tArg.wrapTokens(eighthList), tArg.wrapTokenGroups(eighthGroup) },
+            { tArg.wrapTokens(ninthTokenList), tArg.wrapTokenGroups(ninthGroup) },
+            { tArg.wrapTokens(tenthTokenList), tArg.wrapTokenGroups(tenthGroup) }
         };
     }
     
     @Test(dataProvider = "createTestValidateAugCodeSectionData")
     public void testValidateAugCodeSection(int index, 
-            List<Token> tokenGroup, Integer expected) {
+            TestArgWrapper tokenGroup, Integer expected) {
         ParserException actual = CodeGenerationRequestCreator
-            .validateAugCodeSection(tokenGroup, null);
+            .validateAugCodeSection(tokenGroup.tokens, null);
         if (expected == null) {
             assertNull(actual);
         }
@@ -372,208 +233,275 @@ public class CodeGenerationRequestCreatorTest {
         List<Token> secondGroup = Arrays.asList(newTokenWithLnNum(2, "//01"));       
         List<Token> thirdGroup = Arrays.asList(newTokenWithLnNum(2, "//01"),
             newTokenWithLnNum(3, "//ES"));
-        List<Token> fourthGroup = Arrays.asList(newTokenWithLnNum(2, "//-1"),
-            newTokenWithLnNum(3, "//ES"), newTokenWithLnNum(4, "//-2"));
-        List<Token> fifthGroup = Arrays.asList(newTokenWithLnNum(14, "//-3"));
+        List<Token> fourthGroup = Arrays.asList(newTokenWithLnNum(2, "//01"),
+            newTokenWithLnNum(3, "//ES"), newTokenWithLnNum(4, "//02"));
+        List<Token> fifthGroup = Arrays.asList(newTokenWithLnNum(14, "//03"));
         List<Token> sixthGroup = Arrays.asList(newTokenWithLnNum(13, "//ES"));
 
         // test mixed scenarios of aug code directives
         List<Token> seventhGroup = Arrays.asList(newTokenWithLnNum(2, "//01"),
-            newTokenWithLnNum(3, "//ES"), newTokenWithLnNum(4, "//-3"));
+            newTokenWithLnNum(3, "//ES"), newTokenWithLnNum(4, "//03"));
 
-        // more tests on data driven directive
+        // more tests involving embedded json directives
         List<Token> eighthGroup = Arrays.asList(newTokenWithLnNum(12, "//01"),
-            newTokenWithLnNum(13, "//ES"), newTokenWithLnNum(13, "//ES"),
+            newTokenWithLnNum(13, "//{>"), newTokenWithLnNum(13, "//{>"),
             newTokenWithLnNum(14, "//01"));
 
-        List<Token> ninthGroup = Arrays.asList(newTokenWithLnNum(12, "//-1"),
-            newTokenWithLnNum(13, "//ES"), newTokenWithLnNum(13, "//ES"),
-            newTokenWithLnNum(14, "//-1"));
+        List<Token> ninthGroup = Arrays.asList(newTokenWithLnNum(12, "//01"),
+            newTokenWithLnNum(13, "//ES"), newTokenWithLnNum(13, "//{>"),
+            newTokenWithLnNum(14, "//01"));
 
+        TestArgWrapper tArg = new TestArgWrapper();
         return new Object[][]{
-            { 0, firstGroup, 2 },
-            { 1, secondGroup, 2 },
-            { 2, thirdGroup, null },
-            { 3, fourthGroup, 4},
-            { 4, fifthGroup, null },
-            { 5, sixthGroup, 13 },
-            { 6, seventhGroup, 4,},
-            { 7, eighthGroup, 14,},
-            { 8, ninthGroup, null,}
+            { 0, tArg.wrapTokens(firstGroup), 2 },
+            { 1, tArg.wrapTokens(secondGroup), null },
+            { 2, tArg.wrapTokens(thirdGroup), null },
+            { 3, tArg.wrapTokens(fourthGroup), 4},
+            { 4, tArg.wrapTokens(fifthGroup), null },
+            { 5, tArg.wrapTokens(sixthGroup), 13 },
+            { 6, tArg.wrapTokens(seventhGroup), 4,},
+            { 7, tArg.wrapTokens(eighthGroup), null,},
+            { 8, tArg.wrapTokens(ninthGroup), null,}
         };
     }
     
     @Test(dataProvider = "createTestCreateAugmentingCodeBlocksData")
-    public void testCreateAugmentingCodeBlocks(List<Token> tokenGroup,
-            List<Block> expected) {
-        List<Block> actual = CodeGenerationRequestCreator.createAugmentingCodeBlocks(tokenGroup);
-        assertEquals(actual, expected);
+    public void testCreateAugmentingCodeBlocks(TestArgWrapper tokenGroup,
+            TestArgWrapper expected, List<Integer> expectedReceiver) {
+        List<Integer> receiver = new ArrayList<>();
+        List<Block> actual = CodeGenerationRequestCreator.createAugmentingCodeBlocks(
+            tokenGroup.tokens, receiver);
+        assertEquals(actual, expected.blocks);
+        assertEquals(receiver, expectedReceiver);
     }
 
     @DataProvider
     public Object[][] createTestCreateAugmentingCodeBlocksData() {
-        List<Token> firstGroup = Arrays.asList(
-            newTokenWithLnNum(5, "//-1 println"));
-        List<Token> secondGroup = Arrays.asList(
-            newTokenWithLnNum(5, "//-2 println"),
-            newTokenWithLnNum(6, "//-2("),
+        Token[] firstGroup = new Token[]{
+            newTokenWithLnNum(5, "//01 println") };
+        List<Integer> firstReceiver = Arrays.asList(0);
+
+        Token[] secondGroup = new Token[]{
+            newTokenWithLnNum(5, "//02 println"),
+            newTokenWithLnNum(6, "//02("),
             newTokenWithLnNum(7, "//ES{'value': true}"),
-            newTokenWithLnNum(8, "//-2)")
-        );
-        List<Token> thirdGroup = Arrays.asList(
-            newTokenWithLnNum(5, "//-1 println("),
+            newTokenWithLnNum(8, "//02)")
+        };
+        List<Integer> secondReceiver = Arrays.asList(0, 2, 3);
+
+        Token[] thirdGroup = new Token[]{
+            newTokenWithLnNum(5, "//01 println("),
             newTokenWithLnNum(6, "//ES{"),
             newTokenWithLnNum(7, "//ES'value': true}"),
-            newTokenWithLnNum(8, "//-1)")
-        );
-        List<Token> fourthGroup = Arrays.asList(
-            newTokenWithLnNum(5, "//-1 println"),
-            newTokenWithLnNum(6, "//-1("),
+            newTokenWithLnNum(8, "//01)")
+        };
+        List<Integer> thirdReceiver = Arrays.asList(0, 1, 3);
+
+        Token[] fourthGroup = new Token[]{
+            newTokenWithLnNum(5, "//01 println"),
+            newTokenWithLnNum(6, "//01("),
             newTokenWithLnNum(7, "//ES{'value': true"),
             newTokenWithLnNum(8, "//ES}")
-        );
-        List<Token> fifthGroup = Arrays.asList(
-            newTokenWithLnNum(5, "//-1 println"),
-            newTokenWithLnNum(6, "//-1("),
+        };
+        List<Integer> fourthReceiver = Arrays.asList(0, 2);
+
+        Token[] fifthGroup = new Token[]{
+            newTokenWithLnNum(5, "//01 println"),
+            newTokenWithLnNum(6, "//01("),
             newTokenWithLnNum(7, "//ES{"),
-            newTokenWithLnNum(8, "//ES'value': true"),
-            newTokenWithLnNum(9, "//ES}"),
-            newTokenWithLnNum(10, "//-1);"),
-            newTokenWithLnNum(11, "//-1 println()")
-        );
-        List<Token> sixthGroup = Arrays.asList(
+            newTokenWithLnNum(8, "//{>{'value': true"),
+            newTokenWithLnNum(9, "//{>}"),
+            newTokenWithLnNum(10, "//01);"),
+            newTokenWithLnNum(11, "//01 println()")
+        };
+        List<Integer> fifthReceiver = Arrays.asList(0, 2, 3, 5);
+
+        Token[] sixthGroup = new Token[]{
             newTokenWithLnNum(15, "//00 println"),
-            newTokenWithLnNum(16, "//ES[]")
-        );
+            newTokenWithLnNum(16, "//{>[]")
+        };
+        List<Integer> sixthReceiver = Arrays.asList(0, 1);
+
+        TestArgWrapper tArg = new TestArgWrapper();
         return new Object[][]{
-            { firstGroup, Arrays.asList(new Block(" println", false)) },
-            { secondGroup, Arrays.asList(new Block(" println\r\n(", false),
-                new Block("{'value': true}", true), new Block(")", false)), },
-            { thirdGroup, Arrays.asList(new Block(" println(", false),
-                new Block("{\r\n'value': true}", true), new Block(")", false))
+            { tArg.wrapTokens(firstGroup), tArg.wrapBlocks(new Block(" println", false, false)),
+              firstReceiver },
+            { tArg.wrapTokens(secondGroup), tArg.wrapBlocks(new Block(" println\n(", false, false),
+                new Block("{'value': true}", true, false), new Block(")", false, false)),
+              secondReceiver },
+            { tArg.wrapTokens(thirdGroup), tArg.wrapBlocks(new Block(" println(", false, false),
+                new Block("{\n'value': true}", true, false), new Block(")", false, false)),
+              thirdReceiver
             },
-            { fourthGroup, Arrays.asList(new Block(" println\r\n(", false),
-                new Block("{'value': true\r\n}", true)) },            
-            { fifthGroup, Arrays.asList(new Block(" println\r\n(", false),
-                new Block("{\r\n'value': true\r\n}", true), new Block(");\r\n println()", false)) },
-            { sixthGroup, Arrays.asList(new Block(" println", false),
-                new Block("[]", true)) },
+            { tArg.wrapTokens(fourthGroup), tArg.wrapBlocks(new Block(" println\n(", false, false),
+                new Block("{'value': true\n}", true, false)),
+              fourthReceiver },            
+            { tArg.wrapTokens(fifthGroup), tArg.wrapBlocks(new Block(" println\n(", false, false),
+                new Block("{", true, false),
+                new Block("{'value': true\n}", false, true), 
+                new Block(");\n println()", false, false)),
+              fifthReceiver },
+            { tArg.wrapTokens(sixthGroup), tArg.wrapBlocks(new Block(" println", false, false),
+                new Block("[]", false, true)),
+              sixthReceiver },
         };
     }
 
     @Test(dataProvider = "createTestCreateGeneratedCodeDescriptorData")
-    public void testCreateGeneratedCodeDescriptor(String sourceName, int startIndex, 
+    public void testCreateGeneratedCodeDescriptor(TestArgWrapper sourceTokens, int startIndex, 
             GeneratedCodeDescriptor expected) {
-        List<Token> sourceTokens = fetchTokens(sourceName);
         GeneratedCodeDescriptor actual = CodeGenerationRequestCreator.createGeneratedCodeDescriptor(
-            sourceTokens, startIndex);
+            sourceTokens.tokens, startIndex);
         assertEquals(actual, expected);
     }
 
     @DataProvider
     public Object[][] createTestCreateGeneratedCodeDescriptorData() {
-        final String sourceName1 = "php-tokens.json";
-        final String sourceName2 = "java-tokens.json";
+        String sourceName = "tokens-for-generated-code-descriptor.json";
+        List<Token> tokens = fetchTokens(sourceName);
+        TestArgWrapper tokenSource = new TestArgWrapper(sourceName).wrapTokens(tokens);
         return new Object[][]{
-            { sourceName1, 4, null },
-            { sourceName1, 5, new GeneratedCodeDescriptor(43, 49, 63, 69) },
-            { sourceName1, 10, null },
-            { sourceName2, 2, null },
-            { sourceName2, 13, null },
-            { sourceName2, 20, null },
-            { sourceName2, 24, new GeneratedCodeDescriptor(654, 660, 736, 742) },
-            { sourceName2, 30, null },
-            { sourceName2, 33, new GeneratedCodeDescriptor(859, 865, 900, 906) },
-            { sourceName2, 40, null }
+            { tokenSource, 0, null },
+            { tokenSource, 5, null },
+            { tokenSource, 9, new GeneratedCodeDescriptor(227, 234, 329, 335) },
+            { tokenSource, 10, null },
+            { tokenSource, 13, null },
+            { tokenSource, 19, new GeneratedCodeDescriptor(337, 343, 508, 514) },
+            { tokenSource, 20, null },
+            { tokenSource, 24, null },
+            { tokenSource, 30, null },
+            { tokenSource, 32, new GeneratedCodeDescriptor(574, 580, 663, 669) },
+            { tokenSource, 33, null },
+            { tokenSource, 40, null },
+            { tokenSource, 41, new GeneratedCodeDescriptor(723, 731, 1012, 1018) },
+            { tokenSource, 57, null },
+            { tokenSource, 60, null },
+            { tokenSource, 62, new GeneratedCodeDescriptor(1095, 1101, 1172, 1178) },
+            { tokenSource, 67, null },
+            { tokenSource, 69, new GeneratedCodeDescriptor(1178, 1184, 1232, 1241) },
+            { tokenSource, 74, new GeneratedCodeDescriptor(1241, 1247, 1258, 1264) },
+            { tokenSource, 80, null },
+            { tokenSource, 81, null} // tests for //GS without //GE
         };
+    }
+
+    /**
+     * Used to wrap arguments to test methods, in order to avoid the time wasting and 
+     * verbosity of stringifying test method arguments, for inclusion in test method instances
+     * generated per each argument list.
+     */
+    static class TestArgWrapper {
+        public String name;
+        public Object arg;
+        public List<Token> tokens;
+        public List<List<Token>> tokenGroups;
+        public List<Block> blocks;
+
+        public TestArgWrapper() {
+        }
+
+        public TestArgWrapper(String name) {
+            this.name = name;
+        }
+
+        public TestArgWrapper wrapTokens(Token... tokens) {
+            return wrapTokens(Arrays.asList(tokens));
+        }
+
+        public TestArgWrapper wrapTokens(List<Token> tokens) {
+            TestArgWrapper newInstance = new TestArgWrapper(name);
+            newInstance.arg = newInstance.tokens = tokens;
+            return newInstance;
+        }
+
+        public TestArgWrapper wrapTokenGroups(List<List<Token>> tokenGroups) {
+            TestArgWrapper newInstance = new TestArgWrapper(name);
+            newInstance.arg = newInstance.tokenGroups = tokenGroups;
+            return newInstance;
+        }
+
+        public TestArgWrapper wrapBlocks(Block... blocks) {
+            TestArgWrapper newInstance = new TestArgWrapper(name);
+            newInstance.arg = newInstance.blocks = Arrays.asList(blocks);
+            return newInstance;
+        }
+
+        @Override
+        public String toString() {
+            if (name != null) {
+                return name;
+            }
+            if (arg == null) {
+                return "null";
+            }
+            // generate a shorter name than Object.toString()
+            return String.format("%s@%x",
+                arg.getClass().getSimpleName(), arg.hashCode());
+        }
     }
 
     static class TokenLite {
         public String text;
         public boolean noNewline;
-        public int startPos;
-        public int endPos;
 
         public TokenLite() {
         }
 
-        public TokenLite(String text, int startPos, int endPos) {
+        public TokenLite(String text) {
             this.text = text;
-            this.startPos = startPos;
-            this.endPos = endPos;
-        }
-
-        public TokenLite(String text, boolean noNewline, int startPos, int endPos) {
-            this.text = text;
-            this.noNewline = noNewline;
-            this.startPos = startPos;
-            this.endPos = endPos;
         }
         
-        public Token toToken() {
-            int type, directiveType, augCodeSpecIndex = 0;
+        public Token toToken(String newline) {
+            int type, augCodeSpecIndex = 0;
             String directiveContent;
-            boolean uncheckedAugCode = false;
             final int commonMarkerLen = 4;
             if (text.equals("")) {
-                type = CodeGenerationRequestCreator.TOKEN_TYPE_BLANK;
-                directiveType = 0;
+                type = Token.TYPE_BLANK;
                 directiveContent = null;
             }
             else if (text.startsWith("//GE")) {
-                type = CodeGenerationRequestCreator.TOKEN_TYPE_DIRECTIVE;
-                directiveType = CodeGenerationRequestCreator.DIRECTIVE_TYPE_GEN_CODE_END;
+                type = Token.DIRECTIVE_TYPE_GEN_CODE_END;
                 directiveContent = text.substring(commonMarkerLen);
             }
             else if (text.startsWith("//GS")) {
-                type = CodeGenerationRequestCreator.TOKEN_TYPE_DIRECTIVE;
-                directiveType = CodeGenerationRequestCreator.DIRECTIVE_TYPE_GEN_CODE_START;
+                type = Token.DIRECTIVE_TYPE_GEN_CODE_START;
                 directiveContent = text.substring(commonMarkerLen);
             }
             else if (text.startsWith("//ES")) {
-                type = CodeGenerationRequestCreator.TOKEN_TYPE_DIRECTIVE;
-                directiveType = CodeGenerationRequestCreator.DIRECTIVE_TYPE_EMB_STRING;
+                type = Token.DIRECTIVE_TYPE_EMB_STRING;
+                directiveContent = text.substring(commonMarkerLen);
+            }
+            else if (text.startsWith("//{>")) {
+                type = Token.DIRECTIVE_TYPE_EMB_JSON;
                 directiveContent = text.substring(commonMarkerLen);
             }
             else if (text.startsWith("//++")) {
-                type = CodeGenerationRequestCreator.TOKEN_TYPE_DIRECTIVE;
-                directiveType = CodeGenerationRequestCreator.DIRECTIVE_TYPE_ENABLE_SCAN;
+                type = Token.DIRECTIVE_TYPE_ENABLE_SCAN;
                 directiveContent = text.substring(commonMarkerLen);
             }
             else if (text.startsWith("//--")) {
-                type = CodeGenerationRequestCreator.TOKEN_TYPE_DIRECTIVE;
-                directiveType = CodeGenerationRequestCreator.DIRECTIVE_TYPE_DISABLE_SCAN;
+                type = Token.DIRECTIVE_TYPE_DISABLE_SCAN;
                 directiveContent = text.substring(commonMarkerLen);
             }
             else {
                 try {
                     assert text.substring(0, 2).equals("//");
                     augCodeSpecIndex = Integer.parseInt(text.substring(2, 4));
-                    type = CodeGenerationRequestCreator.TOKEN_TYPE_DIRECTIVE;
-                    directiveType = CodeGenerationRequestCreator.DIRECTIVE_TYPE_AUG_CODE;
+                    assert augCodeSpecIndex >= 0;
+                    type = Token.DIRECTIVE_TYPE_AUG_CODE;
                     directiveContent = text.substring(commonMarkerLen);
-                    if (augCodeSpecIndex < 0) {
-                        // change 1-based of negative ints to 0-based.
-                        augCodeSpecIndex = -augCodeSpecIndex - 1;
-                        uncheckedAugCode = true;
-                    }
                 }
                 catch (NumberFormatException | AssertionError | IndexOutOfBoundsException ex) {
-                    type = CodeGenerationRequestCreator.TOKEN_TYPE_OTHER;
-                    directiveType = 0;
+                    type = Token.TYPE_OTHER;
                     directiveContent = null;
                 }
             }
             Token t = new Token(type);
             t.text = text;
-            t.startPos = startPos;
-            t.endPos = endPos;
-            t.directiveType = directiveType;
             t.directiveContent = directiveContent;
             t.augCodeSpecIndex = augCodeSpecIndex;
-            t.uncheckedAugCodeDirective = uncheckedAugCode;
             if (!noNewline) {
-                t.newline = "\r\n";
+                t.newline = newline;
                 t.text += t.newline;
             }
             return t;
@@ -586,7 +514,7 @@ public class CodeGenerationRequestCreatorTest {
         List<Token> tokens = new ArrayList<>();
         int startPos = 0;
         for (int i = 0; i < ts.length; i++) {
-            Token token = ts[i].toToken();
+            Token token = ts[i].toToken("\r\n");
             token.startPos = startPos;
             token.endPos = token.startPos + token.text.length();
             token.index = i;
@@ -598,7 +526,7 @@ public class CodeGenerationRequestCreatorTest {
     }
 
     private static Token newTokenWithLnNum(int lineNumber, String text) {
-        Token t = new TokenLite(text, 0, 0).toToken();
+        Token t = new TokenLite(text).toToken("\n");
         t.lineNumber = lineNumber;
         return t;
     }

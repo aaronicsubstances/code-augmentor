@@ -1,4 +1,4 @@
-package com.aaronicsubstances.code.augmentor.core.persistence;
+package com.aaronicsubstances.code.augmentor.core.util;
 
 import static org.testng.Assert.assertEquals;
 
@@ -175,13 +175,13 @@ public class PersistenceTest {
                             codeSnippet.setIndex(i);
                             codeSnippet.setDirectiveMarker(generateRandomString(randGen, false));
                             codeSnippet.setIndent(randomIndent(randGen));
-                            codeSnippet.setDataDriven(randGen.nextBoolean());
                             
                             int blockCount = randGen.nextInt(5);
                             for (int k = 0; k < blockCount; k++) {
                                 Block block = new Block();
                                 codeSnippet.getBlocks().add(block);
                                 block.setStringify(randGen.nextBoolean());
+                                block.setJsonify(randGen.nextBoolean());
                                 block.setContent(generateRandomString(randGen, true));
                             }
                         }

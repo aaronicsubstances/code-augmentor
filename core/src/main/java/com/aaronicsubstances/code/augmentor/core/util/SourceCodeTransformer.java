@@ -1,8 +1,5 @@
-package com.aaronicsubstances.code.augmentor.core.tasks;
+package com.aaronicsubstances.code.augmentor.core.util;
 
-/**
- * 
- */
 public class SourceCodeTransformer {
     private final StringBuilder transformedText;
     private int positionAdjustment;

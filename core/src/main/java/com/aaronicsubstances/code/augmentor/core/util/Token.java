@@ -1,6 +1,17 @@
-package com.aaronicsubstances.code.augmentor.core.parsing;
+package com.aaronicsubstances.code.augmentor.core.util;
 
 public class Token {
+    public static final int DIRECTIVE_TYPE_GEN_CODE_START = 1;
+    public static final int DIRECTIVE_TYPE_GEN_CODE_END = 2;
+    public static final int DIRECTIVE_TYPE_EMB_STRING = 3;
+    public static final int DIRECTIVE_TYPE_EMB_JSON = 4;
+    public static final int DIRECTIVE_TYPE_ENABLE_SCAN = 5;
+    public static final int DIRECTIVE_TYPE_DISABLE_SCAN = 6;
+    public static final int DIRECTIVE_TYPE_AUG_CODE = 7;
+
+    public static final int TYPE_BLANK = 20;
+    public static final int TYPE_OTHER = 50;
+
     public final int type;
     public String text;
     public int startPos;
@@ -8,13 +19,11 @@ public class Token {
     public int lineNumber;
     public int index;
 
-    public int directiveType;
     public int augCodeSpecIndex;
     public String indent;
     public String directiveMarker;
     public String directiveContent;
     public String newline;
-	public boolean uncheckedAugCodeDirective;
 
     public Token(int type) {
         this.type = type;
@@ -27,7 +36,6 @@ public class Token {
         result = prime * result + augCodeSpecIndex;
         result = prime * result + ((directiveContent == null) ? 0 : directiveContent.hashCode());
         result = prime * result + ((directiveMarker == null) ? 0 : directiveMarker.hashCode());
-        result = prime * result + directiveType;
         result = prime * result + endPos;
         result = prime * result + ((indent == null) ? 0 : indent.hashCode());
         result = prime * result + index;
@@ -36,7 +44,6 @@ public class Token {
         result = prime * result + startPos;
         result = prime * result + ((text == null) ? 0 : text.hashCode());
         result = prime * result + type;
-        result = prime * result + (uncheckedAugCodeDirective ? 1231 : 1237);
         return result;
     }
 
@@ -60,8 +67,6 @@ public class Token {
             if (other.directiveMarker != null)
                 return false;
         } else if (!directiveMarker.equals(other.directiveMarker))
-            return false;
-        if (directiveType != other.directiveType)
             return false;
         if (endPos != other.endPos)
             return false;
@@ -88,17 +93,14 @@ public class Token {
             return false;
         if (type != other.type)
             return false;
-        if (uncheckedAugCodeDirective != other.uncheckedAugCodeDirective)
-            return false;
         return true;
     }
 
     @Override
     public String toString() {
         return "Token{augCodeSpecIndex=" + augCodeSpecIndex + ", directiveContent=" + directiveContent
-                + ", directiveMarker=" + directiveMarker + ", directiveType=" + directiveType + ", endPos=" + endPos
+                + ", directiveMarker=" + directiveMarker + ", endPos=" + endPos
                 + ", indent=" + indent + ", index=" + index + ", lineNumber=" + lineNumber + ", newline=" + newline
-                + ", startPos=" + startPos + ", text=" + text + ", type=" + type + ", uncheckedAugCodeDirective="
-                + uncheckedAugCodeDirective + "}";
+                + ", startPos=" + startPos + ", text=" + text + ", type=" + type + "}";
     }
 }

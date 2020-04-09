@@ -1,4 +1,4 @@
-package com.aaronicsubstances.code.augmentor.core.tasks;
+package com.aaronicsubstances.code.augmentor.core.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -17,10 +17,10 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 
 /**
  * Exposes helper methods for generic tasks
@@ -127,10 +127,32 @@ public class TaskUtils {
         return s == null || s.trim().isEmpty();
     }
 
-    public static boolean isValidJsonArray(String s) {
+    public static boolean isValidJson(String s) {
+        // Gson interprets empty string as null.
+        // so deal with blank strings separately.
+        if (s == null) {
+            return false;
+        }
+        s = s.trim();
+        if (s.isEmpty()) {
+            return false;
+        }
         try {
-            JsonElement json = JsonParser.parseString(s);
-            return json instanceof JsonArray;
+            JsonElement jsonElem = JsonParser.parseString(s);
+            // For some reason, Gson will validate strings such as
+            // "k", "0x2A", "tru", "nul"; but not "\"k"
+            // Looks like it uses the prefix to conclude on what to do,
+            // and if no matching prefix is found to interpret input as
+            // array ("["), object ("{"), number ("<digit>" or "."),
+            // null, true or false keywords, valid string ("\""),
+            // then it just says string.
+            // So to complete validation require beginning quotes for strings.
+            if (jsonElem instanceof JsonPrimitive) {
+                if (((JsonPrimitive) jsonElem).isString()) {
+                    return s.trim().startsWith("\"");
+                }
+            }
+            return true;
         }
         catch (JsonParseException ex) {
             return false;

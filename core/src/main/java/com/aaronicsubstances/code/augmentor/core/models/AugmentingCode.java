@@ -11,13 +11,16 @@ public class AugmentingCode {
         private String content;
         @SerializedName("stringify")
         private boolean stringify;
+        @SerializedName("jsonify")
+        private boolean jsonify;
 
         public Block() {
         }
 
-        public Block(String content, boolean stringify) {
+        public Block(String content, boolean stringify, boolean jsonify) {
             this.content = content;
             this.stringify = stringify;
+            this.jsonify = jsonify;
         }
 
         public String getContent() {
@@ -36,11 +39,20 @@ public class AugmentingCode {
             this.stringify = stringify;
         }
 
+        public boolean isJsonify() {
+            return jsonify;
+        }
+
+        public void setJsonify(boolean jsonify) {
+            this.jsonify = jsonify;
+        }
+
         @Override
         public int hashCode() {
             final int prime = 31;
             int result = 1;
             result = prime * result + ((content == null) ? 0 : content.hashCode());
+            result = prime * result + (jsonify ? 1231 : 1237);
             result = prime * result + (stringify ? 1231 : 1237);
             return result;
         }
@@ -59,6 +71,8 @@ public class AugmentingCode {
                     return false;
             } else if (!content.equals(other.content))
                 return false;
+            if (jsonify != other.jsonify)
+                return false;
             if (stringify != other.stringify)
                 return false;
             return true;
@@ -66,7 +80,7 @@ public class AugmentingCode {
 
         @Override
         public String toString() {
-            return "Block{content=" + content + ", stringify=" + stringify + "}";
+            return "Block{content=" + content + ", jsonify=" + jsonify + ", stringify=" + stringify + "}";
         }
     }
 
@@ -120,20 +134,11 @@ public class AugmentingCode {
         this.indent = indent;
     }
 
-    public boolean isDataDriven() {
-        return dataDriven;
-    }
-
-    public void setDataDriven(boolean dataDriven) {
-        this.dataDriven = dataDriven;
-    }
-
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((blocks == null) ? 0 : blocks.hashCode());
-        result = prime * result + (dataDriven ? 1231 : 1237);
         result = prime * result + ((directiveMarker == null) ? 0 : directiveMarker.hashCode());
         result = prime * result + ((indent == null) ? 0 : indent.hashCode());
         result = prime * result + index;
@@ -154,8 +159,6 @@ public class AugmentingCode {
                 return false;
         } else if (!blocks.equals(other.blocks))
             return false;
-        if (dataDriven != other.dataDriven)
-            return false;
         if (directiveMarker == null) {
             if (other.directiveMarker != null)
                 return false;
@@ -173,7 +176,7 @@ public class AugmentingCode {
 
     @Override
     public String toString() {
-        return "AugmentingCode{blocks=" + blocks + ", dataDriven=" + dataDriven + ", directiveMarker="
+        return "AugmentingCode{blocks=" + blocks + ", directiveMarker="
                 + directiveMarker + ", indent=" + indent + ", index=" + index + "}";
     }
 }

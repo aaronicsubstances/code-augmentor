@@ -4,34 +4,15 @@ import java.io.File;
 import java.util.List;
 
 public class AugCodeProcessingSpec {
-    private List<String> dataDrivenDirectives;
-    private List<String> uncheckedDirectives;
     private File destFile;
+    private List<String> directives;
 
     public AugCodeProcessingSpec() {
     }
 
-    public AugCodeProcessingSpec(List<String> dataDrivenDirectives, 
-            List<String> uncheckedDirectives, File destFile) {
-        this.dataDrivenDirectives = dataDrivenDirectives;
-        this.uncheckedDirectives = uncheckedDirectives;
+    public AugCodeProcessingSpec(File destFile, List<String> directives) {
         this.destFile = destFile;
-    }
-
-    public List<String> getDataDrivenDirectives() {
-        return dataDrivenDirectives;
-    }
-
-    public void setDataDrivenDirectives(List<String> dataDrivenDirectives) {
-        this.dataDrivenDirectives = dataDrivenDirectives;
-    }
-
-    public List<String> getUncheckedDirectives() {
-        return uncheckedDirectives;
-    }
-
-    public void setUncheckedDirectives(List<String> uncheckedDirectives) {
-        this.uncheckedDirectives = uncheckedDirectives;
+        this.directives = directives;
     }
 
     public File getDestFile() {
@@ -40,5 +21,13 @@ public class AugCodeProcessingSpec {
 
     public void setDestFile(File destFile) {
         this.destFile = destFile;
+    }
+
+    public List<String> getDirectives() {
+        return directives;
+    }
+
+    public void setDirectives(List<String> directives) {
+        this.directives = directives;
     }
 }

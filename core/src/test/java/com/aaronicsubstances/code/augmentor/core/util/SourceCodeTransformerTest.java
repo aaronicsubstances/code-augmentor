@@ -1,4 +1,4 @@
-package com.aaronicsubstances.code.augmentor.core.tasks;
+package com.aaronicsubstances.code.augmentor.core.util;
 
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;

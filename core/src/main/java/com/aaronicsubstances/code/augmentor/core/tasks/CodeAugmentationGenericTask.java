@@ -12,11 +12,13 @@ import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor;
+import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.AugmentingCodeDescriptor;
+import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.GeneratedCodeDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode;
 import com.aaronicsubstances.code.augmentor.core.models.PreCodeAugmentationResult;
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileDescriptor;
-import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.AugmentingCodeDescriptor;
-import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.GeneratedCodeDescriptor;
+import com.aaronicsubstances.code.augmentor.core.util.SourceCodeTransformer;
+import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 
 public class CodeAugmentationGenericTask {
     public static final int LOG_LEVEL_VERBOSE = 1;

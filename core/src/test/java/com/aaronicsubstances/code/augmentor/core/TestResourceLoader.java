@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import com.aaronicsubstances.code.augmentor.core.tasks.TaskUtils;
+import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 
 import org.apache.commons.io.IOUtils;
 

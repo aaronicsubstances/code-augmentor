@@ -1,0 +1,252 @@
+[
+    {
+        "text": "package com.aaronicsubstances.vision.members/*GS*/;"
+    },
+    {
+        "text": ""
+    },
+    {
+        "text": "import/*GS*/ /*GE*/javax.ws.rs.GET/*GS*/;"
+    },
+    {
+        "text": "/*GE*/import//GS"
+    },
+    {
+        "text": " javax.ws.rs.Path;//GE"
+    },
+    {
+        "text": ""
+    },
+    {
+        "text": "import javax.ws.rs.Produces;"
+    },
+    {
+        "text": "import javax.ws.rs.core.MediaType;//GS"
+    },
+    {
+        "text": ""
+    },
+    {
+        "text": "import //GS"
+    },
+    {
+        "text": "//GS "
+    },
+    {
+        "text": "org.springframework.stereotype.Component;"
+    },
+    {
+        "text": "/*GE*/"
+    },
+    {
+        "text": "/**"
+    },
+    {
+        "text": " *"
+    },
+    {
+        "text": " * @author Aaron"
+    },
+    {
+        "text": " */"
+    },
+    {
+        "text": "@Component"
+    },
+    {
+        "text": "//GE"
+    },
+    {
+        "text": ""
+    },
+    {
+        "text": "//GS"
+    },
+    {
+        "text": ""
+    },
+    {
+        "text": "//--"
+    },
+    {
+        "text": "@Path(\"vision-members/api/v1\")"
+    },
+    {
+        "text": "@Produces(MediaType.TEXT_PLAIN)"
+    },
+    {
+        "text": "public class SmsConfigEndpoint {"
+    },
+    {
+        "text": "//++"
+    },
+    {
+        "text": "    @GET"
+    },
+    {
+        "text": "/*GS*/    /*GS*/@Path(\"send-sms-script\")"
+    },
+    {
+        "text": "//GE"
+    },
+    {
+        "text": "    public /*GE*/Object //GE"
+    },
+    {
+        "text": "getSmsScript() //GE"
+    },
+    {
+        "text": "{/*GE*/"
+    },
+    {
+        "text": "//GS"
+    },
+    {
+        "text": "String//GE"
+    },
+    {
+        "text": " sendSmsScript/*GS*/ = //GE"
+    },
+    {
+        "text": "System.getenv(\"vision.send-sms-script\");"
+    },
+    {
+        "text": "//GE"
+    },
+    {
+        "text": "        return //H"
+    },
+    {
+        "text": "//H"
+    },
+    {
+        "text": "sendSmsScript;"
+    },
+    {
+        "text": "    }/*GS*/"
+    },
+    {
+        "text": "//GS*/"
+    },
+    {
+        "text": "    "
+    },
+    {
+        "text": "    @GET"
+    },
+    {
+        "text": "//}> \"Hello World from JS-star\""
+    },
+    {
+        "text": "//++var i = 3 + new Date(); "
+    },
+    {
+        "text": "/*...etc*/"
+    },
+    {
+        "text": "    @Path(\"sms-config\")"
+    },
+    {
+        "text": "    public Object getSmsConfig() {"
+    },
+    {
+        "text": "        String"
+    },
+    {
+        "text": "//00 println(\"World\")"
+    },
+    {
+        "text": "//ES [{}]"
+    },
+    {
+        "text": "        /*GS*/ "
+    },
+    {
+        "text": "        smsConfigJson"
+    },
+    {
+        "text": " = System.getenv(\"vision.sms-config\")"
+    },
+    {
+        "text": "//GE"
+    },
+    {
+        "text": "        "
+    },
+    {
+        "text": "//GS"
+    },
+    {
+        "text": ""
+    },
+    {
+        "text": ";"
+    },
+    {
+        "text": "        return/*GS*/ /*GE*/smsConfigJson/*GE*/;"
+    },
+    {
+        "text": "    }"
+    },
+    {
+        "text": "//GS"
+    },
+    {
+        "text": ""
+    },
+    {
+        "text": "//19 println(\"Hello\")"
+    },
+    {
+        "text": "@GET/*GE*/"
+    },
+    {
+        "text": "    @Path(\"update-config\")//GS"
+    },
+    {
+        "text": ""
+    },
+    {
+        "text": "//GE"
+    },
+    {
+        "text": "//GS"
+    },
+    {
+        "text": "public Object//GS"
+    },
+    {
+        "text": "    getUpdateConfig()"
+    },
+    {
+        "text": "//--"
+    },
+    {
+        "text": "//GE*/ "
+    },
+    {
+        "text": "//GS"
+    },
+    {
+        "text": "{"
+    },
+    {
+        "text": "/*GE*/"
+    },
+    {
+        "text": "//GE"
+    },
+    {
+        "text": "String updateConfigJson = System.getenv(\"vision.update-config\");"
+    },
+    {
+        "text": "        return updateConfigJson;"
+    },
+    {
+        "text": "//GS    }"
+    },
+    {
+        "text": "}",
+        "noNewline": true
+    }
+]

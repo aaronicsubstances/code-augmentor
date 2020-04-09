@@ -1,4 +1,4 @@
-package com.aaronicsubstances.code.augmentor.core.tasks;
+package com.aaronicsubstances.code.augmentor.core.util;
 
 import com.aaronicsubstances.code.augmentor.core.TestResourceLoader;
 
@@ -151,25 +151,43 @@ public class TaskUtilsTest {
         };
     }
 
-    @Test(dataProvider = "createTestIsValidJsonArrayData")
-    public void testIsValidJsonArray(String s, boolean expected) {
-        boolean actual = TaskUtils.isValidJsonArray(s);
+    @Test(dataProvider = "createTestIsValidJsonData")
+    public void testIsValidJson(String s, boolean expected) {
+        boolean actual = TaskUtils.isValidJson(s);
         assertEquals(actual, expected);
     }
 
     @DataProvider
-    public Object[][] createTestIsValidJsonArrayData() {
+    public Object[][] createTestIsValidJsonData() {
         return new Object[][] {
             { "", false },
+            { "     ", false },
+            { null, false },
+            { "\"\"", true },
             { "[", false },
             { "]", false },
+            { "{}", true },
             { "[]{}", false },
-            { "{}", false },
-            { "\"yes\"", false },
-            { "null", false },
-            { "20", false },
-            { "true", false },
-            { "k", false },
+            { "{}", true },
+            { "\"yes\"", true },
+            { "null", true },
+            { "nul", false },
+            { "2A0", false },
+            { "0 e-2", false },
+            { "0x2A0", false },
+            { "0x2A 0", false },
+            { "0.20", true },
+            { ".020", false },
+            { "0e-2", true },
+            { "20 ", true },
+            { "-920 ", true },
+            { "true", true },
+            { "tru", false },
+            { " false", true },
+            { "\"k\"", true },
+            { "\"k", false },
+            { "k\"", false },
+            { " { \"k\": true, \"c\": \"no\" } ", true },
             { " []", true },
             { " [1, 3, null, '3']", true },
             { "[]", true },

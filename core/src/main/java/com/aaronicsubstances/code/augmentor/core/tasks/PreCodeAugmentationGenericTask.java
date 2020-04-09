@@ -8,13 +8,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import com.aaronicsubstances.code.augmentor.core.models.AugmentingCode;
 import com.aaronicsubstances.code.augmentor.core.models.CodeGenerationRequest;
+import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.PreCodeAugmentationResult;
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileAugmentingCode;
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileDescriptor;
-import com.aaronicsubstances.code.augmentor.core.parsing.ParserException;
+import com.aaronicsubstances.code.augmentor.core.util.ParserException;
+import com.aaronicsubstances.code.augmentor.core.util.SourceCodeTokenizer;
+import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
+import com.aaronicsubstances.code.augmentor.core.util.Token;
 
 public class PreCodeAugmentationGenericTask {
     public static final int LOG_LEVEL_VERBOSE = 1;
@@ -28,7 +33,9 @@ public class PreCodeAugmentationGenericTask {
     private List<String> genCodeStartDirectives;
     private List<String> genCodeEndDirectives;
     private List<String> embeddedStringDirectives;
-    private List<String> enableScanDirectives, disableScanDirectives;
+	private List<String> embeddedJsonDirectives;
+    private List<String> enableScanDirectives;
+    private List<String> disableScanDirectives;
     private List<AugCodeProcessingSpec> augCodeProcessingSpecs;
     private Charset charset;
     private File prepFile;
@@ -51,16 +58,13 @@ public class PreCodeAugmentationGenericTask {
             codeGenRequestWriters.add(requestWriter);
         }
 
-        List<List<String>> dataDrivenAugCodeDirectives = new ArrayList<>();
-        List<List<String>> uncheckedAugCodeDirectives = new ArrayList<>();
-        for (AugCodeProcessingSpec augCodeSpec : augCodeProcessingSpecs) {
-            dataDrivenAugCodeDirectives.add(augCodeSpec.getDataDrivenDirectives());
-            uncheckedAugCodeDirectives.add(augCodeSpec.getUncheckedDirectives());
-        }
-        CodeGenerationRequestCreator codeGenerationRequestCreator = new CodeGenerationRequestCreator(
-                genCodeStartDirectives, genCodeEndDirectives, embeddedStringDirectives, 
-                dataDrivenAugCodeDirectives, uncheckedAugCodeDirectives,
-                enableScanDirectives, disableScanDirectives);
+        List<List<String>> augCodeDirectiveSets = augCodeProcessingSpecs.stream().
+            map(x -> x.getDirectives()).collect(Collectors.toList());
+        SourceCodeTokenizer tokenizer = new SourceCodeTokenizer(
+                genCodeStartDirectives, genCodeEndDirectives, 
+                embeddedStringDirectives, embeddedJsonDirectives,
+                enableScanDirectives, disableScanDirectives,
+                augCodeDirectiveSets);
 
         List<List<AugmentingCode>> specAugCodesList = new ArrayList<>();
         for (int i = 0; i < augCodeProcessingSpecs.size(); i++) {
@@ -78,6 +82,8 @@ public class PreCodeAugmentationGenericTask {
             String input = TaskUtils.readFile(srcFile, charset);
             String inputHash = TaskUtils.calcHash(input, charset);
 
+            List<Token> inputTokens = tokenizer.tokenizeSource(input);
+
             // Reset receiver variables.
             for (List<AugmentingCode> specAugCodes : specAugCodesList) {
                 specAugCodes.clear();
@@ -89,11 +95,18 @@ public class PreCodeAugmentationGenericTask {
             s.setDir(baseDir.getPath());
             s.setRelativePath(relativePath);
             s.setContentHash(inputHash);
-            codeGenerationRequestCreator.processSourceFile(s, input, specAugCodesList, errors);
+            List<CodeSnippetDescriptor> bodySnippets = 
+                CodeGenerationRequestCreator.processSourceFile(inputTokens, srcFile,
+                    specAugCodesList, errors);
             if (errors.isEmpty()) {
                 // don't bother to serialize any further if there are
                 // previous errors.
-                if (allErrors.isEmpty()) {
+                // also skip seriaize if no snippets were generated.
+                if (allErrors.isEmpty() && !bodySnippets.isEmpty()) {
+                    // write out descriptor.
+                    s.setBodySnippets(bodySnippets);
+                    s.serialize(resultWriter);
+
                     // serialize aug codes
                     int identifiedAugCodeCount = 0;
                     for (int j = 0; j < codeGenRequestWriters.size(); j++) {
@@ -109,12 +122,7 @@ public class PreCodeAugmentationGenericTask {
                         sourceFileAugCode.serialize(requestWriter);
                     }
 
-                    if (identifiedAugCodeCount > 0) {
-                        logInfo("%s aug code(s) identified in %s", identifiedAugCodeCount, srcFile);
-    
-                        // write out descriptor.
-                        s.serialize(resultWriter);
-                    }
+                    logInfo("%s aug code(s) identified in %s", identifiedAugCodeCount, srcFile);
                 }
             } else {
                 logWarn("%s error(s) encountered in %s", errors.size(), srcFile);
@@ -219,6 +227,14 @@ public class PreCodeAugmentationGenericTask {
     public void setEmbeddedStringDirectives(List<String> embeddedStringDirectives) {
         this.embeddedStringDirectives = embeddedStringDirectives;
     }
+
+	public List<String> getEmbeddedJsonDirectives() {
+        return embeddedJsonDirectives;
+	}
+
+	public void setEmbeddedJsonDirectives(List<String> embeddedJsonDirectives) {
+        this.embeddedJsonDirectives = embeddedJsonDirectives;
+	}
 
     public List<String> getEnableScanDirectives() {
         return enableScanDirectives;
