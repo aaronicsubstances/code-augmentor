@@ -68,8 +68,9 @@ public class PreCodeAugmentationGenericTaskTest {
         task.setGenCodeEndDirectives(Arrays.asList(taskSpec.genCodeEndDirectives));
         task.setEmbeddedStringDirectives(Arrays.asList(
             taskSpec.embeddedStringDirectives));
-        task.setEmbeddedJsonDirectives(Arrays.asList(
-            taskSpec.embeddedJsonDirectives));
+        if (taskSpec.embeddedJsonDirectives != null) {
+            task.setEmbeddedJsonDirectives(Arrays.asList(taskSpec.embeddedJsonDirectives));
+        }
 
         return task;
     }

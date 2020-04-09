@@ -15,12 +15,16 @@ public class GeneratedCodeFetcher {
     private final List<Object> codeGenerationResponseReaders;
     private final List<SourceFileGeneratedCode> lastFetches;
 
+    /**
+     * Constructor for normal/production usage of class with
+     * code generation response files.
+     */
     public GeneratedCodeFetcher(List<File> generatedCodeFiles) throws Exception {
         this(generatedCodeFiles.toArray());
     }
 
     /**
-     * For testing purposes.
+     * Constructor which enables testing.
      * @param codeGenerationResponseSources array of files or strings.
      * @throws Exception
      */
@@ -52,7 +56,7 @@ public class GeneratedCodeFetcher {
         }
     }
     
-    public void prepareForFile(int fileIndex) throws Exception {
+    public boolean prepareForFile(int fileIndex) throws Exception {
         boolean firstPrepare = false;
         if (lastFetches.isEmpty()) {
             firstPrepare = true;
@@ -60,18 +64,28 @@ public class GeneratedCodeFetcher {
                 lastFetches.add(null);
             }
         }
+        boolean found = false;
         for (int i = 0; i < lastFetches.size(); i++) {
             SourceFileGeneratedCode fileGenCode;
             if (!firstPrepare) {
                 fileGenCode = lastFetches.get(i);
-                if (fileGenCode == null || fileIndex <= fileGenCode.getFileIndex()) {
+                if (fileGenCode == null || fileIndex < fileGenCode.getFileIndex()) {
+                    // meaning no more files or file with id fileIndex doesn't exist.
+                    continue;
+                }
+                else if (fileIndex == fileGenCode.getFileIndex()) {
+                    found = true;
                     continue;
                 }
             }
             Object rdr = codeGenerationResponseReaders.get(i);
             fileGenCode = SourceFileGeneratedCode.deserialize(rdr);
             lastFetches.set(i, fileGenCode);
+            if (fileGenCode != null && fileIndex == fileGenCode.getFileIndex()) {
+                found = true;
+            }
         }
+        return found;
     }
 
     public GeneratedCode getGeneratedCode(int fileIndex, int augCodeIndex, 

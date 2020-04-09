@@ -94,14 +94,14 @@ public class SourceCodeTokenizer {
                     }
                 }
                 
-                outer1: for (int j = 0; j < augCodeDirectiveSets.size(); j++) {
+                for (int j = 0; j < augCodeDirectiveSets.size(); j++) {
                     List<String> augCodeDirectives = augCodeDirectiveSets.get(j);
                     for (String d : augCodeDirectives) {
                         if (lineWithoutIndent.startsWith(d)) {
                             Token c = createToken(Token.DIRECTIVE_TYPE_AUG_CODE, d, line);
                             c.augCodeSpecIndex = j;
                             candidateTokens.add(c);
-                            break outer1;
+                            break;
                         }
                     }
                 }

@@ -349,10 +349,16 @@ public class CodeGenerationRequestCreatorTest {
 
     @Test(dataProvider = "createTestCreateGeneratedCodeDescriptorData")
     public void testCreateGeneratedCodeDescriptor(TestArgWrapper sourceTokens, int startIndex, 
-            GeneratedCodeDescriptor expected) {
-        GeneratedCodeDescriptor actual = CodeGenerationRequestCreator.createGeneratedCodeDescriptor(
-            sourceTokens.tokens, startIndex);
-        assertEquals(actual, expected);
+            Object expected) {
+        Object actual = CodeGenerationRequestCreator.createGeneratedCodeDescriptor(
+            sourceTokens.tokens, null, startIndex);
+        if (expected instanceof Integer) {
+            assertTrue(actual instanceof ParserException);
+            assertEquals(((ParserException) actual).getLineNumber(), (int)expected);
+        }
+        else {
+            assertEquals(actual, expected);
+        }
     }
 
     @DataProvider
@@ -374,14 +380,14 @@ public class CodeGenerationRequestCreatorTest {
             { tokenSource, 33, null },
             { tokenSource, 40, null },
             { tokenSource, 41, new GeneratedCodeDescriptor(723, 731, 1012, 1018) },
-            { tokenSource, 57, null },
+            { tokenSource, 57, 59 }, // tests for 2 consecutive //GS without //GE
             { tokenSource, 60, null },
             { tokenSource, 62, new GeneratedCodeDescriptor(1095, 1101, 1172, 1178) },
             { tokenSource, 67, null },
             { tokenSource, 69, new GeneratedCodeDescriptor(1178, 1184, 1232, 1241) },
             { tokenSource, 74, new GeneratedCodeDescriptor(1241, 1247, 1258, 1264) },
-            { tokenSource, 80, null },
-            { tokenSource, 81, null} // tests for //GS without //GE
+            { tokenSource, 80, 82 }, // tests for //GS without //GE
+            { tokenSource, 81, null} 
         };
     }
 

@@ -63,12 +63,17 @@ public class CodeAugmentationGenericTask {
             if (sourceFileDescriptor.getContentHash() != null) {
                 String inputHash = TaskUtils.calcHash(sourceCode, charset);
                 if (!inputHash.equals(sourceFileDescriptor.getContentHash())) {
-                    throw new GenericTaskException(String.format("Changes to source files detected in %s. Regeneration required.",
+                    throw new GenericTaskException(String.format(
+                        "Changes to source files detected in %s. Regeneration required.",
                         srcFile));
                 }
             }
 
-            generatedCodeFetcher.prepareForFile(sourceFileDescriptor.getFileIndex());
+            if (!generatedCodeFetcher.prepareForFile(sourceFileDescriptor.getFileIndex())) {
+                throw new GenericTaskException(String.format(
+                    "Could not find locate generated codes for %s",
+                    srcFile));
+            }
 
             // fetch applicable generated code per aug code descriptor.
             List<String> generatedCodes = new ArrayList<>();

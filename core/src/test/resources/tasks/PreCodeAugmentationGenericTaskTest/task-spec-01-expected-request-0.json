@@ -7,7 +7,6 @@
 			"index" : 0,
 			"directive_marker" : "//JS",
 			"indent": "",
-            "is_data_driven": false,
 			"blocks" : [{
 				"stringify" : false,
 				"content" : " println(\"Hello World from JS-star\")\r\n var i = 3 + new Date(); \r\n ...etc*/"
@@ -21,7 +20,6 @@
 			"index" : 0,
 			"directive_marker" : "//JS",
 			"indent": "",
-            "is_data_driven": false,
 			"blocks" : [{
 				"stringify" : false,
 				"content" : " println(\"World\")"

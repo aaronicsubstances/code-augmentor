@@ -53,8 +53,17 @@ public class CodeGenerationRequestCreator {
             augCodeDescriptor.setIndent(indent);
 
             // b. create gen code descriptor.
-            GeneratedCodeDescriptor genCodeDescriptor = createGeneratedCodeDescriptor(tokens, 
+            GeneratedCodeDescriptor genCodeDescriptor = null;
+            Object genCodeDescriptorOrError = createGeneratedCodeDescriptor(tokens, srcFile,
                 lastToken.index);
+            if (genCodeDescriptorOrError != null) {
+                if (genCodeDescriptorOrError instanceof GeneratedCodeDescriptor) {
+                    genCodeDescriptor = (GeneratedCodeDescriptor) genCodeDescriptorOrError;
+                }
+                else {
+                    saveOrThrowError((ParserException) genCodeDescriptorOrError, errors);
+                }
+            }
 
             CodeSnippetDescriptor bodySnippet = new CodeSnippetDescriptor();
             bodySnippet.setAugmentingCodeDescriptor(augCodeDescriptor);
@@ -218,7 +227,7 @@ public class CodeGenerationRequestCreator {
         return null;
     }
 
-    static GeneratedCodeDescriptor createGeneratedCodeDescriptor(List<Token> sourceTokens, 
+    static Object createGeneratedCodeDescriptor(List<Token> sourceTokens, File srcFile,
             int augCodeEndIndex) {
         // search for gen code start.
         int startIndex = -1;
@@ -244,11 +253,12 @@ public class CodeGenerationRequestCreator {
             return null;
         }
 
+        Token st = sourceTokens.get(startIndex);
+
         // search for gen code end.
         for (int i = startIndex + 1; i < sourceTokens.size(); i++) {
             Token t = sourceTokens.get(i);
             if (t.type == Token.DIRECTIVE_TYPE_GEN_CODE_END) {
-                Token st = sourceTokens.get(startIndex);
                 GeneratedCodeDescriptor generatedCodeDescriptor = new GeneratedCodeDescriptor();
                 generatedCodeDescriptor.setStartDirectiveStartPos(st.startPos);
                 generatedCodeDescriptor.setStartDirectiveEndPos(st.endPos);
@@ -258,7 +268,8 @@ public class CodeGenerationRequestCreator {
             }
 
             // skip any other token, except for gen code start, which
-            // should not appear in generated code.
+            // is interpreted as start of another section, and hence
+            // current search must end.
             if (t.type == Token.DIRECTIVE_TYPE_GEN_CODE_START) {
                 break;
             }
@@ -267,7 +278,13 @@ public class CodeGenerationRequestCreator {
             }
         }
 
-        return null;
+        // getting here means we couldn't find end directive corresponding to
+        // generated code start directive.
+        // signal error.
+        ParserException error = createParserException(
+            "Could not find ending of generated code section",
+            st, srcFile);
+        return error;
     }
 
     static List<Block> createAugmentingCodeBlocks(List<Token> augCodeSection,

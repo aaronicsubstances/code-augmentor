@@ -33,7 +33,6 @@
 			"index" : 2,
 			"directive_marker" : "//DD",
 			"indent": "\t",
-            "is_data_driven": true,
 			"blocks" : [{
 				"stringify" : false,
 				"content" : " print"
