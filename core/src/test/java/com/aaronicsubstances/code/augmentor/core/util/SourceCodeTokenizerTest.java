@@ -9,16 +9,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.core.TestResourceLoader;
-import com.google.gson.Gson;
 
 public class SourceCodeTokenizerTest {
-
-	public static List<Token> fetchTokens(String sourceName) {
-		String serializedTokens = TestResourceLoader.loadResource(sourceName,
-			SourceCodeTokenizerTest.class);
-		Token[] tokenList = new Gson().fromJson(serializedTokens, Token[].class);
-		return Arrays.asList(tokenList);
-	}
 
 	private static SourceCodeTokenizer createInstance() {
 		List<String> genCodeStartDirectives = Arrays.asList("#GS");
@@ -47,10 +39,11 @@ public class SourceCodeTokenizerTest {
 	}
 
 	@Test(dataProvider = "createTestTokenizeSourceData")
-	public void testTokenizeSource(String inputSourceName, String expectedTokenSourceName) {
-		List<Token> expected = fetchTokens(expectedTokenSourceName);
+	public void testTokenizeSource(String inputSourceName, String newline, String expectedTokenSourceName) {
+		List<Token> expected = TestResourceLoader.fetchTokens(expectedTokenSourceName,
+			getClass());
 		String input = TestResourceLoader.loadResourceNewlinesNormalized(inputSourceName,
-			getClass(), "\r\n");
+			getClass(), newline);
 		SourceCodeTokenizer instance = createInstance();
 		List<Token> actual = instance.tokenizeSource(input);
 		assertEquals(actual, expected);
@@ -59,7 +52,9 @@ public class SourceCodeTokenizerTest {
 	@DataProvider
 	public Object[][] createTestTokenizeSourceData() {
 		return new Object[][]{
-			{ "sample-code.php", "sample-code.php.json" }
+			{ "sample-code.php", "\r\n", "sample-code.php.json" },
+			{ "sample-code.java", "\r\n", "sample-code.java.json" },
+			{ "sample-code-on-unix.php", "\n", "sample-code-on-unix.php.json" }
 		};
 	}
 }

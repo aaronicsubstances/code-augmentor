@@ -3,9 +3,12 @@ package com.aaronicsubstances.code.augmentor.core;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
+import com.aaronicsubstances.code.augmentor.core.util.Token;
+import com.google.gson.Gson;
 
 import org.apache.commons.io.IOUtils;
 
@@ -51,4 +54,11 @@ public class TestResourceLoader {
         String newText = sb.toString();
         return newText;
     }
+
+	public static List<Token> fetchTokens(String path, Class<?> cls) {
+		String serializedTokens = TestResourceLoader.loadResource(path,
+			cls);
+		Token[] tokenList = new Gson().fromJson(serializedTokens, Token[].class);
+		return Arrays.asList(tokenList);
+	}
 }

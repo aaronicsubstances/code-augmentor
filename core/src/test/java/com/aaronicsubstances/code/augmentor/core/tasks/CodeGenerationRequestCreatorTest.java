@@ -14,7 +14,6 @@ import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.AugmentingCodeDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.GeneratedCodeDescriptor;
 import com.aaronicsubstances.code.augmentor.core.util.ParserException;
-import com.aaronicsubstances.code.augmentor.core.util.SourceCodeTokenizerTest;
 import com.aaronicsubstances.code.augmentor.core.util.Token;
 import com.google.gson.Gson;
 
@@ -27,7 +26,8 @@ public class CodeGenerationRequestCreatorTest {
     public void testProcessSourceFile(String sourceName, List<CodeSnippetDescriptor> expected,
             List<AugmentingCode> expectedAug1,
             List<AugmentingCode> expectedAug2) {
-        List<Token> sourceTokens = SourceCodeTokenizerTest.fetchTokens(sourceName);
+        List<Token> sourceTokens = TestResourceLoader.fetchTokens(sourceName,
+            getClass());
         List<List<AugmentingCode>> specAugCodesList = Arrays.asList(new ArrayList<>(),
             new ArrayList<>());
         List<CodeSnippetDescriptor> actual = CodeGenerationRequestCreator.processSourceFile( 
@@ -186,8 +186,8 @@ public class CodeGenerationRequestCreatorTest {
  
         List<Token> tenthTokenList = Arrays.asList(
             newTokenWithLnNum(10, "//01"), newTokenWithLnNum(11, "//--"),
-            newTokenWithLnNum(12, "//GS"), newTokenWithLnNum(13, "//++"),
-            newTokenWithLnNum(14, "//GE"), newTokenWithLnNum(15, "//03"));
+            newTokenWithLnNum(12, "//GE"), newTokenWithLnNum(13, "//GS"),
+            newTokenWithLnNum(14, "//++"), newTokenWithLnNum(15, "//03"));
         List<List<Token>> tenthGroup = Arrays.asList(
             Arrays.asList(
                 newTokenWithLnNum(10, "//01")),
@@ -349,16 +349,10 @@ public class CodeGenerationRequestCreatorTest {
 
     @Test(dataProvider = "createTestCreateGeneratedCodeDescriptorData")
     public void testCreateGeneratedCodeDescriptor(TestArgWrapper sourceTokens, int startIndex, 
-            Object expected) {
-        Object actual = CodeGenerationRequestCreator.createGeneratedCodeDescriptor(
-            sourceTokens.tokens, null, startIndex);
-        if (expected instanceof Integer) {
-            assertTrue(actual instanceof ParserException);
-            assertEquals(((ParserException) actual).getLineNumber(), (int)expected);
-        }
-        else {
-            assertEquals(actual, expected);
-        }
+            GeneratedCodeDescriptor expected) {
+        GeneratedCodeDescriptor actual = CodeGenerationRequestCreator.createGeneratedCodeDescriptor(
+            sourceTokens.tokens, startIndex);
+        assertEquals(actual, expected);
     }
 
     @DataProvider
@@ -380,14 +374,30 @@ public class CodeGenerationRequestCreatorTest {
             { tokenSource, 33, null },
             { tokenSource, 40, null },
             { tokenSource, 41, new GeneratedCodeDescriptor(723, 731, 1012, 1018) },
-            { tokenSource, 57, 59 }, // tests for 2 consecutive //GS without //GE
             { tokenSource, 60, null },
             { tokenSource, 62, new GeneratedCodeDescriptor(1095, 1101, 1172, 1178) },
             { tokenSource, 67, null },
             { tokenSource, 69, new GeneratedCodeDescriptor(1178, 1184, 1232, 1241) },
             { tokenSource, 74, new GeneratedCodeDescriptor(1241, 1247, 1258, 1264) },
-            { tokenSource, 80, 82 }, // tests for //GS without //GE
             { tokenSource, 81, null} 
+        };
+    }
+
+    @Test(dataProvider = "createTestCreateGeneratedCodeDescriptorForErrorData",
+        expectedExceptions = RuntimeException.class)
+    public void testCreateGeneratedCodeDescriptorForError(TestArgWrapper sourceTokens, int startIndex) {
+        CodeGenerationRequestCreator.createGeneratedCodeDescriptor(
+            sourceTokens.tokens, startIndex);
+    }
+
+    @DataProvider
+    public Object[][] createTestCreateGeneratedCodeDescriptorForErrorData() {
+        String sourceName = "tokens-for-generated-code-descriptor.json";
+        List<Token> tokens = fetchTokens(sourceName);
+        TestArgWrapper tokenSource = new TestArgWrapper(sourceName).wrapTokens(tokens);
+        return new Object[][]{
+            { tokenSource, 57 }, // test for gen code section not ending before another section starts.
+            { tokenSource, 80 }  // test for gen code ending not found.
         };
     }
 

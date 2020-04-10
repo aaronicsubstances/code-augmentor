@@ -53,17 +53,8 @@ public class CodeGenerationRequestCreator {
             augCodeDescriptor.setIndent(indent);
 
             // b. create gen code descriptor.
-            GeneratedCodeDescriptor genCodeDescriptor = null;
-            Object genCodeDescriptorOrError = createGeneratedCodeDescriptor(tokens, srcFile,
+            GeneratedCodeDescriptor genCodeDescriptor = createGeneratedCodeDescriptor(tokens,
                 lastToken.index);
-            if (genCodeDescriptorOrError != null) {
-                if (genCodeDescriptorOrError instanceof GeneratedCodeDescriptor) {
-                    genCodeDescriptor = (GeneratedCodeDescriptor) genCodeDescriptorOrError;
-                }
-                else {
-                    saveOrThrowError((ParserException) genCodeDescriptorOrError, errors);
-                }
-            }
 
             CodeSnippetDescriptor bodySnippet = new CodeSnippetDescriptor();
             bodySnippet.setAugmentingCodeDescriptor(augCodeDescriptor);
@@ -109,6 +100,7 @@ public class CodeGenerationRequestCreator {
         final int DISABLE_SCAN = 1;
         final int IN_GEN_CODE = 2;
         int escapeMode = 0;
+        Token genCodeStartToken = null;
         // group tokens which strictly follow each other consecutively in line numbers.
         int expectedLineNumber = 0;
         List<Token> currentGroup = new ArrayList<>();
@@ -126,15 +118,24 @@ public class CodeGenerationRequestCreator {
                         t.type == Token.DIRECTIVE_TYPE_ENABLE_SCAN) {
                     escapeMode = 0;
                 }
-                if (escapeMode == IN_GEN_CODE && 
-                        t.type == Token.DIRECTIVE_TYPE_GEN_CODE_END) {
-                    escapeMode = 0;
-                    // ensure newline ending.
-                    if (t.newline == null) {
+                if (escapeMode == IN_GEN_CODE) {
+                    if (t.type == Token.DIRECTIVE_TYPE_GEN_CODE_START) {
                         ParserException error = createParserException(
-                            "Generated code section must end with a newline", 
-                            t, srcFile);
+                            "Could not find end of generated code section", 
+                            genCodeStartToken, srcFile);
                         saveOrThrowError(error, errors);
+                        genCodeStartToken = t;
+                    }
+                    if (t.type == Token.DIRECTIVE_TYPE_GEN_CODE_END) {
+                        escapeMode = 0;
+                        genCodeStartToken = null;
+                        // ensure newline ending.
+                        if (t.newline == null) {
+                            ParserException error = createParserException(
+                                "Generated code section must end with a newline",
+                                t, srcFile);
+                            saveOrThrowError(error, errors);
+                        }
                     }
                 }
                 continue;
@@ -177,11 +178,18 @@ public class CodeGenerationRequestCreator {
                         // set to 0 so a new aug/emb token is definitely added. 
                         expectedLineNumber = 0;
                     }
+                    if (t.type == Token.DIRECTIVE_TYPE_GEN_CODE_END) {
+                        ParserException error = createParserException(
+                            "Could not find start of generated code section",
+                            t, srcFile);
+                        saveOrThrowError(error, errors);
+                    }
                     if (t.type == Token.DIRECTIVE_TYPE_DISABLE_SCAN) {
                         escapeMode = DISABLE_SCAN;
                     }
                     if (t.type == Token.DIRECTIVE_TYPE_GEN_CODE_START) {
                         escapeMode = IN_GEN_CODE;
+                        genCodeStartToken = t;
                     }
                     break;
             }
@@ -189,6 +197,12 @@ public class CodeGenerationRequestCreator {
         if (!currentGroup.isEmpty()) {
             // Create final group.
             groups.add(currentGroup);
+        }
+        if (escapeMode == IN_GEN_CODE) {
+            ParserException error = createParserException(
+                "Could not find end of generated code section", 
+                genCodeStartToken, srcFile);
+            saveOrThrowError(error, errors);
         }
         return groups;
     }
@@ -227,7 +241,7 @@ public class CodeGenerationRequestCreator {
         return null;
     }
 
-    static Object createGeneratedCodeDescriptor(List<Token> sourceTokens, File srcFile,
+    static GeneratedCodeDescriptor createGeneratedCodeDescriptor(List<Token> sourceTokens,
             int augCodeEndIndex) {
         // search for gen code start.
         int startIndex = -1;
@@ -278,13 +292,7 @@ public class CodeGenerationRequestCreator {
             }
         }
 
-        // getting here means we couldn't find end directive corresponding to
-        // generated code start directive.
-        // signal error.
-        ParserException error = createParserException(
-            "Could not find ending of generated code section",
-            st, srcFile);
-        return error;
+        throw new RuntimeException("Could not find ending of a generated code section");
     }
 
     static List<Block> createAugmentingCodeBlocks(List<Token> augCodeSection,
