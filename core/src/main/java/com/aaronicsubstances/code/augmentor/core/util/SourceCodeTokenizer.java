@@ -107,7 +107,7 @@ public class SourceCodeTokenizer {
                 }
 
                 Optional<Token> tOpt = candidateTokens.stream().max(
-                    (x, y) -> new Integer(x.text.length()).compareTo(y.text.length()));
+                    (x, y) -> new Integer(x.directiveMarker.length()).compareTo(y.directiveMarker.length()));
                 if (tOpt.isPresent()) {
                     t = tOpt.get();
                 }
@@ -141,9 +141,6 @@ public class SourceCodeTokenizer {
         int dIndex = line.indexOf(directiveMarker);
         t.indent = line.substring(0, dIndex);
         t.directiveContent = line.substring(dIndex + directiveMarker.length());
-        // set text even though we don't have newline, so search 
-        // for directive token with max length can work.
-        t.text = line;
         return t;
     }
 }

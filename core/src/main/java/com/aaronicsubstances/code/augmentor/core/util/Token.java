@@ -12,7 +12,7 @@ public class Token {
     public static final int TYPE_BLANK = 20;
     public static final int TYPE_OTHER = 50;
 
-    public final int type;
+    public int type;
     public String text;
     public int startPos;
     public int endPos;
@@ -24,6 +24,13 @@ public class Token {
     public String directiveMarker;
     public String directiveContent;
     public String newline;
+
+    /**
+     * Used for JSON serialization.
+     */
+    public Token() {
+
+    }
 
     public Token(int type) {
         this.type = type;
