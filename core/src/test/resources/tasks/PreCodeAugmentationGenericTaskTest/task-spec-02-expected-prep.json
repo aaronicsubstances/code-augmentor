@@ -6,30 +6,30 @@
 		"snippets": [{
 			"augmenting_code": {
 				"index" : 0,
-				"start_pos" : 334,
-				"end_pos" : 425,
+				"start_pos" : 351,
+				"end_pos" : 442,
 				"indent" : " "
 			}
 		},
 		{
 			"augmenting_code": {
 				"index" : 1,
-				"start_pos" : 1029,
-				"end_pos" : 1069,
+				"start_pos" : 1042,
+				"end_pos" : 1082,
 				"indent" : "\t"
 			},
 			"generated_code": {
-				"start_directive_start_pos" : 1069,
-				"start_directive_end_pos" : 1079,
-				"end_directive_start_pos" : 1116,
-				"end_directive_end_pos" : 1123
+				"start_directive_start_pos" : 1084,
+				"start_directive_end_pos" : 1094,
+				"end_directive_start_pos" : 1150,
+				"end_directive_end_pos" : 1157
 			}
 		},
 		{
 			"augmenting_code": {
 				"index" : 2,
-				"start_pos" : 1337,
-				"end_pos" : 1363,
+				"start_pos" : 1394,
+				"end_pos" : 1421,
 				"indent" : "\t"
 			}
 		}]

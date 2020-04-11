@@ -49,30 +49,24 @@ public class SourceCodeTokenizer {
                 for (String d : genCodeStartDirectives) {
                     if (lineWithoutIndent.startsWith(d)) {
                         candidateTokens.add(createToken(Token.DIRECTIVE_TYPE_GEN_CODE_START, d, line));
-                        break;
                     }
                 }
                 
                 for (String d : genCodeEndDirectives) {
                     if (lineWithoutIndent.startsWith(d)) {
                         candidateTokens.add(createToken(Token.DIRECTIVE_TYPE_GEN_CODE_END, d, line));
-                        break;
                     }
                 }
                 
                 for (String d : embeddedStringDirectives) {
                     if (lineWithoutIndent.startsWith(d)) {
                         candidateTokens.add(createToken(Token.DIRECTIVE_TYPE_EMB_STRING, d, line));
-                        break;
                     }
                 }
                 
-                if (embeddedJsonDirectives != null) {
-                    for (String d : embeddedJsonDirectives) {
-                        if (lineWithoutIndent.startsWith(d)) {
-                            candidateTokens.add(createToken(Token.DIRECTIVE_TYPE_EMB_JSON, d, line));
-                            break;
-                        }
+                for (String d : embeddedJsonDirectives) {
+                    if (lineWithoutIndent.startsWith(d)) {
+                        candidateTokens.add(createToken(Token.DIRECTIVE_TYPE_EMB_JSON, d, line));
                     }
                 }
                 
@@ -80,7 +74,6 @@ public class SourceCodeTokenizer {
                     for (String d : enableScanDirectives) {
                         if (lineWithoutIndent.startsWith(d)) {
                             candidateTokens.add(createToken(Token.DIRECTIVE_TYPE_ENABLE_SCAN, d, line));
-                            break;
                         }
                     }
                 }
@@ -89,7 +82,6 @@ public class SourceCodeTokenizer {
                     for (String d : disableScanDirectives) {
                         if (lineWithoutIndent.startsWith(d)) {
                             candidateTokens.add(createToken(Token.DIRECTIVE_TYPE_DISABLE_SCAN, d, line));
-                            break;
                         }
                     }
                 }
@@ -101,7 +93,6 @@ public class SourceCodeTokenizer {
                             Token c = createToken(Token.DIRECTIVE_TYPE_AUG_CODE, d, line);
                             c.augCodeSpecIndex = j;
                             candidateTokens.add(c);
-                            break;
                         }
                     }
                 }

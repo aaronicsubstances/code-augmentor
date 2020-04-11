@@ -22,7 +22,7 @@ import org.testng.annotations.Test;
 
 public class CodeGenerationRequestCreatorTest {
 
-    //@Test(dataProvider = "createTestProcessSourceFileData")
+    @Test(dataProvider = "createTestProcessSourceFileData")
     public void testProcessSourceFile(String sourceName, List<CodeSnippetDescriptor> expected,
             List<AugmentingCode> expectedAug1,
             List<AugmentingCode> expectedAug2) {
@@ -39,48 +39,48 @@ public class CodeGenerationRequestCreatorTest {
 
     @DataProvider
     public Object[][] createTestProcessSourceFileData() {
-        List<CodeSnippetDescriptor> first = new ArrayList<>();
-
         List<CodeSnippetDescriptor> bodySnippets2 = Arrays.asList(
-            new CodeSnippetDescriptor(createAugCodeDescriptor(null, 728, 804, 0), null),
-            new CodeSnippetDescriptor(createAugCodeDescriptor("    ", 1042, 1063, 1), 
-                new GeneratedCodeDescriptor(0, 0, 0, 0))
+            new CodeSnippetDescriptor(createAugCodeDescriptor("  ", 0, 261, 290), null),
+            new CodeSnippetDescriptor(createAugCodeDescriptor("", 1, 294, 301), null)
         );
-        List<AugmentingCode> secondJs = Arrays.asList(
-            createAugCode(null, 0, "JS", new Block(
-                " println(\"Hello World from JS-star\")\r\n" +
-            "var i = 3 + new Date(); \r\n" +
-            "...etc", false, false)),
-            createAugCode(" ", 1, "JS", new Block(" println(\"Hello\")", false, false))
+        List<AugmentingCode> augCodes20 = Arrays.asList(
+            createAugCode("  ", 0, "#PHP", 
+                new Block("", false, false),
+                new Block("", true, false),
+                new Block("[]", false, true))            
         );
-
-        // Data for 3rd test
-        List<CodeSnippetDescriptor> bodySnippets3 = Arrays.asList(
-            new CodeSnippetDescriptor(createAugCodeDescriptor(null, 59, 135, 0), null),
-            new CodeSnippetDescriptor(createAugCodeDescriptor("", 493, 514, 1),
-                new GeneratedCodeDescriptor(600, 610, 630, 640)),
-            new CodeSnippetDescriptor(createAugCodeDescriptor("        ", 560, 581, 2), null)
+        List<AugmentingCode> augCodes21 = Arrays.asList(
+            createAugCode("", 1, "#PHP7", new Block("", false, false))
         );
-        List<AugmentingCode> thirdJs = Arrays.asList(
-            createAugCode(null, 0, "JS", new Block(
-                " println(\"Hello World from JS-star\")\r\n" +
-            "var i = 3 + new Date(); \r\n" +
-            "...etc", false, false)),
-            createAugCode(" ", 1, "JS", new Block(" println(\"World\")", false, false)),
-            createAugCode(null, 2, "JS", new Block(" println(\"Hello\")", false, false))
+        
+        List<CodeSnippetDescriptor> bodySnippets4 = Arrays.asList(
+            new CodeSnippetDescriptor(createAugCodeDescriptor("    ", 0, 27, 58), null),
+            new CodeSnippetDescriptor(createAugCodeDescriptor("", 1, 61, 68),
+                new GeneratedCodeDescriptor(68, 73, 78, 83))
         );
-        return new Object[][]{
-            new Object[]{ "tokens-for-import.json", 
-                first, Arrays.asList(), Arrays.asList() },
-            new Object[]{ "tokens-for-generated-code-descriptor.json", 
-                bodySnippets2, secondJs, Arrays.asList() },
-            new Object[]{ "tokens-for-relevance.json", 
-                bodySnippets3, thirdJs, Arrays.asList() }
+        List<AugmentingCode> augCodes40 = Arrays.asList(
+            createAugCode("    ", 0, "#PHP", 
+                new Block("", false, false),
+                new Block("", true, false),
+                new Block("12", false, true))            
+        );
+        List<AugmentingCode> augCodes41 = Arrays.asList(
+            createAugCode("", 1, "#PHP7", new Block("", false, false))
+        );
+        return new Object[][] {
+            new Object[]{ "tokens-for-process-source-00.json", 
+                Arrays.asList(), Arrays.asList(), Arrays.asList() },
+            new Object[]{ "tokens-for-process-source-01.json", 
+                bodySnippets2, augCodes20, augCodes21 },
+            new Object[]{ "tokens-for-process-source-02.json", 
+                Arrays.asList(), Arrays.asList(), Arrays.asList() },
+            new Object[]{ "tokens-for-process-source-03.json",
+                bodySnippets4, augCodes40, augCodes41 }
         };
     }
 
     private static AugmentingCode createAugCode(String indent, int index, String directiveMarker,
-            Block... blocks) {        
+            Block... blocks) {
         AugmentingCode augCode = new AugmentingCode(Arrays.asList(blocks));
         augCode.setDirectiveMarker(directiveMarker);
         augCode.setIndex(index);
@@ -89,7 +89,7 @@ public class CodeGenerationRequestCreatorTest {
     }
 
     private static AugmentingCodeDescriptor createAugCodeDescriptor(
-            String indent, int startPos, int endPos, int index) {        
+            String indent, int index, int startPos, int endPos) {        
         AugmentingCodeDescriptor augCodeDesc = new AugmentingCodeDescriptor();
         augCodeDesc.setIndent(indent != null ? indent : "");
         augCodeDesc.setStartPos(startPos);

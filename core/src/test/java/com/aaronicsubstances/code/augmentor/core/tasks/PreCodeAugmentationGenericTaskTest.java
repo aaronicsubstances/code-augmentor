@@ -27,6 +27,7 @@ public class PreCodeAugmentationGenericTaskTest {
         public String[] relativePaths;
         public String[] genCodeStartDirectives, genCodeEndDirectives;
         public String[] embeddedStringDirectives, embeddedJsonDirectives;
+        public String[] enableScanDirectives, disableScanDirectives;
         public AugCodeSpec[] augCodeDirectives;
 
         public String prepFile;
@@ -68,14 +69,18 @@ public class PreCodeAugmentationGenericTaskTest {
         task.setGenCodeEndDirectives(Arrays.asList(taskSpec.genCodeEndDirectives));
         task.setEmbeddedStringDirectives(Arrays.asList(
             taskSpec.embeddedStringDirectives));
-        if (taskSpec.embeddedJsonDirectives != null) {
-            task.setEmbeddedJsonDirectives(Arrays.asList(taskSpec.embeddedJsonDirectives));
+        task.setEmbeddedJsonDirectives(Arrays.asList(taskSpec.embeddedJsonDirectives));
+        if (taskSpec.enableScanDirectives != null) {
+            task.setEnableScanDirectives(Arrays.asList(taskSpec.enableScanDirectives));
+        }
+        if (taskSpec.disableScanDirectives != null) {
+            task.setDisableScanDirectives(Arrays.asList(taskSpec.disableScanDirectives));
         }
 
         return task;
     }
 
-    //@Test(dataProvider = "createTestExecuteData")
+    @Test(dataProvider = "createTestExecuteData")
     public void testExecute(String jsonPath) throws Exception {
         PreCodeAugmentationGenericTask task = deserialize(jsonPath);
         String expectedPrepFileContents = TestResourceLoader.loadResource(

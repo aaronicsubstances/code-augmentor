@@ -1,7 +1,7 @@
 package com.aaronicsubstances.vision.members//GE
 ;//GE
-;
-//GE
+
+//GS
 
 /**
  *
@@ -21,10 +21,10 @@ public//JS println("World")
  /*GS*/Object//GS
  getSmsScript() {
 /*GE*/        String sendSmsScript//GE
- //GE
+ //GS
 = System.getenv("vision.send-sms-script")/*GS*/;
-//GS
-        //GS
+//GE
+        ///GS
 return /*GS*/sendSmsScript;/*GS*/
 //JS println("Hello World from JS-star")
 //JS var i = 3 + new Date(); 

@@ -1,5 +1,5 @@
 package /*GS*/com.aaronicsubstances.vision.members;
-
+//DISABLE
 //GS
 import/*GS*/ //GS
 javax.ws.rs.GET;
@@ -8,7 +8,7 @@ javax.ws.rs.GET;
 /*GE*/import/*GE*/ javax.ws.rs.core.MediaType/*GS*/;
 import //GE
 org.springframework.stereotype.Component/*GS*/;
-
+//ENABLE
 /**
  *
  * @author Aaron
@@ -29,7 +29,7 @@ class /*GE*/SmsConfigEndpoint //GS
     //GE
 @Path("send-sms-script")
     public Object//GS
- //GE
+ //GS
 getSmsScript() {/*GS*/
         /*GE*/String sendSmsScript/*GE*/ //GS
 = System.getenv("vision.send-sms-script");//GS
@@ -45,19 +45,22 @@ getSmsScript() {/*GS*/
     public//GE
  //GE
 Object getSmsConfig()/*GS*/ {
-//GE
+
         String /*GE*/smsConfigJson //GS
 =/*GS*/ System.getenv("vision.sms-config");
 	//JS println( 
 	//ES:World
 		//JS )
+
 		//GS*/
+        //DISABLE
         return /*GE*/smsConfigJson;
  //GE
     }
-    
+//DISABLE    
     @GET
     //GS
+    //ENABLE
 @Path("update-config")
     public Object getUpdateConfig() {
         String updateConfigJson = System.getenv("vision.update-config");
@@ -65,5 +68,5 @@ Object getSmsConfig()/*GS*/ {
     }
 }
 	//DD print
-    //ES:[]
+    //EJS:[]
 	

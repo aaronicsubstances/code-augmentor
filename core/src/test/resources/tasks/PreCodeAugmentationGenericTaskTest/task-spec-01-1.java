@@ -32,7 +32,7 @@ Object/*GS*/ /*GS*/getSmsScript()//GE
         String//GE
  /*GS*/sendSmsScript /*GE*/=//GE
  System.getenv("vision.send-sms-script")/*GE*/;
-//GS
+//GE
         return//GE
  sendSmsScript;
     }

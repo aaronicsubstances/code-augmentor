@@ -8,7 +8,6 @@
 			"directive_marker" : "//JS",
 			"indent": " ",
 			"blocks" : [{
-				"stringify" : false,
 				"content" : "*println(\"Hello World from JS-star\")\r\n*var i = 3 + new Date();\r\n*...etc"
 			}]
 		},
@@ -17,7 +16,6 @@
 			"directive_marker" : "//JS",
 			"indent": "\t",
 			"blocks" : [{
-				"stringify" : false,
 				"content" : " println( "
 			},
 			{
@@ -25,7 +23,6 @@
 				"content" : "World"
 			},
 			{
-				"stringify" : false,
 				"content" : " )"
 			}]
 		},
@@ -34,11 +31,10 @@
 			"directive_marker" : "//DD",
 			"indent": "\t",
 			"blocks" : [{
-				"stringify" : false,
 				"content" : " print"
 			},
             {
-				"stringify" : true,
+				"jsonify" : true,
 				"content" : "[]"
 			}]
 		}]

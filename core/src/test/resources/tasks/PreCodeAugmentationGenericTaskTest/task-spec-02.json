@@ -3,6 +3,11 @@
 	"genCodeStartDirectives" : [ "//GS" ],
 	"genCodeEndDirectives" : [ "//GE" ],
 	"embeddedStringDirectives" : [ "//ES:" ],
+	"embeddedJsonDirectives" : [ "//EJS:" ],
+	"embeddedStringDirectives" : [ "//ES:" ],
+	"embeddedJsonDirectives" : [ "//EJS:" ],
+	"enableScanDirectives" : [ "//ENABLE" ],
+	"disableScanDirectives" : [ "//DISABLE" ],
 	"prepFile" : "task-spec-02-actual-prep.json",
 	"augCodeDirectives" : [{
 		"file": "task-spec-02-actual-request-0.json",

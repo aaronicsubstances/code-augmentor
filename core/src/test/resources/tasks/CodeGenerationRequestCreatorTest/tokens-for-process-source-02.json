@@ -1,0 +1,344 @@
+[
+    {
+        "text": "public class OracleJdbcTest\r\n",
+        "index": 0,
+        "lineNumber": 1,
+        "startPos": 0,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 29
+    },
+    {
+        "text": "{\r\n",
+        "index": 1,
+        "lineNumber": 2,
+        "startPos": 29,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 32
+    },
+    {
+        "text": "\tString driverClass = \"oracle.jdbc.driver.OracleDriver\";\r\n",
+        "index": 2,
+        "lineNumber": 3,
+        "startPos": 32,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 90
+    },
+    {
+        "text": "\r\n",
+        "type": 20,
+        "index": 3,
+        "lineNumber": 4,
+        "startPos": 90,
+        "newline": "\r\n",
+        "endPos": 92
+    },
+    {
+        "text": "\tConnection con;\r\n",
+        "index": 4,
+        "lineNumber": 5,
+        "startPos": 92,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 110
+    },
+    {
+        "text": "\t\r\n",
+        "type": 20,
+        "index": 5,
+        "lineNumber": 6,
+        "startPos": 110,
+        "newline": "\r\n",
+        "endPos": 113
+    },
+    {
+        "text": "\tpublic void init(FileInputStream fs) throws ClassNotFoundException, SQLException, FileNotFoundException, IOException\r\n",
+        "index": 6,
+        "lineNumber": 7,
+        "startPos": 113,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 232
+    },
+    {
+        "text": "\t{\r\n",
+        "index": 7,
+        "lineNumber": 8,
+        "startPos": 232,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 236
+    },
+    {
+        "text": "\t\tProperties props = new Properties();\r\n",
+        "index": 8,
+        "lineNumber": 9,
+        "startPos": 236,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 276
+    },
+    {
+        "text": "\t\tprops.load(fs);\r\n",
+        "index": 9,
+        "lineNumber": 10,
+        "startPos": 276,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 295
+    },
+    {
+        "text": "\t\tString url = props.getProperty(\"db.url\");\r\n",
+        "index": 10,
+        "lineNumber": 11,
+        "startPos": 295,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 340
+    },
+    {
+        "text": "\t\tString userName = props.getProperty(\"db.user\");\r\n",
+        "index": 11,
+        "lineNumber": 12,
+        "startPos": 340,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 391
+    },
+    {
+        "text": "\t\tString password = props.getProperty(\"db.password\");\r\n",
+        "index": 12,
+        "lineNumber": 13,
+        "startPos": 391,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 446
+    },
+    {
+        "text": "\t\tClass.forName(driverClass);\r\n",
+        "index": 13,
+        "lineNumber": 14,
+        "startPos": 446,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 477
+    },
+    {
+        "text": "\r\n",
+        "type": 20,
+        "index": 14,
+        "lineNumber": 15,
+        "startPos": 477,
+        "newline": "\r\n",
+        "endPos": 479
+    },
+    {
+        "text": "\t\tcon=DriverManager.getConnection(url, userName, password);\r\n",
+        "index": 15,
+        "lineNumber": 16,
+        "startPos": 479,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 540
+    },
+    {
+        "text": "\t}\r\n",
+        "index": 16,
+        "lineNumber": 17,
+        "startPos": 540,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 544
+    },
+    {
+        "text": "\t\r\n",
+        "type": 20,
+        "index": 17,
+        "lineNumber": 18,
+        "startPos": 544,
+        "newline": "\r\n",
+        "endPos": 547
+    },
+    {
+        "text": "\tpublic void fetch() throws SQLException, IOException\r\n",
+        "index": 18,
+        "lineNumber": 19,
+        "startPos": 547,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 602
+    },
+    {
+        "text": "\t{\r\n",
+        "index": 19,
+        "lineNumber": 20,
+        "startPos": 602,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 606
+    },
+    {
+        "text": "\t\tPreparedStatement ps = con.prepareStatement(\"select SYSDATE from dual\");\r\n",
+        "index": 20,
+        "lineNumber": 21,
+        "startPos": 606,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 682
+    },
+    {
+        "text": "\t\tResultSet rs = ps.executeQuery();\r\n",
+        "index": 21,
+        "lineNumber": 22,
+        "startPos": 682,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 719
+    },
+    {
+        "text": "\t\t\r\n",
+        "type": 20,
+        "index": 22,
+        "lineNumber": 23,
+        "startPos": 719,
+        "newline": "\r\n",
+        "endPos": 723
+    },
+    {
+        "text": "\t\twhile (rs.next())\r\n",
+        "index": 23,
+        "lineNumber": 24,
+        "startPos": 723,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 744
+    },
+    {
+        "text": "\t\t{\r\n",
+        "index": 24,
+        "lineNumber": 25,
+        "startPos": 744,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 749
+    },
+    {
+        "text": "\t\t\t// do the thing you do\r\n",
+        "index": 25,
+        "lineNumber": 26,
+        "startPos": 749,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 776
+    },
+    {
+        "text": "\t\t}\r\n",
+        "index": 26,
+        "lineNumber": 27,
+        "startPos": 776,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 781
+    },
+    {
+        "text": "\t\trs.close();\r\n",
+        "index": 27,
+        "lineNumber": 28,
+        "startPos": 781,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 796
+    },
+    {
+        "text": "\t\tps.close();\r\n",
+        "index": 28,
+        "lineNumber": 29,
+        "startPos": 796,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 811
+    },
+    {
+        "text": "\t}\r\n",
+        "index": 29,
+        "lineNumber": 30,
+        "startPos": 811,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 815
+    },
+    {
+        "text": "\r\n",
+        "type": 20,
+        "index": 30,
+        "lineNumber": 31,
+        "startPos": 815,
+        "newline": "\r\n",
+        "endPos": 817
+    },
+    {
+        "text": "\tpublic static void main(String[] args) \r\n",
+        "index": 31,
+        "lineNumber": 32,
+        "startPos": 817,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 859
+    },
+    {
+        "text": "\t{\r\n",
+        "index": 32,
+        "lineNumber": 33,
+        "startPos": 859,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 863
+    },
+    {
+        "text": "\t\tOracleJdbcTest test = new OracleJdbcTest();\r\n",
+        "index": 33,
+        "lineNumber": 34,
+        "startPos": 863,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 910
+    },
+    {
+        "text": "\t\ttest.init();\r\n",
+        "index": 34,
+        "lineNumber": 35,
+        "startPos": 910,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 926
+    },
+    {
+        "text": "\t\ttest.fetch();\r\n",
+        "index": 35,
+        "lineNumber": 36,
+        "startPos": 926,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 943
+    },
+    {
+        "text": "\t}\r\n",
+        "index": 36,
+        "lineNumber": 37,
+        "startPos": 943,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 947
+    },
+    {
+        "text": "}\r\n",
+        "index": 37,
+        "lineNumber": 38,
+        "startPos": 947,
+        "type": 50,
+        "newline": "\r\n",
+        "endPos": 950
+    }
+]
