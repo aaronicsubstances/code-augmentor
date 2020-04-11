@@ -126,8 +126,7 @@ public class PreCodeAugmentationTask extends DefaultTask {
         List<ParserException> allErrors = genericTask.getAllErrors();
         if (!allErrors.isEmpty()) {
             for (ParserException ex : allErrors) {
-                getLogger().warn(String.format("Parse error in %s %s",
-                    new File(ex.getDir(), ex.getFilePath()), ex));
+                getLogger().warn("Parse error " + ex);
             }
             throw new GradleException(allErrors.size() + " parse error(s) found.");
         }

@@ -13,9 +13,10 @@ import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import com.aaronicsubstances.code.augmentor.core.parsing.ParserException;
+import com.aaronicsubstances.code.augmentor.core.tasks.AugCodeProcessingSpec;
 import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
 import com.aaronicsubstances.code.augmentor.core.tasks.PreCodeAugmentationGenericTask;
+import com.aaronicsubstances.code.augmentor.core.util.ParserException;
 
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.DirectoryScanner;
@@ -28,9 +29,12 @@ public class PreCodeAugmentationTask extends Task {
     private final List<FileSet> srcDirs = new ArrayList<>();
     private File prepFile;
     private final List<CodeGenerationRequestSpecification> requestSpecList = new ArrayList<>();
-    private final List<SuffixSpec> embeddedStringDoubleSlashSuffixes = new ArrayList<>();
-    private final List<SuffixSpec> genCodeStartSuffixes = new ArrayList<>();
-    private final List<SuffixSpec> genCodeEndSuffixes = new ArrayList<>();
+    private final List<Directive> genCodeStartDirectives = new ArrayList<>();
+    private final List<Directive> genCodeEndDirectives = new ArrayList<>();
+    private final List<Directive> embeddedStringDirectives = new ArrayList<>();
+    private final List<Directive> embeddedJsonDirectives = new ArrayList<>();
+    private final List<Directive> enableScanDirectives = new ArrayList<>();
+    private final List<Directive> disableScanDirectives = new ArrayList<>();
 
     public void setEncoding(String encoding) {
         this.encoding = encoding;
@@ -49,25 +53,46 @@ public class PreCodeAugmentationTask extends Task {
         requestSpecList.add(spec);
     }
 
-    public void addConfiguredEmbedded_string_dslash_suffix(SuffixSpec suffix) {
-        if (suffix.getValue() == null) {            
-            throw new BuildException("embedded_string_dslash_suffix[@value] attribute not specified.");
+    public void addConfiguredGen_code_start_directive(Directive d) {
+        if (d.getValue() == null) {            
+            throw new BuildException("gen_code_start_directive[@value] attribute not specified.");
         }
-        embeddedStringDoubleSlashSuffixes.add(suffix);
+        genCodeStartDirectives.add(d);
     }
 
-    public void addConfiguredGen_code_start_suffix(SuffixSpec suffix) {
-        if (suffix.getValue() == null) {            
-            throw new BuildException("gen_code_start_suffix[@value] attribute not specified.");
+    public void addConfiguredGen_code_end_directive(Directive d) {
+        if (d.getValue() == null) {            
+            throw new BuildException("gen_code_end_directive[@value] attribute not specified.");
         }
-        genCodeStartSuffixes.add(suffix);
+        genCodeEndDirectives.add(d);
     }
 
-    public void addConfiguredGen_code_end_suffix(SuffixSpec suffix) {
-        if (suffix.getValue() == null) {            
-            throw new BuildException("gen_code_end_suffix[@value] attribute not specified.");
+    public void addConfiguredEmbedded_string_directive(Directive d) {
+        if (d.getValue() == null) {            
+            throw new BuildException("embedded_string_directive[@value] attribute not specified.");
         }
-        genCodeEndSuffixes.add(suffix);
+        embeddedStringDirectives.add(d);
+    }
+
+    public void addConfiguredEmbedded_json_directive(Directive d) {
+        if (d.getValue() == null) {            
+            throw new BuildException("embedded_json_directive[@value] attribute not specified.");
+        }
+        embeddedJsonDirectives.add(d);
+    }
+
+    public void addConfiguredEnable_scan_directive(Directive d) {
+        if (d.getValue() == null) {            
+            throw new BuildException("enable_scan_directive[@value] attribute not specified.");
+        }
+        enableScanDirectives.add(d);
+    }
+
+    public void addConfiguredDisable_scan_directive(Directive d) {
+        if (d.getValue() == null) {            
+            throw new BuildException("disable_scan_directive[@value] attribute not specified.");
+        }
+        disableScanDirectives.add(d);
     }
 
     public void execute() {
@@ -82,37 +107,50 @@ public class PreCodeAugmentationTask extends Task {
         if (srcDirs.isEmpty()) {
             throw new BuildException("at least 1 nested src element is required");
         }
-        if (requestSpecList.isEmpty()) {
-            throw new BuildException("at least 1 nested spec element is required");
-        }
+
         if (prepFile == null) {
             throw new BuildException("prepfile attribute is required");
         }
-        if (embeddedStringDoubleSlashSuffixes.isEmpty()) {
-            throw new BuildException("at least 1 nested embedded_string_dslash_suffix element is required");
+
+        // ensure at least 1 directive in each category, except for 
+        // enable/disable scan directives, which are optional.
+        if (requestSpecList.isEmpty()) {
+            throw new BuildException("at least 1 nested spec element is required");
         }
-        if (genCodeStartSuffixes.isEmpty()) {
-            throw new BuildException("at least 1 nested gen_code_start_suffix element is required");
+        if (genCodeStartDirectives.isEmpty()) {
+            throw new BuildException("at least 1 nested gen_code_start_directive element is required");
         }
-        if (genCodeEndSuffixes.isEmpty()) {
-            throw new BuildException("at least 1 nested gen_code_end_suffix element is required");
+        if (genCodeEndDirectives.isEmpty()) {
+            throw new BuildException("at least 1 nested gen_code_end_directive element is required");
+        }
+        if (embeddedStringDirectives.isEmpty()) {
+            throw new BuildException("at least 1 nested embedded_string_directive element is required");
+        }
+        if (embeddedJsonDirectives.isEmpty()) {
+            throw new BuildException("at least 1 nested embedded_json_directive element is required");
         }
 
-        // Ensure uniqueness across comment suffixes.
-        Set<SuffixSpec> allSuffixes = new HashSet<>();
-        int totalSuffixCount = 0;
-        allSuffixes.addAll(embeddedStringDoubleSlashSuffixes);
-        totalSuffixCount += embeddedStringDoubleSlashSuffixes.size();
-        allSuffixes.addAll(genCodeStartSuffixes);
-        totalSuffixCount += genCodeStartSuffixes.size();
-        allSuffixes.addAll(genCodeEndSuffixes);
-        totalSuffixCount += genCodeEndSuffixes.size();
+        // Ensure uniqueness across directives.
+        Set<Directive> allDirectives = new HashSet<>();
+        int totalDirectiveCount = 0;
+        allDirectives.addAll(genCodeStartDirectives);
+        totalDirectiveCount += genCodeStartDirectives.size();
+        allDirectives.addAll(genCodeEndDirectives);
+        totalDirectiveCount += genCodeEndDirectives.size();
+        allDirectives.addAll(embeddedStringDirectives);
+        totalDirectiveCount += embeddedStringDirectives.size();
+        allDirectives.addAll(embeddedJsonDirectives);
+        totalDirectiveCount += embeddedJsonDirectives.size();
+        allDirectives.addAll(enableScanDirectives);
+        totalDirectiveCount += enableScanDirectives.size();
+        allDirectives.addAll(disableScanDirectives);
+        totalDirectiveCount += disableScanDirectives.size();
         for (CodeGenerationRequestSpecification spec : requestSpecList) {
-            allSuffixes.addAll(spec.getAugCodeSuffixes());
-            totalSuffixCount += spec.getAugCodeSuffixes().size();
+            allDirectives.addAll(spec.getAugCodeDirectives());
+            totalDirectiveCount += spec.getAugCodeDirectives().size();
         }
-        if (totalSuffixCount != allSuffixes.size()) {
-            throw new BuildException("Duplicates detected across comment marker suffixes");
+        if (totalDirectiveCount != allDirectives.size()) {
+            throw new BuildException("Duplicates detected across directives");
         }
         
         BiConsumer<Integer, Supplier<String>> logAppender = (logLevel, msgFunc) -> {
@@ -148,26 +186,39 @@ public class PreCodeAugmentationTask extends Task {
         genericTask.setPrepFile(prepFile);
         genericTask.setRelativePaths(relativePaths);
         genericTask.setBaseDirs(baseDirs);
-        genericTask.setEmbeddedStringDoubleSlashSuffixes(
-            embeddedStringDoubleSlashSuffixes.stream()
+        genericTask.setGenCodeStartDirectives(genCodeStartDirectives.stream()
             .map(x -> x.getValue())
             .collect(Collectors.toList()));
-        genericTask.setGenCodeStartSuffixes(genCodeStartSuffixes.stream()
+        genericTask.setGenCodeEndDirectives(genCodeEndDirectives.stream()
             .map(x -> x.getValue())
             .collect(Collectors.toList()));
-        genericTask.setGenCodeEndSuffixes(genCodeEndSuffixes.stream()
+        genericTask.setEmbeddedStringDirectives(
+            embeddedStringDirectives.stream()
+            .map(x -> x.getValue())
+            .collect(Collectors.toList()));
+        genericTask.setEmbeddedJsonDirectives(
+            embeddedJsonDirectives.stream()
+            .map(x -> x.getValue())
+            .collect(Collectors.toList()));
+        genericTask.setEnableScanDirectives(
+            enableScanDirectives.stream()
+            .map(x -> x.getValue())
+            .collect(Collectors.toList()));
+        genericTask.setDisableScanDirectives(
+            disableScanDirectives.stream()
             .map(x -> x.getValue())
             .collect(Collectors.toList()));
 
-        List<List<String>> augCodeSuffixes = new ArrayList<>();
-        List<File> augCodeDestFiles = new ArrayList<>();
+        List<AugCodeProcessingSpec> augCodeProcessingSpecs = new ArrayList<>();
         for (CodeGenerationRequestSpecification spec : requestSpecList) {
-            augCodeSuffixes.add(spec.getAugCodeSuffixes().stream().
-                map(x -> x.getValue()).collect(Collectors.toList()));
-            augCodeDestFiles.add(spec.getAugCodeDestFile());
+            AugCodeProcessingSpec augCodeProcessingSpec = new AugCodeProcessingSpec(
+                spec.getAugCodeDestFile(), 
+                spec.getAugCodeDirectives().stream()
+                .map(x -> x.getValue()).collect(Collectors.toList()));
+            augCodeProcessingSpecs.add(augCodeProcessingSpec);
         }
-        genericTask.setAugCodeSuffixes(augCodeSuffixes);
-        genericTask.setAugCodeDestFiles(augCodeDestFiles);
+        genericTask.setAugCodeProcessingSpecs(augCodeProcessingSpecs);
+        
         try {
             genericTask.execute();
         }
@@ -182,8 +233,7 @@ public class PreCodeAugmentationTask extends Task {
         List<ParserException> allErrors = genericTask.getAllErrors();
         if (!allErrors.isEmpty()) {
             for (ParserException ex : allErrors) {
-                log(String.format("Parse error in %s %s",
-                    new File(ex.getDir(), ex.getFilePath()), ex), Project.MSG_WARN);
+                log("Parse error " + ex, Project.MSG_WARN);
             }
             throw new BuildException(allErrors.size() + " parse error(s) found.");
         }

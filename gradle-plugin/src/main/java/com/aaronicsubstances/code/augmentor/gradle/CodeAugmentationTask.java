@@ -29,16 +29,11 @@ public class CodeAugmentationTask extends DefaultTask {
 
     private File destDir;
 
-    private String newline;
-
     private File changeSetInfoFile;
 
     @TaskAction
     public void execute() {
         Charset charset = Charset.forName(encoding);
-        if (newline == null) {
-            newline = System.lineSeparator();
-        }
         BiConsumer<Integer, Supplier<String>> logAppender = (logLevel, msgFunc) -> {
             switch (logLevel) {
                 case CodeAugmentationGenericTask.LOG_LEVEL_VERBOSE:
@@ -61,7 +56,6 @@ public class CodeAugmentationTask extends DefaultTask {
 
         CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
         genericTask.setCharset(charset);
-        genericTask.setNewline(newline);
         genericTask.setLogAppender(logAppender);
         genericTask.setPrepFile(prepFile);
         genericTask.setGeneratedCodeFiles(generatedCodeFiles);

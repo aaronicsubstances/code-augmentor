@@ -36,18 +36,12 @@ public class CodeAugmentationMojo extends AbstractMojo {
     @Parameter( required=true )
     private File destDir;
 
-    @Parameter
-    private String newline;
-
     @Parameter( defaultValue = "${project.build.directory}/code-augmentor-changes.txt")
     private File changeSetInfoFile;
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         Charset charset = Charset.forName(encoding);
-        if (newline == null) {
-            newline = System.lineSeparator();
-        }
         BiConsumer<Integer, Supplier<String>> logAppender = (logLevel, msgFunc) -> {
             switch (logLevel) {
                 case CodeAugmentationGenericTask.LOG_LEVEL_VERBOSE:
@@ -70,7 +64,6 @@ public class CodeAugmentationMojo extends AbstractMojo {
 
         CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
         genericTask.setCharset(charset);
-        genericTask.setNewline(newline);
         genericTask.setLogAppender(logAppender);
         genericTask.setPrepFile(prepFile);
         genericTask.setGeneratedCodeFiles(Arrays.asList(generatedCodeFiles));

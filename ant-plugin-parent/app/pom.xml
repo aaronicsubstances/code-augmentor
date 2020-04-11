@@ -22,7 +22,7 @@
 	
 	<dependency>
 	  <groupId>com.aaronicsubstances</groupId>
-	  <artifactId>codeaugmentor-backlog</artifactId>
+	  <artifactId>codeaugmentor-core</artifactId>
 	  <version>1.0-SNAPSHOT</version>
 	  <scope>runtime</scope>
 	</dependency>

@@ -3,7 +3,7 @@ package com.aaronicsubstances.code.augmentor.gradle;
 import java.io.File;
 import java.util.List;
 
-public class AugCodeSuffixSpec {
+public class AugCodeDirectiveSpec {
 
     private File destFile;
 

@@ -26,7 +26,6 @@ public class CodeAugmentationTask extends Task {
     private String encoding;
     private File prepfile;
     private File destdir;
-    private String newline;
     private File changeSetInfoFile;
     private final List<CodeGenerationResponseSpecification> generatedCodeFiles = new ArrayList<>();
 
@@ -40,10 +39,6 @@ public class CodeAugmentationTask extends Task {
 
     public void setPrepfile(File f) {
         this.prepfile = f;
-    }
-
-    public void setNewline(String newline) {
-        this.newline = newline;
     }
 
     public void setChangeSetInfoFile(File changeSetInfoFile) {
@@ -80,9 +75,6 @@ public class CodeAugmentationTask extends Task {
             throw new BuildException("at least one spec nested element is required");
         }
         
-        if (newline == null) {
-            newline = System.lineSeparator();
-        }
         BiConsumer<Integer, Supplier<String>> logAppender = (logLevel, msgFunc) -> {
             switch (logLevel) {
                 case CodeAugmentationGenericTask.LOG_LEVEL_VERBOSE:
@@ -99,7 +91,6 @@ public class CodeAugmentationTask extends Task {
 
         CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
         genericTask.setCharset(charset);
-        genericTask.setNewline(newline);
         genericTask.setLogAppender(logAppender);
         genericTask.setPrepFile(prepfile);
         genericTask.setGeneratedCodeFiles(

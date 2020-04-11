@@ -4,13 +4,13 @@ import java.io.File;
 
 import org.apache.maven.plugins.annotations.Parameter;
 
-public class AugCodeSuffixSpec {
+public class AugCodeDirectiveSpec {
 
     @Parameter( required=true )
     private File destFile;
 
     @Parameter( required=true )
-    private String[] suffixes;
+    private String[] directives;
 
     public File getDestFile() {
         return destFile;
@@ -20,11 +20,11 @@ public class AugCodeSuffixSpec {
         this.destFile = destFile;
     }
 
-    public String[] getSuffixes() {
-        return suffixes;
+    public String[] getDirectives() {
+        return directives;
     }
 
-    public void setSuffixes(String[] suffixes) {
-        this.suffixes = suffixes;
+    public void setDirectives(String[] directives) {
+        this.directives = directives;
     }
 }

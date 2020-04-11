@@ -1,9 +1,6 @@
 package com.aaronicsubstances.code.augmentor.ant;
 
-/**
- * SuffixSpec
- */
-public class SuffixSpec {
+public class Directive {
     private String value;
 
     public String getValue() {
@@ -30,7 +27,7 @@ public class SuffixSpec {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        SuffixSpec other = (SuffixSpec) obj;
+        Directive other = (Directive) obj;
         if (value == null) {
             if (other.value != null)
                 return false;
