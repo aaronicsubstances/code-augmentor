@@ -99,6 +99,7 @@ public class PreCodeAugmentationGenericTask {
                 CodeGenerationRequestCreator.processSourceFile(inputTokens, srcFile,
                     specAugCodesList, errors);
             if (errors.isEmpty()) {
+                int identifiedAugCodeCount = 0;
                 // don't bother to serialize any further if there are
                 // previous errors.
                 // also skip seriaize if no snippets were generated.
@@ -108,7 +109,6 @@ public class PreCodeAugmentationGenericTask {
                     s.serialize(resultWriter);
 
                     // serialize aug codes
-                    int identifiedAugCodeCount = 0;
                     for (int j = 0; j < codeGenRequestWriters.size(); j++) {
                         Object requestWriter = codeGenRequestWriters.get(j);
                         List<AugmentingCode> specAugCodes = specAugCodesList.get(j);
@@ -121,17 +121,23 @@ public class PreCodeAugmentationGenericTask {
                         sourceFileAugCode.setRelativePath(relativePath);
                         sourceFileAugCode.serialize(requestWriter);
                     }
-
+                }
+                    
+                if (identifiedAugCodeCount == 0) {
+                    logVerbose("0 aug codes identified in %s", srcFile);
+                }
+                else {
                     logInfo("%s aug code(s) identified in %s", identifiedAugCodeCount, srcFile);
                 }
-            } else {
+            } 
+            else {
                 logWarn("%s error(s) encountered in %s", errors.size(), srcFile);
                 allErrors.addAll(errors);
             }
 
             Instant endInstant = Instant.now();
             long timeElapsed = Duration.between(startInstant, endInstant).toMillis();
-            logVerbose("done in %s ms", timeElapsed);
+            logInfo("Done processing %s in %d ms", srcFile, timeElapsed);
         }
 
         // close writers

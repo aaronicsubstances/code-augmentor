@@ -69,13 +69,21 @@ public class GeneratedCodeFetcher {
             SourceFileGeneratedCode fileGenCode;
             if (!firstPrepare) {
                 fileGenCode = lastFetches.get(i);
-                if (fileGenCode == null || fileIndex < fileGenCode.getFileIndex()) {
-                    // meaning no more files or file with id fileIndex doesn't exist.
+                if (fileGenCode == null) {
+                    // meaning no more files
                     continue;
                 }
                 else if (fileIndex == fileGenCode.getFileIndex()) {
                     found = true;
                     continue;
+                }
+                else {
+                    // this part assumes file ids are in ascending order.
+                    // So if peeking reveals file with id higher than fileIndex,
+                    // then it means we are not going to find fileIndex.
+                    if (fileIndex < fileGenCode.getFileIndex()) {                        
+                        continue;
+                    }
                 }
             }
             Object rdr = codeGenerationResponseReaders.get(i);

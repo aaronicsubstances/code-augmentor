@@ -61,7 +61,7 @@ public class TaskUtils {
     /**
      * Calculates line number given a position in a string.
      * 
-     * @param s source code text.
+     * @param content source code text.
      * @param position position in s.
      * 
      * @return line number.
@@ -200,7 +200,7 @@ public class TaskUtils {
         return hash;
     }
 
-    public static void copyStream(InputStream inStream, OutputStream outStream) throws IOException {
+    private static void copyStream(InputStream inStream, OutputStream outStream) throws IOException {
         byte[] b  = new byte[8192];
         int len;
         while ((len = inStream.read(b)) > 0) {

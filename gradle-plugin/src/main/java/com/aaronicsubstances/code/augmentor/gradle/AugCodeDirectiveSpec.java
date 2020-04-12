@@ -1,27 +1,26 @@
 package com.aaronicsubstances.code.augmentor.gradle;
 
-import java.io.File;
 import java.util.List;
 
+import org.gradle.api.file.RegularFile;
+
 public class AugCodeDirectiveSpec {
+    private RegularFile destFile;
+    private List<String> directives;
 
-    private File destFile;
-
-    private List<String> suffixes;
-
-    public File getDestFile() {
+    public RegularFile getDestFile() {
         return destFile;
     }
 
-    public void setDestFile(File destFile) {
+    public void setDestFile(RegularFile destFile) {
         this.destFile = destFile;
     }
 
-    public List<String> getSuffixes() {
-        return suffixes;
+    public List<String> getDirectives() {
+        return directives;
     }
 
-    public void setSuffixes(List<String> suffixes) {
-        this.suffixes = suffixes;
+    public void setDirectives(List<String> directives) {
+        this.directives = directives;
     }
 }

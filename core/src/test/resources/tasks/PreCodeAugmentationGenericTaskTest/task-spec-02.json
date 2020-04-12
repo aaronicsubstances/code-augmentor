@@ -1,5 +1,6 @@
 {
 	"relativePaths" : [ "task-spec-02-0.java" ],
+    "loggingEnabled" : true,
 	"genCodeStartDirectives" : [ "//GS" ],
 	"genCodeEndDirectives" : [ "//GE" ],
 	"embeddedStringDirectives" : [ "//ES:" ],

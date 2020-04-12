@@ -9,14 +9,19 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
-import com.aaronicsubstances.code.augmentor.core.parsing.ParserException;
+import com.aaronicsubstances.code.augmentor.core.tasks.AugCodeProcessingSpec;
 import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
 import com.aaronicsubstances.code.augmentor.core.tasks.PreCodeAugmentationGenericTask;
+import com.aaronicsubstances.code.augmentor.core.util.ParserException;
 
-import org.apache.tools.ant.DirectoryScanner;
-import org.apache.tools.ant.types.FileSet;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
+import org.gradle.api.file.ConfigurableFileTree;
+import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
 
 /**
@@ -24,41 +29,61 @@ import org.gradle.api.tasks.TaskAction;
  *
  */
 public class PreCodeAugmentationTask extends DefaultTask {
-
-    private String encoding;
-
-    public List<FileSet> fileSets;
-
-    private File prepFile;
-
-    private AugCodeSuffixSpec[] augCodeSuffixSpecs;
-
-    private List<String> embeddedStringDoubleSlashSuffixes;
-
-    private List<String> genCodeStartSuffixes;
-
-    private List<String> genCodeEndSuffixes;
+    private final Property<String> encoding;
+    private final ListProperty<ConfigurableFileTree> fileSets;
+    private final RegularFileProperty prepFile;
+    private final ListProperty<AugCodeDirectiveSpec> augCodeDirectives;
+    private final ListProperty<String> genCodeStartDirectives;
+    private final ListProperty<String> genCodeEndDirectives;
+    private final ListProperty<String> embeddedStringDirectives;
+    private final ListProperty<String> embeddedJsonDirectives;
+    private final ListProperty<String> enableScanDirectives;
+    private final ListProperty<String> disableScanDirectives;
+    
+    public PreCodeAugmentationTask() {
+        ObjectFactory objectFactory = getProject().getObjects();
+        encoding = objectFactory.property(String.class);
+        fileSets = objectFactory.listProperty(ConfigurableFileTree.class);
+        prepFile = objectFactory.fileProperty();
+        augCodeDirectives = objectFactory.listProperty(AugCodeDirectiveSpec.class);
+        genCodeStartDirectives = objectFactory.listProperty(String.class);
+        genCodeEndDirectives = objectFactory.listProperty(String.class);
+        embeddedStringDirectives = objectFactory.listProperty(String.class);
+        embeddedJsonDirectives = objectFactory.listProperty(String.class);
+        enableScanDirectives = objectFactory.listProperty(String.class);
+        disableScanDirectives = objectFactory.listProperty(String.class);
+    }
 
     @TaskAction    
     public void execute() {
-        // Ensure uniqueness across comment suffixes.
-        Set<String> allSuffixes = new HashSet<>();
-        int totalSuffixCount = 0;
-        allSuffixes.addAll(embeddedStringDoubleSlashSuffixes);
-        totalSuffixCount += embeddedStringDoubleSlashSuffixes.size();
-        allSuffixes.addAll(genCodeStartSuffixes);
-        totalSuffixCount += genCodeStartSuffixes.size();
-        allSuffixes.addAll(genCodeEndSuffixes);
-        totalSuffixCount += genCodeEndSuffixes.size();
-        for (AugCodeSuffixSpec spec : augCodeSuffixSpecs) {
-            allSuffixes.addAll(spec.getSuffixes());
-            totalSuffixCount += spec.getSuffixes().size();
+        // Ensure uniqueness across directives.
+        Set<String> allDirectives = new HashSet<>();
+        int totalDirectiveCount = 0;
+        allDirectives.addAll(genCodeStartDirectives.get());
+        totalDirectiveCount += genCodeStartDirectives.get().size();
+        allDirectives.addAll(genCodeEndDirectives.get());
+        totalDirectiveCount += genCodeEndDirectives.get().size();
+        allDirectives.addAll(embeddedStringDirectives.get());
+        totalDirectiveCount += embeddedStringDirectives.get().size();
+        allDirectives.addAll(embeddedJsonDirectives.get());
+        totalDirectiveCount += embeddedJsonDirectives.get().size();
+        if (enableScanDirectives != null) {
+            allDirectives.addAll(enableScanDirectives.get());
+            totalDirectiveCount += enableScanDirectives.get().size();
         }
-        if (totalSuffixCount != allSuffixes.size()) {
-            throw new GradleException("Duplicates detected across comment marker suffixes");
+        if (disableScanDirectives != null) {
+            allDirectives.addAll(disableScanDirectives.get());
+            totalDirectiveCount += disableScanDirectives.get().size();
+        }
+        for (AugCodeDirectiveSpec spec : augCodeDirectives.get()) {
+            allDirectives.addAll(spec.getDirectives());
+            totalDirectiveCount += spec.getDirectives().size();
+        }
+        if (totalDirectiveCount != allDirectives.size()) {
+            throw new GradleException("Duplicates detected across directives");
         }
         
-        Charset charset = Charset.forName(encoding);
+        Charset charset = Charset.forName(encoding.get());
         BiConsumer<Integer, Supplier<String>> logAppender = (logLevel, msgFunc) -> {
             switch (logLevel) {
                 case PreCodeAugmentationGenericTask.LOG_LEVEL_VERBOSE:
@@ -82,12 +107,17 @@ public class PreCodeAugmentationTask extends DefaultTask {
         List<File> baseDirs = new ArrayList<>();
         List<String> relativePaths = new ArrayList<>();
         
-        for (FileSet srcdir : fileSets) {
-            DirectoryScanner ds = srcdir.getDirectoryScanner(getAnt().getProject());
-            String[] includedFiles = ds.getIncludedFiles();
-            for (String filename : includedFiles) {
-                baseDirs.add(ds.getBasedir());
-                relativePaths.add(filename);
+        for (ConfigurableFileTree fileTree : fileSets.get()) {
+            Set<File> includedFiles = fileTree.getFiles();
+            File baseDir = fileTree.getDir();
+            String baseDirPath = baseDir.getPath();
+            for (File file : includedFiles) {
+                baseDirs.add(baseDir);
+                assert file.getPath().startsWith(baseDirPath);
+                String relativePath = file.getPath().substring(baseDirPath.length() + 1);
+                assert !relativePath.startsWith("/");
+                assert !relativePath.startsWith("\\");
+                relativePaths.add(relativePath);
             }
         }
 
@@ -96,22 +126,24 @@ public class PreCodeAugmentationTask extends DefaultTask {
         PreCodeAugmentationGenericTask genericTask = new PreCodeAugmentationGenericTask();
         genericTask.setCharset(charset);
         genericTask.setLogAppender(logAppender);
-        genericTask.setPrepFile(prepFile);
+        genericTask.setPrepFile(prepFile.get().getAsFile());
         genericTask.setRelativePaths(relativePaths);
         genericTask.setBaseDirs(baseDirs);
-        genericTask.setEmbeddedStringDoubleSlashSuffixes(
-            embeddedStringDoubleSlashSuffixes);
-        genericTask.setGenCodeStartSuffixes(genCodeStartSuffixes);
-        genericTask.setGenCodeEndSuffixes(genCodeEndSuffixes);
+        genericTask.setGenCodeStartDirectives(genCodeStartDirectives.get());
+        genericTask.setGenCodeEndDirectives(genCodeEndDirectives.get());
+        genericTask.setEmbeddedStringDirectives(embeddedStringDirectives.get());
+        genericTask.setEmbeddedJsonDirectives(embeddedJsonDirectives.get());
+        genericTask.setEnableScanDirectives(enableScanDirectives.get());
+        genericTask.setDisableScanDirectives(disableScanDirectives.get());
 
-        List<List<String>> augCodeSuffixes = new ArrayList<>();
-        List<File> augCodeDestFiles = new ArrayList<>();
-        for (AugCodeSuffixSpec spec : augCodeSuffixSpecs) {
-            augCodeSuffixes.add(spec.getSuffixes());
-            augCodeDestFiles.add(spec.getDestFile());
+        List<AugCodeProcessingSpec> augCodeProcessingSpecs = new ArrayList<>();
+        for (AugCodeDirectiveSpec spec : augCodeDirectives.get()) {
+            AugCodeProcessingSpec augCodeProcessingSpec =   new AugCodeProcessingSpec(
+                spec.getDestFile().getAsFile(), spec.getDirectives());
+            augCodeProcessingSpecs.add(augCodeProcessingSpec);
         }
-        genericTask.setAugCodeSuffixes(augCodeSuffixes);
-        genericTask.setAugCodeDestFiles(augCodeDestFiles);
+        genericTask.setAugCodeProcessingSpecs(augCodeProcessingSpecs);
+        
         try {
             genericTask.execute();
         }
@@ -130,5 +162,55 @@ public class PreCodeAugmentationTask extends DefaultTask {
             }
             throw new GradleException(allErrors.size() + " parse error(s) found.");
         }
+    }
+
+    @Internal
+    public Property<String> getEncoding() {
+        return encoding;
+    }
+
+    @Internal
+    public ListProperty<ConfigurableFileTree> getFileSets() {
+        return fileSets;
+    }
+
+    @Internal
+    public RegularFileProperty getPrepFile() {
+        return prepFile;
+    }
+
+    @Internal
+    public ListProperty<AugCodeDirectiveSpec> getAugCodeDirectives() {
+        return augCodeDirectives;
+    }
+
+    @Internal
+    public ListProperty<String> getGenCodeStartDirectives() {
+        return genCodeStartDirectives;
+    }
+
+    @Internal
+    public ListProperty<String> getGenCodeEndDirectives() {
+        return genCodeEndDirectives;
+    }
+
+    @Internal
+    public ListProperty<String> getEmbeddedStringDirectives() {
+        return embeddedStringDirectives;
+    }
+
+    @Internal
+    public ListProperty<String> getEmbeddedJsonDirectives() {
+        return embeddedJsonDirectives;
+    }
+
+    @Internal
+    public ListProperty<String> getEnableScanDirectives() {
+        return enableScanDirectives;
+    }
+
+    @Internal
+    public ListProperty<String> getDisableScanDirectives() {
+        return disableScanDirectives;
     }
 }

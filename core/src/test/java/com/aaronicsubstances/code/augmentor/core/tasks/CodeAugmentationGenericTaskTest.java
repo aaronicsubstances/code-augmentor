@@ -25,6 +25,7 @@ public class CodeAugmentationGenericTaskTest {
         public String prepFile;
         public String[] generatedCodeFiles;
         public String destDir;
+        public boolean loggingEnabled;
     }
     
     public static CodeAugmentationGenericTask deserialize(String path) throws IOException {
@@ -61,6 +62,11 @@ public class CodeAugmentationGenericTaskTest {
             task.getDestDir().mkdir();
         }
 
+        if (taskSpec.loggingEnabled) {
+            task.setLogAppender((level, msgSrc) -> 
+                System.out.format("[%s] %s\n", level, msgSrc.get()));
+        }
+        
         return task;
     }
 

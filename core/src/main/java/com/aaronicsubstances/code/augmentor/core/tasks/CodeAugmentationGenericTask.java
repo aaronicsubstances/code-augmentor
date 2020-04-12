@@ -97,7 +97,11 @@ public class CodeAugmentationGenericTask {
                 if (genCode.isError()) {
                     throw new GenericTaskException("Generation of code failed for " +
                         describeAugCodeSection(sourceCode, augCodeDescriptor, srcFile) + ":\n" +
-                        genCode.getBodyContent());
+                        genCode.getBodyContent() != null ? genCode.getBodyContent() : "");
+                }
+                if (genCode.getBodyContent() == null) {
+                    throw new GenericTaskException("Generated code body not provided for " +
+                        describeAugCodeSection(sourceCode, augCodeDescriptor, srcFile));
                 }
 
                 int[] replacementRange = determineReplacementRange(snippetDescriptor,
@@ -157,7 +161,10 @@ public class CodeAugmentationGenericTask {
             }
 
             String transformedCode = transformer.getTransformedText();
-            if (!sourceCode.equals(transformedCode)) {
+            if (transformedCode.equals(sourceCode)) {
+                logVerbose("No changes needed for %s", srcFile);
+            }
+            else {
                 String destSubDirName = destSubDirNameMap.get(sourceFileDescriptor.getDir());
                 if (destSubDirName == null) {
                     destSubDirName = new File(sourceFileDescriptor.getDir()).getName();
@@ -171,11 +178,13 @@ public class CodeAugmentationGenericTask {
                 TaskUtils.writeFile(destFile, charset, transformedCode);
                 srcFiles.add(srcFile);
                 destFiles.add(destFile);
+
+                logInfo("Changes needed for %s successfully written to\n %s", srcFile, destFile);
             }
             
             Instant endInstant = Instant.now();
             long timeElapsed = Duration.between(startInstant, endInstant).toMillis();
-            logVerbose("done in %s ms", timeElapsed);
+            logInfo("Done processing %s in %d ms", srcFile, timeElapsed);
         }
 
         // close readers
@@ -239,9 +248,6 @@ public class CodeAugmentationGenericTask {
                 codeBuffer.append(indent).append(line);
             }
             String terminator = splitCode.get(i + 1);
-            if (terminator == null) {
-                break;
-            }
             codeBuffer.append(terminator);
         }
         return codeBuffer.toString();
@@ -250,9 +256,6 @@ public class CodeAugmentationGenericTask {
     static String wrapInGeneratedCodeDirectives(String code, String genCodeStartDirective,
             String genCodeEndDirective,
             String indent, String newline) {
-        if (indent == null) {
-            indent = "";
-        }
         return indent + genCodeStartDirective + newline +
             code +
             indent + genCodeEndDirective + newline;
@@ -273,7 +276,6 @@ public class CodeAugmentationGenericTask {
         logAppender.accept(LOG_LEVEL_VERBOSE, () -> String.format(format, args));
     }
 
-    @SuppressWarnings("unused")
     private void logInfo(String format, Object... args) {
         if (logAppender == null) {
             return;

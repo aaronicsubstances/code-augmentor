@@ -32,6 +32,8 @@ public class PreCodeAugmentationGenericTaskTest {
 
         public String prepFile;
 
+        public boolean loggingEnabled;
+
         public static class AugCodeSpec {
             public String file;
             public String[] directives;
@@ -75,6 +77,11 @@ public class PreCodeAugmentationGenericTaskTest {
         }
         if (taskSpec.disableScanDirectives != null) {
             task.setDisableScanDirectives(Arrays.asList(taskSpec.disableScanDirectives));
+        }
+
+        if (taskSpec.loggingEnabled) {
+            task.setLogAppender((level, msgSrc) -> 
+                System.out.format("[%s] %s\n", level, msgSrc.get()));
         }
 
         return task;

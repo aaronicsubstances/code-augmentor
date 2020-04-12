@@ -6,34 +6,46 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
-import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTask;
 import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
+import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.file.RegularFile;
+import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
 
 /**
  * Completes code generation.
  */
 public class CodeAugmentationTask extends DefaultTask {
-    private String encoding;
+    private final Property<String> encoding;
+    private final ListProperty<RegularFile> generatedCodeFiles;
+    private final RegularFileProperty prepFile;
+    private final DirectoryProperty destDir;
+    private final RegularFileProperty changeSetInfoFile;
     
-    private List<File> generatedCodeFiles;
-
-    private File prepFile;
-
-    private File destDir;
-
-    private File changeSetInfoFile;
+    public CodeAugmentationTask() {
+        ObjectFactory objectFactory = getProject().getObjects();
+        encoding = objectFactory.property(String.class);
+        prepFile = objectFactory.fileProperty();
+        generatedCodeFiles = objectFactory.listProperty(RegularFile.class);
+        destDir = objectFactory.directoryProperty();
+        changeSetInfoFile = objectFactory.fileProperty();
+    }
 
     @TaskAction
     public void execute() {
-        Charset charset = Charset.forName(encoding);
+        Charset charset = Charset.forName(encoding.get());
         BiConsumer<Integer, Supplier<String>> logAppender = (logLevel, msgFunc) -> {
             switch (logLevel) {
                 case CodeAugmentationGenericTask.LOG_LEVEL_VERBOSE:
@@ -57,9 +69,12 @@ public class CodeAugmentationTask extends DefaultTask {
         CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
         genericTask.setCharset(charset);
         genericTask.setLogAppender(logAppender);
-        genericTask.setPrepFile(prepFile);
-        genericTask.setGeneratedCodeFiles(generatedCodeFiles);
-        genericTask.setDestDir(destDir);
+        genericTask.setPrepFile(prepFile.get().getAsFile());
+        genericTask.setGeneratedCodeFiles(generatedCodeFiles.get().
+            stream().map(x -> x.getAsFile()).collect(Collectors.toList()));
+        genericTask.setDestDir(destDir.get().getAsFile());
+        File changeSetInfoFile = this.changeSetInfoFile.get().getAsFile();
+
         try {
             genericTask.execute();
         }
@@ -102,5 +117,36 @@ public class CodeAugmentationTask extends DefaultTask {
                 " file(s) out of sync " +
                 "with generating code scripts. Regeneration needed.");
         }
+    }
+
+    /**
+     * External source file encoding.
+     * Task-generated files are always read and written in UTF-8.
+     * @return encoding used to read and write external source code files. 
+     */
+
+    @Internal
+    public Property<String> getEncoding() {
+        return encoding;
+    }
+
+    @Internal
+    public ListProperty<RegularFile> getGeneratedCodeFiles() {
+        return generatedCodeFiles;
+    }
+
+    @Internal
+    public RegularFileProperty getPrepFile() {
+        return prepFile;
+    }
+
+    @Internal
+    public DirectoryProperty getDestDir() {
+        return destDir;
+    }
+
+    @Internal
+    public RegularFileProperty getChangeSetInfoFile() {
+        return changeSetInfoFile;
     }
 }
