@@ -2,12 +2,11 @@ package com.aaronicsubstances.code.augmentor.gradle;
 
 import org.gradle.api.Project;
 import org.gradle.api.file.ConfigurableFileTree;
-import org.gradle.api.file.DirectoryProperty;
-import org.gradle.api.file.RegularFile;
-import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
+
+import groovy.lang.Closure;
 
 /**
  * Source of configuration for prepare and generate plugin tasks.
@@ -15,26 +14,29 @@ import org.gradle.api.provider.Property;
 public class CodeAugmentorPluginExtension {
     private final Property<String> encoding;
     private final ListProperty<ConfigurableFileTree> fileSets;
-    private final RegularFileProperty prepFile;
-    private final ListProperty<AugCodeDirectiveSpec> augCodeDirectives;
+    private final Property<Object> prepFile;
+    private final ListProperty<AugCodeDirectiveSpec> augCodeSpecs;
     private final ListProperty<String> genCodeStartDirectives;
     private final ListProperty<String> genCodeEndDirectives;
     private final ListProperty<String> embeddedStringDirectives;
     private final ListProperty<String> embeddedJsonDirectives;
     private final ListProperty<String> enableScanDirectives;
     private final ListProperty<String> disableScanDirectives;
-    
+
     // extra config for generate completion.
-    private final ListProperty<RegularFile> generatedCodeFiles;
-    private final DirectoryProperty destDir;
-    private final RegularFileProperty changeSetInfoFile;
-    
+    private final ListProperty<Object> generatedCodeFiles;
+    private final Property<Object> destDir;
+    private final Property<Object> changeSetInfoFile;
+
+    private final Project project;
+
     public CodeAugmentorPluginExtension(Project project) {
+        this.project = project;
         ObjectFactory objectFactory = project.getObjects();
         encoding = objectFactory.property(String.class);
         fileSets = objectFactory.listProperty(ConfigurableFileTree.class);
-        prepFile = objectFactory.fileProperty();
-        augCodeDirectives = objectFactory.listProperty(AugCodeDirectiveSpec.class);
+        prepFile = objectFactory.property(Object.class);
+        augCodeSpecs = objectFactory.listProperty(AugCodeDirectiveSpec.class);
         genCodeStartDirectives = objectFactory.listProperty(String.class);
         genCodeEndDirectives = objectFactory.listProperty(String.class);
         embeddedStringDirectives = objectFactory.listProperty(String.class);
@@ -42,9 +44,15 @@ public class CodeAugmentorPluginExtension {
         enableScanDirectives = objectFactory.listProperty(String.class);
         disableScanDirectives = objectFactory.listProperty(String.class);
 
-        generatedCodeFiles = objectFactory.listProperty(RegularFile.class);
-        destDir = objectFactory.directoryProperty();
-        changeSetInfoFile = objectFactory.fileProperty();
+        generatedCodeFiles = objectFactory.listProperty(Object.class);
+        destDir = objectFactory.property(Object.class);
+        changeSetInfoFile = objectFactory.property(Object.class);
+    }
+
+    public AugCodeDirectiveSpec augCodeSpec(Closure<?> closure) {
+        AugCodeDirectiveSpec augCodeDirectiveSpec = new AugCodeDirectiveSpec(project);
+        project.configure(augCodeDirectiveSpec, closure);
+        return augCodeDirectiveSpec;
     }
 
     public Property<String> getEncoding() {
@@ -55,12 +63,12 @@ public class CodeAugmentorPluginExtension {
         return fileSets;
     }
 
-    public RegularFileProperty getPrepFile() {
+    public Property<Object> getPrepFile() {
         return prepFile;
     }
 
     public ListProperty<AugCodeDirectiveSpec> getAugCodeDirectives() {
-        return augCodeDirectives;
+        return augCodeSpecs;
     }
 
     public ListProperty<String> getGenCodeStartDirectives() {
@@ -87,15 +95,15 @@ public class CodeAugmentorPluginExtension {
         return disableScanDirectives;
     }
 
-    public ListProperty<RegularFile> getGeneratedCodeFiles() {
+    public ListProperty<Object> getGeneratedCodeFiles() {
         return generatedCodeFiles;
     }
 
-    public RegularFileProperty getChangeSetInfoFile() {
+    public Property<Object> getChangeSetInfoFile() {
         return changeSetInfoFile;
     }
 
-    public DirectoryProperty getDestDir() {
+    public Property<Object> getDestDir() {
         return destDir;
     }
 }

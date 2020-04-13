@@ -16,7 +16,7 @@ Operationally, the tool has two aspects: one part which resembles a preprocessor
    * Like a preprocessor, one part of *CodeAugmentor* is concerned with code generation. This part however, always has to be triggered manually by the programmer through batch scripts, outside of the automated build process.
    * *CodeAugmentor* enables the programmer to employ JSON and any full blown scripting language of the programmer's choice to generate code. Hence there is no need to learn any dedicated preprocessor language.
    * *CodeAugmentor* modifies source files in place, unlike the C/C++ preprocessor which generates source files to be used in subsequent compilation steps "under the hood". This ensures error reporting and debugging work as usual, given that the source code handed over to compiler/transpiler/runtime is the same one that the programmer knows.
-   * Unlike a C/C++ preprocessor, *CodeAugmentor* is not intended for conditional compilation. It can however be combined with C/C++ preprocessor by running it first.
+   * Unlike a C/C++ preprocessor, *CodeAugmentor* is not intended for conditional compilation. It can however be combined with C/C++ preprocessor by running it first, followed by the preprocessor.
    * Like a linter, the other part of *CodeAugmentor* runs checks on code without modifying it. This enables straightforward integration of this part with build tools, as hooking a custom step into most build tools is far easier if the step doesn't modify any source code.
 
 The workflow of the programmer using this tool may be exemplified in the following manner:

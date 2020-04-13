@@ -15,9 +15,6 @@ import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
-import org.gradle.api.file.DirectoryProperty;
-import org.gradle.api.file.RegularFile;
-import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
@@ -29,22 +26,34 @@ import org.gradle.api.tasks.TaskAction;
  */
 public class CodeAugmentationTask extends DefaultTask {
     private final Property<String> encoding;
-    private final ListProperty<RegularFile> generatedCodeFiles;
-    private final RegularFileProperty prepFile;
-    private final DirectoryProperty destDir;
-    private final RegularFileProperty changeSetInfoFile;
+    private final ListProperty<Object> generatedCodeFiles;
+    private final Property<Object> prepFile;
+    private final Property<Object> destDir;
+    private final Property<Object> changeSetInfoFile;
     
     public CodeAugmentationTask() {
         ObjectFactory objectFactory = getProject().getObjects();
         encoding = objectFactory.property(String.class);
-        prepFile = objectFactory.fileProperty();
-        generatedCodeFiles = objectFactory.listProperty(RegularFile.class);
-        destDir = objectFactory.directoryProperty();
-        changeSetInfoFile = objectFactory.fileProperty();
+        prepFile = objectFactory.property(Object.class);
+        generatedCodeFiles = objectFactory.listProperty(Object.class);
+        destDir = objectFactory.property(Object.class);
+        changeSetInfoFile = objectFactory.property(Object.class);
     }
 
-    @TaskAction
-    public void execute() {
+    @TaskAction    
+    public void execute() throws Exception {
+        try {
+            _execute();
+        }
+        catch (GradleException ex) {
+            throw ex;
+        }
+        catch (Exception ex) {
+            throw new GradleException("General plugin error: " + ex.getMessage(), ex);
+        }
+    }
+
+    private void _execute() throws Exception {
         Charset charset = Charset.forName(encoding.get());
         BiConsumer<Integer, Supplier<String>> logAppender = (logLevel, msgFunc) -> {
             switch (logLevel) {
@@ -69,20 +78,19 @@ public class CodeAugmentationTask extends DefaultTask {
         CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
         genericTask.setCharset(charset);
         genericTask.setLogAppender(logAppender);
-        genericTask.setPrepFile(prepFile.get().getAsFile());
+        File resolvedPrepFile = getProject().file(prepFile);
+        genericTask.setPrepFile(resolvedPrepFile);
         genericTask.setGeneratedCodeFiles(generatedCodeFiles.get().
-            stream().map(x -> x.getAsFile()).collect(Collectors.toList()));
-        genericTask.setDestDir(destDir.get().getAsFile());
-        File changeSetInfoFile = this.changeSetInfoFile.get().getAsFile();
+            stream().map(x -> getProject().file(x)).collect(Collectors.toList()));
+        File resolvedDestDir = getProject().file(destDir);
+        genericTask.setDestDir(resolvedDestDir);
+        File resolvedChangeSetInfoFile = getProject().file(changeSetInfoFile);
 
         try {
             genericTask.execute();
         }
         catch (GenericTaskException ex) {
             throw new GradleException(ex.getMessage(), ex.getCause());
-        }
-        catch (Exception ex) {
-            throw new GradleException("General plugin error", ex);
         }
 
         // Write out change set info file.
@@ -96,12 +104,12 @@ public class CodeAugmentationTask extends DefaultTask {
             changeSetInfo.append(System.lineSeparator());
         }
         try (Writer fWriter = new OutputStreamWriter(new 
-                FileOutputStream(changeSetInfoFile), Charset.defaultCharset())) {
+                FileOutputStream(resolvedChangeSetInfoFile), Charset.defaultCharset())) {
             fWriter.write(changeSetInfo.toString());
         }
         catch (IOException ex) {
             throw new GradleException("Failed to write change set information to " +
-                changeSetInfoFile, ex);
+                resolvedChangeSetInfoFile, ex);
         }
 
         // fail build if there were changed files.
@@ -131,22 +139,22 @@ public class CodeAugmentationTask extends DefaultTask {
     }
 
     @Internal
-    public ListProperty<RegularFile> getGeneratedCodeFiles() {
+    public ListProperty<Object> getGeneratedCodeFiles() {
         return generatedCodeFiles;
     }
 
     @Internal
-    public RegularFileProperty getPrepFile() {
+    public Property<Object> getPrepFile() {
         return prepFile;
     }
 
     @Internal
-    public DirectoryProperty getDestDir() {
+    public Property<Object> getDestDir() {
         return destDir;
     }
 
     @Internal
-    public RegularFileProperty getChangeSetInfoFile() {
+    public Property<Object> getChangeSetInfoFile() {
         return changeSetInfoFile;
     }
 }

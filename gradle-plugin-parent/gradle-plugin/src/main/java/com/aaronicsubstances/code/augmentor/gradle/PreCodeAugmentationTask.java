@@ -17,7 +17,6 @@ import com.aaronicsubstances.code.augmentor.core.util.ParserException;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.ConfigurableFileTree;
-import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
@@ -31,7 +30,7 @@ import org.gradle.api.tasks.TaskAction;
 public class PreCodeAugmentationTask extends DefaultTask {
     private final Property<String> encoding;
     private final ListProperty<ConfigurableFileTree> fileSets;
-    private final RegularFileProperty prepFile;
+    private final Property<Object> prepFile;
     private final ListProperty<AugCodeDirectiveSpec> augCodeDirectives;
     private final ListProperty<String> genCodeStartDirectives;
     private final ListProperty<String> genCodeEndDirectives;
@@ -44,7 +43,7 @@ public class PreCodeAugmentationTask extends DefaultTask {
         ObjectFactory objectFactory = getProject().getObjects();
         encoding = objectFactory.property(String.class);
         fileSets = objectFactory.listProperty(ConfigurableFileTree.class);
-        prepFile = objectFactory.fileProperty();
+        prepFile = objectFactory.property(Object.class);
         augCodeDirectives = objectFactory.listProperty(AugCodeDirectiveSpec.class);
         genCodeStartDirectives = objectFactory.listProperty(String.class);
         genCodeEndDirectives = objectFactory.listProperty(String.class);
@@ -55,7 +54,26 @@ public class PreCodeAugmentationTask extends DefaultTask {
     }
 
     @TaskAction    
-    public void execute() {
+    public void execute() throws Exception {
+        try {
+            _execute();
+        }
+        catch (GradleException ex) {
+            throw ex;
+        }
+        catch (Exception ex) {
+            throw new GradleException("General plugin error: " + ex.getMessage(), ex);
+        }
+    }
+
+    private void _execute() throws Exception {
+        // validate
+        if (genCodeStartDirectives.get().isEmpty()) {
+            throw new GradleException("at least one element is required in genCodeStartDirectives");
+        }
+        if (genCodeEndDirectives.get().isEmpty()) {
+            throw new GradleException("at least one element is required in genCodeEndDirectives");
+        }
         // Ensure uniqueness across directives.
         Set<String> allDirectives = new HashSet<>();
         int totalDirectiveCount = 0;
@@ -67,20 +85,32 @@ public class PreCodeAugmentationTask extends DefaultTask {
         totalDirectiveCount += embeddedStringDirectives.get().size();
         allDirectives.addAll(embeddedJsonDirectives.get());
         totalDirectiveCount += embeddedJsonDirectives.get().size();
-        if (enableScanDirectives != null) {
+        if (enableScanDirectives.isPresent()) {
             allDirectives.addAll(enableScanDirectives.get());
             totalDirectiveCount += enableScanDirectives.get().size();
         }
-        if (disableScanDirectives != null) {
+        if (disableScanDirectives.isPresent()) {
             allDirectives.addAll(disableScanDirectives.get());
             totalDirectiveCount += disableScanDirectives.get().size();
         }
-        for (AugCodeDirectiveSpec spec : augCodeDirectives.get()) {
-            allDirectives.addAll(spec.getDirectives());
-            totalDirectiveCount += spec.getDirectives().size();
+
+        if (augCodeDirectives.get().isEmpty()) {
+            throw new GradleException("at least 1 element is required in augCodeDirectives");
         }
-        if (totalDirectiveCount != allDirectives.size()) {
-            throw new GradleException("Duplicates detected across directives");
+        for (int i = 0; i < augCodeDirectives.get().size(); i++) {
+            AugCodeDirectiveSpec spec = augCodeDirectives.get().get(i);
+            if (spec == null) {
+                throw new GradleException("null element found in augCodeSpecs at index " + i);
+            }
+            if (spec.getDirectives().get().isEmpty()) {                
+                throw new GradleException("at least one element is required in augCodeSpec.directives " +
+                    "at index " + i);
+            }
+            allDirectives.addAll(spec.getDirectives().get());
+            totalDirectiveCount += spec.getDirectives().get().size();
+        }
+        if (totalDirectiveCount != allDirectives.stream().filter(x -> x != null).count()) {
+            throw new GradleException("duplicates and/or nulls detected across directives");
         }
         
         Charset charset = Charset.forName(encoding.get());
@@ -126,7 +156,8 @@ public class PreCodeAugmentationTask extends DefaultTask {
         PreCodeAugmentationGenericTask genericTask = new PreCodeAugmentationGenericTask();
         genericTask.setCharset(charset);
         genericTask.setLogAppender(logAppender);
-        genericTask.setPrepFile(prepFile.get().getAsFile());
+        File resolvedPrepFile = getProject().file(prepFile);
+        genericTask.setPrepFile(resolvedPrepFile);
         genericTask.setRelativePaths(relativePaths);
         genericTask.setBaseDirs(baseDirs);
         genericTask.setGenCodeStartDirectives(genCodeStartDirectives.get());
@@ -138,8 +169,9 @@ public class PreCodeAugmentationTask extends DefaultTask {
 
         List<AugCodeProcessingSpec> augCodeProcessingSpecs = new ArrayList<>();
         for (AugCodeDirectiveSpec spec : augCodeDirectives.get()) {
+            File resolvedDestFile = getProject().file(spec.getDestFile().get());
             AugCodeProcessingSpec augCodeProcessingSpec =   new AugCodeProcessingSpec(
-                spec.getDestFile().getAsFile(), spec.getDirectives());
+                resolvedDestFile, spec.getDirectives().get());
             augCodeProcessingSpecs.add(augCodeProcessingSpec);
         }
         genericTask.setAugCodeProcessingSpecs(augCodeProcessingSpecs);
@@ -149,9 +181,6 @@ public class PreCodeAugmentationTask extends DefaultTask {
         }
         catch (GenericTaskException ex) {
             throw new GradleException(ex.getMessage(), ex.getCause());
-        }
-        catch (Exception ex) {
-            throw new GradleException("General plugin error", ex);
         }
 
         // fail build if there were errors.
@@ -175,7 +204,7 @@ public class PreCodeAugmentationTask extends DefaultTask {
     }
 
     @Internal
-    public RegularFileProperty getPrepFile() {
+    public Property<Object> getPrepFile() {
         return prepFile;
     }
 
