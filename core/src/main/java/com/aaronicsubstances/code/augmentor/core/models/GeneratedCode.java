@@ -1,21 +1,12 @@
 package com.aaronicsubstances.code.augmentor.core.models;
 
-import com.google.gson.annotations.SerializedName;
-
 public class GeneratedCode {
-    @SerializedName("index")
     private int index;
-    @SerializedName("error")
     private boolean error;
-    @SerializedName("body")
-    private String bodyContent;
-    @SerializedName("indent")
+    private String content;
     private String indent;
-    @SerializedName("skipped")
     private boolean skipped;
-    @SerializedName("replace_aug_code_directives")
     private boolean replaceAugCodeDirectives;
-    @SerializedName("replace_gen_code_directives")
     private boolean replaceGenCodeDirectives;
 
     public int getIndex() {
@@ -34,12 +25,12 @@ public class GeneratedCode {
         this.error = error;
     }
 
-    public String getBodyContent() {
-        return bodyContent;
+    public String getContent() {
+        return content;
     }
 
-    public void setBodyContent(String bodyContent) {
-        this.bodyContent = bodyContent;
+    public void setContent(String content) {
+        this.content = content;
     }
 
     public String getIndent() {
@@ -78,7 +69,7 @@ public class GeneratedCode {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((bodyContent == null) ? 0 : bodyContent.hashCode());
+        result = prime * result + ((content == null) ? 0 : content.hashCode());
         result = prime * result + (error ? 1231 : 1237);
         result = prime * result + ((indent == null) ? 0 : indent.hashCode());
         result = prime * result + index;
@@ -97,10 +88,10 @@ public class GeneratedCode {
         if (getClass() != obj.getClass())
             return false;
         GeneratedCode other = (GeneratedCode) obj;
-        if (bodyContent == null) {
-            if (other.bodyContent != null)
+        if (content == null) {
+            if (other.content != null)
                 return false;
-        } else if (!bodyContent.equals(other.bodyContent))
+        } else if (!content.equals(other.content))
             return false;
         if (error != other.error)
             return false;
@@ -122,7 +113,7 @@ public class GeneratedCode {
 
     @Override
     public String toString() {
-        return "GeneratedCode{bodyContent=" + bodyContent + ", error=" + error + ", indent=" + indent + ", index="
+        return "GeneratedCode{content=" + content + ", error=" + error + ", indent=" + indent + ", index="
                 + index + ", replaceAugCodeDirectives=" + replaceAugCodeDirectives + ", replaceGenCodeDirectives="
                 + replaceGenCodeDirectives + ", skipped=" + skipped + "}";
     }

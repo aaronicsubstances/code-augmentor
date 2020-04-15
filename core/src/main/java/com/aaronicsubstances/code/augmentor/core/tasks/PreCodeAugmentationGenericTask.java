@@ -47,6 +47,8 @@ public class PreCodeAugmentationGenericTask {
         PreCodeAugmentationResult prepResult = new PreCodeAugmentationResult();
         prepResult.setGenCodeStartDirective(genCodeStartDirectives.get(0));
         prepResult.setGenCodeEndDirective(genCodeEndDirectives.get(0));
+        // ensure dir exists for prepFile
+        prepFile.getParentFile().mkdirs();
         Object resultWriter = prepResult.beginSerialize(prepFile);
 
         List<Object> codeGenRequestWriters = new ArrayList<>();
@@ -54,6 +56,8 @@ public class PreCodeAugmentationGenericTask {
         for (AugCodeProcessingSpec augCodeSpec : augCodeProcessingSpecs) {
             CodeGenerationRequest codeGenRequest = new CodeGenerationRequest();
             codeGenRequests.add(codeGenRequest);
+            // ensure dir exists for destFile
+            augCodeSpec.getDestFile().getParentFile().mkdirs();
             Object requestWriter = codeGenRequest.beginSerialize(augCodeSpec.getDestFile());
             codeGenRequestWriters.add(requestWriter);
         }
@@ -95,7 +99,7 @@ public class PreCodeAugmentationGenericTask {
             s.setDir(baseDir.getPath());
             s.setRelativePath(relativePath);
             s.setContentHash(inputHash);
-            List<CodeSnippetDescriptor> bodySnippets = 
+            List<CodeSnippetDescriptor> codeSnippets = 
                 CodeGenerationRequestCreator.processSourceFile(inputTokens, srcFile,
                     specAugCodesList, errors);
             if (errors.isEmpty()) {
@@ -103,9 +107,9 @@ public class PreCodeAugmentationGenericTask {
                 // don't bother to serialize any further if there are
                 // previous errors.
                 // also skip seriaize if no snippets were generated.
-                if (allErrors.isEmpty() && !bodySnippets.isEmpty()) {
+                if (allErrors.isEmpty() && !codeSnippets.isEmpty()) {
                     // write out descriptor.
-                    s.setBodySnippets(bodySnippets);
+                    s.setCodeSnippets(codeSnippets);
                     s.serialize(resultWriter);
 
                     // serialize aug codes

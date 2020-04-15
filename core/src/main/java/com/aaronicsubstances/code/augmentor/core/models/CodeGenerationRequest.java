@@ -14,30 +14,28 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.core.util.PersistenceUtil;
-import com.google.gson.annotations.SerializedName;
 
 public class CodeGenerationRequest {
 
     public static class Header {
-        @SerializedName("content_streaming_enabled")
-        Boolean contentStreamEnabled;
+        Boolean contentStreamingEnabled;
     }
 
-    private List<SourceFileAugmentingCode> sourceFileAugmentingCodeList;
+    private List<SourceFileAugmentingCode> sourceFileAugmentingCodes;
 
     public CodeGenerationRequest() {
     }
 
-    public CodeGenerationRequest(List<SourceFileAugmentingCode> sourceFileAugmentingCodeList) {
-        this.sourceFileAugmentingCodeList = sourceFileAugmentingCodeList;
+    public CodeGenerationRequest(List<SourceFileAugmentingCode> sourceFileAugmentingCodes) {
+        this.sourceFileAugmentingCodes = sourceFileAugmentingCodes;
     }
 
-    public List<SourceFileAugmentingCode> getSourceFileAugmentingCodeList() {
-        return sourceFileAugmentingCodeList;
+    public List<SourceFileAugmentingCode> getSourceFileAugmentingCodes() {
+        return sourceFileAugmentingCodes;
     }
 
-    public void setSourceFileAugmentingCodeList(List<SourceFileAugmentingCode> sourceFileAugmentingCodeList) {
-        this.sourceFileAugmentingCodeList = sourceFileAugmentingCodeList;
+    public void setSourceFileAugmentingCodes(List<SourceFileAugmentingCode> sourceFileAugmentingCodes) {
+        this.sourceFileAugmentingCodes = sourceFileAugmentingCodes;
     }
 
     public Object beginSerialize(File file) throws Exception {
@@ -59,7 +57,7 @@ public class CodeGenerationRequest {
     private void printHeader(PersistenceUtil persistenceUtil, boolean contentStreamEnabled) 
             throws Exception {        
         Header header = new Header();
-        header.contentStreamEnabled = contentStreamEnabled;
+        header.contentStreamingEnabled = contentStreamEnabled;
         String headerString = PersistenceUtil.serializeCompactlyToJson(header);
         persistenceUtil.println(headerString);
     }
@@ -85,11 +83,11 @@ public class CodeGenerationRequest {
         PersistenceUtil persistenceUtil = new PersistenceUtil(new PrintWriter(stream), false);
         printHeader(persistenceUtil, !serializeAllAsJson);
         if (serializeAllAsJson) {
-            String json = PersistenceUtil.serializeFormattedToJson(sourceFileAugmentingCodeList);
+            String json = PersistenceUtil.serializeFormattedToJson(sourceFileAugmentingCodes);
             persistenceUtil.println(json);
         }
         else {
-            for (SourceFileAugmentingCode s : sourceFileAugmentingCodeList) {
+            for (SourceFileAugmentingCode s : sourceFileAugmentingCodes) {
                 s.serialize(persistenceUtil);
             }
         }
@@ -110,7 +108,7 @@ public class CodeGenerationRequest {
         PersistenceUtil persistenceUtil = new PersistenceUtil(new BufferedReader(stream), 
             closeStream);
         boolean contentStreamEnabled = readHeader(persistenceUtil);
-        sourceFileAugmentingCodeList = new ArrayList<>();
+        sourceFileAugmentingCodes = new ArrayList<>();
         if (!contentStreamEnabled) {            
             String inputRemainder = persistenceUtil.readToEnd();
             SourceFileAugmentingCode[] entireList = PersistenceUtil.deserializeFromJson(inputRemainder, 
@@ -124,11 +122,11 @@ public class CodeGenerationRequest {
         String headerString = persistenceUtil.readLine();
         Header header = PersistenceUtil.deserializeFromJson(headerString, Header.class);
         // enable content streaming by default.
-        boolean contentStreamEnabled = true;
-        if (header.contentStreamEnabled != null) {
-            contentStreamEnabled = header.contentStreamEnabled;
+        boolean contentStreamingEnabled = true;
+        if (header.contentStreamingEnabled != null) {
+            contentStreamingEnabled = header.contentStreamingEnabled;
         }
-        return contentStreamEnabled;
+        return contentStreamingEnabled;
     }
 
     public void endDeserialize(Object deserializer) throws Exception {
@@ -149,7 +147,7 @@ public class CodeGenerationRequest {
         try {
             SourceFileAugmentingCode s;
             while ((s = SourceFileAugmentingCode.deserialize(deserializer)) != null) {
-                instance.sourceFileAugmentingCodeList.add(s);
+                instance.sourceFileAugmentingCodes.add(s);
             }
         }
         finally {
@@ -162,7 +160,7 @@ public class CodeGenerationRequest {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((sourceFileAugmentingCodeList == null) ? 0 : sourceFileAugmentingCodeList.hashCode());
+        result = prime * result + ((sourceFileAugmentingCodes == null) ? 0 : sourceFileAugmentingCodes.hashCode());
         return result;
     }
 
@@ -175,16 +173,16 @@ public class CodeGenerationRequest {
         if (getClass() != obj.getClass())
             return false;
         CodeGenerationRequest other = (CodeGenerationRequest) obj;
-        if (sourceFileAugmentingCodeList == null) {
-            if (other.sourceFileAugmentingCodeList != null)
+        if (sourceFileAugmentingCodes == null) {
+            if (other.sourceFileAugmentingCodes != null)
                 return false;
-        } else if (!sourceFileAugmentingCodeList.equals(other.sourceFileAugmentingCodeList))
+        } else if (!sourceFileAugmentingCodes.equals(other.sourceFileAugmentingCodes))
             return false;
         return true;
     }
 
     @Override
     public String toString() {
-        return "CodeGenerationRequest{sourceFileAugmentingCodeList=" + sourceFileAugmentingCodeList + "}";
+        return "CodeGenerationRequest{sourceFileAugmentingCodes=" + sourceFileAugmentingCodes + "}";
     }
 }

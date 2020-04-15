@@ -3,24 +3,20 @@ package com.aaronicsubstances.code.augmentor.core.models;
 import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.core.util.PersistenceUtil;
-import com.google.gson.annotations.SerializedName;
+import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 
 public class SourceFileDescriptor {
-    @SerializedName("file_index")
     private int fileIndex;
-    @SerializedName("dir")
     private String dir;
-    @SerializedName("rel_path")
     private String relativePath;
-    @SerializedName("snippets")
-    private List<CodeSnippetDescriptor> bodySnippets;
+    private List<CodeSnippetDescriptor> codeSnippets;
     private String contentHash;
 
     public SourceFileDescriptor() {
     }
 
-    public SourceFileDescriptor(List<CodeSnippetDescriptor> bodySnippets) {
-        this.bodySnippets = bodySnippets;
+    public SourceFileDescriptor(List<CodeSnippetDescriptor> codeSnippets) {
+        this.codeSnippets = codeSnippets;
     }
 
     public int getFileIndex() {
@@ -47,12 +43,12 @@ public class SourceFileDescriptor {
         this.relativePath = relativePath;
     }
 
-    public List<CodeSnippetDescriptor> getBodySnippets() {
-        return bodySnippets;
+    public List<CodeSnippetDescriptor> getCodeSnippets() {
+        return codeSnippets;
     }
 
-    public void setBodySnippets(List<CodeSnippetDescriptor> bodySnippets) {
-        this.bodySnippets = bodySnippets;
+    public void setCodeSnippets(List<CodeSnippetDescriptor> codeSnippets) {
+        this.codeSnippets = codeSnippets;
     }
 
     public String getContentHash() {
@@ -83,7 +79,13 @@ public class SourceFileDescriptor {
             }
         }
         else {
-            String json = persistenceUtil.readLine();
+            // ignore blank lines.
+            String json;
+            while ((json = persistenceUtil.readLine()) != null) {
+                if (!TaskUtils.isBlank(json)) {
+                    break;
+                }
+            }
             if (json != null) {
                 obj = PersistenceUtil.deserializeFromJson(json, SourceFileDescriptor.class);
             }
@@ -95,7 +97,7 @@ public class SourceFileDescriptor {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((bodySnippets == null) ? 0 : bodySnippets.hashCode());
+        result = prime * result + ((codeSnippets == null) ? 0 : codeSnippets.hashCode());
         result = prime * result + ((contentHash == null) ? 0 : contentHash.hashCode());
         result = prime * result + ((dir == null) ? 0 : dir.hashCode());
         result = prime * result + ((relativePath == null) ? 0 : relativePath.hashCode());
@@ -111,10 +113,10 @@ public class SourceFileDescriptor {
         if (getClass() != obj.getClass())
             return false;
         SourceFileDescriptor other = (SourceFileDescriptor) obj;
-        if (bodySnippets == null) {
-            if (other.bodySnippets != null)
+        if (codeSnippets == null) {
+            if (other.codeSnippets != null)
                 return false;
-        } else if (!bodySnippets.equals(other.bodySnippets))
+        } else if (!codeSnippets.equals(other.codeSnippets))
             return false;
         if (contentHash == null) {
             if (other.contentHash != null)
@@ -136,7 +138,7 @@ public class SourceFileDescriptor {
 
     @Override
     public String toString() {
-        return "SourceFileDescriptor{bodySnippets=" + bodySnippets + ", contentHash=" + contentHash + ", dir=" + dir
+        return "SourceFileDescriptor{codeSnippets=" + codeSnippets + ", contentHash=" + contentHash + ", dir=" + dir
                 + ", relativePath=" + relativePath + "}";
     }
 }

@@ -20,38 +20,20 @@ class PreCodeAugmentationTaskFunctionalTest extends Specification {
         """
     }
 
-    def "test code_aug_prepare task with extension defaults"() {
+    def "test codeAugmentorPrepare task with extension defaults"() {
         buildFile << """
-            code_augmentor {
-                fileSets.add(project.fileTree('src/main/java') {
-                    include '**/*.java'
-                })
-                fileSets.add(project.fileTree('src/test/java') {
-                    include '**/*.java'
-                })
-                fileSets.add(project.fileTree('src/main/groovy') {
-                    include '**/*.groovy'
-                })
-                fileSets.add(project.fileTree('src/test/groovy') {
-                    include '**/*.groovy'
-                })
-                fileSets.add(project.fileTree('src/main/kotlin') {
-                    include '**/*.kt'
-                })
-                fileSets.add(project.fileTree('src/test/kotlin') {
-                    include '**/*.kt'
-                })
+            codeAugmentor {
             }
         """
 
         when:
         def result = GradleRunner.create()
             .withProjectDir(testProjectDir.root)
-            .withArguments('code_aug_prepare', '--stacktrace')
+            .withArguments('codeAugmentorPrepare', '--stacktrace')
             .withPluginClasspath()
             .build()
 
         then:
-        result.task(":code_aug_prepare").outcome == SUCCESS
+        result.task(":codeAugmentorPrepare").outcome == SUCCESS
     }
 }

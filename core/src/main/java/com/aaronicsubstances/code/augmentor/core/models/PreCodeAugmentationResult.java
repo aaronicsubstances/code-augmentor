@@ -14,17 +14,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.core.util.PersistenceUtil;
-import com.google.gson.annotations.SerializedName;
 
 public class PreCodeAugmentationResult {
 
     public static class Header {
-        @SerializedName("gen_code_start_directive")
         String genCodeStartDirective;
-        @SerializedName("gen_code_end_directive")
         String genCodeEndDirective;
-        @SerializedName("content_streaming_enabled")
-        Boolean contentStreamEnabled;
+        Boolean contentStreamingEnabled;
     }
 
     private String genCodeStartDirective;
@@ -85,7 +81,7 @@ public class PreCodeAugmentationResult {
         Header header = new Header();
         header.genCodeStartDirective = genCodeStartDirective;
         header.genCodeEndDirective = genCodeEndDirective;
-        header.contentStreamEnabled = contentStreamEnabled;
+        header.contentStreamingEnabled = contentStreamEnabled;
         String headerString = PersistenceUtil.serializeCompactlyToJson(header);
         persistenceUtil.println(headerString);
     }
@@ -134,9 +130,9 @@ public class PreCodeAugmentationResult {
     private PersistenceUtil beginDeserialize(Reader stream, boolean closeStream) throws Exception {
         PersistenceUtil persistenceUtil = new PersistenceUtil(new BufferedReader(stream), 
             closeStream);
-        boolean contentStreamEnabled = readHeader(persistenceUtil);
+        boolean contentStreamingEnabled = readHeader(persistenceUtil);
         fileDescriptors = new ArrayList<>();
-        if (!contentStreamEnabled) {            
+        if (!contentStreamingEnabled) {            
             String inputRemainder = persistenceUtil.readToEnd();
             SourceFileDescriptor[] entireList = PersistenceUtil.deserializeFromJson(inputRemainder, 
                 SourceFileDescriptor[].class);
@@ -151,11 +147,11 @@ public class PreCodeAugmentationResult {
         genCodeStartDirective = header.genCodeStartDirective;
         genCodeEndDirective = header.genCodeEndDirective;
         // enable content streaming by default.
-        boolean contentStreamEnabled = true;
-        if (header.contentStreamEnabled != null) {
-            contentStreamEnabled = header.contentStreamEnabled;
+        boolean contentStreamingEnabled = true;
+        if (header.contentStreamingEnabled != null) {
+            contentStreamingEnabled = header.contentStreamingEnabled;
         }
-        return contentStreamEnabled;
+        return contentStreamingEnabled;
     }
 
     public void endDeserialize(Object deserializer) throws Exception {

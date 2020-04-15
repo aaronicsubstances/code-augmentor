@@ -1,17 +1,17 @@
-{ "content_streaming_enabled": false, "newline": "\r\n" }
+{ "contentStreamingEnabled": false, "newline": "\r\n" }
 [
 	{
-		"file_index": 0,
-		"generated_codes": [{
+		"fileIndex": 0,
+		"generatedCodes": [{
 			"index" : 0,
-			"body" : "String tea; int foo;"
+			"content" : "String tea; int foo;"
 		}]
 	},
 	{
-		"file_index": 1,
-		"generated_codes": [{
+		"fileIndex": 1,
+		"generatedCodes": [{
 			"index" : 0,
-			"body" : "StringBuilder teaBag;\r\nprintln();"
+			"content" : "StringBuilder teaBag;\r\nprintln();"
 		}]
 	}
 ]

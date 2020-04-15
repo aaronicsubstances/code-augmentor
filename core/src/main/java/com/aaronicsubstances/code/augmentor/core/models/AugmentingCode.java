@@ -2,16 +2,11 @@ package com.aaronicsubstances.code.augmentor.core.models;
 
 import java.util.List;
 
-import com.google.gson.annotations.SerializedName;
-
 public class AugmentingCode {
     
     public static class Block {
-        @SerializedName("content")
         private String content;
-        @SerializedName("stringify")
         private boolean stringify;
-        @SerializedName("jsonify")
         private boolean jsonify;
 
         public Block() {
@@ -84,16 +79,14 @@ public class AugmentingCode {
         }
     }
 
-    @SerializedName("index")
     private int index;
-    @SerializedName("blocks")
     private List<Block> blocks;
-    @SerializedName("directive_marker")
     private String directiveMarker;
-    @SerializedName("indent")
     private String indent;
-    @SerializedName("is_data_driven")
-    private boolean dataDriven;
+
+    // used to attach results of processing aug codes.
+    // not persisted
+    private transient List<Object> args;
 
     public AugmentingCode() {
     }
@@ -134,10 +127,19 @@ public class AugmentingCode {
         this.indent = indent;
     }
 
+    public List<Object> getArgs() {
+        return args;
+    }
+
+    public void setArgs(List<Object> args) {
+        this.args = args;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
+        result = prime * result + ((args == null) ? 0 : args.hashCode());
         result = prime * result + ((blocks == null) ? 0 : blocks.hashCode());
         result = prime * result + ((directiveMarker == null) ? 0 : directiveMarker.hashCode());
         result = prime * result + ((indent == null) ? 0 : indent.hashCode());
@@ -154,6 +156,11 @@ public class AugmentingCode {
         if (getClass() != obj.getClass())
             return false;
         AugmentingCode other = (AugmentingCode) obj;
+        if (args == null) {
+            if (other.args != null)
+                return false;
+        } else if (!args.equals(other.args))
+            return false;
         if (blocks == null) {
             if (other.blocks != null)
                 return false;
@@ -176,7 +183,7 @@ public class AugmentingCode {
 
     @Override
     public String toString() {
-        return "AugmentingCode{blocks=" + blocks + ", directiveMarker="
-                + directiveMarker + ", indent=" + indent + ", index=" + index + "}";
+        return "AugmentingCode{args=" + args + ", blocks=" + blocks + ", directiveMarker=" + directiveMarker
+                + ", indent=" + indent + ", index=" + index + "}";
     }
 }

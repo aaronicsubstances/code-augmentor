@@ -28,6 +28,10 @@ public class CodeAugmentorPluginExtension {
     private final Property<Object> destDir;
     private final Property<Object> changeSetInfoFile;
 
+    // extra config for process with groovy
+    private final Property<Object> scriptsDir;
+    private final Property<String> entryScriptName;
+
     private final Project project;
 
     public CodeAugmentorPluginExtension(Project project) {
@@ -47,6 +51,9 @@ public class CodeAugmentorPluginExtension {
         generatedCodeFiles = objectFactory.listProperty(Object.class);
         destDir = objectFactory.property(Object.class);
         changeSetInfoFile = objectFactory.property(Object.class);
+
+        scriptsDir = objectFactory.property(Object.class);
+        entryScriptName = objectFactory.property(String.class);
     }
 
     public AugCodeDirectiveSpec augCodeSpec(Closure<?> closure) {
@@ -67,7 +74,7 @@ public class CodeAugmentorPluginExtension {
         return prepFile;
     }
 
-    public ListProperty<AugCodeDirectiveSpec> getAugCodeDirectives() {
+    public ListProperty<AugCodeDirectiveSpec> getAugCodeSpecs() {
         return augCodeSpecs;
     }
 
@@ -105,5 +112,13 @@ public class CodeAugmentorPluginExtension {
 
     public Property<Object> getDestDir() {
         return destDir;
+    }
+
+	public Property<Object> getScriptsDir() {
+		return scriptsDir;
+	}
+
+    public Property<String> getEntryScriptName() {
+        return entryScriptName;
     }
 }

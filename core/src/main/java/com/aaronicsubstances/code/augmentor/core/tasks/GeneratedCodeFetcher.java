@@ -103,7 +103,7 @@ public class GeneratedCodeFetcher {
             CodeGenerationResponse codeGenRes = codeGenerationResponses.get(i);
             SourceFileGeneratedCode fileGenCode = lastFetches.get(i);
             if (fileGenCode != null && fileGenCode.getFileIndex() == fileIndex) {
-                Optional<GeneratedCode> genCodeOpt = fileGenCode.getGeneratedCodeList()
+                Optional<GeneratedCode> genCodeOpt = fileGenCode.getGeneratedCodes()
                     .stream().filter(x -> x.getIndex() == augCodeIndex).findFirst();
                     
                 if (genCodeOpt.isPresent()) {

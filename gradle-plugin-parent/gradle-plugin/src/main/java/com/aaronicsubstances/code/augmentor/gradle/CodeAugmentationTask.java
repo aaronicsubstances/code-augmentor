@@ -78,12 +78,21 @@ public class CodeAugmentationTask extends DefaultTask {
         CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
         genericTask.setCharset(charset);
         genericTask.setLogAppender(logAppender);
+        if (!prepFile.isPresent()) {
+            throw new GradleException("prepFile property must be set");
+        }
         File resolvedPrepFile = getProject().file(prepFile);
         genericTask.setPrepFile(resolvedPrepFile);
         genericTask.setGeneratedCodeFiles(generatedCodeFiles.get().
             stream().map(x -> getProject().file(x)).collect(Collectors.toList()));
+        if (!destDir.isPresent()) {
+            throw new GradleException("destDir property must be set");
+        }
         File resolvedDestDir = getProject().file(destDir);
         genericTask.setDestDir(resolvedDestDir);
+        if (!changeSetInfoFile.isPresent()) {
+            throw new GradleException("changeSetInfoFile property must be set");
+        }
         File resolvedChangeSetInfoFile = getProject().file(changeSetInfoFile);
 
         try {
@@ -103,6 +112,8 @@ public class CodeAugmentationTask extends DefaultTask {
             changeSetInfo.append(genericTask.getDestFiles().get(i).getAbsolutePath());
             changeSetInfo.append(System.lineSeparator());
         }
+        // ensure dir exists for changeSetInfoFile
+        resolvedChangeSetInfoFile.getParentFile().mkdirs();
         try (Writer fWriter = new OutputStreamWriter(new 
                 FileOutputStream(resolvedChangeSetInfoFile), Charset.defaultCharset())) {
             fWriter.write(changeSetInfo.toString());

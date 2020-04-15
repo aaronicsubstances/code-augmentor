@@ -1,11 +1,11 @@
-{ "content_streaming_enabled": false }
+{ "contentStreamingEnabled": false }
 [
 	{
-		"file_index": 0,
-		"rel_path": "task-spec-01-0.java",
-		"augmenting_codes": [{
+		"fileIndex": 0,
+		"relativePath": "task-spec-01-0.java",
+		"augmentingCodes": [{
 			"index" : 0,
-			"directive_marker" : "//JS",
+			"directiveMarker" : "//JS",
 			"indent": "",
 			"blocks" : [{
 				"stringify" : false,
@@ -14,11 +14,11 @@
 		}]
 	},
 	{
-		"file_index": 1,
-		"rel_path": "task-spec-01-1.java",
-		"augmenting_codes": [{
+		"fileIndex": 1,
+		"relativePath": "task-spec-01-1.java",
+		"augmentingCodes": [{
 			"index" : 0,
-			"directive_marker" : "//JS",
+			"directiveMarker" : "//JS",
 			"indent": "",
 			"blocks" : [{
 				"stringify" : false,

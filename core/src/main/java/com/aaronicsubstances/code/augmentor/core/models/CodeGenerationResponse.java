@@ -14,25 +14,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.core.util.PersistenceUtil;
-import com.google.gson.annotations.SerializedName;
 
 public class CodeGenerationResponse {
 
     public static class Header {
-        @SerializedName("newline")
         String newline;
-        @SerializedName("content_streaming_enabled")
-        Boolean contentStreamEnabled;
+        Boolean contentStreamingEnabled;
     }
     
     private String newline;
-    private List<SourceFileGeneratedCode> sourceFileGeneratedCodeList;
+    private List<SourceFileGeneratedCode> sourceFileGeneratedCodes;
 
     public CodeGenerationResponse() {
     }
 
     public CodeGenerationResponse(List<SourceFileGeneratedCode> sourceFileGeneratedCodeList) {
-        this.sourceFileGeneratedCodeList = sourceFileGeneratedCodeList;
+        this.sourceFileGeneratedCodes = sourceFileGeneratedCodeList;
     }
 
     public String getNewline() {
@@ -43,12 +40,12 @@ public class CodeGenerationResponse {
         this.newline = newline;
     }
 
-    public List<SourceFileGeneratedCode> getSourceFileGeneratedCodeList() {
-        return sourceFileGeneratedCodeList;
+    public List<SourceFileGeneratedCode> getSourceFileGeneratedCodes() {
+        return sourceFileGeneratedCodes;
     }
 
-    public void setSourceFileGeneratedCodeList(List<SourceFileGeneratedCode> sourceFileGeneratedCodeList) {
-        this.sourceFileGeneratedCodeList = sourceFileGeneratedCodeList;
+    public void setSourceFileGeneratedCodes(List<SourceFileGeneratedCode> sourceFileGeneratedCodes) {
+        this.sourceFileGeneratedCodes = sourceFileGeneratedCodes;
     }
 
     public Object beginSerialize(File file) throws Exception {
@@ -71,7 +68,7 @@ public class CodeGenerationResponse {
             throws Exception {
         Header header = new Header();
         header.newline = newline;
-        header.contentStreamEnabled = contentStreamEnabled;
+        header.contentStreamingEnabled = contentStreamEnabled;
         String headerString = PersistenceUtil.serializeCompactlyToJson(header);
         persistenceUtil.println(headerString);
     }
@@ -97,11 +94,11 @@ public class CodeGenerationResponse {
         PersistenceUtil persistenceUtil = new PersistenceUtil(new PrintWriter(stream), false);
         printHeader(persistenceUtil, !serializeAllAsJson);
         if (serializeAllAsJson) {
-            String json = PersistenceUtil.serializeFormattedToJson(sourceFileGeneratedCodeList);
+            String json = PersistenceUtil.serializeFormattedToJson(sourceFileGeneratedCodes);
             persistenceUtil.println(json);
         }
         else {
-            for (SourceFileGeneratedCode s : sourceFileGeneratedCodeList) {
+            for (SourceFileGeneratedCode s : sourceFileGeneratedCodes) {
                 s.serialize(persistenceUtil);
             }
         }
@@ -122,7 +119,7 @@ public class CodeGenerationResponse {
         PersistenceUtil persistenceUtil = new PersistenceUtil(new BufferedReader(stream), 
             closeStream);
         boolean contentStreamEnabled = readHeader(persistenceUtil);
-        sourceFileGeneratedCodeList = new ArrayList<>();
+        sourceFileGeneratedCodes = new ArrayList<>();
         if (!contentStreamEnabled) {            
             String inputRemainder = persistenceUtil.readToEnd();
             SourceFileGeneratedCode[] entireList = PersistenceUtil.deserializeFromJson(inputRemainder, 
@@ -137,11 +134,11 @@ public class CodeGenerationResponse {
         Header header = PersistenceUtil.deserializeFromJson(headerString, Header.class);
         newline = header.newline;
         // enable content streaming by default.
-        boolean contentStreamEnabled = true;
-        if (header.contentStreamEnabled != null) {
-            contentStreamEnabled = header.contentStreamEnabled;
+        boolean contentStreamingEnabled = true;
+        if (header.contentStreamingEnabled != null) {
+            contentStreamingEnabled = header.contentStreamingEnabled;
         }
-        return contentStreamEnabled;
+        return contentStreamingEnabled;
     }
 
     public void endDeserialize(Object deserializer) throws Exception {
@@ -162,7 +159,7 @@ public class CodeGenerationResponse {
         try {
             SourceFileGeneratedCode s;
             while ((s = SourceFileGeneratedCode.deserialize(deserializer)) != null) {
-                instance.sourceFileGeneratedCodeList.add(s);
+                instance.sourceFileGeneratedCodes.add(s);
             }
         }
         finally {
@@ -176,7 +173,7 @@ public class CodeGenerationResponse {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((newline == null) ? 0 : newline.hashCode());
-        result = prime * result + ((sourceFileGeneratedCodeList == null) ? 0 : sourceFileGeneratedCodeList.hashCode());
+        result = prime * result + ((sourceFileGeneratedCodes == null) ? 0 : sourceFileGeneratedCodes.hashCode());
         return result;
     }
 
@@ -194,17 +191,17 @@ public class CodeGenerationResponse {
                 return false;
         } else if (!newline.equals(other.newline))
             return false;
-        if (sourceFileGeneratedCodeList == null) {
-            if (other.sourceFileGeneratedCodeList != null)
+        if (sourceFileGeneratedCodes == null) {
+            if (other.sourceFileGeneratedCodes != null)
                 return false;
-        } else if (!sourceFileGeneratedCodeList.equals(other.sourceFileGeneratedCodeList))
+        } else if (!sourceFileGeneratedCodes.equals(other.sourceFileGeneratedCodes))
             return false;
         return true;
     }
 
     @Override
     public String toString() {
-        return "CodeGenerationResponse{newline=" + newline + ", sourceFileGeneratedCodeList="
-                + sourceFileGeneratedCodeList + "}";
+        return "CodeGenerationResponse{newline=" + newline + ", sourceFileGeneratedCode="
+                + sourceFileGeneratedCodes + "}";
     }
 }

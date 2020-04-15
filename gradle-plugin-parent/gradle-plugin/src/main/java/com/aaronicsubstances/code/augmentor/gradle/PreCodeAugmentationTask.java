@@ -31,7 +31,7 @@ public class PreCodeAugmentationTask extends DefaultTask {
     private final Property<String> encoding;
     private final ListProperty<ConfigurableFileTree> fileSets;
     private final Property<Object> prepFile;
-    private final ListProperty<AugCodeDirectiveSpec> augCodeDirectives;
+    private final ListProperty<AugCodeDirectiveSpec> augCodeSpecs;
     private final ListProperty<String> genCodeStartDirectives;
     private final ListProperty<String> genCodeEndDirectives;
     private final ListProperty<String> embeddedStringDirectives;
@@ -44,7 +44,7 @@ public class PreCodeAugmentationTask extends DefaultTask {
         encoding = objectFactory.property(String.class);
         fileSets = objectFactory.listProperty(ConfigurableFileTree.class);
         prepFile = objectFactory.property(Object.class);
-        augCodeDirectives = objectFactory.listProperty(AugCodeDirectiveSpec.class);
+        augCodeSpecs = objectFactory.listProperty(AugCodeDirectiveSpec.class);
         genCodeStartDirectives = objectFactory.listProperty(String.class);
         genCodeEndDirectives = objectFactory.listProperty(String.class);
         embeddedStringDirectives = objectFactory.listProperty(String.class);
@@ -85,26 +85,22 @@ public class PreCodeAugmentationTask extends DefaultTask {
         totalDirectiveCount += embeddedStringDirectives.get().size();
         allDirectives.addAll(embeddedJsonDirectives.get());
         totalDirectiveCount += embeddedJsonDirectives.get().size();
-        if (enableScanDirectives.isPresent()) {
-            allDirectives.addAll(enableScanDirectives.get());
-            totalDirectiveCount += enableScanDirectives.get().size();
-        }
-        if (disableScanDirectives.isPresent()) {
-            allDirectives.addAll(disableScanDirectives.get());
-            totalDirectiveCount += disableScanDirectives.get().size();
-        }
+        allDirectives.addAll(enableScanDirectives.get());
+        totalDirectiveCount += enableScanDirectives.get().size();
+        allDirectives.addAll(disableScanDirectives.get());
+        totalDirectiveCount += disableScanDirectives.get().size();
 
-        if (augCodeDirectives.get().isEmpty()) {
-            throw new GradleException("at least 1 element is required in augCodeDirectives");
+        if (augCodeSpecs.get().isEmpty()) {
+            throw new GradleException("at least 1 element is required in augCodeSpecs");
         }
-        for (int i = 0; i < augCodeDirectives.get().size(); i++) {
-            AugCodeDirectiveSpec spec = augCodeDirectives.get().get(i);
+        for (int i = 0; i < augCodeSpecs.get().size(); i++) {
+            AugCodeDirectiveSpec spec = augCodeSpecs.get().get(i);
             if (spec == null) {
-                throw new GradleException("null element found in augCodeSpecs at index " + i);
+                throw new GradleException("augCodeSpecs[" + i + "] is null");
             }
             if (spec.getDirectives().get().isEmpty()) {                
-                throw new GradleException("at least one element is required in augCodeSpec.directives " +
-                    "at index " + i);
+                throw new GradleException("at least one element is required in augCodeSpecs[" + i +
+                    "].directives");
             }
             allDirectives.addAll(spec.getDirectives().get());
             totalDirectiveCount += spec.getDirectives().get().size();
@@ -151,11 +147,19 @@ public class PreCodeAugmentationTask extends DefaultTask {
             }
         }
 
-        getLogger().info(String.format("Found %s file(s)", relativePaths.size()));
+        if (relativePaths.isEmpty()) {
+            getLogger().warn("No files were found");
+        }
+        else {
+            getLogger().info(String.format("Found %s file(s)", relativePaths.size()));
+        }
 
         PreCodeAugmentationGenericTask genericTask = new PreCodeAugmentationGenericTask();
         genericTask.setCharset(charset);
         genericTask.setLogAppender(logAppender);
+        if (!prepFile.isPresent()) {
+            throw new GradleException("prepFile property must be set");
+        }
         File resolvedPrepFile = getProject().file(prepFile);
         genericTask.setPrepFile(resolvedPrepFile);
         genericTask.setRelativePaths(relativePaths);
@@ -168,7 +172,11 @@ public class PreCodeAugmentationTask extends DefaultTask {
         genericTask.setDisableScanDirectives(disableScanDirectives.get());
 
         List<AugCodeProcessingSpec> augCodeProcessingSpecs = new ArrayList<>();
-        for (AugCodeDirectiveSpec spec : augCodeDirectives.get()) {
+        for (int i = 0; i < augCodeSpecs.get().size(); i++) {
+            AugCodeDirectiveSpec spec = augCodeSpecs.get().get(i);
+            if (!spec.getDestFile().isPresent()) {
+                throw new GradleException("augCodeSpecs[" + i + "].destFile property must be set");
+            }
             File resolvedDestFile = getProject().file(spec.getDestFile().get());
             AugCodeProcessingSpec augCodeProcessingSpec =   new AugCodeProcessingSpec(
                 resolvedDestFile, spec.getDirectives().get());
@@ -209,8 +217,8 @@ public class PreCodeAugmentationTask extends DefaultTask {
     }
 
     @Internal
-    public ListProperty<AugCodeDirectiveSpec> getAugCodeDirectives() {
-        return augCodeDirectives;
+    public ListProperty<AugCodeDirectiveSpec> getAugCodeSpecs() {
+        return augCodeSpecs;
     }
 
     @Internal

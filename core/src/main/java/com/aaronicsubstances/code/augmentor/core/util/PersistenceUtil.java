@@ -20,6 +20,9 @@ public class PersistenceUtil {
     }
 
     public static <T> T deserializeFromJson(String s, Class<T> cls) {
+        if (TaskUtils.isBlank(s)) {
+            throw new RuntimeException("Cannot parse blank string as JSON");
+        }
         return JSON_CONVERT.fromJson(s, cls);
     }
 

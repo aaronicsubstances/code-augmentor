@@ -3,22 +3,19 @@ package com.aaronicsubstances.code.augmentor.core.models;
 import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.core.util.PersistenceUtil;
-import com.google.gson.annotations.SerializedName;
+import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 
 public class SourceFileGeneratedCode {
-    @SerializedName("file_index")
     private int fileIndex;
-    @SerializedName("newline")
     private String newline;
-    @SerializedName("generated_codes")
-    private List<GeneratedCode> generatedCodeList;
+    private List<GeneratedCode> generatedCodes;
 
     public SourceFileGeneratedCode() {
 
     }
 
-    public SourceFileGeneratedCode(List<GeneratedCode> generatedCodeList) {
-        this.generatedCodeList = generatedCodeList;
+    public SourceFileGeneratedCode(List<GeneratedCode> generatedCodes) {
+        this.generatedCodes = generatedCodes;
     }
     
     public int getFileIndex() {
@@ -37,12 +34,12 @@ public class SourceFileGeneratedCode {
         this.newline = newline;
     }
 
-    public List<GeneratedCode> getGeneratedCodeList() {
-        return generatedCodeList;
+    public List<GeneratedCode> getGeneratedCodes() {
+        return generatedCodes;
     }
 
-    public void setGeneratedCodeList(List<GeneratedCode> generatedCodeList) {
-        this.generatedCodeList = generatedCodeList;
+    public void setGeneratedCodes(List<GeneratedCode> generatedCodes) {
+        this.generatedCodes = generatedCodes;
     }
 
     public void serialize(Object serializer) throws Exception {
@@ -65,7 +62,13 @@ public class SourceFileGeneratedCode {
             }
         }
         else {
-            String json = persistenceUtil.readLine();
+            // ignore blank lines.
+            String json;
+            while ((json = persistenceUtil.readLine()) != null) {
+                if (!TaskUtils.isBlank(json)) {
+                    break;
+                }
+            }
             if (json != null) {
                 obj = PersistenceUtil.deserializeFromJson(json, SourceFileGeneratedCode.class);
             }
@@ -78,7 +81,7 @@ public class SourceFileGeneratedCode {
         final int prime = 31;
         int result = 1;
         result = prime * result + fileIndex;
-        result = prime * result + ((generatedCodeList == null) ? 0 : generatedCodeList.hashCode());
+        result = prime * result + ((generatedCodes == null) ? 0 : generatedCodes.hashCode());
         result = prime * result + ((newline == null) ? 0 : newline.hashCode());
         return result;
     }
@@ -94,10 +97,10 @@ public class SourceFileGeneratedCode {
         SourceFileGeneratedCode other = (SourceFileGeneratedCode) obj;
         if (fileIndex != other.fileIndex)
             return false;
-        if (generatedCodeList == null) {
-            if (other.generatedCodeList != null)
+        if (generatedCodes == null) {
+            if (other.generatedCodes != null)
                 return false;
-        } else if (!generatedCodeList.equals(other.generatedCodeList))
+        } else if (!generatedCodes.equals(other.generatedCodes))
             return false;
         if (newline == null) {
             if (other.newline != null)
@@ -109,7 +112,7 @@ public class SourceFileGeneratedCode {
 
     @Override
     public String toString() {
-        return "SourceFileGeneratedCode{fileIndex=" + fileIndex + ", generatedCodeList=" + generatedCodeList
+        return "SourceFileGeneratedCode{fileIndex=" + fileIndex + ", generatedCodes=" + generatedCodes
                 + ", newline=" + newline + "}";
     }
 }

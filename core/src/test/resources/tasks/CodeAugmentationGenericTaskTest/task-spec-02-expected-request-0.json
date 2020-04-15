@@ -1,11 +1,11 @@
-{ "content_streaming_enabled": false }
+{ "contentStreamingEnabled": false }
 [
 	{
-		"file_index": 0,
-		"rel_path": "task-spec-02-0.java",
-		"augmenting_codes": [{
+		"fileIndex": 0,
+		"relativePath": "task-spec-02-0.java",
+		"augmentingCodes": [{
 			"index" : 0,
-			"comment_suffix" : "JS",
+			"directiveMarker" : "JS",
 			"blocks" : [{
 				"stringify" : false,
 				"content" : " println(\"Hello World from JS-star\")\r\nvar i = 3 + new Date();\r\n...etc"
@@ -13,7 +13,7 @@
 		},
 		{
 			"index" : 1,
-			"comment_suffix" : "JS",
+			"directiveMarker" : "JS",
 			"blocks" : [{
 				"stringify" : false,
 				"content" : " println( \r\n"

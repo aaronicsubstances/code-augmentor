@@ -78,7 +78,7 @@ public class CodeAugmentationGenericTask {
             // fetch applicable generated code per aug code descriptor.
             List<String> generatedCodes = new ArrayList<>();
             List<int[]> replacementRanges = new ArrayList<>();
-            for (CodeSnippetDescriptor snippetDescriptor : sourceFileDescriptor.getBodySnippets()) {
+            for (CodeSnippetDescriptor snippetDescriptor : sourceFileDescriptor.getCodeSnippets()) {
                 AugmentingCodeDescriptor augCodeDescriptor = snippetDescriptor.getAugmentingCodeDescriptor();
                 int augCodeIndex = augCodeDescriptor.getIndex();
 
@@ -97,9 +97,9 @@ public class CodeAugmentationGenericTask {
                 if (genCode.isError()) {
                     throw new GenericTaskException("Generation of code failed for " +
                         describeAugCodeSection(sourceCode, augCodeDescriptor, srcFile) + ":\n" +
-                        genCode.getBodyContent() != null ? genCode.getBodyContent() : "");
+                        genCode.getContent() != null ? genCode.getContent() : "");
                 }
-                if (genCode.getBodyContent() == null) {
+                if (genCode.getContent() == null) {
                     throw new GenericTaskException("Generated code body not provided for " +
                         describeAugCodeSection(sourceCode, augCodeDescriptor, srcFile));
                 }
@@ -113,7 +113,7 @@ public class CodeAugmentationGenericTask {
                     newline = newlineReceiver.toString();
                 }
 
-                String formattedGenCode = ensureEndingNewline(genCode.getBodyContent(),
+                String formattedGenCode = ensureEndingNewline(genCode.getContent(),
                     newline);
                 String indent = getEffectiveIndent(augCodeDescriptor, genCode);
                 if (!TaskUtils.isEmpty(indent)) {
@@ -143,7 +143,7 @@ public class CodeAugmentationGenericTask {
                 }
                 else {
                     // resort to default behaviour
-                    CodeSnippetDescriptor snippetDescriptor = sourceFileDescriptor.getBodySnippets().get(i);
+                    CodeSnippetDescriptor snippetDescriptor = sourceFileDescriptor.getCodeSnippets().get(i);
                     GeneratedCodeDescriptor genCodeDescriptor = snippetDescriptor.getGeneratedCodeDescriptor();
                     if (genCodeDescriptor != null) {                    
                         // by default range of generated code excludes directive markers.
@@ -173,8 +173,8 @@ public class CodeAugmentationGenericTask {
                     destSubDirNameMap.put(sourceFileDescriptor.getDir(), destSubDirName);
                 }
                 File destSubDir = new File(destDir, destSubDirName);
-                destSubDir.mkdirs();
                 File destFile = new File(destSubDir, sourceFileDescriptor.getRelativePath());
+                destFile.getParentFile().mkdirs();
                 TaskUtils.writeFile(destFile, charset, transformedCode);
                 srcFiles.add(srcFile);
                 destFiles.add(destFile);

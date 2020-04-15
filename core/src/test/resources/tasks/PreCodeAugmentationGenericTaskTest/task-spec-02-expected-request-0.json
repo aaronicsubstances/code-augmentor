@@ -1,11 +1,11 @@
-{ "content_streaming_enabled": false }
+{ "contentStreamingEnabled": false }
 [
 	{
-		"file_index": 0,
-		"rel_path": "task-spec-02-0.java",
-		"augmenting_codes": [{
+		"fileIndex": 0,
+		"relativePath": "task-spec-02-0.java",
+		"augmentingCodes": [{
 			"index" : 0,
-			"directive_marker" : "//JS",
+			"directiveMarker" : "//JS",
 			"indent": " ",
 			"blocks" : [{
 				"content" : "*println(\"Hello World from JS-star\")\r\n*var i = 3 + new Date();\r\n*...etc"
@@ -13,7 +13,7 @@
 		},
 		{
 			"index" : 1,
-			"directive_marker" : "//JS",
+			"directiveMarker" : "//JS",
 			"indent": "\t",
 			"blocks" : [{
 				"content" : " println( "
@@ -28,7 +28,7 @@
 		},
 		{
 			"index" : 2,
-			"directive_marker" : "//DD",
+			"directiveMarker" : "//DD",
 			"indent": "\t",
 			"blocks" : [{
 				"content" : " print"

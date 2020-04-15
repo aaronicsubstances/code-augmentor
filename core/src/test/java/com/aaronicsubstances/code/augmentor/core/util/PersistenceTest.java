@@ -95,7 +95,7 @@ public class PersistenceTest {
                         int snippetListSize = randGen.nextInt(5);
                         for (int j = 0; j < snippetListSize; j++) {
                             CodeSnippetDescriptor c = generateRandomCodeSnippetDescriptor(randGen);
-                            s.getBodySnippets().add(c);
+                            s.getCodeSnippets().add(c);
                         }
                     }
                 }
@@ -111,7 +111,7 @@ public class PersistenceTest {
         StringWriter sw = new StringWriter();
         if (stream) {
             Object serializer = expected.beginSerialize(sw);
-            for (SourceFileAugmentingCode augmentingCode : expected.getSourceFileAugmentingCodeList()) {
+            for (SourceFileAugmentingCode augmentingCode : expected.getSourceFileAugmentingCodes()) {
                 augmentingCode.serialize(serializer);
             }
             expected.endSerialize(serializer);
@@ -130,7 +130,7 @@ public class PersistenceTest {
             Object deserializer = actual.beginDeserialize(sr);
             SourceFileAugmentingCode augmentingCode;
             while ((augmentingCode = SourceFileAugmentingCode.deserialize(deserializer)) != null) {
-                actual.getSourceFileAugmentingCodeList().add(augmentingCode);
+                actual.getSourceFileAugmentingCodes().add(augmentingCode);
             }
             actual.endDeserialize(deserializer);
         }
@@ -199,7 +199,7 @@ public class PersistenceTest {
         StringWriter sw = new StringWriter();
         if (stream) {
             Object serializer = expected.beginSerialize(sw);
-            for (SourceFileGeneratedCode generatedCode : expected.getSourceFileGeneratedCodeList()) {
+            for (SourceFileGeneratedCode generatedCode : expected.getSourceFileGeneratedCodes()) {
                 generatedCode.serialize(serializer);
             }
             expected.endSerialize(serializer);
@@ -218,7 +218,7 @@ public class PersistenceTest {
             Object deserializer = actual.beginDeserialize(sr);
             SourceFileGeneratedCode generatedCode;
             while ((generatedCode = SourceFileGeneratedCode.deserialize(deserializer)) != null) {
-                actual.getSourceFileGeneratedCodeList().add(generatedCode);
+                actual.getSourceFileGeneratedCodes().add(generatedCode);
             }
             actual.endDeserialize(deserializer);
         }
@@ -269,7 +269,7 @@ public class PersistenceTest {
                             generatedCode.setSkipped(randGen.nextBoolean());
                             generatedCode.setReplaceAugCodeDirectives(randGen.nextBoolean());
                             generatedCode.setReplaceGenCodeDirectives(randGen.nextBoolean());
-                            generatedCode.setBodyContent(generateRandomString(randGen, true));
+                            generatedCode.setContent(generateRandomString(randGen, true));
                         }
                     }
                 }

@@ -18,22 +18,29 @@ class CodeAugmentationTaskFunctionalTest extends Specification {
                 id 'com.aaronicsubstances.codeaugmentor'
             }
         """
+        File workingDir = testProjectDir.newFolder("build", "codeAugmentor")
+        File testPrepFile = new File(workingDir, "prepResults.json")
+        testPrepFile << """{}
+        """
+        File genCodesFile = new File(workingDir, "genCodes.json")
+        genCodesFile << """{}
+        """
     }
 
-    def "test code_aug_generate task with extension defaults"() {
+    def "test codeAugmentorGenerate task with extension defaults"() {
         buildFile << """
-            code_augmentor {
+            codeAugmentor {
             }
         """
 
         when:
         def result = GradleRunner.create()
             .withProjectDir(testProjectDir.root)
-            .withArguments('code_aug_generate', '--stacktrace')
+            .withArguments('codeAugmentorGenerate', '--stacktrace')
             .withPluginClasspath()
             .build()
 
         then:
-        result.task(":code_aug_generate").outcome == SUCCESS
+        result.task(":codeAugmentorGenerate").outcome == SUCCESS
     }
 }

@@ -3,21 +3,18 @@ package com.aaronicsubstances.code.augmentor.core.models;
 import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.core.util.PersistenceUtil;
-import com.google.gson.annotations.SerializedName;
+import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 
 public class SourceFileAugmentingCode {
-    @SerializedName("file_index")
     private int fileIndex;
-    @SerializedName("rel_path")
     private String relativePath;
-    @SerializedName("augmenting_codes")
-    private List<AugmentingCode> augmentingCodeList;
+    private List<AugmentingCode> augmentingCodes;
 
     public SourceFileAugmentingCode() {
     }
 
-    public SourceFileAugmentingCode(List<AugmentingCode> augmentingCodeList) {
-        this.augmentingCodeList = augmentingCodeList;
+    public SourceFileAugmentingCode(List<AugmentingCode> augmentingCodes) {
+        this.augmentingCodes = augmentingCodes;
     }
 
     public int getFileIndex() {
@@ -36,12 +33,12 @@ public class SourceFileAugmentingCode {
         this.relativePath = relativePath;
     }
 
-    public List<AugmentingCode> getAugmentingCodeList() {
-        return augmentingCodeList;
+    public List<AugmentingCode> getAugmentingCodes() {
+        return augmentingCodes;
     }
 
-    public void setAugmentingCodeList(List<AugmentingCode> augmentingCodeList) {
-        this.augmentingCodeList = augmentingCodeList;
+    public void setAugmentingCodes(List<AugmentingCode> augmentingCodes) {
+        this.augmentingCodes = augmentingCodes;
     }
 
     public void serialize(Object serializer) throws Exception {
@@ -64,7 +61,13 @@ public class SourceFileAugmentingCode {
             }
         }
         else {
-            String json = persistenceUtil.readLine();
+            // ignore blank lines.
+            String json;
+            while ((json = persistenceUtil.readLine()) != null) {
+                if (!TaskUtils.isBlank(json)) {
+                    break;
+                }
+            }
             if (json != null) {
                 obj = PersistenceUtil.deserializeFromJson(json, SourceFileAugmentingCode.class);
             }
@@ -76,7 +79,7 @@ public class SourceFileAugmentingCode {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((augmentingCodeList == null) ? 0 : augmentingCodeList.hashCode());
+        result = prime * result + ((augmentingCodes == null) ? 0 : augmentingCodes.hashCode());
         result = prime * result + fileIndex;
         result = prime * result + ((relativePath == null) ? 0 : relativePath.hashCode());
         return result;
@@ -91,10 +94,10 @@ public class SourceFileAugmentingCode {
         if (getClass() != obj.getClass())
             return false;
         SourceFileAugmentingCode other = (SourceFileAugmentingCode) obj;
-        if (augmentingCodeList == null) {
-            if (other.augmentingCodeList != null)
+        if (augmentingCodes == null) {
+            if (other.augmentingCodes != null)
                 return false;
-        } else if (!augmentingCodeList.equals(other.augmentingCodeList))
+        } else if (!augmentingCodes.equals(other.augmentingCodes))
             return false;
         if (fileIndex != other.fileIndex)
             return false;
@@ -108,7 +111,7 @@ public class SourceFileAugmentingCode {
 
     @Override
     public String toString() {
-        return "SourceFileAugmentingCode{augmentingCodeList=" + augmentingCodeList +
+        return "SourceFileAugmentingCode{augmentingCodes=" + augmentingCodes +
                 ", fileIndex=" + fileIndex +
                 ", relativePath=" + relativePath + "}";
     }

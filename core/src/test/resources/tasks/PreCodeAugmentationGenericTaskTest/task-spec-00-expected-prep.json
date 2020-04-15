@@ -1,2 +1,2 @@
-{ "content_streaming_enabled": false, "gen_code_start_directive": "//GS", "gen_code_end_directive": "//GE" }
+{ "contentStreamingEnabled": false, "genCodeStartDirective": "//GS", "genCodeEndDirective": "//GE" }
 []

@@ -1,35 +1,35 @@
-{ "content_streaming_enabled": false, "gen_code_start_directive": "//GS", "gen_code_end_directive": "//GE" }
+{ "contentStreamingEnabled": false, "genCodeStartDirective": "//GS", "genCodeEndDirective": "//GE" }
 [
 	{
-		"file_index": 0,
-		"rel_path": "task-spec-02-0.java",
-		"snippets": [{
-			"augmenting_code": {
+		"fileIndex": 0,
+		"relativePath": "task-spec-02-0.java",
+		"codeSnippets": [{
+			"augmentingCodeDescriptor": {
 				"index" : 0,
-				"start_pos" : 351,
-				"end_pos" : 442,
+				"startPos" : 351,
+				"endPos" : 442,
 				"indent" : " "
 			}
 		},
 		{
-			"augmenting_code": {
+			"augmentingCodeDescriptor": {
 				"index" : 1,
-				"start_pos" : 1042,
-				"end_pos" : 1082,
+				"startPos" : 1042,
+				"endPos" : 1082,
 				"indent" : "\t"
 			},
-			"generated_code": {
-				"start_directive_start_pos" : 1084,
-				"start_directive_end_pos" : 1094,
-				"end_directive_start_pos" : 1150,
-				"end_directive_end_pos" : 1157
+			"generatedCodeDescriptor": {
+				"startDirectiveStartPos" : 1084,
+				"startDirectiveEndPos" : 1094,
+				"endDirectiveStartPos" : 1150,
+				"endDirectiveEndPos" : 1157
 			}
 		},
 		{
-			"augmenting_code": {
+			"augmentingCodeDescriptor": {
 				"index" : 2,
-				"start_pos" : 1394,
-				"end_pos" : 1421,
+				"startPos" : 1394,
+				"endPos" : 1421,
 				"indent" : "\t"
 			}
 		}]

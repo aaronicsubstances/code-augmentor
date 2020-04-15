@@ -1,0 +1,17 @@
+{
+  "name": "code-augmentor-scripts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Aaron Baffour-Awuah <aaronbaffourawuah@gmail.com> (https://github.com/aaronicsubstances)",
+  "license": "MIT",
+  "dependencies": {
+    "line-reader": "^0.4.0",
+    "n-readlines": "^1.0.0",
+    "yargs": "^15.3.1"
+  }
+}
