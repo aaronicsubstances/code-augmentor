@@ -16,18 +16,13 @@ import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.PreCodeAugmentationResult;
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileAugmentingCode;
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileDescriptor;
-import com.aaronicsubstances.code.augmentor.core.util.ParserException;
 import com.aaronicsubstances.code.augmentor.core.util.SourceCodeTokenizer;
 import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 import com.aaronicsubstances.code.augmentor.core.util.Token;
 
 public class PreCodeAugmentationGenericTask {
-    public static final int LOG_LEVEL_VERBOSE = 1;
-    public static final int LOG_LEVEL_INFO = 2;
-    public static final int LOG_LEVEL_WARN = 3;
-
     // input properties
-    private BiConsumer<Integer, Supplier<String>> logAppender;
+    private BiConsumer<GenericTaskLogLevel, Supplier<String>> logAppender;
     private List<String> relativePaths;
     private List<File> baseDirs;
     private List<String> genCodeStartDirectives;
@@ -41,9 +36,11 @@ public class PreCodeAugmentationGenericTask {
     private File prepFile;
 
     // output properties
-    private final List<ParserException> allErrors = new ArrayList<>();
+    private final List<Exception> allErrors = new ArrayList<>();
 
     public void execute() throws Exception {
+        allErrors.clear();
+
         PreCodeAugmentationResult prepResult = new PreCodeAugmentationResult();
         prepResult.setGenCodeStartDirective(genCodeStartDirectives.get(0));
         prepResult.setGenCodeEndDirective(genCodeEndDirectives.get(0));
@@ -75,13 +72,11 @@ public class PreCodeAugmentationGenericTask {
             specAugCodesList.add(new ArrayList<>());
         }
 
-        allErrors.clear();
-
         for (int i = 0; i < relativePaths.size(); i++) {
             String relativePath = relativePaths.get(i);
             File baseDir = baseDirs.get(i);
             File srcFile = new File(baseDir, relativePath);
-            logVerbose("Preparing %s", srcFile);
+            TaskUtils.logVerbose(logAppender, "Preparing %s", srcFile);
             Instant startInstant = Instant.now();
             String input = TaskUtils.readFile(srcFile, charset);
             String inputHash = TaskUtils.calcHash(input, charset);
@@ -92,7 +87,7 @@ public class PreCodeAugmentationGenericTask {
             for (List<AugmentingCode> specAugCodes : specAugCodesList) {
                 specAugCodes.clear();
             }
-            List<ParserException> errors = new ArrayList<>();
+            List<Exception> errors = new ArrayList<>();
 
             SourceFileDescriptor s = new SourceFileDescriptor();
             s.setFileIndex(i);
@@ -128,20 +123,20 @@ public class PreCodeAugmentationGenericTask {
                 }
                     
                 if (identifiedAugCodeCount == 0) {
-                    logVerbose("0 aug codes identified in %s", srcFile);
+                    TaskUtils.logVerbose(logAppender, "0 aug codes identified in %s", srcFile);
                 }
                 else {
-                    logInfo("%s aug code(s) identified in %s", identifiedAugCodeCount, srcFile);
+                    TaskUtils.logInfo(logAppender, "%s aug code(s) identified in %s", identifiedAugCodeCount, srcFile);
                 }
             } 
             else {
-                logWarn("%s error(s) encountered in %s", errors.size(), srcFile);
+                TaskUtils.logWarn(logAppender, "%s error(s) encountered in %s", errors.size(), srcFile);
                 allErrors.addAll(errors);
             }
 
             Instant endInstant = Instant.now();
             long timeElapsed = Duration.between(startInstant, endInstant).toMillis();
-            logInfo("Done processing %s in %d ms", srcFile, timeElapsed);
+            TaskUtils.logInfo(logAppender, "Done processing %s in %d ms", srcFile, timeElapsed);
         }
 
         // close writers
@@ -153,32 +148,11 @@ public class PreCodeAugmentationGenericTask {
         }
     }
 
-    private void logVerbose(String format, Object... args) {
-        if (logAppender == null) {
-            return;
-        }
-        logAppender.accept(LOG_LEVEL_VERBOSE, () -> String.format(format, args));
-    }
-
-    private void logInfo(String format, Object... args) {
-        if (logAppender == null) {
-            return;
-        }
-        logAppender.accept(LOG_LEVEL_INFO, () -> String.format(format, args));        
-    }
-
-    private void logWarn(String format, Object... args) {
-        if (logAppender == null) {
-            return;
-        }
-        logAppender.accept(LOG_LEVEL_WARN, () -> String.format(format, args));        
-    }
-
-    public BiConsumer<Integer, Supplier<String>> getLogAppender() {
+    public BiConsumer<GenericTaskLogLevel, Supplier<String>> getLogAppender() {
         return logAppender;
     }
 
-    public void setLogAppender(BiConsumer<Integer, Supplier<String>> logAppender) {
+    public void setLogAppender(BiConsumer<GenericTaskLogLevel, Supplier<String>> logAppender) {
         this.logAppender = logAppender;
     }
 
@@ -270,7 +244,7 @@ public class PreCodeAugmentationGenericTask {
         this.augCodeProcessingSpecs = augCodeProcessingSpecs;
     }
 
-    public List<ParserException> getAllErrors() {
+    public List<Exception> getAllErrors() {
         return allErrors;
     }
 }

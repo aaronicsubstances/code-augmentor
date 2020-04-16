@@ -21,12 +21,8 @@ import com.aaronicsubstances.code.augmentor.core.util.SourceCodeTransformer;
 import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 
 public class CodeAugmentationGenericTask {
-    public static final int LOG_LEVEL_VERBOSE = 1;
-    public static final int LOG_LEVEL_INFO = 2;
-    public static final int LOG_LEVEL_WARN = 3;
-
     // input properties.
-    private BiConsumer<Integer, Supplier<String>> logAppender;
+    private BiConsumer<GenericTaskLogLevel, Supplier<String>> logAppender;
     private Charset charset;
     private File prepFile;
     private List<File> generatedCodeFiles;
@@ -56,23 +52,21 @@ public class CodeAugmentationGenericTask {
             }
             File srcFile = new File(sourceFileDescriptor.getDir(),
                 sourceFileDescriptor.getRelativePath());
-            logVerbose("Processing %s", srcFile);
+            TaskUtils.logVerbose(logAppender, "Processing %s", srcFile);
             
             Instant startInstant = Instant.now();
             String sourceCode = TaskUtils.readFile(srcFile, charset);
             if (sourceFileDescriptor.getContentHash() != null) {
                 String inputHash = TaskUtils.calcHash(sourceCode, charset);
                 if (!inputHash.equals(sourceFileDescriptor.getContentHash())) {
-                    throw new GenericTaskException(String.format(
-                        "Changes to source files detected in %s. Regeneration required.",
-                        srcFile));
+                    throw createException("Source file has changed unexpectedly. Regeneration required.",
+                        null, srcFile);
                 }
             }
 
             if (!generatedCodeFetcher.prepareForFile(sourceFileDescriptor.getFileIndex())) {
-                throw new GenericTaskException(String.format(
-                    "Could not find locate generated codes for %s",
-                    srcFile));
+                throw createException("Could not locate generated codes",
+                    null, srcFile);
             }
 
             // fetch applicable generated code per aug code descriptor.
@@ -86,26 +80,30 @@ public class CodeAugmentationGenericTask {
                 GeneratedCode genCode = generatedCodeFetcher.getGeneratedCode(sourceFileDescriptor.getFileIndex(), 
                     augCodeIndex, newlineReceiver);
                 if (genCode == null) {
-                    throw new GenericTaskException("Could not find generated code for " +
-                        describeAugCodeSection(sourceCode, augCodeDescriptor, srcFile));
+                    throw createException("Could not find generated code", augCodeDescriptor, srcFile);
                 }
                 if (genCode.isSkipped()) {
-                    logWarn("Skipped generation of code for %s",
-                        describeAugCodeSection(sourceCode, augCodeDescriptor, srcFile));
+                    GenericTaskException warning = createException("Code generation skipped", 
+                        augCodeDescriptor, srcFile);
+                    TaskUtils.logWarn(logAppender, warning.getMessage());
                     continue;
                 }
-                if (genCode.isError()) {
-                    throw new GenericTaskException("Generation of code failed for " +
-                        describeAugCodeSection(sourceCode, augCodeDescriptor, srcFile) + ":\n" +
-                        genCode.getContent() != null ? genCode.getContent() : "");
-                }
                 if (genCode.getContent() == null) {
-                    throw new GenericTaskException("Generated code body not provided for " +
-                        describeAugCodeSection(sourceCode, augCodeDescriptor, srcFile));
+                    throw createException("Received null for generated code content",
+                        augCodeDescriptor, srcFile);
+                }
+                if (genCode.isError()) {
+                    throw createException("Encounterd error during code generation: " +
+                        genCode.getContent(), augCodeDescriptor, srcFile);
                 }
 
                 int[] replacementRange = determineReplacementRange(snippetDescriptor,
                     genCode);
+                if (replacementRange != null) {
+                    GenericTaskException warning = createException("Advanced replacement usage detected.", 
+                        augCodeDescriptor, srcFile);
+                    TaskUtils.logWarn(logAppender, warning.getMessage());
+                }
                 replacementRanges.add(replacementRange);
 
                 String newline = System.lineSeparator();
@@ -162,7 +160,7 @@ public class CodeAugmentationGenericTask {
 
             String transformedCode = transformer.getTransformedText();
             if (transformedCode.equals(sourceCode)) {
-                logVerbose("No changes needed for %s", srcFile);
+                TaskUtils.logVerbose(logAppender, "No changes needed for %s", srcFile);
             }
             else {
                 String destSubDirName = destSubDirNameMap.get(sourceFileDescriptor.getDir());
@@ -179,12 +177,12 @@ public class CodeAugmentationGenericTask {
                 srcFiles.add(srcFile);
                 destFiles.add(destFile);
 
-                logInfo("Changes needed for %s successfully written to\n %s", srcFile, destFile);
+                TaskUtils.logInfo(logAppender, "Changes needed for %s successfully written to\n %s", srcFile, destFile);
             }
             
             Instant endInstant = Instant.now();
             long timeElapsed = Duration.between(startInstant, endInstant).toMillis();
-            logInfo("Done processing %s in %d ms", srcFile, timeElapsed);
+            TaskUtils.logInfo(logAppender, "Done processing %s in %d ms", srcFile, timeElapsed);
         }
 
         // close readers
@@ -261,40 +259,24 @@ public class CodeAugmentationGenericTask {
             indent + genCodeEndDirective + newline;
     }
 
-    private static String describeAugCodeSection(String input, AugmentingCodeDescriptor augCodeDescriptor, 
-            File srcFile) {
-        int lineNumber = TaskUtils.calculateLineNumber(input, 
-            augCodeDescriptor.getStartPos());
-        String msg = String.format("in %s at line %s", srcFile, lineNumber);
-        return msg;
-    }
-
-    private void logVerbose(String format, Object... args) {
-        if (logAppender == null) {
-            return;
+    private static GenericTaskException createException(String errorMessage, 
+            AugmentingCodeDescriptor augCodeDescriptor, File srcFile) {
+        String srcPath = null;
+        if (srcFile != null) {
+            srcPath = srcFile.getPath();
         }
-        logAppender.accept(LOG_LEVEL_VERBOSE, () -> String.format(format, args));
-    }
-
-    private void logInfo(String format, Object... args) {
-        if (logAppender == null) {
-            return;
+        int lineNumber = 0;
+        if (augCodeDescriptor != null) {
+            lineNumber = augCodeDescriptor.getLineNumber();
         }
-        logAppender.accept(LOG_LEVEL_INFO, () -> String.format(format, args));        
+        return GenericTaskException.create(null, errorMessage, srcPath, lineNumber, null);
     }
 
-    private void logWarn(String format, Object... args) {
-        if (logAppender == null) {
-            return;
-        }
-        logAppender.accept(LOG_LEVEL_WARN, () -> String.format(format, args));        
-    }
-
-    public BiConsumer<Integer, Supplier<String>> getLogAppender() {
+    public BiConsumer<GenericTaskLogLevel, Supplier<String>> getLogAppender() {
         return logAppender;
     }
 
-    public void setLogAppender(BiConsumer<Integer, Supplier<String>> logAppender) {
+    public void setLogAppender(BiConsumer<GenericTaskLogLevel, Supplier<String>> logAppender) {
         this.logAppender = logAppender;
     }
 

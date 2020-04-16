@@ -6,8 +6,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
-import java.util.function.BiConsumer;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTask;
@@ -43,98 +41,74 @@ public class CodeAugmentationTask extends DefaultTask {
     @TaskAction    
     public void execute() throws Exception {
         try {
-            _execute();
-        }
-        catch (GradleException ex) {
-            throw ex;
-        }
-        catch (Exception ex) {
-            throw new GradleException("General plugin error: " + ex.getMessage(), ex);
-        }
-    }
-
-    private void _execute() throws Exception {
-        Charset charset = Charset.forName(encoding.get());
-        BiConsumer<Integer, Supplier<String>> logAppender = (logLevel, msgFunc) -> {
-            switch (logLevel) {
-                case CodeAugmentationGenericTask.LOG_LEVEL_VERBOSE:
-                    if (getLogger().isDebugEnabled()) {
-                        getLogger().debug(msgFunc.get());
-                    }
-                    break;
-                case CodeAugmentationGenericTask.LOG_LEVEL_INFO:
-                    if (getLogger().isInfoEnabled()) {
-                        getLogger().info(msgFunc.get());
-                    }
-                    break;
-                case CodeAugmentationGenericTask.LOG_LEVEL_WARN:
-                    if (getLogger().isWarnEnabled()) {
-                        getLogger().warn(msgFunc.get());
-                    }
-                    break;
+            CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
+            Charset charset = Charset.forName(encoding.get());
+            genericTask.setCharset(charset);
+            genericTask.setLogAppender(TaskUtils.createLogAppender(this));
+            if (!prepFile.isPresent()) {
+                throw new GradleException("prepFile property must be set");
             }
-        };
-
-        CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
-        genericTask.setCharset(charset);
-        genericTask.setLogAppender(logAppender);
-        if (!prepFile.isPresent()) {
-            throw new GradleException("prepFile property must be set");
-        }
-        File resolvedPrepFile = getProject().file(prepFile);
-        genericTask.setPrepFile(resolvedPrepFile);
-        genericTask.setGeneratedCodeFiles(generatedCodeFiles.get().
-            stream().map(x -> getProject().file(x)).collect(Collectors.toList()));
-        if (!destDir.isPresent()) {
-            throw new GradleException("destDir property must be set");
-        }
-        File resolvedDestDir = getProject().file(destDir);
-        genericTask.setDestDir(resolvedDestDir);
-        if (!changeSetInfoFile.isPresent()) {
-            throw new GradleException("changeSetInfoFile property must be set");
-        }
-        File resolvedChangeSetInfoFile = getProject().file(changeSetInfoFile);
-
-        try {
-            genericTask.execute();
-        }
-        catch (GenericTaskException ex) {
-            throw new GradleException(ex.getMessage(), ex.getCause());
-        }
-
-        // Write out change set info file.
-        // Because change set info is intended to be used by OS command line scripts,
-        // use OS newline separator, default charset, and absolute paths.
-        StringBuilder changeSetInfo = new StringBuilder();
-        for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {
-            changeSetInfo.append(genericTask.getSrcFiles().get(i).getAbsolutePath());
-            changeSetInfo.append(System.lineSeparator());
-            changeSetInfo.append(genericTask.getDestFiles().get(i).getAbsolutePath());
-            changeSetInfo.append(System.lineSeparator());
-        }
-        // ensure dir exists for changeSetInfoFile
-        resolvedChangeSetInfoFile.getParentFile().mkdirs();
-        try (Writer fWriter = new OutputStreamWriter(new 
-                FileOutputStream(resolvedChangeSetInfoFile), Charset.defaultCharset())) {
-            fWriter.write(changeSetInfo.toString());
-        }
-        catch (IOException ex) {
-            throw new GradleException("Failed to write change set information to " +
-                resolvedChangeSetInfoFile, ex);
-        }
-
-        // fail build if there were changed files.
-        if (!genericTask.getSrcFiles().isEmpty()) {
-            getLogger().warn("The following file(s) out of sync " +
-                "with generating code scripts:");
+            File resolvedPrepFile = getProject().file(prepFile);
+            genericTask.setPrepFile(resolvedPrepFile);
+            genericTask.setGeneratedCodeFiles(generatedCodeFiles.get().
+                stream().map(x -> getProject().file(x)).collect(Collectors.toList()));
+            if (!destDir.isPresent()) {
+                throw new GradleException("destDir property must be set");
+            }
+            File resolvedDestDir = getProject().file(destDir);
+            genericTask.setDestDir(resolvedDestDir);
+            if (!changeSetInfoFile.isPresent()) {
+                throw new GradleException("changeSetInfoFile property must be set");
+            }
+            File resolvedChangeSetInfoFile = getProject().file(changeSetInfoFile);
+    
+            try {
+                genericTask.execute();
+            }
+            catch (GenericTaskException ex) {
+                throw new GradleException(ex.getMessage(), ex.getCause());
+            }
+    
+            // Write out change set info file.
+            // Because change set info is intended to be used by OS command line scripts,
+            // use OS newline separator, default charset, and absolute paths.
+            StringBuilder changeSetInfo = new StringBuilder();
             for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {
-                getLogger().warn(genericTask.getSrcFiles().get(i).getPath());
+                changeSetInfo.append(genericTask.getSrcFiles().get(i).getAbsolutePath());
+                changeSetInfo.append(System.lineSeparator());
+                changeSetInfo.append(genericTask.getDestFiles().get(i).getAbsolutePath());
+                changeSetInfo.append(System.lineSeparator());
             }
-
-            throw new GradleException(
-                genericTask.getSrcFiles().size() +
-                " file(s) out of sync " +
-                "with generating code scripts. Regeneration needed.");
+            // ensure dir exists for changeSetInfoFile
+            resolvedChangeSetInfoFile.getParentFile().mkdirs();
+            try (Writer fWriter = new OutputStreamWriter(new 
+                    FileOutputStream(resolvedChangeSetInfoFile), Charset.defaultCharset())) {
+                fWriter.write(changeSetInfo.toString());
+            }
+            catch (IOException ex) {
+                throw new GradleException("Failed to write change set information to " +
+                    resolvedChangeSetInfoFile, ex);
+            }
+    
+            // fail build if there were changed files.
+            if (!genericTask.getSrcFiles().isEmpty()) {
+                getLogger().warn("The following file(s) out of sync " +
+                    "with generating code scripts:");
+                for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {
+                    getLogger().warn(genericTask.getSrcFiles().get(i).getPath());
+                }
+    
+                throw new GradleException(
+                    genericTask.getSrcFiles().size() +
+                    " file(s) out of sync " +
+                    "with generating code scripts. Regeneration needed.");
+            }
+        }
+        catch (Throwable ex) {
+            if (ex instanceof GradleException) {
+                throw ex;
+            }
+            throw new GradleException("General plugin error: " + ex, ex);
         }
     }
 

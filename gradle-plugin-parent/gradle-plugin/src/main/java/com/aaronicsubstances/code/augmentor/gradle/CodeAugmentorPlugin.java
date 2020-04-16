@@ -40,6 +40,8 @@ public class CodeAugmentorPlugin implements Plugin<Project> {
         // lastly set defaults for process task.
         extension.getEntryScriptName().convention("main.groovy");
 
+        extension.getVerbose().convention(false);
+
         // add tasks.
         project.getTasks().register("codeAugmentorPrepare", PreCodeAugmentationTask.class, new Action<PreCodeAugmentationTask>() {
 

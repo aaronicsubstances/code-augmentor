@@ -1,6 +1,7 @@
 package com.aaronicsubstances.code.augmentor.core.util;
 
 import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -8,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.StringReader;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
@@ -16,11 +18,13 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonPrimitive;
+import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskLogLevel;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
+import com.google.gson.stream.MalformedJsonException;
 
 /**
  * Exposes helper methods for generic tasks
@@ -127,35 +131,37 @@ public class TaskUtils {
         return s == null || s.trim().isEmpty();
     }
 
-    public static boolean isValidJson(String s) {
-        // Gson interprets empty string as null.
-        // so deal with blank strings separately.
-        if (s == null) {
-            return false;
+    public static String validateJson(String s) {
+        // cannot use JsonParser.parse*() methods since they always
+        // are used by GSON (as at 2.8.6) in lenient mode. 
+        try (JsonReader reader = new JsonReader(new StringReader(s))) {
+            reader.setLenient(false);
+            reader.skipValue();
+            JsonToken next = reader.peek();
+            assert next.equals(JsonToken.END_DOCUMENT);
+            return null;
         }
-        s = s.trim();
-        if (s.isEmpty()) {
-            return false;
-        }
-        try {
-            JsonElement jsonElem = JsonParser.parseString(s);
-            // For some reason, Gson will validate strings such as
-            // "k", "0x2A", "tru", "nul"; but not "\"k"
-            // Looks like it uses the prefix to conclude on what to do,
-            // and if no matching prefix is found to interpret input as
-            // array ("["), object ("{"), number ("<digit>" or "."),
-            // null, true or false keywords, valid string ("\""),
-            // then it just says string.
-            // So to complete validation require beginning quotes for strings.
-            if (jsonElem instanceof JsonPrimitive) {
-                if (((JsonPrimitive) jsonElem).isString()) {
-                    return s.trim().startsWith("\"");
+        catch (Exception ex) {            
+            String message = ex.getMessage();
+            if (ex instanceof MalformedJsonException) {
+                String cutOutPrefix = "Use JsonReader.setLenient(true) to accept malformed JSON";
+                if (message.startsWith(cutOutPrefix)) {
+                    message = message.substring(cutOutPrefix.length()).trim();
                 }
+                return MalformedJsonException.class.getSimpleName() + ": " + message;
             }
-            return true;
-        }
-        catch (JsonParseException ex) {
-            return false;
+            else if (ex instanceof EOFException) {
+                String cutOutPrefix = "End of input";
+                if (message.startsWith(cutOutPrefix)) {
+                    message = "Unexpected end of input " + 
+                        message.substring(cutOutPrefix.length()).trim();
+                }
+                if (isBlank(s)) {
+                    message += " (input is blank)";
+                }
+                return EOFException.class.getSimpleName() + ": " + message;
+            }
+            return ex.toString();
         }
     }
 
@@ -214,5 +220,29 @@ public class TaskUtils {
                 copyStream(inputStream, outputStream);
             }
         }
+    }
+
+    public static void logVerbose(BiConsumer<GenericTaskLogLevel, Supplier<String>> logAppender, 
+            String format, Object... args) {
+        if (logAppender == null) {
+            return;
+        }
+        logAppender.accept(GenericTaskLogLevel.VERBOSE, () -> String.format(format, args));
+    }
+
+    public static void logInfo(BiConsumer<GenericTaskLogLevel, Supplier<String>> logAppender, 
+            String format, Object... args) {
+        if (logAppender == null) {
+            return;
+        }
+        logAppender.accept(GenericTaskLogLevel.INFO, () -> String.format(format, args));        
+    }
+
+    public static void logWarn(BiConsumer<GenericTaskLogLevel, Supplier<String>> logAppender, 
+            String format, Object... args) {
+        if (logAppender == null) {
+            return;
+        }
+        logAppender.accept(GenericTaskLogLevel.WARN, () -> String.format(format, args));        
     }
 }

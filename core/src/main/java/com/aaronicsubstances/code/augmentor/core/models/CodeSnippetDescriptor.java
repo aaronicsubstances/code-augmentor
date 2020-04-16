@@ -7,6 +7,7 @@ public class CodeSnippetDescriptor {
         private int startPos = 0;
         private int endPos = 0;
         private String indent;
+        private int lineNumber;
 
         public int getIndex() {
             return index;
@@ -40,6 +41,14 @@ public class CodeSnippetDescriptor {
             this.indent = indent;
         }
 
+        public int getLineNumber() {
+            return lineNumber;
+        }
+    
+        public void setLineNumber(int lineNumber) {
+            this.lineNumber = lineNumber;
+        }
+
         @Override
         public int hashCode() {
             final int prime = 31;
@@ -47,6 +56,7 @@ public class CodeSnippetDescriptor {
             result = prime * result + endPos;
             result = prime * result + ((indent == null) ? 0 : indent.hashCode());
             result = prime * result + index;
+            result = prime * result + lineNumber;
             result = prime * result + startPos;
             return result;
         }
@@ -69,6 +79,8 @@ public class CodeSnippetDescriptor {
                 return false;
             if (index != other.index)
                 return false;
+            if (lineNumber != other.lineNumber)
+                return false;
             if (startPos != other.startPos)
                 return false;
             return true;
@@ -76,9 +88,8 @@ public class CodeSnippetDescriptor {
 
         @Override
         public String toString() {
-            return "AugmentingCodeDescriptor{endPos=" + endPos
-                    + ", indent=" + indent + ", index=" + index
-                    + ", startPos=" + startPos + "}";
+            return "AugmentingCodeDescriptor{endPos=" + endPos + ", indent=" + indent + ", index=" + index
+                    + ", lineNumber=" + lineNumber + ", startPos=" + startPos + "}";
         }
     }
 

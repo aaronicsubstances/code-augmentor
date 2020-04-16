@@ -153,8 +153,13 @@ public class TaskUtilsTest {
 
     @Test(dataProvider = "createTestIsValidJsonData")
     public void testIsValidJson(String s, boolean expected) {
-        boolean actual = TaskUtils.isValidJson(s);
-        assertEquals(actual, expected);
+        String errorMessage = TaskUtils.validateJson(s);
+        if (expected) {
+            assertNull(errorMessage);
+        }
+        else {
+            assertNotNull(errorMessage);
+        }
     }
 
     @DataProvider
@@ -189,7 +194,8 @@ public class TaskUtilsTest {
             { "k\"", false },
             { " { \"k\": true, \"c\": \"no\" } ", true },
             { " []", true },
-            { " [1, 3, null, '3']", true },
+            { " [1, 3, null, \"3\"]", true },
+            { " [1, 3, null, '3']", false },
             { "[]", true },
             { "[{}]", true },
             { "[\n]", true },

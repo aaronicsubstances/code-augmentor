@@ -32,6 +32,8 @@ public class CodeAugmentorPluginExtension {
     private final Property<Object> scriptsDir;
     private final Property<String> entryScriptName;
 
+    private final Property<Boolean> verbose;
+
     private final Project project;
 
     public CodeAugmentorPluginExtension(Project project) {
@@ -54,6 +56,7 @@ public class CodeAugmentorPluginExtension {
 
         scriptsDir = objectFactory.property(Object.class);
         entryScriptName = objectFactory.property(String.class);
+        verbose = objectFactory.property(Boolean.class);
     }
 
     public AugCodeDirectiveSpec augCodeSpec(Closure<?> closure) {
@@ -121,4 +124,8 @@ public class CodeAugmentorPluginExtension {
     public Property<String> getEntryScriptName() {
         return entryScriptName;
     }
+
+	public Property<Boolean> getVerbose() {
+		return verbose;
+	}
 }

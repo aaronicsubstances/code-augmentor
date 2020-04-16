@@ -175,6 +175,7 @@ public class PersistenceTest {
                             codeSnippet.setIndex(i);
                             codeSnippet.setDirectiveMarker(generateRandomString(randGen, false));
                             codeSnippet.setIndent(randomIndent(randGen));
+                            codeSnippet.setLineNumber(randGen.nextInt());
                             
                             int blockCount = randGen.nextInt(5);
                             for (int k = 0; k < blockCount; k++) {
@@ -294,6 +295,7 @@ public class PersistenceTest {
         d.setEndPos(randGen.nextInt(1000));
         d.setIndex(randGen.nextInt(200));
         d.setIndent(randomIndent(randGen));
+        d.setLineNumber(randGen.nextInt());
         return c;
     }
     

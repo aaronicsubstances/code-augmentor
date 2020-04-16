@@ -8,7 +8,8 @@
 				"index" : 0,
 				"startPos" : 510,
 				"endPos" : 596,
-				"indent" : ""
+				"indent" : "",
+                "lineNumber": 29
 			}
 		}]
 	},
@@ -20,7 +21,8 @@
 				"index" : 0,
 				"startPos" : 799,
 				"endPos" : 822,
-				"indent" : ""
+				"indent" : "",
+                "lineNumber": 44
 			},
 			"generatedCodeDescriptor": {
 				"startDirectiveStartPos" : 822,

@@ -8,7 +8,8 @@
 				"index" : 1,
 				"startPos" : 1026,
 				"endPos" : 1063,
-				"indent" : "\t\t"
+				"indent" : "\t\t",
+                "lineNumber": 51
 			},
 			"generatedCodeDescriptor": {
 				"startDirectiveStartPos" : 1065,

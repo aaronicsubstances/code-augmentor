@@ -3,28 +3,31 @@ package com.aaronicsubstances.code.augmentor.core.tasks;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.aaronicsubstances.code.augmentor.core.models.AugmentingCode;
 import com.aaronicsubstances.code.augmentor.core.models.AugmentingCode.Block;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.AugmentingCodeDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.GeneratedCodeDescriptor;
-import com.aaronicsubstances.code.augmentor.core.util.ParserException;
 import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 import com.aaronicsubstances.code.augmentor.core.util.Token;
 
 public class CodeGenerationRequestCreator {
+    private static final Pattern GSON_ERROR_MESSAGE_REGEX = Pattern.compile(
+        "at\\s+line\\s+(\\d+)[^c]*(?:column\\s+(\\d+))?", Pattern.CASE_INSENSITIVE);
 
     public static List<CodeSnippetDescriptor> processSourceFile(
             List<Token> tokens, File srcFile,
-            List<List<AugmentingCode>> specAugCodesList, List<ParserException> errors) {        
+            List<List<AugmentingCode>> specAugCodesList, List<Exception> errors) {        
         // 1. First identify aug code sections.
         List<List<Token>> augCodeSections = identifyAugCodeSections(tokens, srcFile, 
             errors);
         
         // 2. validate aug code sections.
         for (List<Token> augCodeSection : augCodeSections) {
-            ParserException error = validateAugCodeSection(augCodeSection,
+            GenericTaskException error = validateAugCodeSection(augCodeSection,
                 srcFile);
             if (error != null) {
                 saveOrThrowError(error, errors);
@@ -47,6 +50,7 @@ public class CodeGenerationRequestCreator {
             AugmentingCodeDescriptor augCodeDescriptor = new AugmentingCodeDescriptor();
             augCodeDescriptor.setIndex(i);
             augCodeDescriptor.setStartPos(firstToken.startPos);
+            augCodeDescriptor.setLineNumber(firstToken.lineNumber);
             augCodeDescriptor.setEndPos(lastToken.endPos);
             String indent = augCodeSection.stream().map(x -> x.indent)
                 .min((x, y) -> new Integer(x.length()).compareTo(y.length())).get();
@@ -68,20 +72,16 @@ public class CodeGenerationRequestCreator {
             augmentingCode.setIndex(i);
             augmentingCode.setIndent(augCodeDescriptor.getIndent());
             augmentingCode.setDirectiveMarker(firstToken.directiveMarker);
+            augmentingCode.setLineNumber(augCodeDescriptor.getLineNumber());
             
             // d. validate json directive contents.
             for (int j = 0; j < blocks.size(); j++) {
                 Block b = blocks.get(j);
                 if (b.isJsonify()) {
-                    boolean isValidJson = TaskUtils.isValidJson(b.getContent());
-                    if (!isValidJson) {
-                        int blockStartTokenIndex = blockDelimiters.get(j);
-                        Token blockStartToken = augCodeSection.get(blockStartTokenIndex);
-                        ParserException error = createParserException(
-                            "Embedded JSON section of augmenting code is not " +
-                            "valid.",
-                            blockStartToken, srcFile);
-                        saveOrThrowError(error, errors);
+                    GenericTaskException jsonValidationError = validateJson(j, b.getContent(),
+                        augCodeSection, blockDelimiters, srcFile);
+                    if (jsonValidationError != null) {
+                        saveOrThrowError(jsonValidationError, errors);
                     }
                 }
             }
@@ -95,7 +95,7 @@ public class CodeGenerationRequestCreator {
     }
 
     static List<List<Token>> identifyAugCodeSections(List<Token> tokens,
-            File srcFile, List<ParserException> errors) { 
+            File srcFile, List<Exception> errors) { 
         List<List<Token>> groups = new ArrayList<>();
         final int DISABLE_SCAN = 1;
         final int IN_GEN_CODE = 2;
@@ -120,7 +120,7 @@ public class CodeGenerationRequestCreator {
                 }
                 if (escapeMode == IN_GEN_CODE) {
                     if (t.type == Token.DIRECTIVE_TYPE_GEN_CODE_START) {
-                        ParserException error = createParserException(
+                        GenericTaskException error = createException(
                             "Could not find end of generated code section", 
                             genCodeStartToken, srcFile);
                         saveOrThrowError(error, errors);
@@ -131,7 +131,7 @@ public class CodeGenerationRequestCreator {
                         genCodeStartToken = null;
                         // ensure newline ending.
                         if (t.newline == null) {
-                            ParserException error = createParserException(
+                            GenericTaskException error = createException(
                                 "Generated code section must end with a newline",
                                 t, srcFile);
                             saveOrThrowError(error, errors);
@@ -146,7 +146,7 @@ public class CodeGenerationRequestCreator {
                     t.type == Token.DIRECTIVE_TYPE_EMB_JSON) {
                 // ensure newline ending.
                 if (t.newline == null) {
-                    ParserException error = createParserException(
+                    GenericTaskException error = createException(
                         "Augmenting code section must end with a newline", 
                         t, srcFile);
                     saveOrThrowError(error, errors);
@@ -179,7 +179,7 @@ public class CodeGenerationRequestCreator {
                         expectedLineNumber = 0;
                     }
                     if (t.type == Token.DIRECTIVE_TYPE_GEN_CODE_END) {
-                        ParserException error = createParserException(
+                        GenericTaskException error = createException(
                             "Could not find start of generated code section",
                             t, srcFile);
                         saveOrThrowError(error, errors);
@@ -199,7 +199,7 @@ public class CodeGenerationRequestCreator {
             groups.add(currentGroup);
         }
         if (escapeMode == IN_GEN_CODE) {
-            ParserException error = createParserException(
+            GenericTaskException error = createException(
                 "Could not find end of generated code section", 
                 genCodeStartToken, srcFile);
             saveOrThrowError(error, errors);
@@ -207,7 +207,7 @@ public class CodeGenerationRequestCreator {
         return groups;
     }
 
-    static ParserException validateAugCodeSection(List<Token> tokenGroup, File srcFile) {
+    static GenericTaskException validateAugCodeSection(List<Token> tokenGroup, File srcFile) {
         Token token = tokenGroup.get(0);
         if (token.type == Token.DIRECTIVE_TYPE_AUG_CODE) {
             int expectedAugCodeSpecIndex = token.augCodeSpecIndex;
@@ -220,7 +220,7 @@ public class CodeGenerationRequestCreator {
                     default:
                         assert token.type == Token.DIRECTIVE_TYPE_AUG_CODE;
                         if (expectedAugCodeSpecIndex != token.augCodeSpecIndex) {
-                            return createParserException("Different augmenting code directives in " +
+                            return createException("Different augmenting code directives in " +
                                 "same section not allowed", token, srcFile);
                         }
                         break;
@@ -229,12 +229,12 @@ public class CodeGenerationRequestCreator {
         }
         else {
             if (token.type == Token.DIRECTIVE_TYPE_EMB_JSON) {
-                return createParserException("Embedded JSON directive cannot start an " +
+                return createException("Embedded JSON directive cannot start an " +
                     "augmenting code section", token, srcFile);
             }
             else {
                 assert token.type == Token.DIRECTIVE_TYPE_EMB_STRING;
-                return createParserException("Embedded string directive cannot start an " +
+                return createException("Embedded string directive cannot start an " +
                     "augmenting code section", token, srcFile);
             }
         }
@@ -337,17 +337,104 @@ public class CodeGenerationRequestCreator {
         return blocks;
     }
 
-    private static ParserException createParserException(String errorMessage, Token token,
-            File srcFile) {
-        String fullMessage = String.format("at line %s: %s\n\n%s",
-            token.lineNumber, errorMessage, token.text);
-        if (srcFile != null) {
-            fullMessage = "in " + srcFile + " " + fullMessage;
+    static GenericTaskException validateJson(int blockIndex, String blockContent,
+            List<Token> augCodeSection, List<Integer> blockDelimiters, File srcFile) {
+        if (TaskUtils.validateJson(blockContent) == null) {
+            return null;
         }
-        return new ParserException(token.lineNumber, fullMessage);
+        // for error messages to show line numbers nicely,
+        // prefix content with sufficient number of newlines and indents.
+        List<Token> blockTokens = new ArrayList<>();
+        Token stopToken = null;
+        if (blockIndex + 1 < blockDelimiters.size()) {
+            stopToken = augCodeSection.get(blockDelimiters.get(blockIndex + 1));
+        }
+        for (int i = blockDelimiters.get(blockIndex); i < augCodeSection.size(); i++) {
+            Token t = augCodeSection.get(i);
+            if (t == stopToken) {
+                break;
+            }
+            blockTokens.add(t);
+        }
+
+        assert blockTokens.size() == blockDelimiters.size();
+        Token blockStartToken = blockTokens.get(0);
+        
+        // construct equivalent JSON with whitespace
+        StringBuilder paddedContent = new StringBuilder();
+        for (int i = 0; i < blockTokens.size(); i++) {
+            if (i > 0) {
+                paddedContent.append("\n");
+            }
+            Token t = blockTokens.get(i);
+            paddedContent.append(t.indent);
+            // replace directive marker with whitespace
+            for (int j = 0; j < t.directiveMarker.length(); j++) {
+                paddedContent.append(' ');
+            }
+            paddedContent.append(t.directiveContent);
+        }
+
+        // total number of newlines padded should be 1 less than
+        // block line number (which starts from 1).
+        for (int i = 1; i < blockStartToken.lineNumber; i++) {
+            paddedContent.insert(0, "\n");
+        }
+
+        String jsonValidationError = TaskUtils.validateJson(paddedContent.toString());
+        assert jsonValidationError != null;
+
+        // set defaults
+        String errorMessage = jsonValidationError;
+        int lineNumber = blockStartToken.lineNumber;
+        String snippet = blockStartToken.text;
+        String srcPath = null;
+        if (srcFile != null) {
+            srcPath = srcFile.getPath();
+        }
+
+        // try and do better by identifying snippet corresponding to line number
+        // embedded in validation error
+        Matcher matcher = GSON_ERROR_MESSAGE_REGEX.matcher(jsonValidationError);
+        if (matcher.find()) {
+            int emdLineNumber = Integer.parseInt(matcher.group(1));
+            int errorBlockTokenIndex = emdLineNumber - lineNumber;
+            Token errorBlockToken = blockTokens.get(errorBlockTokenIndex);
+            assert errorBlockToken.lineNumber == emdLineNumber;
+            lineNumber = errorBlockToken.lineNumber;
+            snippet = errorBlockToken.text;
+
+            // if column number available, do even better by pointing out 
+            // error position.
+            String colStr = matcher.group(2);
+            if (!TaskUtils.isEmpty(colStr)) {
+                int embCol = Integer.parseInt(colStr);
+                StringBuilder pointerPadding = new StringBuilder();
+                // NB: col starts from 1
+                for (int i = 1; i < embCol; i++) {
+                    pointerPadding.append(' ');
+                }
+                pointerPadding.append('^');
+                // since directive token's text already ends with newline,
+                // no need to add intervening line.
+                snippet += pointerPadding;
+            }
+        }
+        
+        return GenericTaskException.create(null, "Embedded JSON section of augmenting code is not " +
+            "valid: " + errorMessage, srcPath, lineNumber, snippet);
     }
 
-    private static void saveOrThrowError(ParserException error, List<ParserException> errors) {
+    private static GenericTaskException createException(String errorMessage, Token token,
+            File srcFile) {
+        String srcPath = null;
+        if (srcFile != null) {
+            srcPath  = srcFile.getPath();
+        }
+        return GenericTaskException.create(null, errorMessage, srcPath, token.lineNumber, token.text);
+    }
+
+    private static void saveOrThrowError(GenericTaskException error, List<Exception> errors) {
         if (errors == null) {
             throw error;
         }

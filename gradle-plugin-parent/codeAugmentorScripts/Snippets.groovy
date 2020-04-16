@@ -15,10 +15,10 @@ class Snippets {
             def capitalized = "${fieldSpec.name[0]}".toUpperCase() + fieldSpec.name[1..-1];
             output << "public ${fieldSpec.type} get${capitalized}() {" << newline;
             output << "${indent}return ${fieldSpec.name};" << newline;
-            output<< "}" << newline << newline;
+            output << "}" << newline << newline;
             output << "public void set${capitalized}(${fieldSpec.type} ${fieldSpec.name}) {" << newline;
             output << "${indent}this.${fieldSpec.name} = ${fieldSpec.name};" << newline;
-            output<< "}" << newline << newline;
+            output << "}" << newline << newline;
         }
         return output.toString();
     }

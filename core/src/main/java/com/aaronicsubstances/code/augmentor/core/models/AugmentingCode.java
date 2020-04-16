@@ -83,6 +83,7 @@ public class AugmentingCode {
     private List<Block> blocks;
     private String directiveMarker;
     private String indent;
+    private int lineNumber;
 
     // used to attach results of processing aug codes.
     // not persisted
@@ -127,6 +128,14 @@ public class AugmentingCode {
         this.indent = indent;
     }
 
+    public int getLineNumber() {
+        return lineNumber;
+    }
+
+    public void setLineNumber(int lineNumber) {
+        this.lineNumber = lineNumber;
+    }
+
     public List<Object> getArgs() {
         return args;
     }
@@ -144,6 +153,7 @@ public class AugmentingCode {
         result = prime * result + ((directiveMarker == null) ? 0 : directiveMarker.hashCode());
         result = prime * result + ((indent == null) ? 0 : indent.hashCode());
         result = prime * result + index;
+        result = prime * result + lineNumber;
         return result;
     }
 
@@ -178,12 +188,14 @@ public class AugmentingCode {
             return false;
         if (index != other.index)
             return false;
+        if (lineNumber != other.lineNumber)
+            return false;
         return true;
     }
 
     @Override
     public String toString() {
         return "AugmentingCode{args=" + args + ", blocks=" + blocks + ", directiveMarker=" + directiveMarker
-                + ", indent=" + indent + ", index=" + index + "}";
+                + ", indent=" + indent + ", index=" + index + ", lineNumber=" + lineNumber + "}";
     }
 }
