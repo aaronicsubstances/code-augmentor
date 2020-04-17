@@ -2,6 +2,7 @@ package com.aaronicsubstances.code.augmentor.gradle;
 
 import java.io.File;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeGenericTask;
@@ -72,15 +73,22 @@ public class ProcessCodeTask extends DefaultTask {
                 getLogger().info("\tgenericTask.outputFile: " + resolvedGenCodeFile);
                 getLogger().info("\tgenericTask.logAppender: " + genericTask.getLogAppender());
                 getLogger().info("\tgenericTask.jsonParseFunction: " + genericTask.getJsonParseFunction());
-                getLogger().info("\tgenericTask.evalFunction: " + genericTask.getEvalFunction());
             }
 
             getLogger().info("Launching " + mainScriptName + "...");
-            scriptEngine.run(mainScriptName, binding);
+            List<Throwable> scriptErrors = new ArrayList<>();
+            try {
+                scriptEngine.run(mainScriptName, binding);
+            }
+            catch (Throwable t) {
+                scriptErrors.add(t);
+            }
+
+            scriptErrors.addAll(genericTask.getAllErrors());
     
             // fail build if there were errors.
-            if (!genericTask.getAllErrors().isEmpty()) {
-                throw TaskUtils.convertToGradleException(genericTask.getAllErrors());
+            if (!scriptErrors.isEmpty()) {
+                throw TaskUtils.convertToGradleException(scriptErrors);
             }
         }
         catch (Throwable ex) {

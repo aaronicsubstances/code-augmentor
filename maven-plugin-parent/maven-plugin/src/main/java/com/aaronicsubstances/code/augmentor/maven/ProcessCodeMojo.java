@@ -2,6 +2,8 @@ package com.aaronicsubstances.code.augmentor.maven;
 
 import java.io.File;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeGenericTask;
 
@@ -80,15 +82,22 @@ public class ProcessCodeMojo extends AbstractPluginMojo {
                 getLog().info("\tgenericTask.outputFile: " + genCodeFile);
                 getLog().info("\tgenericTask.logAppender: " + genericTask.getLogAppender());
                 getLog().info("\tgenericTask.jsonParseFunction: " + genericTask.getJsonParseFunction());
-                getLog().info("\tgenericTask.evalFunction: " + genericTask.getEvalFunction());
             }
 
             getLog().info("Launching " + entryScriptName + "...");
-            scriptEngine.run(entryScriptName, binding);
+            List<Throwable> scriptErrors = new ArrayList<>();
+            try {
+                scriptEngine.run(entryScriptName, binding);
+            }
+            catch (Throwable t) {
+                scriptErrors.add(t);
+            }
+
+            scriptErrors.addAll(genericTask.getAllErrors());
     
             // fail build if there were errors.
-            if (!genericTask.getAllErrors().isEmpty()) {
-                throw TaskUtils.convertToMavenException(genericTask.getAllErrors());
+            if (!scriptErrors.isEmpty()) {
+                throw TaskUtils.convertToMavenException(scriptErrors);
             }
         }
         catch (Throwable ex) {

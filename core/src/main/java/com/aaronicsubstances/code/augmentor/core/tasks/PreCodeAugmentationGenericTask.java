@@ -36,7 +36,7 @@ public class PreCodeAugmentationGenericTask {
     private File prepFile;
 
     // output properties
-    private final List<Exception> allErrors = new ArrayList<>();
+    private final List<Throwable> allErrors = new ArrayList<>();
 
     public void execute() throws Exception {
         allErrors.clear();
@@ -244,7 +244,7 @@ public class PreCodeAugmentationGenericTask {
         this.augCodeProcessingSpecs = augCodeProcessingSpecs;
     }
 
-    public List<Exception> getAllErrors() {
+    public List<Throwable> getAllErrors() {
         return allErrors;
     }
 }

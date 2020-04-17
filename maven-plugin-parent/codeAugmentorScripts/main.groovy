@@ -3,7 +3,7 @@
 // not in default package (just like this script).
 
 final FUNCTION_NAME_REGEX = /^((Snippets)\.)[a-zA-Z]\w*$/
-parentTask.evalFunction = { args ->
+parentTask.execute({ args ->
     def functionName = args[0]
     binding.augCode = args[1]
     binding.context = args[2]
@@ -13,6 +13,4 @@ parentTask.evalFunction = { args ->
     else {
         throw new RuntimeException("Invalid/Unsupported function name: " + functionName)
     }
-}
-
-parentTask.execute()
+})

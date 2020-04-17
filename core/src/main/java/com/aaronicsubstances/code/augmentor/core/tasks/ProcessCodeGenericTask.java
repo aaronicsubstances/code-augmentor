@@ -27,12 +27,11 @@ public class ProcessCodeGenericTask {
     private File inputFile;
     private File outputFile;
     private Function<String, Object> jsonParseFunction;
-    private Function<List<Object>, Object> evalFunction;
     
     // output properties
-    private final List<Exception> allErrors = new ArrayList<>();
+    private final List<Throwable> allErrors = new ArrayList<>();
 
-    public void execute() throws Exception {
+    public void execute(Function<List<Object>, Object> evalFunction) throws Exception {
         allErrors.clear();
         // ensure dir exists for outputFile
         outputFile.getParentFile().mkdirs();
@@ -92,7 +91,7 @@ public class ProcessCodeGenericTask {
                     context.put("augCodeIndex", i);
                     List<GeneratedCode> genCodes;
                     try {
-                        genCodes = processAugCode(functionName, augCode, context);
+                        genCodes = processAugCode(evalFunction, functionName, augCode, context);
                     }
                     catch (GenericTaskException ex) {
                         allErrors.add(ex);
@@ -132,8 +131,8 @@ public class ProcessCodeGenericTask {
     }
     
     @SuppressWarnings("unchecked")
-    List<GeneratedCode> processAugCode(String functionName, AugmentingCode augCode, 
-            Map<String, Object> context) {
+    List<GeneratedCode> processAugCode(Function<List<Object>, Object> evalFunction, 
+            String functionName, AugmentingCode augCode, Map<String, Object> context) {
         Object result;
         try {
             result = evalFunction.apply(Arrays.asList(functionName, augCode, context));
@@ -245,15 +244,7 @@ public class ProcessCodeGenericTask {
         this.jsonParseFunction = jsonParseFunction;
     }
 
-    public Function<List<Object>, Object> getEvalFunction() {
-        return evalFunction;
-    }
-
-    public void setEvalFunction(Function<List<Object>, Object> evalFunction) {
-        this.evalFunction = evalFunction;
-    }
-
-    public List<Exception> getAllErrors() {
+    public List<Throwable> getAllErrors() {
         return allErrors;
     }
 }

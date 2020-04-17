@@ -37,9 +37,13 @@ codeAugmentor {
         include '**/*java'
     })
     scriptDir = '../codeAugmentorScripts'
-    verbose = true
 }
 
+// Unlike in Maven, if compileJava chooses not to run because
+// its source file inputs haven't changed, it won't run its actions,
+// and Gradle won't call tasks dependent on it.
+// So we are forced to run before compileJava on possibly 
+// uncompilable source code...
 compileJava.dependsOn codeAugmentorGenerate
 codeAugmentorGenerate.dependsOn codeAugmentorProcess
 codeAugmentorProcess.dependsOn codeAugmentorPrepare

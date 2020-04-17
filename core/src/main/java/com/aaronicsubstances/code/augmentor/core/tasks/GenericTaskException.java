@@ -53,10 +53,10 @@ public class GenericTaskException extends RuntimeException {
     private static final String STACKTRACE_SANITIZER_FILTERED_OUT_TEXT = "...";
 
     public static String toExceptionMessageWithGroovyConsideration(
-            List<Exception> allErrors) {
+            List<Throwable> allErrors) {
         StringBuilder allExMsg = new StringBuilder();
         allExMsg.append(allErrors.size()).append(" error(s) found.\n");
-        for (Exception ex : allErrors) {
+        for (Throwable ex : allErrors) {
             Throwable cause = ex;
             while (cause != null) {
                 if (cause == ex) {

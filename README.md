@@ -52,6 +52,8 @@ Usually, code duplication is frowned upon because it increases likelihood of err
 **The goal of *CodeAugmentor* is to compensate for the cost of passing over waterfall software architectures** (such as code duplication), by employing **data-driven programming** techniques. These techinques aim to have a single point of truth (SPOT) data specification from which a number of related code sections can be generated. Many possiblities for code quality improvement become possible. For example, the programmer can:
 
    * automate the process of synchronizing similar code sections in multiple places.
+   * generate documentation in a format not natively supported by programming environment (or simply for his/her own purposes).
+   * create connections among comments in the code base which can be machine validated in some way.
    * implement patterns which are much easier/less time consuming to do with code generation than with code (re)design.
    * better maintain workarounds which can easily be updated/migrated when superior alternatives arrive.
 

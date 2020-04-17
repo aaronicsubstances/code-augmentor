@@ -40,7 +40,7 @@ public class TaskUtils {
         return logAppender;
     }
 
-    public static MojoExecutionException convertToMavenException(List<Exception> allErrors) {
+    public static MojoExecutionException convertToMavenException(List<Throwable> allErrors) {
         String allExMsg = GenericTaskException.toExceptionMessageWithGroovyConsideration(allErrors);
         return new MojoExecutionException(allExMsg);
     }

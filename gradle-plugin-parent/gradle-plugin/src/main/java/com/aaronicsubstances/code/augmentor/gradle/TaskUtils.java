@@ -41,7 +41,7 @@ public class TaskUtils {
         return logAppender;
     }
 
-    public static GradleException convertToGradleException(List<Exception> allErrors) {
+    public static GradleException convertToGradleException(List<Throwable> allErrors) {
         String allExMsg = GenericTaskException.toExceptionMessageWithGroovyConsideration(allErrors);
         return new GradleException(allExMsg);
     }
