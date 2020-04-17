@@ -1,4 +1,4 @@
-package com.aaronicsubstances.code.augmentor.gradle;
+package com.aaronicsubstances.code.augmentor.maven;
 
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -7,20 +7,19 @@ import java.util.function.Supplier;
 import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
 import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskLogLevel;
 
-import org.gradle.api.GradleException;
-import org.gradle.api.Task;
-import org.gradle.api.logging.Logger;
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 
 public class TaskUtils {
     
-    public static BiConsumer<GenericTaskLogLevel, Supplier<String>> createLogAppender(Task task) {
-        CodeAugmentorPluginExtension ext = (CodeAugmentorPluginExtension) 
-            task.getProject().getExtensions().getByName(CodeAugmentorPlugin.EXTENSION_NAME);
+    public static BiConsumer<GenericTaskLogLevel, Supplier<String>> createLogAppender(
+            AbstractMojo mojo, boolean verbose) {
         BiConsumer<GenericTaskLogLevel, Supplier<String>> logAppender = (logLevel, msgFunc) -> {
-            Logger logger = task.getProject().getLogger();
+            Log logger = mojo.getLog();
             switch (logLevel) {
                 case VERBOSE:
-                    if (!ext.getVerbose().get()) {
+                    if (!verbose) {
                         break;
                     }
                     else {
@@ -41,8 +40,8 @@ public class TaskUtils {
         return logAppender;
     }
 
-    public static GradleException convertToGradleException(List<Exception> allErrors) {
+    public static MojoExecutionException convertToMavenException(List<Exception> allErrors) {
         String allExMsg = GenericTaskException.toExceptionMessageWithGroovyConsideration(allErrors);
-        return new GradleException(allExMsg);
+        return new MojoExecutionException(allExMsg);
     }
 }

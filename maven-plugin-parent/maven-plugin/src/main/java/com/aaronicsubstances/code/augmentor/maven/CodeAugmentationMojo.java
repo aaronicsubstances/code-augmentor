@@ -7,13 +7,10 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
-import java.util.function.BiConsumer;
-import java.util.function.Supplier;
 
 import com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTask;
 import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
 
-import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -23,92 +20,87 @@ import org.apache.maven.plugins.annotations.Parameter;
  * Completes code generation.
  */
 @Mojo(name = "generate")
-public class CodeAugmentationMojo extends AbstractMojo {
-    @Parameter( defaultValue="${project.build.sourceEncoding}", readonly=true, required=true )
-    private String encoding;
-    
-    @Parameter( required=true )
-    private File[] generatedCodeFiles;
+public class CodeAugmentationMojo extends AbstractPluginMojo {
 
-    @Parameter( required=true )
-    private File prepFile;
-
-    @Parameter( required=true )
+    @Parameter( defaultValue = "${project.build.directory}/codeAugmentor/generated", 
+        required = false )
     private File destDir;
 
-    @Parameter( defaultValue = "${project.build.directory}/code-augmentor-changes.txt")
+    @Parameter( defaultValue = "${project.build.directory}/codeAugmentor/changeSet.txt", 
+        required = false )
     private File changeSetInfoFile;
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        Charset charset = Charset.forName(encoding);
-        BiConsumer<Integer, Supplier<String>> logAppender = (logLevel, msgFunc) -> {
-            switch (logLevel) {
-                case CodeAugmentationGenericTask.LOG_LEVEL_VERBOSE:
-                    if (getLog().isDebugEnabled()) {
-                        getLog().debug(msgFunc.get());
-                    }
-                    break;
-                case CodeAugmentationGenericTask.LOG_LEVEL_INFO:
-                    if (getLog().isInfoEnabled()) {
-                        getLog().info(msgFunc.get());
-                    }
-                    break;
-                case CodeAugmentationGenericTask.LOG_LEVEL_WARN:
-                    if (getLog().isWarnEnabled()) {
-                        getLog().warn(msgFunc.get());
-                    }
-                    break;
+        try {            
+            CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
+            Charset charset = Charset.forName(getEncoding());
+            genericTask.setCharset(charset);
+            genericTask.setLogAppender(TaskUtils.createLogAppender(this, isVerbose()));
+            genericTask.setPrepFile(getPrepFile());
+            genericTask.setGeneratedCodeFiles(Arrays.asList(getGeneratedCodeFiles()));
+            genericTask.setDestDir(destDir);
+
+            if (isVerbose()) {
+                // print task properties - generic task ones, and any ones outside
+                getLog().info("Configuration properties:");
+                getLog().info("\tencoding: " + genericTask.getCharset());
+                getLog().info("\tprepFile: " + genericTask.getPrepFile());
+                getLog().info("\tdestDir: " + genericTask.getDestDir());
+                for (int i = 0; i < genericTask.getGeneratedCodeFiles().size(); i++) {
+                    getLog().info("\tgeneratedCodeFiles[" + i + "]: " + genericTask.getGeneratedCodeFiles().get(i));
+                }
+                getLog().info("\tchangeSetInfoFile: " + changeSetInfoFile);
+                getLog().info("\tgenericTask.logAppender: " + genericTask.getLogAppender());
             }
-        };
 
-        CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
-        genericTask.setCharset(charset);
-        genericTask.setLogAppender(logAppender);
-        genericTask.setPrepFile(prepFile);
-        genericTask.setGeneratedCodeFiles(Arrays.asList(generatedCodeFiles));
-        genericTask.setDestDir(destDir);
-        try {
-            genericTask.execute();
-        }
-        catch (GenericTaskException ex) {
-            throw new MojoExecutionException(ex.getMessage(), ex.getCause());
-        }
-        catch (Exception ex) {
-            throw new MojoFailureException("General plugin error", ex);
-        }
+            try {
+                genericTask.execute();
+            }
+            catch (GenericTaskException ex) {
+                throw new MojoExecutionException(ex.getMessage(), ex.getCause());
+            }
 
-        // Write out change set info file.
-        // Because change set info is intended to be used by OS command line scripts,
-        // use OS newline separator, default charset, and absolute paths.
-        StringBuilder changeSetInfo = new StringBuilder();
-        for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {
-            changeSetInfo.append(genericTask.getSrcFiles().get(i).getAbsolutePath());
-            changeSetInfo.append(System.lineSeparator());
-            changeSetInfo.append(genericTask.getDestFiles().get(i).getAbsolutePath());
-            changeSetInfo.append(System.lineSeparator());
-        }
-        try (Writer fWriter = new OutputStreamWriter(new 
-                FileOutputStream(changeSetInfoFile), Charset.defaultCharset())) {
-            fWriter.write(changeSetInfo.toString());
-        }
-        catch (IOException ex) {
-            throw new MojoExecutionException("Failed to write change set information to " +
-                changeSetInfoFile, ex);
-        }
-
-        // fail build if there were changed files.
-        if (!genericTask.getSrcFiles().isEmpty()) {
-            getLog().warn("The following file(s) out of sync " +
-                "with generating code scripts:");
+            // Write out change set info file.
+            // Because change set info is intended to be used by OS command line scripts,
+            // use OS newline separator, default charset, and absolute paths.
+            StringBuilder changeSetInfo = new StringBuilder();
             for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {
-                getLog().warn(genericTask.getSrcFiles().get(i).getPath());
+                changeSetInfo.append(genericTask.getSrcFiles().get(i).getAbsolutePath());
+                changeSetInfo.append(System.lineSeparator());
+                changeSetInfo.append(genericTask.getDestFiles().get(i).getAbsolutePath());
+                changeSetInfo.append(System.lineSeparator());
+            }
+            try (Writer fWriter = new OutputStreamWriter(new 
+                    FileOutputStream(changeSetInfoFile), Charset.defaultCharset())) {
+                fWriter.write(changeSetInfo.toString());
+            }
+            catch (IOException ex) {
+                throw new MojoExecutionException("Failed to write change set information to " +
+                    changeSetInfoFile, ex);
             }
 
-            throw new MojoExecutionException(
-                genericTask.getSrcFiles().size() +
-                " file(s) out of sync " +
-                "with generating code scripts. Regeneration needed.");
+            // fail build if there were changed files.
+            if (!genericTask.getSrcFiles().isEmpty()) {
+                StringBuilder outOfSyncMsg = new StringBuilder();
+                outOfSyncMsg.append("The following files are out of sync with generating code scripts:\n");
+                for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {
+                    outOfSyncMsg.append(" ").append(i+1).append(". ");
+                    outOfSyncMsg.append(genericTask.getSrcFiles().get(i).getPath());
+                    outOfSyncMsg.append("\n");
+                }
+
+                throw new MojoExecutionException(outOfSyncMsg.toString());
+            }
+        }
+        catch (Throwable ex) {
+            if (ex instanceof MojoExecutionException) {
+                throw (MojoExecutionException) ex;
+            }
+            if (ex instanceof MojoFailureException) {
+                throw (MojoFailureException) ex;
+            }
+            throw new MojoFailureException("General plugin error: " + ex, ex);
         }
     }
 }

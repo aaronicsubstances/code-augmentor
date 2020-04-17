@@ -29,7 +29,7 @@ public class CodeAugmentorPluginExtension {
     private final Property<Object> changeSetInfoFile;
 
     // extra config for process with groovy
-    private final Property<Object> scriptsDir;
+    private final Property<Object> scriptDir;
     private final Property<String> entryScriptName;
 
     private final Property<Boolean> verbose;
@@ -54,7 +54,7 @@ public class CodeAugmentorPluginExtension {
         destDir = objectFactory.property(Object.class);
         changeSetInfoFile = objectFactory.property(Object.class);
 
-        scriptsDir = objectFactory.property(Object.class);
+        scriptDir = objectFactory.property(Object.class);
         entryScriptName = objectFactory.property(String.class);
         verbose = objectFactory.property(Boolean.class);
     }
@@ -117,8 +117,8 @@ public class CodeAugmentorPluginExtension {
         return destDir;
     }
 
-	public Property<Object> getScriptsDir() {
-		return scriptsDir;
+	public Property<Object> getScriptDir() {
+		return scriptDir;
 	}
 
     public Property<String> getEntryScriptName() {

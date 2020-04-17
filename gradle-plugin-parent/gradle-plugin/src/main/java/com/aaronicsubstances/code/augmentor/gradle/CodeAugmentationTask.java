@@ -61,6 +61,21 @@ public class CodeAugmentationTask extends DefaultTask {
                 throw new GradleException("changeSetInfoFile property must be set");
             }
             File resolvedChangeSetInfoFile = getProject().file(changeSetInfoFile);
+            
+            CodeAugmentorPluginExtension ext = getProject().getExtensions().findByType(
+                CodeAugmentorPluginExtension.class);
+            if (ext.getVerbose().get()) {
+                // print task properties - generic task ones, and any ones outside
+                getLogger().info("Configuration properties:");
+                getLogger().info("\tencoding: " + genericTask.getCharset());
+                getLogger().info("\tprepFile: " + genericTask.getPrepFile());
+                getLogger().info("\tdestDir: " + genericTask.getDestDir());
+                for (int i = 0; i < genericTask.getGeneratedCodeFiles().size(); i++) {
+                    getLogger().info("\tgeneratedCodeFiles[" + i + "]: " + genericTask.getGeneratedCodeFiles().get(i));
+                }
+                getLogger().info("\tchangeSetInfoFile: " + resolvedChangeSetInfoFile);
+                getLogger().info("\tgenericTask.logAppender: " + genericTask.getLogAppender());
+            }
     
             try {
                 genericTask.execute();
@@ -92,16 +107,15 @@ public class CodeAugmentationTask extends DefaultTask {
     
             // fail build if there were changed files.
             if (!genericTask.getSrcFiles().isEmpty()) {
-                getLogger().warn("The following file(s) out of sync " +
-                    "with generating code scripts:");
+                StringBuilder outOfSyncMsg = new StringBuilder();
+                outOfSyncMsg.append("The following files are out of sync with generating code scripts:\n");
                 for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {
-                    getLogger().warn(genericTask.getSrcFiles().get(i).getPath());
+                    outOfSyncMsg.append(" ").append(i+1).append(". ");
+                    outOfSyncMsg.append(genericTask.getSrcFiles().get(i).getPath());
+                    outOfSyncMsg.append("\n");
                 }
     
-                throw new GradleException(
-                    genericTask.getSrcFiles().size() +
-                    " file(s) out of sync " +
-                    "with generating code scripts. Regeneration needed.");
+                throw new GradleException(outOfSyncMsg.toString());
             }
         }
         catch (Throwable ex) {

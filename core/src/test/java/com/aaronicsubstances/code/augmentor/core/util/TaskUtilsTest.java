@@ -151,6 +151,27 @@ public class TaskUtilsTest {
         };
     }
 
+    @Test(dataProvider = "createTestStrMultiplyData")
+    public void testStrMultiply(String s, int nTimes, String expResult) {
+        String result = TaskUtils.strMultiply(s, nTimes);
+        assertEquals(result, expResult);
+    }
+
+    @DataProvider
+    public Object[][] createTestStrMultiplyData() {
+        return new Object[][] {
+            {null, 0, null},
+            {null, 2, null},
+            {"", 0, ""},
+            {"", 5, ""},
+            {"yz", 0, ""},
+            {"yz", 1, "yz"},
+            {"yz", 2, "yzyz"},
+            {"x", 1, "x"},
+            {"x", 5, "xxxxx"},
+        };
+    }
+
     @Test(dataProvider = "createTestIsValidJsonData")
     public void testIsValidJson(String s, boolean expected) {
         String errorMessage = TaskUtils.validateJson(s);

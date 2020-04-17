@@ -36,8 +36,8 @@ codeAugmentor {
     fileSets.add(project.fileTree('src/main/java') {
         include '**/*java'
     })
-
-    scriptsDir = '../codeAugmentorScripts'
+    scriptDir = '../codeAugmentorScripts'
+    verbose = true
 }
 
 compileJava.dependsOn codeAugmentorGenerate

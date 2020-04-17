@@ -5,14 +5,12 @@ public class Person {
     //:EJS: {
     //:EJS:  "fields": [
     //:EJS: { "name": "name", "type": "String" },
-    //:EJS: { "name": "age", "type": "int" },
-    //:EJS: { "name": "phoneNumber", "type": "String" }
+    //:EJS: { "name": "age", "type": "int" }
     //:EJS: ]}
 
     //:GS:
     private String name;
     private int age;
-    private String phoneNumber;
 
     public String getName() {
         return name;
@@ -28,14 +26,6 @@ public class Person {
 
     public void setAge(int age) {
         this.age = age;
-    }
-
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
     }
 
     //:GE:

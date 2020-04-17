@@ -59,8 +59,7 @@ public class ProcessCodeGenericTask {
             SourceFileAugmentingCode fileAugCodes;
             while ((fileAugCodes = SourceFileAugmentingCode.deserialize(requestReader)) != null) {
                 File srcFile = new File(fileAugCodes.getRelativePath());
-                TaskUtils.logVerbose(logAppender, "Processing %s. %s", fileAugCodes.getFileIndex(), 
-                    srcFile);
+                TaskUtils.logVerbose(logAppender, "Processing %s", srcFile);
                 Instant startInstant = Instant.now();
 
                 // fetch arguments, and parse any json arguments found.
@@ -118,7 +117,7 @@ public class ProcessCodeGenericTask {
 
                 Instant endInstant = Instant.now();
                 long timeElapsed = Duration.between(startInstant, endInstant).toMillis();
-                TaskUtils.logInfo(logAppender, "Done processing %s. %s in %d ms", fileAugCodes.getFileIndex(), 
+                TaskUtils.logInfo(logAppender, "Done processing %s in %d ms", 
                     srcFile, timeElapsed);
             }
         }

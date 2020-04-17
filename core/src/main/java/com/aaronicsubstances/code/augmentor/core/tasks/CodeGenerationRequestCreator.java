@@ -3,6 +3,7 @@ package com.aaronicsubstances.code.augmentor.core.tasks;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -77,12 +78,10 @@ public class CodeGenerationRequestCreator {
             // d. validate json directive contents.
             for (int j = 0; j < blocks.size(); j++) {
                 Block b = blocks.get(j);
-                if (b.isJsonify()) {
-                    GenericTaskException jsonValidationError = validateJson(j, b.getContent(),
+                if (b.isJsonify() && TaskUtils.validateJson(b.getContent()) != null) {
+                    GenericTaskException jsonValidationError = createJsonValidationError(j,
                         augCodeSection, blockDelimiters, srcFile);
-                    if (jsonValidationError != null) {
-                        saveOrThrowError(jsonValidationError, errors);
-                    }
+                    saveOrThrowError(jsonValidationError, errors);
                 }
             }
             
@@ -337,12 +336,57 @@ public class CodeGenerationRequestCreator {
         return blocks;
     }
 
-    static GenericTaskException validateJson(int blockIndex, String blockContent,
+    static GenericTaskException createJsonValidationError(int blockIndex, 
             List<Token> augCodeSection, List<Integer> blockDelimiters, File srcFile) {
-        if (TaskUtils.validateJson(blockContent) == null) {
-            return null;
+        String paddedContent = createPaddedJsonEquivalent(blockIndex, augCodeSection, blockDelimiters);
+        String jsonValidationError = TaskUtils.validateJson(paddedContent);
+        assert jsonValidationError != null;
+
+        // set defaults
+        Token blockStartToken = augCodeSection.get(blockIndex);
+        String errorMessage = jsonValidationError;
+        int lineNumber = blockStartToken.lineNumber;
+        String snippet = blockStartToken.text;
+        String srcPath = null;
+        if (srcFile != null) {
+            srcPath = srcFile.getPath();
         }
-        // for error messages to show line numbers nicely,
+
+        // try and do better by identifying snippet corresponding to line number
+        // embedded in validation error
+        Matcher matcher = GSON_ERROR_MESSAGE_REGEX.matcher(jsonValidationError);
+        if (matcher.find()) {
+            int embLineNumber = Integer.parseInt(matcher.group(1));
+            Optional<Token> errorBlockTokenSearch = augCodeSection.stream()
+                .filter(x -> x.lineNumber == embLineNumber)
+                .findFirst();
+            if (errorBlockTokenSearch.isPresent()) {
+                Token errorBlockToken = errorBlockTokenSearch.get();
+                lineNumber = errorBlockToken.lineNumber;
+                snippet = errorBlockToken.text;
+
+                // if column number available, do even better by pointing out 
+                // error position.
+                String colStr = matcher.group(2);
+                if (!TaskUtils.isEmpty(colStr)) {
+                    int embCol = Integer.parseInt(colStr);
+                    // NB: col starts from 1. Also, Gson column numbers
+                    // may indicate the char after the actual trouble char.
+                    // So just point to two chars instead of 1.
+                    String pointerPadding = TaskUtils.strMultiply(" ", embCol - 2);
+                    // since directive token's text already ends with newline,
+                    // no need to add intervening line.
+                    snippet += pointerPadding + "^^";
+                }
+            }
+        }
+        
+        return GenericTaskException.create(null, "Embedded JSON section of augmenting code is not " +
+            "valid: " + errorMessage, srcPath, lineNumber, snippet);
+    }
+
+    static String createPaddedJsonEquivalent(int blockIndex,
+            List<Token> augCodeSection, List<Integer> blockDelimiters) {
         // prefix content with sufficient number of newlines and indents.
         List<Token> blockTokens = new ArrayList<>();
         Token stopToken = null;
@@ -356,12 +400,15 @@ public class CodeGenerationRequestCreator {
             }
             blockTokens.add(t);
         }
-
-        assert blockTokens.size() == blockDelimiters.size();
-        Token blockStartToken = blockTokens.get(0);
         
         // construct equivalent JSON with whitespace
         StringBuilder paddedContent = new StringBuilder();
+
+        // total number of newlines padded should be 1 less than
+        // block line number (which starts from 1).
+        Token blockStartToken = blockTokens.get(0);
+        paddedContent.append(TaskUtils.strMultiply("\n", blockStartToken.lineNumber - 1));
+
         for (int i = 0; i < blockTokens.size(); i++) {
             if (i > 0) {
                 paddedContent.append("\n");
@@ -369,60 +416,10 @@ public class CodeGenerationRequestCreator {
             Token t = blockTokens.get(i);
             paddedContent.append(t.indent);
             // replace directive marker with whitespace
-            for (int j = 0; j < t.directiveMarker.length(); j++) {
-                paddedContent.append(' ');
-            }
+            paddedContent.append(TaskUtils.strMultiply(" ", t.directiveMarker.length()));
             paddedContent.append(t.directiveContent);
         }
-
-        // total number of newlines padded should be 1 less than
-        // block line number (which starts from 1).
-        for (int i = 1; i < blockStartToken.lineNumber; i++) {
-            paddedContent.insert(0, "\n");
-        }
-
-        String jsonValidationError = TaskUtils.validateJson(paddedContent.toString());
-        assert jsonValidationError != null;
-
-        // set defaults
-        String errorMessage = jsonValidationError;
-        int lineNumber = blockStartToken.lineNumber;
-        String snippet = blockStartToken.text;
-        String srcPath = null;
-        if (srcFile != null) {
-            srcPath = srcFile.getPath();
-        }
-
-        // try and do better by identifying snippet corresponding to line number
-        // embedded in validation error
-        Matcher matcher = GSON_ERROR_MESSAGE_REGEX.matcher(jsonValidationError);
-        if (matcher.find()) {
-            int emdLineNumber = Integer.parseInt(matcher.group(1));
-            int errorBlockTokenIndex = emdLineNumber - lineNumber;
-            Token errorBlockToken = blockTokens.get(errorBlockTokenIndex);
-            assert errorBlockToken.lineNumber == emdLineNumber;
-            lineNumber = errorBlockToken.lineNumber;
-            snippet = errorBlockToken.text;
-
-            // if column number available, do even better by pointing out 
-            // error position.
-            String colStr = matcher.group(2);
-            if (!TaskUtils.isEmpty(colStr)) {
-                int embCol = Integer.parseInt(colStr);
-                StringBuilder pointerPadding = new StringBuilder();
-                // NB: col starts from 1
-                for (int i = 1; i < embCol; i++) {
-                    pointerPadding.append(' ');
-                }
-                pointerPadding.append('^');
-                // since directive token's text already ends with newline,
-                // no need to add intervening line.
-                snippet += pointerPadding;
-            }
-        }
-        
-        return GenericTaskException.create(null, "Embedded JSON section of augmenting code is not " +
-            "valid: " + errorMessage, srcPath, lineNumber, snippet);
+        return paddedContent.toString();
     }
 
     private static GenericTaskException createException(String errorMessage, Token token,

@@ -10,7 +10,7 @@ public class AugCodeDirectiveSpec {
     private File destFile;
 
     @Parameter( required=true )
-    private String[] directives;
+    private String[] directives = new String[0];
 
     public File getDestFile() {
         return destFile;

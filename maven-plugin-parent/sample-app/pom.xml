@@ -1,0 +1,76 @@
+<project>
+  <modelVersion>4.0.0</modelVersion>
+ 
+  <groupId>com.aaronicsubstances</groupId>
+  <artifactId>codeaugmentor-maven-plugin-sample-app</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
+ 
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+  </properties>
+ 
+  <dependencies>
+    <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>1.7.25</version>
+    </dependency>
+    <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-simple</artifactId>
+        <version>1.7.25</version>
+        <scope>runtime</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.testng</groupId>
+        <artifactId>testng</artifactId>
+        <version>6.8.1</version>
+        <scope>test</scope>
+    </dependency>
+  </dependencies>
+  
+  <!--
+  mvn exec:java
+  -->
+  <build>
+    <plugins>
+      <plugin>
+          <groupId>com.aaronicsubstances</groupId>
+          <artifactId>codeaugmentor-maven-plugin</artifactId>
+          <version>1.0-SNAPSHOT</version>
+          <configuration>
+              <!-- http://maven.apache.org/shared/file-management/fileset.html -->
+              <fileSets>
+                <fileSet>
+                  <directory>src/main/java</directory>
+                  <includes>**/*.java</includes>
+                </fileSet>
+              </fileSets>
+              <scriptDir>../codeAugmentorScripts</scriptDir>
+              <verbose>true</verbose>
+          </configuration>
+          <executions>
+            <execution>
+            <phase>compile</phase>
+              <goals>
+                <goal>prepare</goal>
+                <goal>process</goal>
+                <goal>generate</goal>
+              </goals>
+            </execution>
+          </executions>
+      </plugin>
+      <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>exec-maven-plugin</artifactId>
+          <version>1.6.0</version>
+          <configuration>
+              <mainClass>demo.Main</mainClass>
+          </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

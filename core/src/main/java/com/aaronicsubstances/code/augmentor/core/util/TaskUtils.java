@@ -131,6 +131,23 @@ public class TaskUtils {
         return s == null || s.trim().isEmpty();
     }
 
+    public static String strMultiply(String s, int nTimes) {
+        if (s == null) {
+            return null;
+        }
+        if (nTimes == 0 || s.isEmpty()) {
+            return "";
+        }
+        if (nTimes == 1) {
+            return s;
+        }
+        StringBuilder multiplied = new StringBuilder();
+        for (int i = 0; i < nTimes; i++) {
+            multiplied.append(s);
+        }
+        return multiplied.toString();
+    }
+
     public static String validateJson(String s) {
         // cannot use JsonParser.parse*() methods since they always
         // are used by GSON (as at 2.8.6) in lenient mode. 

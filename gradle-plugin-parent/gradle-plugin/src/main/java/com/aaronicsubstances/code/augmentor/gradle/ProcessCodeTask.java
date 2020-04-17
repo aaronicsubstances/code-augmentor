@@ -20,22 +20,22 @@ import groovy.json.JsonSlurper;
 public class ProcessCodeTask extends DefaultTask {
     private int augCodeSpecIndex = 0;
     private int genCodeFileIndex = 0;
-    private final Property<Object> scriptsDir;
+    private final Property<Object> scriptDir;
     private final Property<String> entryScriptName;
 
     private static final JsonSlurper JSON_PARSER = new JsonSlurper();
     
     public ProcessCodeTask() {
         ObjectFactory objectFactory = getProject().getObjects();
-        scriptsDir = objectFactory.property(Object.class);
+        scriptDir = objectFactory.property(Object.class);
         entryScriptName = objectFactory.property(String.class);
     }
 
     @TaskAction    
     public void execute() throws Exception {
         try {
-            getLogger().info("Beginning execute()...");
-            CodeAugmentorPluginExtension ext = getProject().getExtensions().findByType(CodeAugmentorPluginExtension.class);
+            CodeAugmentorPluginExtension ext = getProject().getExtensions().findByType(
+                CodeAugmentorPluginExtension.class);
             List<AugCodeDirectiveSpec> augCodeSpecs = ext.getAugCodeSpecs().get();
             AugCodeDirectiveSpec augCodeSpec = augCodeSpecs.get(augCodeSpecIndex);
             File resolvedAugCodeFile = getProject().file(augCodeSpec.getDestFile());
@@ -43,11 +43,11 @@ public class ProcessCodeTask extends DefaultTask {
             Object genCodeFile = genCodeFiles.get(genCodeFileIndex);
             File resolvedGenCodeFile = getProject().file(genCodeFile);
     
-            if (!scriptsDir.isPresent()) {
-                throw new GradleException("scriptsDir property must be set");
+            if (!scriptDir.isPresent()) {
+                throw new GradleException("scriptDir property must be set");
             }
 
-            File resolvedScriptsDir = getProject().file(scriptsDir.get());
+            File resolvedScriptDir = getProject().file(scriptDir.get());
             String mainScriptName = entryScriptName.get();
     
             ProcessCodeGenericTask genericTask = new ProcessCodeGenericTask();
@@ -56,12 +56,27 @@ public class ProcessCodeTask extends DefaultTask {
             genericTask.setOutputFile(resolvedGenCodeFile);
             genericTask.setJsonParseFunction(s -> JSON_PARSER.parseText(s));
     
-            URL[] scriptEngineRoots = new URL[]{ resolvedScriptsDir.toURI().toURL() };
+            URL[] scriptEngineRoots = new URL[]{ resolvedScriptDir.toURI().toURL() };
             GroovyScriptEngine scriptEngine = new GroovyScriptEngine(scriptEngineRoots);
             Binding binding = new Binding();
             binding.setVariable("parentTask", genericTask);
+
+            if (ext.getVerbose().get()) {
+                // print task properties - generic task ones, and any ones outside
+                getLogger().info("Configuration properties:");
+                getLogger().info("\taugCodeSpecIndex: " + augCodeSpecIndex);
+                getLogger().info("\tgenCodeFileIndex: " + genCodeFileIndex);
+                getLogger().info("\tscriptDir: " + resolvedScriptDir);
+                getLogger().info("\tentryScriptName: " + mainScriptName);
+                getLogger().info("\tgenericTask.inputFile: " + resolvedAugCodeFile);
+                getLogger().info("\tgenericTask.outputFile: " + resolvedGenCodeFile);
+                getLogger().info("\tgenericTask.logAppender: " + genericTask.getLogAppender());
+                getLogger().info("\tgenericTask.jsonParseFunction: " + genericTask.getJsonParseFunction());
+                getLogger().info("\tgenericTask.evalFunction: " + genericTask.getEvalFunction());
+            }
+
+            getLogger().info("Launching " + mainScriptName + "...");
             scriptEngine.run(mainScriptName, binding);
-            getLogger().info("Completed execute().");
     
             // fail build if there were errors.
             if (!genericTask.getAllErrors().isEmpty()) {
@@ -95,8 +110,8 @@ public class ProcessCodeTask extends DefaultTask {
     }
 
     @Internal
-	public Property<Object> getScriptsDir() {
-		return scriptsDir;
+	public Property<Object> getScriptDir() {
+		return scriptDir;
 	}
 
     @Internal

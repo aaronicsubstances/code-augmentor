@@ -402,6 +402,32 @@ public class CodeGenerationRequestCreatorTest {
         };
     }
 
+    @Test(dataProvider = "createTestCreatePaddedJsonEquivalentData")
+    public void testCreatePaddedJsonEquivalent(int blockIndex,
+            List<Token> augCodeSection, List<Integer> blockDelimiters, String expected) {
+        String actual = CodeGenerationRequestCreator.createPaddedJsonEquivalent(
+            blockIndex, augCodeSection, blockDelimiters);
+        assertEquals(actual, expected);
+    }
+
+    @DataProvider
+    public Object[][] createTestCreatePaddedJsonEquivalentData() {
+        return new Object[][]{
+            { 1, Arrays.asList(newTokenWithLnNum2(1, "//00", " "),
+                    newTokenWithLnNum2(2, "//{> ['']", " ")), Arrays.asList(0, 1), 
+                "\n      ['']"},
+            { 1, Arrays.asList(newTokenWithLnNum(1, "//00"),
+                    newTokenWithLnNum(2, "//{>[")), Arrays.asList(0, 1), 
+                "\n    ["},
+            { 1, Arrays.asList(newTokenWithLnNum(1, "//00"),
+                    newTokenWithLnNum(2, "//{>[@")), Arrays.asList(0, 1), 
+                "\n    [@"},
+            { 1, Arrays.asList(newTokenWithLnNum(1, "//00"),
+                    newTokenWithLnNum(2, "//{>[{]")), Arrays.asList(0, 1), 
+                "\n    [{]"}
+        };
+    }
+
     /**
      * Used to wrap arguments to test methods, in order to avoid the time wasting and 
      * verbosity of stringifying test method arguments, for inclusion in test method instances
@@ -515,7 +541,11 @@ public class CodeGenerationRequestCreatorTest {
             }
             Token t = new Token(type);
             t.text = text;
-            t.directiveContent = directiveContent;
+            t.indent = "";
+            if (directiveContent != null) {
+                t.directiveContent = directiveContent;
+                t.directiveMarker = text.substring(0, commonMarkerLen);
+            }
             t.augCodeSpecIndex = augCodeSpecIndex;
             if (!noNewline) {
                 t.newline = newline;
@@ -545,6 +575,14 @@ public class CodeGenerationRequestCreatorTest {
     private static Token newTokenWithLnNum(int lineNumber, String text) {
         Token t = new TokenLite(text).toToken("\n");
         t.lineNumber = lineNumber;
+        return t;
+    }
+
+    private static Token newTokenWithLnNum2(int lineNumber, String text, String indent) {
+        Token t = new TokenLite(text).toToken("\n");
+        t.lineNumber = lineNumber;
+        t.indent = indent;
+        t.text = indent + t.text;
         return t;
     }
 }

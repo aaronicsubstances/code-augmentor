@@ -10,7 +10,7 @@ import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 class ProcessCodeTaskFunctionalTest extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
     File buildFile
-    File scriptsDir
+    File scriptDir
 
     def setup() {
         buildFile = testProjectDir.newFile('build.gradle')
@@ -23,20 +23,17 @@ class ProcessCodeTaskFunctionalTest extends Specification {
         File augCodesFile = new File(workingDir, "augCodes.json")
         augCodesFile << """{}
         """
-        scriptsDir = testProjectDir.newFolder("scripts")
-        File entryFile = new File(scriptsDir, "main.groovy")
+        scriptDir = testProjectDir.newFolder("scripts")
+        File entryFile = new File(scriptDir, "main.groovy")
         entryFile << """
-        println 'Works good'
-        parentTask.completeExecute {
-            return "just a test"
-        }
+        parentTask.execute()
         """
     }
 
     def "test codeAugmentorProcess task with extension defaults"() {
         buildFile << """
             codeAugmentor {
-                scriptsDir = "${scriptsDir.name}"
+                scriptDir = "${scriptDir.name}"
             }
         """
 

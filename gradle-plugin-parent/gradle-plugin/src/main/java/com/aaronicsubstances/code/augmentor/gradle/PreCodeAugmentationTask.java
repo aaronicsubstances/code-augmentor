@@ -52,7 +52,8 @@ public class PreCodeAugmentationTask extends DefaultTask {
 
     @TaskAction    
     public void execute() throws Exception {
-        try {// validate
+        try {
+            // validate
             if (genCodeStartDirectives.get().isEmpty()) {
                 throw new GradleException("at least one element is required in genCodeStartDirectives");
             }
@@ -149,6 +150,32 @@ public class PreCodeAugmentationTask extends DefaultTask {
                 augCodeProcessingSpecs.add(augCodeProcessingSpec);
             }
             genericTask.setAugCodeProcessingSpecs(augCodeProcessingSpecs);
+            
+            CodeAugmentorPluginExtension ext = getProject().getExtensions().findByType(
+                CodeAugmentorPluginExtension.class);
+            if (ext.getVerbose().get()) {
+                // print task properties - generic task ones, and any ones outside
+                getLogger().info("Configuration properties:");
+                getLogger().info("\tencoding: " + genericTask.getCharset());
+                getLogger().info("\tprepFile: " + genericTask.getPrepFile());
+                getLogger().info("\tgenCodeStartDirectives: " + genericTask.getGenCodeStartDirectives());
+                getLogger().info("\tgenCodeEndDirectives: " + genericTask.getGenCodeEndDirectives());
+                getLogger().info("\tembeddedStringDirectives: " + genericTask.getEmbeddedStringDirectives());
+                getLogger().info("\tembeddedJsonDirectives: " + genericTask.getEmbeddedJsonDirectives());
+                getLogger().info("\tenableScanDirectives: " + genericTask.getEnableScanDirectives());
+                getLogger().info("\tdisableScanDirectives: " + genericTask.getDisableScanDirectives());
+                
+                for (int i = 0; i < genericTask.getAugCodeProcessingSpecs().size(); i++) {
+                    AugCodeProcessingSpec augCodeSpec = genericTask.getAugCodeProcessingSpecs().get(i);
+                    getLogger().info("\taugCodeSpecs[" + i + "].directives: " + augCodeSpec.getDirectives());
+                    getLogger().info("\taugCodeSpecs[" + i + "].destFile: " + augCodeSpec.getDestFile());
+                }
+
+                getLogger().info("\tfileSets: " + fileSets.get());
+                getLogger().info("\tgenericTask.logAppender: " + genericTask.getLogAppender());
+                getLogger().info("\tgenericTask.baseDirs: " + new HashSet<>(genericTask.getBaseDirs()));
+                getLogger().info("\tgenericTask.relativePaths: " + genericTask.getRelativePaths());
+            }
             
             try {
                 genericTask.execute();

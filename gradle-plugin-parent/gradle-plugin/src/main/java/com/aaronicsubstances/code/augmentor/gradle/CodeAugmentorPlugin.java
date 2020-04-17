@@ -21,14 +21,16 @@ public class CodeAugmentorPlugin implements Plugin<Project> {
         DirectoryProperty buildDir = project.getLayout().getBuildDirectory();
         String workingDirPrefix = EXTENSION_NAME + "/";
         extension.getPrepFile().convention(buildDir.file(workingDirPrefix + "prepResults.json"));
-        extension.getGenCodeStartDirectives().convention(Arrays.asList("//GS:"));
-        extension.getGenCodeEndDirectives().convention(Arrays.asList("//:GE"));
-        extension.getEmbeddedStringDirectives().convention(Arrays.asList("//ES:"));
-        extension.getEmbeddedJsonDirectives().convention(Arrays.asList("//EJS:"));
+        extension.getGenCodeStartDirectives().convention(Arrays.asList("//:GS:"));
+        extension.getGenCodeEndDirectives().convention(Arrays.asList("//:GE:"));
+        extension.getEmbeddedStringDirectives().convention(Arrays.asList("//:ES:"));
+        extension.getEmbeddedJsonDirectives().convention(Arrays.asList("//:EJS:"));
+        extension.getEnableScanDirectives().convention(Arrays.asList("//:ENABLE_SCAN:"));
+        extension.getDisableScanDirectives().convention(Arrays.asList("//:DISABLE_SCAN:"));
         
         AugCodeDirectiveSpec defaultAugCodeSpec = new AugCodeDirectiveSpec(project);
         defaultAugCodeSpec.getDestFile().convention(buildDir.file(workingDirPrefix + "augCodes.json"));
-        defaultAugCodeSpec.getDirectives().convention(Arrays.asList("//AUG_CODE:"));
+        defaultAugCodeSpec.getDirectives().convention(Arrays.asList("//:AUG_CODE:"));
         extension.getAugCodeSpecs().convention(Arrays.asList(defaultAugCodeSpec));
 
         // continue setting defaults for generate task.
@@ -67,7 +69,7 @@ public class CodeAugmentorPlugin implements Plugin<Project> {
             public void execute(ProcessCodeTask processTask) {
                 processTask.setDescription("Determines generated code per each extracted augmenting code");
                 processTask.setGroup(EXTENSION_NAME);
-                processTask.getScriptsDir().set(extension.getScriptsDir());
+                processTask.getScriptDir().set(extension.getScriptDir());
                 processTask.getEntryScriptName().set(extension.getEntryScriptName());
             }
         });
