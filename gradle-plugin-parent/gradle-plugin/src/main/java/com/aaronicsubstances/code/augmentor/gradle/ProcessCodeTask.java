@@ -5,11 +5,14 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskExtensionFunction;
 import com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeGenericTask;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
+import org.gradle.api.logging.Logger;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
@@ -19,111 +22,220 @@ import groovy.util.GroovyScriptEngine;
 import groovy.json.JsonSlurper;
 
 public class ProcessCodeTask extends DefaultTask {
-    private int augCodeSpecIndex = 0;
-    private int genCodeFileIndex = 0;
-    private final Property<Object> scriptDir;
-    private final Property<String> entryScriptName;
+    private final Property<Boolean> verbose;
+    private final ListProperty<AugCodeDirectiveSpec> augCodeSpecs;
+    private final Property<Integer> augCodeSpecIndex;
+    private final ListProperty<Object> generatedCodeFiles;
+    private final Property<Integer> genCodeFileIndex;
+    private final Property<Object> groovyScriptDir;
+    private final Property<String> groovyEntryScriptName;
+    private final Property<GenericTaskExtensionFunction> scriptEvalFunction;
+    private final ListProperty<String> scriptErrorStackTraceFilterPrefixes;
+    private final ListProperty<String> scriptErrorStackTraceLimitPrefixes;
 
     private static final JsonSlurper JSON_PARSER = new JsonSlurper();
     
     public ProcessCodeTask() {
         ObjectFactory objectFactory = getProject().getObjects();
-        scriptDir = objectFactory.property(Object.class);
-        entryScriptName = objectFactory.property(String.class);
+        verbose = objectFactory.property(Boolean.class);
+        augCodeSpecs = objectFactory.listProperty(AugCodeDirectiveSpec.class);
+        augCodeSpecIndex = objectFactory.property(Integer.class);
+        generatedCodeFiles = objectFactory.listProperty(Object.class);
+        genCodeFileIndex = objectFactory.property(Integer.class);
+        groovyScriptDir = objectFactory.property(Object.class);
+        groovyEntryScriptName = objectFactory.property(String.class);
+        scriptEvalFunction = objectFactory.property(GenericTaskExtensionFunction.class);
+        scriptErrorStackTraceFilterPrefixes = objectFactory.listProperty(String.class);
+        scriptErrorStackTraceLimitPrefixes = objectFactory.listProperty(String.class);
     }
 
-    @TaskAction    
-    public void execute() throws Exception {
+    @TaskAction
+    public void execute() throws GradleException {
         try {
-            CodeAugmentorPluginExtension ext = getProject().getExtensions().findByType(
-                CodeAugmentorPluginExtension.class);
-            List<AugCodeDirectiveSpec> augCodeSpecs = ext.getAugCodeSpecs().get();
-            AugCodeDirectiveSpec augCodeSpec = augCodeSpecs.get(augCodeSpecIndex);
-            File resolvedAugCodeFile = getProject().file(augCodeSpec.getDestFile());
-            List<Object> genCodeFiles = ext.getGeneratedCodeFiles().get();
-            Object genCodeFile = genCodeFiles.get(genCodeFileIndex);
+            boolean resolvedVerbose = verbose.get();
+            int resolvedAugCodeSpecIndex = augCodeSpecIndex.get();
+            List<AugCodeDirectiveSpec> resolvedAugCodeSpecs = augCodeSpecs.get();
+            if (resolvedAugCodeSpecIndex < 0 || resolvedAugCodeSpecIndex >= resolvedAugCodeSpecs.size()) {
+                throw new GradleException(String.format("Invalid augCodeSpecIndex lies outside valid " +
+                    "range of 0 ..< %s: %s", resolvedAugCodeSpecs.size(), resolvedAugCodeSpecIndex));
+            }
+            AugCodeDirectiveSpec augCodeSpec = resolvedAugCodeSpecs.get(resolvedAugCodeSpecIndex);
+            File resolvedAugCodeFile = null;
+            if (augCodeSpec != null) {
+                resolvedAugCodeFile = getProject().file(augCodeSpec.getDestFile());
+            }
+            int resolvedGenCodeFileIndex = genCodeFileIndex.get();
+            List<Object> resolvedGenCodeFiles = generatedCodeFiles.get();
+            if (resolvedGenCodeFileIndex < 0 || resolvedGenCodeFileIndex >= resolvedGenCodeFiles.size()) {
+                throw new GradleException(String.format("Invalid genCodeFileIndex lies outside valid " +
+                    "range of 0 ..< %s: %s", resolvedGenCodeFiles.size(), resolvedGenCodeFileIndex));
+            }
+            Object genCodeFile = resolvedGenCodeFiles.get(resolvedGenCodeFileIndex);
             File resolvedGenCodeFile = getProject().file(genCodeFile);
-    
-            if (!scriptDir.isPresent()) {
-                throw new GradleException("scriptDir property must be set");
+            
+            GenericTaskExtensionFunction resolvedScriptEvalFunction = null;
+            if (scriptEvalFunction.isPresent()) {
+                resolvedScriptEvalFunction = scriptEvalFunction.get();
             }
-
-            File resolvedScriptDir = getProject().file(scriptDir.get());
-            String mainScriptName = entryScriptName.get();
-    
-            ProcessCodeGenericTask genericTask = new ProcessCodeGenericTask();
-            genericTask.setLogAppender(TaskUtils.createLogAppender(this));
-            genericTask.setInputFile(resolvedAugCodeFile);
-            genericTask.setOutputFile(resolvedGenCodeFile);
-            genericTask.setJsonParseFunction(s -> JSON_PARSER.parseText(s));
-    
-            URL[] scriptEngineRoots = new URL[]{ resolvedScriptDir.toURI().toURL() };
-            GroovyScriptEngine scriptEngine = new GroovyScriptEngine(scriptEngineRoots);
-            Binding binding = new Binding();
-            binding.setVariable("parentTask", genericTask);
-
-            if (ext.getVerbose().get()) {
-                // print task properties - generic task ones, and any ones outside
-                getLogger().info("Configuration properties:");
-                getLogger().info("\taugCodeSpecIndex: " + augCodeSpecIndex);
-                getLogger().info("\tgenCodeFileIndex: " + genCodeFileIndex);
-                getLogger().info("\tscriptDir: " + resolvedScriptDir);
-                getLogger().info("\tentryScriptName: " + mainScriptName);
-                getLogger().info("\tgenericTask.inputFile: " + resolvedAugCodeFile);
-                getLogger().info("\tgenericTask.outputFile: " + resolvedGenCodeFile);
-                getLogger().info("\tgenericTask.logAppender: " + genericTask.getLogAppender());
-                getLogger().info("\tgenericTask.jsonParseFunction: " + genericTask.getJsonParseFunction());
+            File resolvedGroovyScriptDir = null;
+            if (groovyScriptDir.isPresent()) {
+                resolvedGroovyScriptDir = getProject().file(groovyScriptDir);
             }
-
-            getLogger().info("Launching " + mainScriptName + "...");
-            List<Throwable> scriptErrors = new ArrayList<>();
-            try {
-                scriptEngine.run(mainScriptName, binding);
-            }
-            catch (Throwable t) {
-                scriptErrors.add(t);
-            }
-
-            scriptErrors.addAll(genericTask.getAllErrors());
-    
-            // fail build if there were errors.
-            if (!scriptErrors.isEmpty()) {
-                throw TaskUtils.convertToGradleException(scriptErrors);
-            }
+            String resolvedGroovyEntryScriptName = groovyEntryScriptName.get();
+            
+            List<String> resolvedStackTraceLimitPrefixes = scriptErrorStackTraceLimitPrefixes.get();
+            List<String> resolvedStackTraceFilterPrefixes = scriptErrorStackTraceFilterPrefixes.get();
+            completeExecute(this, resolvedVerbose, resolvedAugCodeSpecIndex, 
+                resolvedGenCodeFileIndex, resolvedAugCodeFile, resolvedGenCodeFile,
+                resolvedScriptEvalFunction, resolvedStackTraceLimitPrefixes,
+                resolvedStackTraceFilterPrefixes, resolvedGroovyScriptDir,
+                resolvedGroovyEntryScriptName);
+        }
+        catch (GradleException ex) {
+            throw ex;
         }
         catch (Throwable ex) {
-            if (ex instanceof GradleException) {
-                throw ex;
-            }
             throw new GradleException("General plugin error: " + ex, ex);
         }
     }
 
+    static void completeExecute(DefaultTask task, boolean resolvedVerbose,
+            int resolvedAugCodeSpecIndex, int resolvedGenCodeFileIndex,
+            File resolvedAugCodeFile, File resolvedGenCodeFile, 
+            GenericTaskExtensionFunction resolvedScriptEvalFunction,
+            List<String> resolvedStackTraceLimitPrefixes, 
+            List<String> resolvedStackTraceFilterPrefixes,
+            File resolvedGroovyScriptDir, String resolvedGroovyEntryScriptName) throws Exception {
+        // validate
+        if (resolvedAugCodeFile == null) {
+            if (task instanceof ProcessCodeTask) {
+                throw new GradleException("augCodeSpecs[" + resolvedAugCodeSpecIndex +
+                    "].destFile is null");
+            }
+            else {
+                throw new RuntimeException("unexpected null for augCodeFile");
+            }
+        }
+        if (resolvedGenCodeFile == null) {
+            if (task instanceof ProcessCodeTask) {
+                throw new GradleException("generatedCodeFiles[" + resolvedGenCodeFileIndex +
+                    "] is null");
+            }
+            else {
+                throw new RuntimeException("unexpected null for genCodeFile");
+            }
+        }
+        // either eval function or groovy script dir is required.
+        if (resolvedScriptEvalFunction == null && resolvedGroovyScriptDir == null) {
+            throw new GradleException("groovyScriptDir property must be set if scriptEvalFunction is absent");
+        }
+
+        Logger logger = task.getLogger();
+
+        ProcessCodeGenericTask genericTask = new ProcessCodeGenericTask();
+        genericTask.setLogAppender(TaskUtils.createLogAppender(task, resolvedVerbose));
+        genericTask.setInputFile(resolvedAugCodeFile);
+        genericTask.setOutputFile(resolvedGenCodeFile);
+        genericTask.setJsonParseFunction(s -> JSON_PARSER.parseText(s));
+
+        if (resolvedVerbose) {
+            // print task properties - generic task ones, and any ones outside
+            logger.info("Configuration properties:");
+            if (task instanceof ProcessCodeTask) {
+                logger.info("\taugCodeSpecIndex: " + resolvedAugCodeSpecIndex);
+                logger.info("\tgenCodeFileIndex: " + resolvedGenCodeFileIndex);
+            }
+            logger.info("\tscriptEvalFunction: " + resolvedScriptEvalFunction);
+            logger.info("\tgroovyScriptDir: " + resolvedGroovyScriptDir);
+            logger.info("\tgroovyEntryScriptName: " + resolvedGroovyEntryScriptName);
+            logger.info("\tgenericTask.inputFile: " + resolvedAugCodeFile);
+            logger.info("\tgenericTask.outputFile: " + resolvedGenCodeFile);
+            logger.info("\tgenericTask.logAppender: " + genericTask.getLogAppender());
+            logger.info("\tgenericTask.jsonParseFunction: " + genericTask.getJsonParseFunction());
+        }
+
+        List<Throwable> scriptErrors = new ArrayList<>();
+        boolean defaultGroovyUsed = false;
+        if (resolvedScriptEvalFunction == null) {
+            defaultGroovyUsed = true;
+            URL[] scriptEngineRoots = new URL[]{ resolvedGroovyScriptDir.toURI().toURL() };
+            GroovyScriptEngine scriptEngine = new GroovyScriptEngine(scriptEngineRoots);
+            Binding binding = new Binding();
+            binding.setVariable("parentTask", genericTask);
+            logger.info("Launching " + resolvedGroovyEntryScriptName + "...");
+            scriptErrors = new ArrayList<>();
+            try {
+                scriptEngine.run(resolvedGroovyEntryScriptName, binding);
+            }
+            catch (Throwable t) {
+                scriptErrors.add(t);
+            }
+        }
+        else {
+            try {
+                genericTask.execute(resolvedScriptEvalFunction);
+            }
+            catch (Throwable t) {
+                scriptErrors.add(t);
+            }
+        }
+
+        scriptErrors.addAll(genericTask.getAllErrors());
+
+        // fail build if there were errors.
+        if (!scriptErrors.isEmpty()) {
+            throw TaskUtils.convertToGradleException(scriptErrors, true, defaultGroovyUsed,
+                resolvedStackTraceLimitPrefixes, resolvedStackTraceFilterPrefixes);
+        }
+    }
+
     @Internal
-    public int getAugCodeSpecIndex() {
+    public Property<Integer> getAugCodeSpecIndex() {
         return augCodeSpecIndex;
     }
 
-    public void setAugCodeSpecIndex(int augCodeSpecIndex) {
-        this.augCodeSpecIndex = augCodeSpecIndex;
-    }
-
     @Internal
-    public int getGenCodeFileIndex() {
+    public Property<Integer> getGenCodeFileIndex() {
         return genCodeFileIndex;
     }
 
-    public void setGenCodeFileIndex(int genCodeFileIndex) {
-        this.genCodeFileIndex = genCodeFileIndex;
+    @Internal
+    public Property<GenericTaskExtensionFunction> getScriptEvalFunction() {
+        return scriptEvalFunction;
     }
 
     @Internal
-	public Property<Object> getScriptDir() {
-		return scriptDir;
+    public ListProperty<String> getScriptErrorStackTraceFilterPrefixes() {
+        return scriptErrorStackTraceFilterPrefixes;
+    }
+
+    @Internal
+    public ListProperty<String> getScriptErrorStackTraceLimitPrefixes() {
+        return scriptErrorStackTraceLimitPrefixes;
+    }
+
+    @Internal
+	public Property<Object> getGroovyScriptDir() {
+		return groovyScriptDir;
 	}
 
     @Internal
-    public Property<String> getEntryScriptName() {
-        return entryScriptName;
+    public Property<String> getGroovyEntryScriptName() {
+        return groovyEntryScriptName;
+    }
+
+    @Internal
+    public Property<Boolean> getVerbose() {
+        return verbose;
+    }
+
+    @Internal
+    public ListProperty<AugCodeDirectiveSpec> getAugCodeSpecs() {
+        return augCodeSpecs;
+    }
+
+    @Internal
+    public ListProperty<Object> getGeneratedCodeFiles() {
+        return generatedCodeFiles;
     }
 }

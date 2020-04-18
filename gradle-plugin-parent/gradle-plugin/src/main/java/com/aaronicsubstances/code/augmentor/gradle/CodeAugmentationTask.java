@@ -1,136 +1,137 @@
 package com.aaronicsubstances.code.augmentor.gradle;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.nio.charset.Charset;
-import java.util.stream.Collectors;
+import java.util.Arrays;
+import java.util.List;
 
-import com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTask;
-import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
+import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskExtensionFunction;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
+import org.gradle.api.file.ConfigurableFileTree;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
 
-/**
- * Completes code generation.
- */
 public class CodeAugmentationTask extends DefaultTask {
+    private final Property<Boolean> verbose;
     private final Property<String> encoding;
-    private final ListProperty<Object> generatedCodeFiles;
-    private final Property<Object> prepFile;
+    private final ListProperty<ConfigurableFileTree> fileSets;
+    private final ListProperty<String> augCodeDirectives;
+    private final ListProperty<String> genCodeStartDirectives;
+    private final ListProperty<String> genCodeEndDirectives;
+    private final ListProperty<String> embeddedStringDirectives;
+    private final ListProperty<String> embeddedJsonDirectives;
+    private final ListProperty<String> enableScanDirectives;
+    private final ListProperty<String> disableScanDirectives;
+    
+    private final Property<GenericTaskExtensionFunction> scriptEvalFunction;
+    private final ListProperty<String> scriptErrorStackTraceFilterPrefixes;
+    private final ListProperty<String> scriptErrorStackTraceLimitPrefixes;
+    private final Property<Object> groovyScriptDir;
+    private final Property<String> groovyEntryScriptName;
+
     private final Property<Object> destDir;
     private final Property<Object> changeSetInfoFile;
+
+    private final Property<Object> prepFile;
+    private final Property<Object> augCodeFile;
+    private final Property<Object> genCodeFile;
     
     public CodeAugmentationTask() {
         ObjectFactory objectFactory = getProject().getObjects();
+        verbose = objectFactory.property(Boolean.class);
         encoding = objectFactory.property(String.class);
-        prepFile = objectFactory.property(Object.class);
-        generatedCodeFiles = objectFactory.listProperty(Object.class);
+        fileSets = objectFactory.listProperty(ConfigurableFileTree.class);
+        augCodeDirectives = objectFactory.listProperty(String.class);
+        genCodeStartDirectives = objectFactory.listProperty(String.class);
+        genCodeEndDirectives = objectFactory.listProperty(String.class);
+        embeddedStringDirectives = objectFactory.listProperty(String.class);
+        embeddedJsonDirectives = objectFactory.listProperty(String.class);
+        enableScanDirectives = objectFactory.listProperty(String.class);
+        disableScanDirectives = objectFactory.listProperty(String.class);
+
+        scriptEvalFunction = objectFactory.property(GenericTaskExtensionFunction.class);
+        scriptErrorStackTraceFilterPrefixes = objectFactory.listProperty(String.class);
+        scriptErrorStackTraceLimitPrefixes = objectFactory.listProperty(String.class);
+        groovyScriptDir = objectFactory.property(Object.class);
+        groovyEntryScriptName = objectFactory.property(String.class);
+        
         destDir = objectFactory.property(Object.class);
         changeSetInfoFile = objectFactory.property(Object.class);
+
+        prepFile = objectFactory.property(Object.class);
+        augCodeFile = objectFactory.property(Object.class);
+        genCodeFile = objectFactory.property(Object.class);
     }
 
     @TaskAction    
-    public void execute() throws Exception {
+    public void execute() throws GradleException {
         try {
-            CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
-            Charset charset = Charset.forName(encoding.get());
-            genericTask.setCharset(charset);
-            genericTask.setLogAppender(TaskUtils.createLogAppender(this));
-            if (!prepFile.isPresent()) {
-                throw new GradleException("prepFile property must be set");
-            }
+            // Prepare prepFile and aug codes file.
+            String resolvedEncoding = encoding.get();
+            boolean resolvedVerbose = verbose.get(); 
+            List<ConfigurableFileTree> resolvedFileSets = fileSets.get();
+            List<String> resolvedGenCodeStartDirectives = genCodeStartDirectives.get();
+            List<String> resolvedGenCodeEndDirectives = genCodeEndDirectives.get();
+            List<String> resolvedEmbeddedStringDirectives = embeddedStringDirectives.get();
+            List<String> resolvedEmbeddedJsonDirectives = embeddedJsonDirectives.get();
+            List<String> resolvedEnableScanDirectives = enableScanDirectives.get();
+            List<String> resolvedDisableScanDirectives = disableScanDirectives.get();
+            List<List<String>> resolvedAugCodeSpecDirectives = Arrays.asList(
+                augCodeDirectives.get());
+            List<File> resolvedAugCodeFiles = Arrays.asList(getProject().file(augCodeFile));
             File resolvedPrepFile = getProject().file(prepFile);
-            genericTask.setPrepFile(resolvedPrepFile);
-            genericTask.setGeneratedCodeFiles(generatedCodeFiles.get().
-                stream().map(x -> getProject().file(x)).collect(Collectors.toList()));
-            if (!destDir.isPresent()) {
-                throw new GradleException("destDir property must be set");
+            PrepareCodeTask.completeExecute(this, resolvedEncoding, resolvedVerbose,
+                resolvedFileSets, resolvedGenCodeStartDirectives,
+                resolvedGenCodeEndDirectives, resolvedEmbeddedStringDirectives,
+                resolvedEmbeddedJsonDirectives, resolvedEnableScanDirectives,
+                resolvedDisableScanDirectives, resolvedAugCodeSpecDirectives,
+                resolvedAugCodeFiles, resolvedPrepFile);
+
+            // Process aug codes file into gen codes file.
+            File resolvedAugCodeFile = getProject().file(augCodeFile);
+            File resolvedGenCodeFile = getProject().file(genCodeFile);
+            GenericTaskExtensionFunction resolvedScriptEvalFunction = null;
+            if (scriptEvalFunction.isPresent()) {
+                resolvedScriptEvalFunction = scriptEvalFunction.get();
             }
-            File resolvedDestDir = getProject().file(destDir);
-            genericTask.setDestDir(resolvedDestDir);
-            if (!changeSetInfoFile.isPresent()) {
-                throw new GradleException("changeSetInfoFile property must be set");
+            File resolvedGroovyScriptDir = null;
+            if (groovyScriptDir.isPresent()) {
+                resolvedGroovyScriptDir = getProject().file(groovyScriptDir);
             }
-            File resolvedChangeSetInfoFile = getProject().file(changeSetInfoFile);
+            String resolvedGroovyEntryScriptName = groovyEntryScriptName.get();
             
-            CodeAugmentorPluginExtension ext = getProject().getExtensions().findByType(
-                CodeAugmentorPluginExtension.class);
-            if (ext.getVerbose().get()) {
-                // print task properties - generic task ones, and any ones outside
-                getLogger().info("Configuration properties:");
-                getLogger().info("\tencoding: " + genericTask.getCharset());
-                getLogger().info("\tprepFile: " + genericTask.getPrepFile());
-                getLogger().info("\tdestDir: " + genericTask.getDestDir());
-                for (int i = 0; i < genericTask.getGeneratedCodeFiles().size(); i++) {
-                    getLogger().info("\tgeneratedCodeFiles[" + i + "]: " + genericTask.getGeneratedCodeFiles().get(i));
-                }
-                getLogger().info("\tchangeSetInfoFile: " + resolvedChangeSetInfoFile);
-                getLogger().info("\tgenericTask.logAppender: " + genericTask.getLogAppender());
-            }
-    
-            try {
-                genericTask.execute();
-            }
-            catch (GenericTaskException ex) {
-                throw new GradleException(ex.getMessage(), ex.getCause());
-            }
-    
-            // Write out change set info file.
-            // Because change set info is intended to be used by OS command line scripts,
-            // use OS newline separator, default charset, and absolute paths.
-            StringBuilder changeSetInfo = new StringBuilder();
-            for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {
-                changeSetInfo.append(genericTask.getSrcFiles().get(i).getAbsolutePath());
-                changeSetInfo.append(System.lineSeparator());
-                changeSetInfo.append(genericTask.getDestFiles().get(i).getAbsolutePath());
-                changeSetInfo.append(System.lineSeparator());
-            }
-            // ensure dir exists for changeSetInfoFile
-            resolvedChangeSetInfoFile.getParentFile().mkdirs();
-            try (Writer fWriter = new OutputStreamWriter(new 
-                    FileOutputStream(resolvedChangeSetInfoFile), Charset.defaultCharset())) {
-                fWriter.write(changeSetInfo.toString());
-            }
-            catch (IOException ex) {
-                throw new GradleException("Failed to write change set information to " +
-                    resolvedChangeSetInfoFile, ex);
-            }
-    
-            // fail build if there were changed files.
-            if (!genericTask.getSrcFiles().isEmpty()) {
-                StringBuilder outOfSyncMsg = new StringBuilder();
-                outOfSyncMsg.append("The following files are out of sync with generating code scripts:\n");
-                for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {
-                    outOfSyncMsg.append(" ").append(i+1).append(". ");
-                    outOfSyncMsg.append(genericTask.getSrcFiles().get(i).getPath());
-                    outOfSyncMsg.append("\n");
-                }
-    
-                throw new GradleException(outOfSyncMsg.toString());
-            }
+            List<String> resolvedStackTraceLimitPrefixes = scriptErrorStackTraceLimitPrefixes.get();
+            List<String> resolvedStackTraceFilterPrefixes = scriptErrorStackTraceFilterPrefixes.get();
+            ProcessCodeTask.completeExecute(this, resolvedVerbose, 0, 0, 
+                resolvedAugCodeFile, resolvedGenCodeFile,
+                resolvedScriptEvalFunction, resolvedStackTraceLimitPrefixes,
+                resolvedStackTraceFilterPrefixes, resolvedGroovyScriptDir,
+                resolvedGroovyEntryScriptName);
+
+            // Finish off code augmentation with gen codes file.
+            File resolvedDestDir = getProject().file(destDir);
+            File resolvedChangeSetInfoFile = getProject().file(changeSetInfoFile);
+            CompleteRunTask.completeExecute(this, resolvedEncoding, resolvedVerbose,
+                resolvedPrepFile, Arrays.asList(resolvedGenCodeFile), resolvedDestDir,
+                resolvedChangeSetInfoFile);
+        }
+        catch (GradleException ex) {
+            throw ex;
         }
         catch (Throwable ex) {
-            if (ex instanceof GradleException) {
-                throw ex;
-            }
             throw new GradleException("General plugin error: " + ex, ex);
         }
     }
 
-    /**
-     * External source file encoding.
-     * Task-generated files are always read and written in UTF-8.
-     * @return encoding used to read and write external source code files. 
-     */
+    @Internal
+    public Property<Boolean> getVerbose() {
+        return verbose;
+    }
 
     @Internal
     public Property<String> getEncoding() {
@@ -138,13 +139,68 @@ public class CodeAugmentationTask extends DefaultTask {
     }
 
     @Internal
-    public ListProperty<Object> getGeneratedCodeFiles() {
-        return generatedCodeFiles;
+    public ListProperty<ConfigurableFileTree> getFileSets() {
+        return fileSets;
     }
 
     @Internal
-    public Property<Object> getPrepFile() {
-        return prepFile;
+    public ListProperty<String> getAugCodeDirectives() {
+        return augCodeDirectives;
+    }
+
+    @Internal
+    public ListProperty<String> getGenCodeStartDirectives() {
+        return genCodeStartDirectives;
+    }
+
+    @Internal
+    public ListProperty<String> getGenCodeEndDirectives() {
+        return genCodeEndDirectives;
+    }
+
+    @Internal
+    public ListProperty<String> getEmbeddedStringDirectives() {
+        return embeddedStringDirectives;
+    }
+
+    @Internal
+    public ListProperty<String> getEmbeddedJsonDirectives() {
+        return embeddedJsonDirectives;
+    }
+
+    @Internal
+    public ListProperty<String> getEnableScanDirectives() {
+        return enableScanDirectives;
+    }
+
+    @Internal
+    public ListProperty<String> getDisableScanDirectives() {
+        return disableScanDirectives;
+    }
+
+    @Internal
+    public Property<GenericTaskExtensionFunction> getScriptEvalFunction() {
+        return scriptEvalFunction;
+    }
+
+    @Internal
+    public ListProperty<String> getScriptErrorStackTraceFilterPrefixes() {
+        return scriptErrorStackTraceFilterPrefixes;
+    }
+
+    @Internal
+    public ListProperty<String> getScriptErrorStackTraceLimitPrefixes() {
+        return scriptErrorStackTraceLimitPrefixes;
+    }
+
+    @Internal
+    public Property<Object> getGroovyScriptDir() {
+        return groovyScriptDir;
+    }
+
+    @Internal
+    public Property<String> getGroovyEntryScriptName() {
+        return groovyEntryScriptName;
     }
 
     @Internal
@@ -155,5 +211,20 @@ public class CodeAugmentationTask extends DefaultTask {
     @Internal
     public Property<Object> getChangeSetInfoFile() {
         return changeSetInfoFile;
+    }
+
+    @Internal
+    public Provider<Object> getPrepFile() {
+        return prepFile;
+    }
+
+    @Internal
+    public Provider<Object> getAugCodeFile() {
+        return augCodeFile;
+    }
+
+    @Internal
+    public Provider<Object> getGenCodeFile() {
+        return genCodeFile;
     }
 }

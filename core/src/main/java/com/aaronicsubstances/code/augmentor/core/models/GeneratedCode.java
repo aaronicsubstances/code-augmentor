@@ -2,7 +2,6 @@ package com.aaronicsubstances.code.augmentor.core.models;
 
 public class GeneratedCode {
     private int index;
-    private boolean error;
     private String content;
     private String indent;
     private boolean skipped;
@@ -15,14 +14,6 @@ public class GeneratedCode {
 
     public void setIndex(int index) {
         this.index = index;
-    }
-
-    public boolean isError() {
-        return error;
-    }
-
-    public void setError(boolean error) {
-        this.error = error;
     }
 
     public String getContent() {
@@ -70,7 +61,6 @@ public class GeneratedCode {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((content == null) ? 0 : content.hashCode());
-        result = prime * result + (error ? 1231 : 1237);
         result = prime * result + ((indent == null) ? 0 : indent.hashCode());
         result = prime * result + index;
         result = prime * result + (replaceAugCodeDirectives ? 1231 : 1237);
@@ -93,8 +83,6 @@ public class GeneratedCode {
                 return false;
         } else if (!content.equals(other.content))
             return false;
-        if (error != other.error)
-            return false;
         if (indent == null) {
             if (other.indent != null)
                 return false;
@@ -113,7 +101,7 @@ public class GeneratedCode {
 
     @Override
     public String toString() {
-        return "GeneratedCode{content=" + content + ", error=" + error + ", indent=" + indent + ", index="
+        return "GeneratedCode{content=" + content + ", indent=" + indent + ", index="
                 + index + ", replaceAugCodeDirectives=" + replaceAugCodeDirectives + ", replaceGenCodeDirectives="
                 + replaceGenCodeDirectives + ", skipped=" + skipped + "}";
     }

@@ -1,11 +1,15 @@
 package com.aaronicsubstances.code.augmentor.gradle;
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.file.RegularFile;
+import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
 
 public class CodeAugmentorPlugin implements Plugin<Project> {
     public static final String EXTENSION_NAME = "codeAugmentor";
@@ -15,42 +19,52 @@ public class CodeAugmentorPlugin implements Plugin<Project> {
         CodeAugmentorPluginExtension extension = project.getExtensions().create(
             EXTENSION_NAME, CodeAugmentorPluginExtension.class, project);
         
-        // set defaults for all required values.
+        // set defaults for common required values.
         extension.getEncoding().convention("utf-8");
-
-        DirectoryProperty buildDir = project.getLayout().getBuildDirectory();
-        String workingDirPrefix = EXTENSION_NAME + "/";
-        extension.getPrepFile().convention(buildDir.file(workingDirPrefix + "prepResults.json"));
-        extension.getGenCodeStartDirectives().convention(Arrays.asList("//:GS:"));
-        extension.getGenCodeEndDirectives().convention(Arrays.asList("//:GE:"));
-        extension.getEmbeddedStringDirectives().convention(Arrays.asList("//:ES:"));
-        extension.getEmbeddedJsonDirectives().convention(Arrays.asList("//:EJS:"));
-        extension.getEnableScanDirectives().convention(Arrays.asList("//:ENABLE_SCAN:"));
-        extension.getDisableScanDirectives().convention(Arrays.asList("//:DISABLE_SCAN:"));
-        
-        AugCodeDirectiveSpec defaultAugCodeSpec = new AugCodeDirectiveSpec(project);
-        defaultAugCodeSpec.getDestFile().convention(buildDir.file(workingDirPrefix + "augCodes.json"));
-        defaultAugCodeSpec.getDirectives().convention(Arrays.asList("//:AUG_CODE:"));
-        extension.getAugCodeSpecs().convention(Arrays.asList(defaultAugCodeSpec));
-
-        // continue setting defaults for generate task.
-        extension.getChangeSetInfoFile().convention(buildDir.file(workingDirPrefix + "changeSet.txt"));
-        extension.getDestDir().convention(buildDir.dir(workingDirPrefix + "generated"));
-        extension.getGeneratedCodeFiles().convention(Arrays.asList(
-            buildDir.file(workingDirPrefix + "genCodes.json")));
-
-        // lastly set defaults for process task.
-        extension.getEntryScriptName().convention("main.groovy");
-
+        // since info logging is only seen when --info command line arg is used,
+        // we make verbose true by default. The assumption is that human user
+        // is using --info to view as much details as possible. 
         extension.getVerbose().convention(true);
 
+        // set defaults for prepare task
+        DirectoryProperty buildDir = project.getLayout().getBuildDirectory();
+        String workingDirPrefix = EXTENSION_NAME + "/";
+        Provider<RegularFile> defaultPrepFile = buildDir.file(workingDirPrefix + "prepResults.json");
+        Provider<RegularFile> defaultAugCodeFile = buildDir.file(workingDirPrefix + "augCodes.json");
+        Provider<RegularFile> defaultGenCodeFile = buildDir.file(workingDirPrefix + "genCodes.json");
+        List<String> defaultAugCodeDirectives = Arrays.asList("//:AUG_CODE:");
+        extension.getPrepFile().convention(defaultPrepFile);
+        extension.getGenCodeStartDirectives().convention(Arrays.asList("//:GEN_CODE_START:"));
+        extension.getGenCodeEndDirectives().convention(Arrays.asList("//:GEN_CODE_END:"));
+        extension.getEmbeddedStringDirectives().convention(Arrays.asList("//:STR:"));
+        extension.getEmbeddedJsonDirectives().convention(Arrays.asList("//:JSON:"));
+        extension.getEnableScanDirectives().convention(Arrays.asList("//:ENABLE_SCAN:"));
+        extension.getDisableScanDirectives().convention(Arrays.asList("//:DISABLE_SCAN:"));
+        extension.getAugCodeDirectives().convention(defaultAugCodeDirectives);
+        
+        AugCodeDirectiveSpec defaultAugCodeSpec = new AugCodeDirectiveSpec(project);
+        defaultAugCodeSpec.getDestFile().convention(defaultAugCodeFile);
+        defaultAugCodeSpec.getDirectives().convention(defaultAugCodeDirectives);
+        extension.getAugCodeSpecs().convention(Arrays.asList(defaultAugCodeSpec));
+
+        // set defaults for process task.
+        extension.getGroovyEntryScriptName().convention("main.groovy");
+        extension.getAugCodeSpecIndex().convention(0);
+        extension.getGenCodeFileIndex().convention(0);
+
+        // sets defaults for complete task.
+        extension.getChangeSetInfoFile().convention(buildDir.file(workingDirPrefix + "changeSet.txt"));
+        extension.getDestDir().convention(buildDir.dir(workingDirPrefix + "generated"));
+        extension.getGeneratedCodeFiles().convention(Arrays.asList(defaultGenCodeFile));
+
         // add tasks.
-        project.getTasks().register("codeAugmentorPrepare", PreCodeAugmentationTask.class, new Action<PreCodeAugmentationTask>() {
+        project.getTasks().register("codeAugmentorPrepare", PrepareCodeTask.class, new Action<PrepareCodeTask>() {
 
             @Override
-            public void execute(PreCodeAugmentationTask prepareTask) {
+            public void execute(PrepareCodeTask prepareTask) {
                 prepareTask.setDescription("Extracts augmenting code sections for processing");
                 prepareTask.setGroup(EXTENSION_NAME);
+                prepareTask.getVerbose().set(extension.getVerbose());
                 prepareTask.getEncoding().set(extension.getEncoding());
                 prepareTask.getFileSets().set(extension.getFileSets());
                 prepareTask.getPrepFile().set(extension.getPrepFile());
@@ -69,21 +83,60 @@ public class CodeAugmentorPlugin implements Plugin<Project> {
             public void execute(ProcessCodeTask processTask) {
                 processTask.setDescription("Determines generated code per each extracted augmenting code");
                 processTask.setGroup(EXTENSION_NAME);
-                processTask.getScriptDir().set(extension.getScriptDir());
-                processTask.getEntryScriptName().set(extension.getEntryScriptName());
+                processTask.getVerbose().set(extension.getVerbose());
+                processTask.getGroovyScriptDir().set(extension.getGroovyScriptDir());
+                processTask.getGroovyEntryScriptName().set(extension.getGroovyEntryScriptName());
+                processTask.getAugCodeSpecs().set(extension.getAugCodeSpecs());
+                processTask.getAugCodeSpecIndex().set(extension.getAugCodeSpecIndex());
+                processTask.getGeneratedCodeFiles().set(extension.getGeneratedCodeFiles());
+                processTask.getGenCodeFileIndex().set(extension.getGenCodeFileIndex());
+                processTask.getScriptEvalFunction().set(extension.getScriptEvalFunction());
+                processTask.getScriptErrorStackTraceFilterPrefixes().set(extension.getScriptErrorStackTraceFilterPrefixes());
+                processTask.getScriptErrorStackTraceLimitPrefixes().set(extension.getScriptErrorStackTraceLimitPrefixes());
             }
         });
-        project.getTasks().register("codeAugmentorGenerate", CodeAugmentationTask.class, new Action<CodeAugmentationTask>() {
+        project.getTasks().register("codeAugmentorComplete", CompleteRunTask.class, new Action<CompleteRunTask>() {
 
             @Override
-            public void execute(CodeAugmentationTask generateTask) {
+            public void execute(CompleteRunTask generateTask) {
                 generateTask.setDescription("Generates for each outdated source file one with generated code section updated");
                 generateTask.setGroup(EXTENSION_NAME);
+                generateTask.getVerbose().set(extension.getVerbose());
                 generateTask.getEncoding().set(extension.getEncoding());
                 generateTask.getPrepFile().set(extension.getPrepFile());
                 generateTask.getGeneratedCodeFiles().set(extension.getGeneratedCodeFiles());
                 generateTask.getDestDir().set(extension.getDestDir());
                 generateTask.getChangeSetInfoFile().set(extension.getChangeSetInfoFile());
+            }
+        });
+        project.getTasks().register("codeAugmentorRun", CodeAugmentationTask.class, new Action<CodeAugmentationTask>() {
+
+            @Override
+            public void execute(CodeAugmentationTask runTask) {
+                runTask.setDescription("Runs code augmentor on source files and generates versions for files which have to be updated");
+                runTask.setGroup(EXTENSION_NAME);
+                runTask.getVerbose().set(extension.getVerbose());
+                runTask.getEncoding().set(extension.getEncoding());
+                runTask.getFileSets().set(extension.getFileSets());
+                runTask.getAugCodeDirectives().set(extension.getAugCodeDirectives());
+                runTask.getGenCodeStartDirectives().set(extension.getGenCodeStartDirectives());
+                runTask.getGenCodeEndDirectives().set(extension.getGenCodeEndDirectives());
+                runTask.getEmbeddedStringDirectives().set(extension.getEmbeddedStringDirectives());
+                runTask.getEmbeddedJsonDirectives().set(extension.getEmbeddedJsonDirectives());
+                runTask.getEnableScanDirectives().set(extension.getEnableScanDirectives());
+                runTask.getDisableScanDirectives().set(extension.getDisableScanDirectives());
+                runTask.getGroovyScriptDir().set(extension.getGroovyScriptDir());
+                runTask.getGroovyEntryScriptName().set(extension.getGroovyEntryScriptName());
+                runTask.getScriptEvalFunction().set(extension.getScriptEvalFunction());
+                runTask.getScriptErrorStackTraceFilterPrefixes().set(extension.getScriptErrorStackTraceFilterPrefixes());
+                runTask.getScriptErrorStackTraceLimitPrefixes().set(extension.getScriptErrorStackTraceLimitPrefixes());
+                runTask.getDestDir().set(extension.getDestDir());
+                runTask.getChangeSetInfoFile().set(extension.getChangeSetInfoFile());
+
+                // Set these properties as readonly.                
+                ((Property<Object>) runTask.getPrepFile()).set(defaultPrepFile);
+                ((Property<Object>) runTask.getAugCodeFile()).set(defaultAugCodeFile);
+                ((Property<Object>) runTask.getGenCodeFile()).set(defaultGenCodeFile);
             }
         });
     }

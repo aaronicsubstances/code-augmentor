@@ -13,14 +13,12 @@ import org.gradle.api.logging.Logger;
 
 public class TaskUtils {
     
-    public static BiConsumer<GenericTaskLogLevel, Supplier<String>> createLogAppender(Task task) {
-        CodeAugmentorPluginExtension ext = (CodeAugmentorPluginExtension) 
-            task.getProject().getExtensions().getByName(CodeAugmentorPlugin.EXTENSION_NAME);
+    public static BiConsumer<GenericTaskLogLevel, Supplier<String>> createLogAppender(Task task, boolean verboseEnabled) {
         BiConsumer<GenericTaskLogLevel, Supplier<String>> logAppender = (logLevel, msgFunc) -> {
             Logger logger = task.getProject().getLogger();
             switch (logLevel) {
                 case VERBOSE:
-                    if (!ext.getVerbose().get()) {
+                    if (!verboseEnabled) {
                         break;
                     }
                     else {
@@ -42,7 +40,15 @@ public class TaskUtils {
     }
 
     public static GradleException convertToGradleException(List<Throwable> allErrors) {
-        String allExMsg = GenericTaskException.toExceptionMessageWithGroovyConsideration(allErrors);
+        return convertToGradleException(allErrors, false, false, null, null);
+    }
+
+    public static GradleException convertToGradleException(List<Throwable> allErrors,
+            boolean includeStackTraces, boolean useDefaultGroovyPrefixes, 
+            List<String> stackTraceFilterPrefixes, List<String> stackTraceLimitPrefixes) {
+        String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(allErrors,
+            includeStackTraces, useDefaultGroovyPrefixes,
+            stackTraceLimitPrefixes, stackTraceFilterPrefixes);
         return new GradleException(allExMsg);
     }
 }

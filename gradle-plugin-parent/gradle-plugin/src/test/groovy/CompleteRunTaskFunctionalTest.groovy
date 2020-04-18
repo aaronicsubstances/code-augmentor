@@ -7,7 +7,7 @@ import spock.lang.Specification
 
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
-class PreCodeAugmentationTaskFunctionalTest extends Specification {
+class CompleteRunTaskFunctionalTest extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
     File buildFile
 
@@ -18,9 +18,16 @@ class PreCodeAugmentationTaskFunctionalTest extends Specification {
                 id 'com.aaronicsubstances.codeaugmentor'
             }
         """
+        File workingDir = testProjectDir.newFolder("build", "codeAugmentor")
+        File testPrepFile = new File(workingDir, "prepResults.json")
+        testPrepFile << """{}
+        """
+        File genCodesFile = new File(workingDir, "genCodes.json")
+        genCodesFile << """{}
+        """
     }
 
-    def "test codeAugmentorPrepare task with extension defaults"() {
+    def "test codeAugmentorComplete task with extension defaults"() {
         buildFile << """
             codeAugmentor {
             }
@@ -29,11 +36,11 @@ class PreCodeAugmentationTaskFunctionalTest extends Specification {
         when:
         def result = GradleRunner.create()
             .withProjectDir(testProjectDir.root)
-            .withArguments('codeAugmentorPrepare', '--stacktrace')
+            .withArguments('codeAugmentorComplete', '--stacktrace')
             .withPluginClasspath()
             .build()
 
         then:
-        result.task(":codeAugmentorPrepare").outcome == SUCCESS
+        result.task(":codeAugmentorComplete").outcome == SUCCESS
     }
 }

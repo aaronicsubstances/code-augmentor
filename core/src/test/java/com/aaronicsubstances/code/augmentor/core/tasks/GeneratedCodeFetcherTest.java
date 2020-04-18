@@ -24,9 +24,7 @@ public class GeneratedCodeFetcherTest {
     public void testGetGeneratedCode_0(GeneratedCodeFetcher instance, 
             int fileIndex, int augCodeIndex,
             GeneratedCode expected) throws Exception {
-        StringBuilder newlineReceiverToBeIgnored = new StringBuilder();
-        GeneratedCode actual = instance.getGeneratedCode(fileIndex, augCodeIndex, 
-            newlineReceiverToBeIgnored);
+        GeneratedCode actual = instance.getGeneratedCode(fileIndex, augCodeIndex);
         assertEquals(actual, expected);
     }
 
@@ -39,9 +37,7 @@ public class GeneratedCodeFetcherTest {
     public void testGetGeneratedCode_1(GeneratedCodeFetcher instance, 
             int fileIndex, int augCodeIndex,
             GeneratedCode expected) throws Exception {
-        StringBuilder newlineReceiverToBeIgnored = new StringBuilder();
-        GeneratedCode actual = instance.getGeneratedCode(fileIndex, augCodeIndex, 
-            newlineReceiverToBeIgnored);
+        GeneratedCode actual = instance.getGeneratedCode(fileIndex, augCodeIndex);
         assertEquals(actual, expected);
     }
 
@@ -54,9 +50,7 @@ public class GeneratedCodeFetcherTest {
     public void testGetGeneratedCode_2(GeneratedCodeFetcher instance, 
             int fileIndex, int augCodeIndex,
             GeneratedCode expected) throws Exception {
-        StringBuilder newlineReceiverToBeIgnored = new StringBuilder();
-        GeneratedCode actual = instance.getGeneratedCode(fileIndex, augCodeIndex, 
-            newlineReceiverToBeIgnored);
+        GeneratedCode actual = instance.getGeneratedCode(fileIndex, augCodeIndex);
         assertEquals(actual, expected);
     }
 
@@ -64,9 +58,7 @@ public class GeneratedCodeFetcherTest {
     public void testGetGeneratedCode_5(GeneratedCodeFetcher instance, 
             int fileIndex, int augCodeIndex,
             GeneratedCode expected) throws Exception {
-        StringBuilder newlineReceiverToBeIgnored = new StringBuilder();
-        GeneratedCode actual = instance.getGeneratedCode(fileIndex, augCodeIndex, 
-            newlineReceiverToBeIgnored);
+        GeneratedCode actual = instance.getGeneratedCode(fileIndex, augCodeIndex);
         assertEquals(actual, expected);
     }
 

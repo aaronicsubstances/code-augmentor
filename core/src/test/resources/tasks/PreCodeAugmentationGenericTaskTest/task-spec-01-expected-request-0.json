@@ -8,6 +8,7 @@
 			"directiveMarker" : "//JS",
 			"indent": "",
             "lineNumber": 29,
+            "lineSeparator": "\r\n",
 			"blocks" : [{
 				"stringify" : false,
 				"content" : " println(\"Hello World from JS-star\")\r\n var i = 3 + new Date(); \r\n ...etc*/"
@@ -22,6 +23,7 @@
 			"directiveMarker" : "//JS",
 			"indent": "",
             "lineNumber": 44,
+            "lineSeparator": "\r\n",
 			"blocks" : [{
 				"stringify" : false,
 				"content" : " println(\"World\")"

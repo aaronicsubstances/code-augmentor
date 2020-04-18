@@ -1,13 +1,9 @@
-{ "contentStreamingEnabled": false, "newline": "\r\n" }
+{ "contentStreamingEnabled": false }
 [
 	{
 		"fileIndex": 0,
 		"generatedCodes": [{
 			"index" : 0,
-			"content" : "StringBuilder teaBag;\r\nprintln();"
-		},
-		{
-			"index" : 1,
 			"content" : "char f;"
 		}]
 	}

@@ -84,6 +84,7 @@ public class AugmentingCode {
     private String directiveMarker;
     private String indent;
     private int lineNumber;
+    private String lineSeparator;
 
     // used to attach results of processing aug codes.
     // not persisted
@@ -136,6 +137,14 @@ public class AugmentingCode {
         this.lineNumber = lineNumber;
     }
 
+    public String getLineSeparator() {
+        return lineSeparator;
+    }
+
+    public void setLineSeparator(String lineSeparator) {
+        this.lineSeparator = lineSeparator;
+    }
+
     public List<Object> getArgs() {
         return args;
     }
@@ -154,6 +163,7 @@ public class AugmentingCode {
         result = prime * result + ((indent == null) ? 0 : indent.hashCode());
         result = prime * result + index;
         result = prime * result + lineNumber;
+        result = prime * result + ((lineSeparator == null) ? 0 : lineSeparator.hashCode());
         return result;
     }
 
@@ -190,12 +200,18 @@ public class AugmentingCode {
             return false;
         if (lineNumber != other.lineNumber)
             return false;
+        if (lineSeparator == null) {
+            if (other.lineSeparator != null)
+                return false;
+        } else if (!lineSeparator.equals(other.lineSeparator))
+            return false;
         return true;
     }
 
     @Override
     public String toString() {
         return "AugmentingCode{args=" + args + ", blocks=" + blocks + ", directiveMarker=" + directiveMarker
-                + ", indent=" + indent + ", index=" + index + ", lineNumber=" + lineNumber + "}";
+                + ", indent=" + indent + ", index=" + index + ", lineNumber=" + lineNumber + ", lineSeparator="
+                + lineSeparator + "}";
     }
 }

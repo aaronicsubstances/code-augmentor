@@ -1,6 +1,6 @@
 class Snippets {
     static generateClassContents(augCode, context) {
-        def newline = System.lineSeparator(); 
+        def newline = augCode.lineSeparator; 
         def fieldSpecs = augCode.args[0].fields
         def output = new StringBuilder()
         // generate fields.

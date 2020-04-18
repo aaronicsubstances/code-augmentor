@@ -45,15 +45,27 @@ public class GenericTaskException extends RuntimeException {
 	public int getLineNumber() {
 		return lineNumber;
     }
-    
-    private static final String GroovyScriptEngine_CLASS_NAME = "groovy.util.GroovyScriptEngine";
-    private static final List<String> STACKTRACE_SANITIZER_PREFIXES = Arrays.asList(
-        "com.sun.", "sun.", "groovy.lang.", "org.codehaus.groovy."
-    );
-    private static final String STACKTRACE_SANITIZER_FILTERED_OUT_TEXT = "...";
 
-    public static String toExceptionMessageWithGroovyConsideration(
-            List<Throwable> allErrors) {
+    public static String toExceptionMessageWithScriptConsideration(
+            List<Throwable> allErrors,
+            boolean includeStackTraces, boolean useDefaultGroovyPrefixes, 
+            List<String> stackTraceLimitPrefixes, List<String> stackTraceFilterPrefixes) {
+        // set up prefixes
+        if (stackTraceLimitPrefixes == null) {
+            stackTraceLimitPrefixes = Arrays.asList();
+        }
+        if (stackTraceFilterPrefixes == null) {
+            stackTraceFilterPrefixes = Arrays.asList();
+        }
+        if (useDefaultGroovyPrefixes && stackTraceLimitPrefixes.isEmpty()) {
+            stackTraceLimitPrefixes = Arrays.asList("groovy.util.GroovyScriptEngine");
+        }
+        if (useDefaultGroovyPrefixes && stackTraceFilterPrefixes.isEmpty()) {
+            stackTraceFilterPrefixes = Arrays.asList("com.sun.", "sun.", 
+                "groovy.lang.", "org.codehaus.groovy.");
+        }
+        final String STACKTRACE_SANITIZER_FILTERED_OUT_TEXT = "...";
+
         StringBuilder allExMsg = new StringBuilder();
         allExMsg.append(allErrors.size()).append(" error(s) found.\n");
         for (Throwable ex : allErrors) {
@@ -67,17 +79,20 @@ public class GenericTaskException extends RuntimeException {
                 }
                 allExMsg.append("\n");
                 
-                List<StackTraceElement> stackTrace = sanitizeStackTrace(cause);
-                for (StackTraceElement elem : stackTrace) {
-                    allExMsg.append("\t");
-                    if (elem == null) {
-                        // filtered
-                        allExMsg.append(STACKTRACE_SANITIZER_FILTERED_OUT_TEXT);
+                if (includeStackTraces) {
+                    List<StackTraceElement> stackTrace = sanitizeStackTrace(cause,
+                        stackTraceLimitPrefixes, stackTraceFilterPrefixes);
+                    for (StackTraceElement elem : stackTrace) {
+                        allExMsg.append("\t");
+                        if (elem == null) {
+                            // filtered
+                            allExMsg.append(STACKTRACE_SANITIZER_FILTERED_OUT_TEXT);
+                        }
+                        else {
+                            allExMsg.append("--> ").append(elem);
+                        }
+                        allExMsg.append("\n");
                     }
-                    else {
-                        allExMsg.append("--> ").append(elem);
-                    }
-                    allExMsg.append("\n");
                 }
                 cause = cause.getCause();
             }
@@ -92,29 +107,35 @@ public class GenericTaskException extends RuntimeException {
         return allExMsg.toString();
     }
 
-    private static List<StackTraceElement> sanitizeStackTrace(Throwable t) {        
-        // Only show stack trace if it is about GroovyScriptEngine
-        // Also skip irrelevant stack trace elements from Groovy internals.
+    private static List<StackTraceElement> sanitizeStackTrace(Throwable t,
+            List<String> stackTraceLimitPrefixes, List<String> stackTraceFilterPrefixes) {        
+        // Only show stack trace if it includes limit prefixes.
+        // Also skip irrelevant stack trace elements using filter prefixes.
         List<StackTraceElement> filtered = new ArrayList<>();        
         StackTraceElement[] stackTrace = t.getStackTrace();
         if (stackTrace == null) {
             return filtered;
         }
-        Optional<StackTraceElement> stackTraceIndex = Arrays.stream(stackTrace)
-            .filter(elem -> GroovyScriptEngine_CLASS_NAME.equals(elem.getClassName()))
+        Optional<StackTraceElement> relevanceSearch = Arrays.stream(stackTrace)
+            .filter(elem -> elem.getClassName() != null && stackTraceLimitPrefixes.stream()
+                .filter(x -> elem.getClassName().startsWith(x))
+                .findAny().isPresent())
             .findAny();
-        if (!stackTraceIndex.isPresent()) {
+        if (!relevanceSearch.isPresent()) {
             return filtered;
         }
         for (StackTraceElement elem : stackTrace) {
-            if (GroovyScriptEngine_CLASS_NAME.equals(elem.getClassName())) {
-                break;
-            }
             if (elem.getClassName() != null) {
-                Optional<String> skipElem = STACKTRACE_SANITIZER_PREFIXES.stream()
+                Optional<String> elemSearch = stackTraceLimitPrefixes.stream()
                     .filter(x -> elem.getClassName().startsWith(x))
                     .findAny();
-                if (skipElem.isPresent()) {
+                if (elemSearch.isPresent()) {
+                    break;
+                }
+                elemSearch = stackTraceFilterPrefixes.stream()
+                    .filter(x -> elem.getClassName().startsWith(x))
+                    .findAny();
+                if (elemSearch.isPresent()) {
                     if (filtered.isEmpty() || filtered.get(filtered.size() - 1) != null) {
                         filtered.add(null);
                     }

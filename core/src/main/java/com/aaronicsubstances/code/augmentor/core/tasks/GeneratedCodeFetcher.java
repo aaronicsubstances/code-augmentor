@@ -96,11 +96,9 @@ public class GeneratedCodeFetcher {
         return found;
     }
 
-    public GeneratedCode getGeneratedCode(int fileIndex, int augCodeIndex, 
-            StringBuilder newlineReceiver) throws Exception {
+    public GeneratedCode getGeneratedCode(int fileIndex, int augCodeIndex) throws Exception {
         GeneratedCode nextGenCode = null;
         for (int i = 0; i < lastFetches.size(); i++) {
-            CodeGenerationResponse codeGenRes = codeGenerationResponses.get(i);
             SourceFileGeneratedCode fileGenCode = lastFetches.get(i);
             if (fileGenCode != null && fileGenCode.getFileIndex() == fileIndex) {
                 Optional<GeneratedCode> genCodeOpt = fileGenCode.getGeneratedCodes()
@@ -108,15 +106,6 @@ public class GeneratedCodeFetcher {
                     
                 if (genCodeOpt.isPresent()) {
                     nextGenCode = genCodeOpt.get();
-                    if (fileGenCode.getNewline() != null) {
-                        newlineReceiver.append(fileGenCode.getNewline());
-                    }
-                    else if (codeGenRes.getNewline() != null) {
-                        newlineReceiver.append(codeGenRes.getNewline());
-                    }
-                    else {
-                        newlineReceiver.setLength(0);
-                    }
                     break;
                 }
             }

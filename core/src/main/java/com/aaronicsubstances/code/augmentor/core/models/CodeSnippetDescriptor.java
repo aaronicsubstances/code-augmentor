@@ -8,6 +8,7 @@ public class CodeSnippetDescriptor {
         private int endPos = 0;
         private String indent;
         private int lineNumber;
+        private String lineSeparator;
 
         public int getIndex() {
             return index;
@@ -49,6 +50,14 @@ public class CodeSnippetDescriptor {
             this.lineNumber = lineNumber;
         }
 
+        public String getLineSeparator() {
+            return lineSeparator;
+        }
+
+        public void setLineSeparator(String lineSeparator) {
+            this.lineSeparator = lineSeparator;
+        }
+
         @Override
         public int hashCode() {
             final int prime = 31;
@@ -57,6 +66,7 @@ public class CodeSnippetDescriptor {
             result = prime * result + ((indent == null) ? 0 : indent.hashCode());
             result = prime * result + index;
             result = prime * result + lineNumber;
+            result = prime * result + ((lineSeparator == null) ? 0 : lineSeparator.hashCode());
             result = prime * result + startPos;
             return result;
         }
@@ -81,6 +91,11 @@ public class CodeSnippetDescriptor {
                 return false;
             if (lineNumber != other.lineNumber)
                 return false;
+            if (lineSeparator == null) {
+                if (other.lineSeparator != null)
+                    return false;
+            } else if (!lineSeparator.equals(other.lineSeparator))
+                return false;
             if (startPos != other.startPos)
                 return false;
             return true;
@@ -89,7 +104,8 @@ public class CodeSnippetDescriptor {
         @Override
         public String toString() {
             return "AugmentingCodeDescriptor{endPos=" + endPos + ", indent=" + indent + ", index=" + index
-                    + ", lineNumber=" + lineNumber + ", startPos=" + startPos + "}";
+                    + ", lineNumber=" + lineNumber + ", lineSeparator=" + lineSeparator + ", startPos=" + startPos
+                    + "}";
         }
     }
 

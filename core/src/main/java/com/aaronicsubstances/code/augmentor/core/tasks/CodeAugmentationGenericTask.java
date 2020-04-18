@@ -76,9 +76,8 @@ public class CodeAugmentationGenericTask {
                 AugmentingCodeDescriptor augCodeDescriptor = snippetDescriptor.getAugmentingCodeDescriptor();
                 int augCodeIndex = augCodeDescriptor.getIndex();
 
-                StringBuilder newlineReceiver = new StringBuilder();
-                GeneratedCode genCode = generatedCodeFetcher.getGeneratedCode(sourceFileDescriptor.getFileIndex(), 
-                    augCodeIndex, newlineReceiver);
+                GeneratedCode genCode = generatedCodeFetcher.getGeneratedCode(
+                    sourceFileDescriptor.getFileIndex(), augCodeIndex);
                 if (genCode == null) {
                     throw createException("Could not find generated code", augCodeDescriptor, srcFile);
                 }
@@ -92,10 +91,6 @@ public class CodeAugmentationGenericTask {
                     throw createException("Received null for generated code content",
                         augCodeDescriptor, srcFile);
                 }
-                if (genCode.isError()) {
-                    throw createException("Encounterd error during code generation: " +
-                        genCode.getContent(), augCodeDescriptor, srcFile);
-                }
 
                 int[] replacementRange = determineReplacementRange(snippetDescriptor,
                     genCode);
@@ -106,10 +101,7 @@ public class CodeAugmentationGenericTask {
                 }
                 replacementRanges.add(replacementRange);
 
-                String newline = System.lineSeparator();
-                if (newlineReceiver.length() > 0) {
-                    newline = newlineReceiver.toString();
-                }
+                String newline = augCodeDescriptor.getLineSeparator();
 
                 String formattedGenCode = ensureEndingNewline(genCode.getContent(),
                     newline);

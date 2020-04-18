@@ -5,11 +5,12 @@
 		"relativePath": "task-spec-02-0.java",
 		"codeSnippets": [{
 			"augmentingCodeDescriptor": {
-				"index" : 1,
+				"index" : 0,
 				"startPos" : 1026,
-				"endPos" : 1063,
+				"endPos" : 1065,
 				"indent" : "\t\t",
-                "lineNumber": 51
+                "lineNumber": 51,
+                "lineSeparator": "\r\n"
 			},
 			"generatedCodeDescriptor": {
 				"startDirectiveStartPos" : 1065,

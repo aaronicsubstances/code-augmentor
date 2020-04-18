@@ -8,6 +8,7 @@
 			"directiveMarker" : "//JS",
 			"indent": " ",
             "lineNumber": 17,
+            "lineSeparator": "\r\n",
 			"blocks" : [{
 				"content" : "*println(\"Hello World from JS-star\")\r\n*var i = 3 + new Date();\r\n*...etc"
 			}]
@@ -17,6 +18,7 @@
 			"directiveMarker" : "//JS",
 			"indent": "\t",
             "lineNumber": 51,
+            "lineSeparator": "\r\n",
 			"blocks" : [{
 				"content" : " println( "
 			},
@@ -33,6 +35,7 @@
 			"directiveMarker" : "//DD",
 			"indent": "\t",
             "lineNumber": 70,
+            "lineSeparator": "\r\n",
 			"blocks" : [{
 				"content" : " print"
 			},

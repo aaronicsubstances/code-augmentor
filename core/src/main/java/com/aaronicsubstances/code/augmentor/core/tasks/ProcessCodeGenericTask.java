@@ -31,7 +31,7 @@ public class ProcessCodeGenericTask {
     // output properties
     private final List<Throwable> allErrors = new ArrayList<>();
 
-    public void execute(Function<List<Object>, Object> evalFunction) throws Exception {
+    public void execute(GenericTaskExtensionFunction evalFunction) throws Exception {
         allErrors.clear();
         // ensure dir exists for outputFile
         outputFile.getParentFile().mkdirs();
@@ -131,11 +131,11 @@ public class ProcessCodeGenericTask {
     }
     
     @SuppressWarnings("unchecked")
-    List<GeneratedCode> processAugCode(Function<List<Object>, Object> evalFunction, 
+    List<GeneratedCode> processAugCode(GenericTaskExtensionFunction evalFunction, 
             String functionName, AugmentingCode augCode, Map<String, Object> context) {
         Object result;
         try {
-            result = evalFunction.apply(Arrays.asList(functionName, augCode, context));
+            result = evalFunction.makeFunctionCall(new Object[]{ functionName, augCode, context });
         }
         catch (Throwable ex) {
             throw createException(context, ex);

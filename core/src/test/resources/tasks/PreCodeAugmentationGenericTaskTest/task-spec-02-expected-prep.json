@@ -9,7 +9,8 @@
 				"startPos" : 351,
 				"endPos" : 442,
 				"indent" : " ",
-                "lineNumber": 17
+                "lineNumber": 17,
+                "lineSeparator": "\r\n"
 			}
 		},
 		{
@@ -18,7 +19,8 @@
 				"startPos" : 1042,
 				"endPos" : 1082,
 				"indent" : "\t",
-                "lineNumber": 51
+                "lineNumber": 51,
+                "lineSeparator": "\r\n"
 			},
 			"generatedCodeDescriptor": {
 				"startDirectiveStartPos" : 1084,
@@ -33,7 +35,8 @@
 				"startPos" : 1394,
 				"endPos" : 1421,
 				"indent" : "\t",
-                "lineNumber": 70
+                "lineNumber": 70,
+                "lineSeparator": "\r\n"
 			}
 		}]
 	}

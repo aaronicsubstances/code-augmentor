@@ -53,6 +53,7 @@ public class CodeGenerationRequestCreator {
             augCodeDescriptor.setStartPos(firstToken.startPos);
             augCodeDescriptor.setLineNumber(firstToken.lineNumber);
             augCodeDescriptor.setEndPos(lastToken.endPos);
+            augCodeDescriptor.setLineSeparator(lastToken.newline);
             String indent = augCodeSection.stream().map(x -> x.indent)
                 .min((x, y) -> new Integer(x.length()).compareTo(y.length())).get();
             augCodeDescriptor.setIndent(indent);
@@ -74,6 +75,7 @@ public class CodeGenerationRequestCreator {
             augmentingCode.setIndent(augCodeDescriptor.getIndent());
             augmentingCode.setDirectiveMarker(firstToken.directiveMarker);
             augmentingCode.setLineNumber(augCodeDescriptor.getLineNumber());
+            augmentingCode.setLineSeparator(augCodeDescriptor.getLineSeparator());
             
             // d. validate json directive contents.
             for (int j = 0; j < blocks.size(); j++) {

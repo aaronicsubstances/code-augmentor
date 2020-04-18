@@ -246,9 +246,6 @@ public class PersistenceTest {
             public Object[] next() {
                 List<SourceFileGeneratedCode> files = new ArrayList<>();
                 CodeGenerationResponse instance = new CodeGenerationResponse(files);
-                if (randGen.nextBoolean()) {
-                    instance.setNewline(generateRandomString(randGen, true));
-                }
                 if (count > 0) {
                     int fileListSize = randGen.nextInt(5);
                     for (int i = 0; i < fileListSize; i++) {
@@ -256,9 +253,6 @@ public class PersistenceTest {
                         SourceFileGeneratedCode file = new SourceFileGeneratedCode(generatedCodeList);
                         files.add(file);
                         file.setFileIndex(i);
-                        if (randGen.nextBoolean()) {
-                            file.setNewline(generateRandomString(randGen, true));
-                        }
                         int generatedCodeListSize = randGen.nextInt(5);
                         for (int j = 0; j < generatedCodeListSize; j++) {
                             GeneratedCode generatedCode = new GeneratedCode();
@@ -266,7 +260,6 @@ public class PersistenceTest {
 
                             generatedCode.setIndex(j);
                             generatedCode.setIndent(randomIndent(randGen));
-                            generatedCode.setError(randGen.nextBoolean());
                             generatedCode.setSkipped(randGen.nextBoolean());
                             generatedCode.setReplaceAugCodeDirectives(randGen.nextBoolean());
                             generatedCode.setReplaceGenCodeDirectives(randGen.nextBoolean());

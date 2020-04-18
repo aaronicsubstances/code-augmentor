@@ -7,7 +7,6 @@ import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 
 public class SourceFileGeneratedCode {
     private int fileIndex;
-    private String newline;
     private List<GeneratedCode> generatedCodes;
 
     public SourceFileGeneratedCode() {
@@ -24,14 +23,6 @@ public class SourceFileGeneratedCode {
 
     public void setFileIndex(int fileIndex) {
         this.fileIndex = fileIndex;
-    }
-
-    public String getNewline() {
-        return newline;
-    }
-
-    public void setNewline(String newline) {
-        this.newline = newline;
     }
 
     public List<GeneratedCode> getGeneratedCodes() {
@@ -82,7 +73,6 @@ public class SourceFileGeneratedCode {
         int result = 1;
         result = prime * result + fileIndex;
         result = prime * result + ((generatedCodes == null) ? 0 : generatedCodes.hashCode());
-        result = prime * result + ((newline == null) ? 0 : newline.hashCode());
         return result;
     }
 
@@ -102,17 +92,12 @@ public class SourceFileGeneratedCode {
                 return false;
         } else if (!generatedCodes.equals(other.generatedCodes))
             return false;
-        if (newline == null) {
-            if (other.newline != null)
-                return false;
-        } else if (!newline.equals(other.newline))
-            return false;
         return true;
     }
 
     @Override
     public String toString() {
-        return "SourceFileGeneratedCode{fileIndex=" + fileIndex + ", generatedCodes=" + generatedCodes
-                + ", newline=" + newline + "}";
+        return "SourceFileGeneratedCode{fileIndex=" + fileIndex + 
+            ", generatedCodes=" + generatedCodes + "}";
     }
 }

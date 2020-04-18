@@ -1,5 +1,7 @@
 package com.aaronicsubstances.code.augmentor.gradle;
 
+import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskExtensionFunction;
+
 import org.gradle.api.Project;
 import org.gradle.api.file.ConfigurableFileTree;
 import org.gradle.api.model.ObjectFactory;
@@ -16,6 +18,7 @@ public class CodeAugmentorPluginExtension {
     private final ListProperty<ConfigurableFileTree> fileSets;
     private final Property<Object> prepFile;
     private final ListProperty<AugCodeDirectiveSpec> augCodeSpecs;
+    private final ListProperty<String> augCodeDirectives;
     private final ListProperty<String> genCodeStartDirectives;
     private final ListProperty<String> genCodeEndDirectives;
     private final ListProperty<String> embeddedStringDirectives;
@@ -28,11 +31,17 @@ public class CodeAugmentorPluginExtension {
     private final Property<Object> destDir;
     private final Property<Object> changeSetInfoFile;
 
-    // extra config for process with groovy
-    private final Property<Object> scriptDir;
-    private final Property<String> entryScriptName;
+    // config for process task.
+    private final Property<GenericTaskExtensionFunction> scriptEvalFunction;
+    private final ListProperty<String> scriptErrorStackTraceFilterPrefixes;
+    private final ListProperty<String> scriptErrorStackTraceLimitPrefixes;
+    private final Property<Object> groovyScriptDir;
+    private final Property<String> groovyEntryScriptName;
 
     private final Property<Boolean> verbose;
+
+    private final Property<Integer> augCodeSpecIndex;
+    private final Property<Integer> genCodeFileIndex;
 
     private final Project project;
 
@@ -43,6 +52,7 @@ public class CodeAugmentorPluginExtension {
         fileSets = objectFactory.listProperty(ConfigurableFileTree.class);
         prepFile = objectFactory.property(Object.class);
         augCodeSpecs = objectFactory.listProperty(AugCodeDirectiveSpec.class);
+        augCodeDirectives = objectFactory.listProperty(String.class);
         genCodeStartDirectives = objectFactory.listProperty(String.class);
         genCodeEndDirectives = objectFactory.listProperty(String.class);
         embeddedStringDirectives = objectFactory.listProperty(String.class);
@@ -54,8 +64,14 @@ public class CodeAugmentorPluginExtension {
         destDir = objectFactory.property(Object.class);
         changeSetInfoFile = objectFactory.property(Object.class);
 
-        scriptDir = objectFactory.property(Object.class);
-        entryScriptName = objectFactory.property(String.class);
+        scriptEvalFunction = objectFactory.property(GenericTaskExtensionFunction.class);
+        scriptErrorStackTraceFilterPrefixes = objectFactory.listProperty(String.class);
+        scriptErrorStackTraceLimitPrefixes = objectFactory.listProperty(String.class);
+        groovyScriptDir = objectFactory.property(Object.class);
+        groovyEntryScriptName = objectFactory.property(String.class);
+        augCodeSpecIndex = objectFactory.property(Integer.class);
+        genCodeFileIndex = objectFactory.property(Integer.class);
+
         verbose = objectFactory.property(Boolean.class);
     }
 
@@ -79,6 +95,10 @@ public class CodeAugmentorPluginExtension {
 
     public ListProperty<AugCodeDirectiveSpec> getAugCodeSpecs() {
         return augCodeSpecs;
+    }
+
+    public ListProperty<String> getAugCodeDirectives() {
+        return augCodeDirectives;
     }
 
     public ListProperty<String> getGenCodeStartDirectives() {
@@ -117,15 +137,35 @@ public class CodeAugmentorPluginExtension {
         return destDir;
     }
 
-	public Property<Object> getScriptDir() {
-		return scriptDir;
+    public Property<GenericTaskExtensionFunction> getScriptEvalFunction() {
+        return scriptEvalFunction;
+    }
+
+    public ListProperty<String> getScriptErrorStackTraceFilterPrefixes() {
+        return scriptErrorStackTraceFilterPrefixes;
+    }
+
+    public ListProperty<String> getScriptErrorStackTraceLimitPrefixes() {
+        return scriptErrorStackTraceLimitPrefixes;
+    }
+
+	public Property<Object> getGroovyScriptDir() {
+		return groovyScriptDir;
 	}
 
-    public Property<String> getEntryScriptName() {
-        return entryScriptName;
+    public Property<String> getGroovyEntryScriptName() {
+        return groovyEntryScriptName;
     }
 
 	public Property<Boolean> getVerbose() {
 		return verbose;
 	}
+
+    public Property<Integer> getAugCodeSpecIndex() {
+        return augCodeSpecIndex;
+    }
+
+    public Property<Integer> getGenCodeFileIndex() {
+        return genCodeFileIndex;
+    }
 }

@@ -2,14 +2,13 @@ package demo;
 
 public class Person {
     //:AUG_CODE: Snippets.generateClassContents
-    //:EJS: {
-    //:EJS:  "fields": [
-    //:EJS: { "name": "name", "type": "String" },
-    //:EJS: { "name": "age", "type": "int" },
-    //:EJS: { "name": "phoneNumber", "type": "String" }
-    //:EJS: ]}
-
-    //:GS:
+    //:JSON: {
+    //:JSON:  "fields": [
+    //:JSON: { "name": "name", "type": "String" },
+    //:JSON: { "name": "age", "type": "int" },
+    //:JSON: { "name": "phoneNumber", "type": "String" }
+    //:JSON: ]}
+    //:GEN_CODE_START:
     private String name;
     private int age;
     private String phoneNumber;
@@ -38,5 +37,5 @@ public class Person {
         this.phoneNumber = phoneNumber;
     }
 
-    //:GE:
+    //:GEN_CODE_END:
 }
