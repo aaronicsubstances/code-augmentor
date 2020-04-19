@@ -1,0 +1,78 @@
+    static void completeExecute($PLUGIN_BASE_TASK_TYPE task, String resolvedEncoding,
+            boolean resolvedVerbose, File resolvedPrepFile,
+            List<File> resolvedGenCodeFiles, File resolvedDestDir,
+            File resolvedChangeSetInfoFile) throws Exception {
+        // validate
+        Charset charset = Charset.forName(resolvedEncoding);
+        for (int i = 0; i < resolvedGenCodeFiles.size(); i++) {
+            File resolvedGenCodeFile = resolvedGenCodeFiles.get(i);
+            if (resolvedGenCodeFile == null) {
+                if (task instanceof $PLUGIN_COMPLETE_TASK_TYPE) {
+                    throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE($VAL_ERROR_COMPLETE_NULL_GEN_CODE_FILE_AT_I);
+                }
+                else {
+                    throw new RuntimeException($VAL_ERROR_RUN_NULL_GEN_CODE_FILE);
+                }
+            }
+        }
+
+        // Validation complete. start execution by deleting contents
+        // of destDir so generated output files is not confused with previous ones.
+        $LOG_REFERENCE
+        $LOG_DELETE_DEST_DIR
+        $DEST_DIR_CONTENT_DELETION_CODE
+
+        CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
+        genericTask.setCharset(charset);
+        genericTask.setLogAppender(TaskUtils.createLogAppender(task, resolvedVerbose));
+        genericTask.setPrepFile(resolvedPrepFile);
+        genericTask.setGeneratedCodeFiles(resolvedGenCodeFiles);
+        genericTask.setDestDir(resolvedDestDir);
+        
+        if (resolvedVerbose) {
+            // Print plugin task properties and any extra useful values for user.
+            // As much as possible use generic task properties.
+            $LOG_COMPLETE_TASK_PROPERTIES
+        }
+
+        try {
+            genericTask.execute();
+        }
+        catch (GenericTaskException ex) {
+            throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE(ex.getMessage(), ex.getCause());
+        }
+
+        // Write out change set info file always even if there are no changes.
+        // Because change set info is intended to be used by OS command line scripts,
+        // use OS newline separator, default charset, and absolute paths.
+        StringBuilder changeSetInfo = new StringBuilder();
+        for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {
+            changeSetInfo.append(genericTask.getSrcFiles().get(i).getAbsolutePath());
+            changeSetInfo.append(System.lineSeparator());
+            changeSetInfo.append(genericTask.getDestFiles().get(i).getAbsolutePath());
+            changeSetInfo.append(System.lineSeparator());
+        }
+        // ensure dir exists for changeSetInfoFile
+        resolvedChangeSetInfoFile.getParentFile().mkdirs();
+        try (Writer fWriter = new OutputStreamWriter(new 
+                FileOutputStream(resolvedChangeSetInfoFile), Charset.defaultCharset())) {
+            fWriter.write(changeSetInfo.toString());
+        }
+        catch (IOException ex) {
+            throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE("Failed to write change set information to " +
+                resolvedChangeSetInfoFile, ex);
+        }
+
+        // fail build if there were changed files.
+        if (!genericTask.getSrcFiles().isEmpty()) {
+            StringBuilder outOfSyncMsg = new StringBuilder();
+            outOfSyncMsg.append("The following files are out of sync with generating code scripts:\\n");
+            for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {
+                outOfSyncMsg.append(" ").append(i+1).append(". ");
+                outOfSyncMsg.append(genericTask.getSrcFiles().get(i).getPath());
+                outOfSyncMsg.append("\\n");
+            }
+
+            throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE(outOfSyncMsg.toString());
+        }
+    }

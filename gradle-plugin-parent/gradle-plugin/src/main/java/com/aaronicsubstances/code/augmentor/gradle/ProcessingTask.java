@@ -21,7 +21,7 @@ import groovy.lang.Binding;
 import groovy.util.GroovyScriptEngine;
 import groovy.json.JsonSlurper;
 
-public class ProcessCodeTask extends DefaultTask {
+public class ProcessingTask extends DefaultTask {
     private final Property<Boolean> verbose;
     private final ListProperty<AugCodeDirectiveSpec> augCodeSpecs;
     private final Property<Integer> augCodeSpecIndex;
@@ -32,10 +32,8 @@ public class ProcessCodeTask extends DefaultTask {
     private final Property<GenericTaskExtensionFunction> scriptEvalFunction;
     private final ListProperty<String> scriptErrorStackTraceFilterPrefixes;
     private final ListProperty<String> scriptErrorStackTraceLimitPrefixes;
-
-    private static final JsonSlurper JSON_PARSER = new JsonSlurper();
     
-    public ProcessCodeTask() {
+    public ProcessingTask() {
         ObjectFactory objectFactory = getProject().getObjects();
         verbose = objectFactory.property(Boolean.class);
         augCodeSpecs = objectFactory.listProperty(AugCodeDirectiveSpec.class);
@@ -99,6 +97,10 @@ public class ProcessCodeTask extends DefaultTask {
         }
     }
 
+//
+//:GEN_CODE_START:
+    private static final JsonSlurper JSON_PARSER = new JsonSlurper();
+    
     static void completeExecute(DefaultTask task, boolean resolvedVerbose,
             int resolvedAugCodeSpecIndex, int resolvedGenCodeFileIndex,
             File resolvedAugCodeFile, File resolvedGenCodeFile, 
@@ -108,21 +110,21 @@ public class ProcessCodeTask extends DefaultTask {
             File resolvedGroovyScriptDir, String resolvedGroovyEntryScriptName) throws Exception {
         // validate
         if (resolvedAugCodeFile == null) {
-            if (task instanceof ProcessCodeTask) {
-                throw new GradleException("augCodeSpecs[" + resolvedAugCodeSpecIndex +
-                    "].destFile is null");
+            if (task instanceof ProcessingTask) {
+                int i = resolvedAugCodeSpecIndex;
+                throw new GradleException("invalid null value found at augCodeSpecs[" + i + "]?.destFile");
             }
             else {
-                throw new RuntimeException("unexpected null for augCodeFile");
+                throw new RuntimeException("unexpected absence of augCodeFile");
             }
         }
         if (resolvedGenCodeFile == null) {
-            if (task instanceof ProcessCodeTask) {
-                throw new GradleException("generatedCodeFiles[" + resolvedGenCodeFileIndex +
-                    "] is null");
+            if (task instanceof ProcessingTask) {
+                int i = resolvedGenCodeFileIndex;
+                throw new GradleException("invaid null value found at generatedCodeFiles[" + i + "]");
             }
             else {
-                throw new RuntimeException("unexpected null for genCodeFile");
+                throw new RuntimeException("unexpected absence of genCodeFile");
             }
         }
         // either eval function or groovy script dir is required.
@@ -139,9 +141,10 @@ public class ProcessCodeTask extends DefaultTask {
         genericTask.setJsonParseFunction(s -> JSON_PARSER.parseText(s));
 
         if (resolvedVerbose) {
-            // print task properties - generic task ones, and any ones outside
+            // Print plugin task properties and any extra useful values for user.
+            // As much as possible use generic task properties.
             logger.info("Configuration properties:");
-            if (task instanceof ProcessCodeTask) {
+            if (task instanceof ProcessingTask) {
                 logger.info("\taugCodeSpecIndex: " + resolvedAugCodeSpecIndex);
                 logger.info("\tgenCodeFileIndex: " + resolvedGenCodeFileIndex);
             }
@@ -184,10 +187,11 @@ public class ProcessCodeTask extends DefaultTask {
 
         // fail build if there were errors.
         if (!scriptErrors.isEmpty()) {
-            throw TaskUtils.convertToGradleException(scriptErrors, true, defaultGroovyUsed,
+            throw TaskUtils.convertToPluginException(scriptErrors, true, defaultGroovyUsed,
                 resolvedStackTraceLimitPrefixes, resolvedStackTraceFilterPrefixes);
         }
     }
+//:GEN_CODE_END:
 
     @Internal
     public Property<Integer> getAugCodeSpecIndex() {

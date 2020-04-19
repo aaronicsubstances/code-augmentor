@@ -58,10 +58,10 @@ public class CodeAugmentorPlugin implements Plugin<Project> {
         extension.getGeneratedCodeFiles().convention(Arrays.asList(defaultGenCodeFile));
 
         // add tasks.
-        project.getTasks().register("codeAugmentorPrepare", PrepareCodeTask.class, new Action<PrepareCodeTask>() {
+        project.getTasks().register("codeAugmentorPrepare", PreparationTask.class, new Action<PreparationTask>() {
 
             @Override
-            public void execute(PrepareCodeTask prepareTask) {
+            public void execute(PreparationTask prepareTask) {
                 prepareTask.setDescription("Extracts augmenting code sections for processing");
                 prepareTask.setGroup(EXTENSION_NAME);
                 prepareTask.getVerbose().set(extension.getVerbose());
@@ -77,10 +77,10 @@ public class CodeAugmentorPlugin implements Plugin<Project> {
                 prepareTask.getDisableScanDirectives().set(extension.getDisableScanDirectives());
             }
         });
-        project.getTasks().register("codeAugmentorProcess", ProcessCodeTask.class, new Action<ProcessCodeTask>() {
+        project.getTasks().register("codeAugmentorProcess", ProcessingTask.class, new Action<ProcessingTask>() {
 
             @Override
-            public void execute(ProcessCodeTask processTask) {
+            public void execute(ProcessingTask processTask) {
                 processTask.setDescription("Determines generated code per each extracted augmenting code");
                 processTask.setGroup(EXTENSION_NAME);
                 processTask.getVerbose().set(extension.getVerbose());
@@ -95,10 +95,10 @@ public class CodeAugmentorPlugin implements Plugin<Project> {
                 processTask.getScriptErrorStackTraceLimitPrefixes().set(extension.getScriptErrorStackTraceLimitPrefixes());
             }
         });
-        project.getTasks().register("codeAugmentorComplete", CompleteRunTask.class, new Action<CompleteRunTask>() {
+        project.getTasks().register("codeAugmentorComplete", CompletionTask.class, new Action<CompletionTask>() {
 
             @Override
-            public void execute(CompleteRunTask generateTask) {
+            public void execute(CompletionTask generateTask) {
                 generateTask.setDescription("Generates for each outdated source file one with generated code section updated");
                 generateTask.setGroup(EXTENSION_NAME);
                 generateTask.getVerbose().set(extension.getVerbose());
@@ -109,10 +109,10 @@ public class CodeAugmentorPlugin implements Plugin<Project> {
                 generateTask.getChangeSetInfoFile().set(extension.getChangeSetInfoFile());
             }
         });
-        project.getTasks().register("codeAugmentorRun", CodeAugmentationTask.class, new Action<CodeAugmentationTask>() {
+        project.getTasks().register("codeAugmentorRun", CodeAugmentorTask.class, new Action<CodeAugmentorTask>() {
 
             @Override
-            public void execute(CodeAugmentationTask runTask) {
+            public void execute(CodeAugmentorTask runTask) {
                 runTask.setDescription("Runs code augmentor on source files and generates versions for files which have to be updated");
                 runTask.setGroup(EXTENSION_NAME);
                 runTask.getVerbose().set(extension.getVerbose());

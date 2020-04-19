@@ -24,7 +24,7 @@ import org.gradle.api.tasks.TaskAction;
 /**
  * Completes code generation.
  */
-public class CompleteRunTask extends DefaultTask {
+public class CompletionTask extends DefaultTask {
     private final Property<Boolean> verbose;
     private final Property<String> encoding;
     private final ListProperty<Object> generatedCodeFiles;
@@ -32,7 +32,7 @@ public class CompleteRunTask extends DefaultTask {
     private final Property<Object> destDir;
     private final Property<Object> changeSetInfoFile;
     
-    public CompleteRunTask() {
+    public CompletionTask() {
         ObjectFactory objectFactory = getProject().getObjects();
         verbose = objectFactory.property(Boolean.class);
         encoding = objectFactory.property(String.class);
@@ -64,6 +64,8 @@ public class CompleteRunTask extends DefaultTask {
         }
     }
 
+//
+//:GEN_CODE_START:
     static void completeExecute(DefaultTask task, String resolvedEncoding,
             boolean resolvedVerbose, File resolvedPrepFile,
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
@@ -73,11 +75,11 @@ public class CompleteRunTask extends DefaultTask {
         for (int i = 0; i < resolvedGenCodeFiles.size(); i++) {
             File resolvedGenCodeFile = resolvedGenCodeFiles.get(i);
             if (resolvedGenCodeFile == null) {
-                if (task instanceof CompleteRunTask) {
-                    throw new GradleException("generatedCodeFiles[" + i + "] is null");
+                if (task instanceof CompletionTask) {
+                    throw new GradleException("invaid null value found at generatedCodeFiles[" + i + "]");
                 }
                 else {
-                    throw new RuntimeException("unexpected null for genCodeFile");
+                    throw new RuntimeException("unexpected absence of genCodeFile");
                 }
             }
         }
@@ -86,6 +88,7 @@ public class CompleteRunTask extends DefaultTask {
         // of destDir so generated output files is not confused with previous ones.
         Logger logger = task.getLogger();
         logger.info("Deleting contents of " + resolvedDestDir + "...");
+        
         task.getProject().delete(task.getProject().fileTree(resolvedDestDir));
 
         CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
@@ -96,11 +99,12 @@ public class CompleteRunTask extends DefaultTask {
         genericTask.setDestDir(resolvedDestDir);
         
         if (resolvedVerbose) {
-            // print task properties - generic task ones, and any ones outside
+            // Print plugin task properties and any extra useful values for user.
+            // As much as possible use generic task properties.
             logger.info("Configuration properties:");
             logger.info("\tencoding: " + genericTask.getCharset());
             logger.info("\tdestDir: " + genericTask.getDestDir());
-            if (task instanceof CompleteRunTask) {
+            if (task instanceof CompletionTask) {
                 logger.info("\tprepFile: " + genericTask.getPrepFile());
                 for (int i = 0; i < genericTask.getGeneratedCodeFiles().size(); i++) {
                     logger.info("\tgeneratedCodeFiles[" + i + "]: " + genericTask.getGeneratedCodeFiles().get(i));
@@ -151,6 +155,7 @@ public class CompleteRunTask extends DefaultTask {
             throw new GradleException(outOfSyncMsg.toString());
         }
     }
+//:GEN_CODE_END:
 
     @Internal
     public Property<Boolean> getVerbose() {

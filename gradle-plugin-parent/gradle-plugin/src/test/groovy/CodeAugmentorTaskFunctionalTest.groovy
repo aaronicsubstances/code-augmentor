@@ -7,7 +7,7 @@ import spock.lang.Specification
 
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
-class CodeAugmentationTaskFunctionalTest extends Specification {
+class CodeAugmentorTaskFunctionalTest extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
     File buildFile
     File scriptDir

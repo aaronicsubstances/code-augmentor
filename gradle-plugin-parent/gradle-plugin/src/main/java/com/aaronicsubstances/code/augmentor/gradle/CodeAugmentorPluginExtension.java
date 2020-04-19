@@ -81,6 +81,10 @@ public class CodeAugmentorPluginExtension {
         return augCodeDirectiveSpec;
     }
 
+    public GenericTaskExtensionFunction acceptScriptEvalFunction(GenericTaskExtensionFunction fxn) {
+        return fxn;
+    }
+
     public Property<String> getEncoding() {
         return encoding;
     }

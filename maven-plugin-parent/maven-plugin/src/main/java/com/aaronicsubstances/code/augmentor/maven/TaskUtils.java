@@ -41,7 +41,15 @@ public class TaskUtils {
     }
 
     public static MojoExecutionException convertToMavenException(List<Throwable> allErrors) {
-        String allExMsg = GenericTaskException.toExceptionMessageWithGroovyConsideration(allErrors);
+        return convertToPluginException(allErrors, false, false, null, null);
+    }
+
+    public static MojoExecutionException convertToPluginException(List<Throwable> allErrors,
+            boolean includeStackTraces, boolean useDefaultGroovyPrefixes, 
+            List<String> stackTraceFilterPrefixes, List<String> stackTraceLimitPrefixes) {
+        String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(allErrors,
+            includeStackTraces, useDefaultGroovyPrefixes,
+            stackTraceLimitPrefixes, stackTraceFilterPrefixes);
         return new MojoExecutionException(allExMsg);
     }
 }

@@ -16,7 +16,7 @@ import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
 
-public class CodeAugmentationTask extends DefaultTask {
+public class CodeAugmentorTask extends DefaultTask {
     private final Property<Boolean> verbose;
     private final Property<String> encoding;
     private final ListProperty<ConfigurableFileTree> fileSets;
@@ -41,7 +41,7 @@ public class CodeAugmentationTask extends DefaultTask {
     private final Property<Object> augCodeFile;
     private final Property<Object> genCodeFile;
     
-    public CodeAugmentationTask() {
+    public CodeAugmentorTask() {
         ObjectFactory objectFactory = getProject().getObjects();
         verbose = objectFactory.property(Boolean.class);
         encoding = objectFactory.property(String.class);
@@ -85,7 +85,7 @@ public class CodeAugmentationTask extends DefaultTask {
                 augCodeDirectives.get());
             List<File> resolvedAugCodeFiles = Arrays.asList(getProject().file(augCodeFile));
             File resolvedPrepFile = getProject().file(prepFile);
-            PrepareCodeTask.completeExecute(this, resolvedEncoding, resolvedVerbose,
+            PreparationTask.completeExecute(this, resolvedEncoding, resolvedVerbose,
                 resolvedFileSets, resolvedGenCodeStartDirectives,
                 resolvedGenCodeEndDirectives, resolvedEmbeddedStringDirectives,
                 resolvedEmbeddedJsonDirectives, resolvedEnableScanDirectives,
@@ -107,7 +107,7 @@ public class CodeAugmentationTask extends DefaultTask {
             
             List<String> resolvedStackTraceLimitPrefixes = scriptErrorStackTraceLimitPrefixes.get();
             List<String> resolvedStackTraceFilterPrefixes = scriptErrorStackTraceFilterPrefixes.get();
-            ProcessCodeTask.completeExecute(this, resolvedVerbose, 0, 0, 
+            ProcessingTask.completeExecute(this, resolvedVerbose, 0, 0, 
                 resolvedAugCodeFile, resolvedGenCodeFile,
                 resolvedScriptEvalFunction, resolvedStackTraceLimitPrefixes,
                 resolvedStackTraceFilterPrefixes, resolvedGroovyScriptDir,
@@ -116,7 +116,7 @@ public class CodeAugmentationTask extends DefaultTask {
             // Finish off code augmentation with gen codes file.
             File resolvedDestDir = getProject().file(destDir);
             File resolvedChangeSetInfoFile = getProject().file(changeSetInfoFile);
-            CompleteRunTask.completeExecute(this, resolvedEncoding, resolvedVerbose,
+            CompletionTask.completeExecute(this, resolvedEncoding, resolvedVerbose,
                 resolvedPrepFile, Arrays.asList(resolvedGenCodeFile), resolvedDestDir,
                 resolvedChangeSetInfoFile);
         }

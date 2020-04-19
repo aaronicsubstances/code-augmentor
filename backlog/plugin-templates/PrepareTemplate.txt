@@ -1,0 +1,140 @@
+    static void completeExecute(
+            $PLUGIN_BASE_TASK_TYPE task,
+            String resolvedEncoding, boolean resolvedVerbose, 
+            List<$PLUGIN_FILE_SET_TYPE> resolvedFileSets,
+            List<String> resolvedGenCodeStartDirectives,
+            List<String> resolvedGenCodeEndDirectives,
+            List<String> resolvedEmbeddedStringDirectives,
+            List<String> resolvedEmbeddedJsonDirectives,
+            List<String> resolvedEnableScanDirectives,
+            List<String> resolvedDisableScanDirectives,
+            List<List<String>> resolvedAugCodeSpecDirectives,
+            List<File> resolvedAugCodeFiles,
+            File resolvedPrepFile) throws Exception {
+        
+        // validate
+        if (resolvedFileSets.isEmpty()) {
+            throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE($VAL_ERROR_NO_FILESET);
+        }
+        Charset charset = Charset.forName(resolvedEncoding); // validate encoding.
+        if (resolvedGenCodeStartDirectives.isEmpty()) {
+            throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE($VAL_ERROR_NO_GEN_CODE_START_DRV);
+        }
+        if (resolvedGenCodeEndDirectives.isEmpty()) {
+            throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE($VAL_ERROR_NO_GEN_CODE_END_DRV);
+        }
+
+        if (resolvedAugCodeSpecDirectives.isEmpty()) {
+            if (task instanceof $PLUGIN_PREPARE_TASK_TYPE) {
+                throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE($VAL_ERROR_PREPARE_NO_AUG_CODE_SPEC);
+            }
+            else {
+                throw new RuntimeException($VAL_ERROR_RUN_NO_AUG_CODE_SPEC);
+            }
+        }
+        for (int i = 0; i < resolvedAugCodeSpecDirectives.size(); i++) {
+            List<String> resolvedAugCodeDirectives = resolvedAugCodeSpecDirectives.get(i);
+            if (resolvedAugCodeDirectives.isEmpty()) {
+                if (task instanceof $PLUGIN_PREPARE_TASK_TYPE) {
+                    throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE($VAL_ERROR_PREPARE_NO_AUG_CODE_DRV_AT_I);
+                }
+                else {
+                    throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE($VAL_ERROR_RUN_NO_AUG_CODE_DRV_AT_I);
+                }
+            }
+        }
+        for (int i = 0; i < resolvedAugCodeFiles.size(); i++) {
+            File resolvedAugCodeFile = resolvedAugCodeFiles.get(i);
+            if (resolvedAugCodeFile == null) {
+                if (task instanceof $PLUGIN_PREPARE_TASK_TYPE) {
+                    throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE($VAL_ERROR_PREPARE_NULL_AUG_CODE_FILE_AT_I);
+                }
+                else {
+                    throw new RuntimeException($VAL_ERROR_RUN_NULL_AUG_CODE_FILE);
+                }
+            }
+        }
+        for (int i = 0; i < resolvedFileSets.size(); i++) {
+            if (resolvedFileSets.get(i) == null) {
+                throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE($VAL_ERROR_NULL_FILE_SET_AT_I);
+            }
+        }
+
+        // Ensure uniqueness across directives.
+        Set<String> allDirectives = new HashSet<>();
+        int totalDirectiveCount = 0;
+        allDirectives.addAll(resolvedGenCodeStartDirectives);
+        totalDirectiveCount += resolvedGenCodeStartDirectives.size();
+        allDirectives.addAll(resolvedGenCodeEndDirectives);
+        totalDirectiveCount += resolvedGenCodeEndDirectives.size();
+        allDirectives.addAll(resolvedEmbeddedStringDirectives);
+        totalDirectiveCount += resolvedEmbeddedStringDirectives.size();
+        allDirectives.addAll(resolvedEmbeddedJsonDirectives);
+        totalDirectiveCount += resolvedEmbeddedJsonDirectives.size();
+        allDirectives.addAll(resolvedEnableScanDirectives);
+        totalDirectiveCount += resolvedEnableScanDirectives.size();
+        allDirectives.addAll(resolvedDisableScanDirectives);
+        totalDirectiveCount += resolvedDisableScanDirectives.size();
+        
+        for (List<String> resolvedAugCodeDirectives : resolvedAugCodeSpecDirectives) {
+            allDirectives.addAll(resolvedAugCodeDirectives);
+            totalDirectiveCount += resolvedAugCodeDirectives.size();
+        }
+        if (totalDirectiveCount != allDirectives.stream().filter(x -> x != null && !x.trim().isEmpty()).count()) {
+            throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE("duplicates and/or blanks detected across directives");
+        }
+
+        // Validation successful, so begin execution by fetching files inside file sets.
+        List<File> baseDirs = new ArrayList<>();
+        List<String> relativePaths = new ArrayList<>();
+        $FILE_SET_EXTRACTION_CODE
+
+        $LOG_REFERENCE
+        if (relativePaths.isEmpty()) {
+            $LOG_NO_FILES_FOUND
+        }
+        else {
+            $LOG_ONE_OR_MORE_FILE_COUNT
+        }
+
+        PreCodeAugmentationGenericTask genericTask = new PreCodeAugmentationGenericTask();
+        genericTask.setCharset(charset);
+        genericTask.setLogAppender(TaskUtils.createLogAppender(task, resolvedVerbose));        
+        genericTask.setPrepFile(resolvedPrepFile);
+        genericTask.setRelativePaths(relativePaths);
+        genericTask.setBaseDirs(baseDirs);
+        genericTask.setGenCodeStartDirectives(resolvedGenCodeStartDirectives);
+        genericTask.setGenCodeEndDirectives(resolvedGenCodeEndDirectives);
+        genericTask.setEmbeddedStringDirectives(resolvedEmbeddedStringDirectives);
+        genericTask.setEmbeddedJsonDirectives(resolvedEmbeddedJsonDirectives);
+        genericTask.setEnableScanDirectives(resolvedEnableScanDirectives);
+        genericTask.setDisableScanDirectives(resolvedDisableScanDirectives);
+
+        List<AugCodeProcessingSpec> augCodeProcessingSpecs = new ArrayList<>();
+        genericTask.setAugCodeProcessingSpecs(augCodeProcessingSpecs);
+        for (int i = 0; i < resolvedAugCodeFiles.size(); i++) {
+            File resolvedDestFile = resolvedAugCodeFiles.get(i);
+            List<String> resolvedAugCodeDirectives = resolvedAugCodeSpecDirectives.get(i);
+            AugCodeProcessingSpec augCodeProcessingSpec = new AugCodeProcessingSpec(
+                resolvedDestFile, resolvedAugCodeDirectives);
+            augCodeProcessingSpecs.add(augCodeProcessingSpec);
+        }
+        
+        if (resolvedVerbose) {
+            // Print plugin task properties and any extra useful values for user.
+            // As much as possible use generic task properties.
+            $LOG_PREPARE_TASK_PROPERTIES
+        }
+        
+        try {
+            genericTask.execute();
+        }
+        catch (GenericTaskException ex) {
+            throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE(ex.getMessage(), ex.getCause());
+        }
+
+        // fail build if there were errors.
+        if (!genericTask.getAllErrors().isEmpty()) {
+            throw TaskUtils.convertToPluginException(genericTask.getAllErrors());
+        }
+    }

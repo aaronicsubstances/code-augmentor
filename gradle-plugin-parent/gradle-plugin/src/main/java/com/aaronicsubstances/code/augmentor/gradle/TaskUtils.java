@@ -39,11 +39,11 @@ public class TaskUtils {
         return logAppender;
     }
 
-    public static GradleException convertToGradleException(List<Throwable> allErrors) {
-        return convertToGradleException(allErrors, false, false, null, null);
+    public static GradleException convertToPluginException(List<Throwable> allErrors) {
+        return convertToPluginException(allErrors, false, false, null, null);
     }
 
-    public static GradleException convertToGradleException(List<Throwable> allErrors,
+    public static GradleException convertToPluginException(List<Throwable> allErrors,
             boolean includeStackTraces, boolean useDefaultGroovyPrefixes, 
             List<String> stackTraceFilterPrefixes, List<String> stackTraceLimitPrefixes) {
         String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(allErrors,

@@ -7,10 +7,9 @@ import spock.lang.Specification
 
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
-class ProcessCodeTaskFunctionalTest extends Specification {
+class CompletionTaskFunctionalTest extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
     File buildFile
-    File scriptDir
 
     def setup() {
         buildFile = testProjectDir.newFile('build.gradle')
@@ -20,31 +19,28 @@ class ProcessCodeTaskFunctionalTest extends Specification {
             }
         """
         File workingDir = testProjectDir.newFolder("build", "codeAugmentor")
-        File augCodesFile = new File(workingDir, "augCodes.json")
-        augCodesFile << """{}
+        File testPrepFile = new File(workingDir, "prepResults.json")
+        testPrepFile << """{}
         """
-        scriptDir = testProjectDir.newFolder("scripts")
-        File entryFile = new File(scriptDir, "main.groovy")
-        entryFile << """
-        parentTask.execute({})
+        File genCodesFile = new File(workingDir, "genCodes.json")
+        genCodesFile << """{}
         """
     }
 
-    def "test codeAugmentorProcess task with extension defaults"() {
+    def "test codeAugmentorComplete task with extension defaults"() {
         buildFile << """
             codeAugmentor {
-                groovyScriptDir = "${scriptDir.name}"
             }
         """
 
         when:
         def result = GradleRunner.create()
             .withProjectDir(testProjectDir.root)
-            .withArguments('codeAugmentorProcess', '--stacktrace')
+            .withArguments('codeAugmentorComplete', '--stacktrace')
             .withPluginClasspath()
             .build()
 
         then:
-        result.task(":codeAugmentorProcess").outcome == SUCCESS
+        result.task(":codeAugmentorComplete").outcome == SUCCESS
     }
 }

@@ -19,8 +19,8 @@ import org.apache.maven.plugins.annotations.Parameter;
 /**
  * Completes code generation.
  */
-@Mojo(name = "generate")
-public class CodeAugmentationMojo extends AbstractPluginMojo {
+@Mojo(name = "complete")
+public class CompletionMojo extends AbstractPluginMojo {
 
     @Parameter( defaultValue = "${project.build.directory}/codeAugmentor/generated", 
         required = false )

@@ -25,7 +25,7 @@ import org.gradle.api.tasks.TaskAction;
  * Prepares for code generation.
  *
  */
-public class PrepareCodeTask extends DefaultTask {
+public class PreparationTask extends DefaultTask {
     private final Property<Boolean> verbose;
     private final Property<String> encoding;
     private final ListProperty<ConfigurableFileTree> fileSets;
@@ -38,7 +38,7 @@ public class PrepareCodeTask extends DefaultTask {
     private final ListProperty<String> enableScanDirectives;
     private final ListProperty<String> disableScanDirectives;
     
-    public PrepareCodeTask() {
+    public PreparationTask() {
         ObjectFactory objectFactory = getProject().getObjects();
         verbose = objectFactory.property(Boolean.class);
         encoding = objectFactory.property(String.class);
@@ -94,7 +94,9 @@ public class PrepareCodeTask extends DefaultTask {
             throw new GradleException("General plugin error: " + ex, ex);
         }
     }
-    
+
+//
+//:GEN_CODE_START:
     static void completeExecute(
             DefaultTask task,
             String resolvedEncoding, boolean resolvedVerbose, 
@@ -122,7 +124,7 @@ public class PrepareCodeTask extends DefaultTask {
         }
 
         if (resolvedAugCodeSpecDirectives.isEmpty()) {
-            if (task instanceof PrepareCodeTask) {
+            if (task instanceof PreparationTask) {
                 throw new GradleException("at least 1 element is required in augCodeSpecs");
             }
             else {
@@ -132,9 +134,8 @@ public class PrepareCodeTask extends DefaultTask {
         for (int i = 0; i < resolvedAugCodeSpecDirectives.size(); i++) {
             List<String> resolvedAugCodeDirectives = resolvedAugCodeSpecDirectives.get(i);
             if (resolvedAugCodeDirectives.isEmpty()) {
-                if (task instanceof PrepareCodeTask) {
-                    throw new GradleException("at least 1 element is required in augCodeSpecs[" + i +
-                        "].directives");
+                if (task instanceof PreparationTask) {
+                    throw new GradleException("at least 1 element is required in augCodeSpecs[" + i + "].directives");
                 }
                 else {
                     throw new GradleException("at least 1 element is required in augCodeDirectives");
@@ -144,18 +145,17 @@ public class PrepareCodeTask extends DefaultTask {
         for (int i = 0; i < resolvedAugCodeFiles.size(); i++) {
             File resolvedAugCodeFile = resolvedAugCodeFiles.get(i);
             if (resolvedAugCodeFile == null) {
-                if (task instanceof PrepareCodeTask) {
-                    throw new GradleException("invalid null value found at augCodeSpecs[" + i +
-                        "]?.destFile");
+                if (task instanceof PreparationTask) {
+                    throw new GradleException("invalid null value found at augCodeSpecs[" + i + "]?.destFile");
                 }
                 else {
-                    throw new RuntimeException("unexpected null for augCodeFile");
+                    throw new RuntimeException("unexpected absence of augCodeFile");
                 }
             }
         }
         for (int i = 0; i < resolvedFileSets.size(); i++) {
             if (resolvedFileSets.get(i) == null) {
-                throw new GradleException("fileSets[" + i + "] is null");
+                throw new GradleException("invalid null value found at fileSets[" + i + "]");
             }
         }
 
@@ -179,8 +179,8 @@ public class PrepareCodeTask extends DefaultTask {
             allDirectives.addAll(resolvedAugCodeDirectives);
             totalDirectiveCount += resolvedAugCodeDirectives.size();
         }
-        if (totalDirectiveCount != allDirectives.stream().filter(x -> x != null).count()) {
-            throw new GradleException("duplicates and/or nulls detected across directives");
+        if (totalDirectiveCount != allDirectives.stream().filter(x -> x != null && !x.trim().isEmpty()).count()) {
+            throw new GradleException("duplicates and/or blanks detected across directives");
         }
 
         // Validation successful, so begin execution by fetching files inside file sets.
@@ -227,13 +227,14 @@ public class PrepareCodeTask extends DefaultTask {
         for (int i = 0; i < resolvedAugCodeFiles.size(); i++) {
             File resolvedDestFile = resolvedAugCodeFiles.get(i);
             List<String> resolvedAugCodeDirectives = resolvedAugCodeSpecDirectives.get(i);
-            AugCodeProcessingSpec augCodeProcessingSpec =   new AugCodeProcessingSpec(
+            AugCodeProcessingSpec augCodeProcessingSpec = new AugCodeProcessingSpec(
                 resolvedDestFile, resolvedAugCodeDirectives);
             augCodeProcessingSpecs.add(augCodeProcessingSpec);
         }
         
         if (resolvedVerbose) {
-            // print task properties - generic task ones, and any ones outside
+            // Print plugin task properties and any extra useful values for user.
+            // As much as possible use generic task properties.
             logger.info("Configuration properties:");
             logger.info("\tencoding: " + genericTask.getCharset());
             logger.info("\tgenCodeStartDirectives: " + genericTask.getGenCodeStartDirectives());
@@ -243,7 +244,7 @@ public class PrepareCodeTask extends DefaultTask {
             logger.info("\tenableScanDirectives: " + genericTask.getEnableScanDirectives());
             logger.info("\tdisableScanDirectives: " + genericTask.getDisableScanDirectives());
             
-            if (task instanceof PrepareCodeTask) {
+            if (task instanceof PreparationTask) {
                 logger.info("\tprepFile: " + genericTask.getPrepFile());
                 for (int i = 0; i < genericTask.getAugCodeProcessingSpecs().size(); i++) {
                     AugCodeProcessingSpec augCodeSpec = genericTask.getAugCodeProcessingSpecs().get(i);
@@ -271,9 +272,10 @@ public class PrepareCodeTask extends DefaultTask {
 
         // fail build if there were errors.
         if (!genericTask.getAllErrors().isEmpty()) {
-            throw TaskUtils.convertToGradleException(genericTask.getAllErrors());
+            throw TaskUtils.convertToPluginException(genericTask.getAllErrors());
         }
     }
+//:GEN_CODE_END:
 
     @Internal
     public Property<Boolean> getVerbose() {
