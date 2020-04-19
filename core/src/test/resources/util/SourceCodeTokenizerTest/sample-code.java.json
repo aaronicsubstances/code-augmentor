@@ -86,7 +86,7 @@
     {
         "lineNumber": 7,
         "index": 6,
-        "type": 6,
+        "type": 2,
         "text": "//--\tpublic vo#GSid init(FileInputStream fs) throws ClassNotFoundExcept//--ion, SQLException, FileNotFoundException, IOException\r\n",
         "startPos": 116,
         "endPos": 246,
@@ -207,6 +207,7 @@
         "indent": "     ",
         "directiveMarker": "#GE",
         "directiveContent": "",
+        "isGeneratedCodeMarker": true,
         "newline": "\r\n"
     },
     {
@@ -333,6 +334,7 @@
         "indent": "",
         "directiveMarker": "#GS",
         "directiveContent": "\t\twhile (rs.next())",
+        "isGeneratedCodeMarker": true,
         "newline": "\r\n"
     },
     {

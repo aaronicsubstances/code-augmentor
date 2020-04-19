@@ -6,8 +6,8 @@
             List<String> resolvedGenCodeEndDirectives,
             List<String> resolvedEmbeddedStringDirectives,
             List<String> resolvedEmbeddedJsonDirectives,
-            List<String> resolvedEnableScanDirectives,
-            List<String> resolvedDisableScanDirectives,
+            List<String> resolvedSkipCodeStartDirectives,
+            List<String> resolvedSkipCodeEndDirectives,
             List<List<String>> resolvedAugCodeSpecDirectives,
             List<File> resolvedAugCodeFiles,
             File resolvedPrepFile) throws Exception {
@@ -71,10 +71,10 @@
         totalDirectiveCount += resolvedEmbeddedStringDirectives.size();
         allDirectives.addAll(resolvedEmbeddedJsonDirectives);
         totalDirectiveCount += resolvedEmbeddedJsonDirectives.size();
-        allDirectives.addAll(resolvedEnableScanDirectives);
-        totalDirectiveCount += resolvedEnableScanDirectives.size();
-        allDirectives.addAll(resolvedDisableScanDirectives);
-        totalDirectiveCount += resolvedDisableScanDirectives.size();
+        allDirectives.addAll(resolvedSkipCodeStartDirectives);
+        totalDirectiveCount += resolvedSkipCodeStartDirectives.size();
+        allDirectives.addAll(resolvedSkipCodeEndDirectives);
+        totalDirectiveCount += resolvedSkipCodeEndDirectives.size();
         
         for (List<String> resolvedAugCodeDirectives : resolvedAugCodeSpecDirectives) {
             allDirectives.addAll(resolvedAugCodeDirectives);
@@ -107,8 +107,8 @@
         genericTask.setGenCodeEndDirectives(resolvedGenCodeEndDirectives);
         genericTask.setEmbeddedStringDirectives(resolvedEmbeddedStringDirectives);
         genericTask.setEmbeddedJsonDirectives(resolvedEmbeddedJsonDirectives);
-        genericTask.setEnableScanDirectives(resolvedEnableScanDirectives);
-        genericTask.setDisableScanDirectives(resolvedDisableScanDirectives);
+        genericTask.setSkipCodeStartDirectives(resolvedSkipCodeStartDirectives);
+        genericTask.setSkipCodeEndDirectives(resolvedSkipCodeEndDirectives);
 
         List<AugCodeProcessingSpec> augCodeProcessingSpecs = new ArrayList<>();
         genericTask.setAugCodeProcessingSpecs(augCodeProcessingSpecs);

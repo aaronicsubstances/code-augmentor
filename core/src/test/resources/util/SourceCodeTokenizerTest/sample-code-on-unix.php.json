@@ -100,7 +100,7 @@
     {
         "lineNumber": 8,
         "index": 7,
-        "type": 5,
+        "type": 1,
         "text": "//--<<        print \"GeeksForGe#ESeks\\n\"; \n",
         "startPos": 96,
         "endPos": 139,

@@ -1,12 +1,10 @@
 package com.aaronicsubstances.code.augmentor.core.util;
 
 public class Token {
-    public static final int DIRECTIVE_TYPE_GEN_CODE_START = 1;
-    public static final int DIRECTIVE_TYPE_GEN_CODE_END = 2;
+    public static final int DIRECTIVE_TYPE_SKIP_CODE_START = 1;
+    public static final int DIRECTIVE_TYPE_SKIP_CODE_END = 2;
     public static final int DIRECTIVE_TYPE_EMB_STRING = 3;
     public static final int DIRECTIVE_TYPE_EMB_JSON = 4;
-    public static final int DIRECTIVE_TYPE_ENABLE_SCAN = 5;
-    public static final int DIRECTIVE_TYPE_DISABLE_SCAN = 6;
     public static final int DIRECTIVE_TYPE_AUG_CODE = 7;
 
     public static final int TYPE_BLANK = 20;
@@ -24,6 +22,7 @@ public class Token {
     public String directiveMarker;
     public String directiveContent;
     public String newline;
+    public boolean isGeneratedCodeMarker;
 
     /**
      * Used for JSON serialization.
@@ -46,6 +45,7 @@ public class Token {
         result = prime * result + endPos;
         result = prime * result + ((indent == null) ? 0 : indent.hashCode());
         result = prime * result + index;
+        result = prime * result + (isGeneratedCodeMarker ? 1231 : 1237);
         result = prime * result + lineNumber;
         result = prime * result + ((newline == null) ? 0 : newline.hashCode());
         result = prime * result + startPos;
@@ -84,6 +84,8 @@ public class Token {
             return false;
         if (index != other.index)
             return false;
+        if (isGeneratedCodeMarker != other.isGeneratedCodeMarker)
+            return false;
         if (lineNumber != other.lineNumber)
             return false;
         if (newline == null) {
@@ -106,8 +108,8 @@ public class Token {
     @Override
     public String toString() {
         return "Token{augCodeSpecIndex=" + augCodeSpecIndex + ", directiveContent=" + directiveContent
-                + ", directiveMarker=" + directiveMarker + ", endPos=" + endPos
-                + ", indent=" + indent + ", index=" + index + ", lineNumber=" + lineNumber + ", newline=" + newline
-                + ", startPos=" + startPos + ", text=" + text + ", type=" + type + "}";
+                + ", directiveMarker=" + directiveMarker + ", endPos=" + endPos + ", indent=" + indent + ", index="
+                + index + ", isGeneratedCodeMarker=" + isGeneratedCodeMarker + ", lineNumber=" + lineNumber
+                + ", newline=" + newline + ", startPos=" + startPos + ", text=" + text + ", type=" + type + "}";
     }
 }

@@ -130,7 +130,7 @@ public class ProcessCodeGenericTask {
         }
     }
     
-    @SuppressWarnings("unchecked")
+    //@SuppressWarnings("unchecked")
     List<GeneratedCode> processAugCode(GenericTaskExtensionFunction evalFunction, 
             String functionName, AugmentingCode augCode, Map<String, Object> context) {
         Object result;
@@ -141,22 +141,37 @@ public class ProcessCodeGenericTask {
             throw createException(context, ex);
         }
     
-        // validate return result: must be list of objects, single object or string.
-        if (result instanceof List) {
-            List<GeneratedCode> listResult = (List<GeneratedCode>) result;
+        // validate return result: content must be set.        
+        if (result == null) {
+            throw createException(context, "Received null result");
+        }
+        else if (result instanceof List) {
+            List listResult = (List) result;
             if (listResult.isEmpty()) {
                 throw createException(context, "Received empty results");
             }
             int augCodeIndexInContext = (int) context.get("augCodeIndex");
             SourceFileAugmentingCode fileAugCodes = (SourceFileAugmentingCode) context.get("fileAugCodes");
             for (int j = 0; j < listResult.size(); j++) {
-                GeneratedCode genCode = listResult.get(j);
+                Object listItem = listResult.get(j);
+                GeneratedCode genCode; 
                 // instead of throwing error, rather save them here so
                 // we can skip past whatever aug codes are targeted, and
                 // likely avoid superflous errors due to intermediate/dependent aug codes.
-                if (genCode.getContent() == null) {
-                    allErrors.add(createException(context, "content property is not set"));
+                if (listItem == null) {
+                    allErrors.add(createException(context, "Received null at index " + j));
                     break;
+                }
+                if (listItem instanceof GeneratedCode) {
+                    genCode = (GeneratedCode) listItem;
+                    if (genCode.getContent() == null) {
+                        allErrors.add(createException(context, "content property is not set at index " + j));
+                        break;
+                    }
+                }
+                else {
+                    genCode = new GeneratedCode();
+                    genCode.setContent(listItem.toString());
                 }
                 if (augCodeIndexInContext + j >= fileAugCodes.getAugmentingCodes().size()) {
                     allErrors.add(createException(context, "No aug code found at offset " + j));
@@ -168,28 +183,19 @@ public class ProcessCodeGenericTask {
             }
             return listResult;
         }
-        else if (result instanceof String) {
-            GeneratedCode genCode = new GeneratedCode();
-            genCode.setContent((String) result);
+        else if (result instanceof GeneratedCode) {
+            GeneratedCode genCode = (GeneratedCode) result;
+            if (genCode.getContent() == null) {
+                throw createException(context, "content property is not set");
+            }
             genCode.setIndex(augCode.getIndex());
             return Arrays.asList(genCode);
         }
         else {
-            // must be object or else error.            
-            if (result instanceof GeneratedCode) {
-                GeneratedCode genCode = (GeneratedCode) result;
-                if (genCode.getContent() == null) {
-                    throw createException(context, "content property is not set");
-                }
-                genCode.setIndex(augCode.getIndex());
-                return Arrays.asList(genCode);
-            }
-            else if (result == null) {
-                throw createException(context, "Received null");
-            }
-            else {
-                throw createException(context, "Received unexpected result type: " + result.getClass());
-            }
+            GeneratedCode genCode = new GeneratedCode();
+            genCode.setContent(result.toString());
+            genCode.setIndex(augCode.getIndex());
+            return Arrays.asList(genCode);
         }
     }
 

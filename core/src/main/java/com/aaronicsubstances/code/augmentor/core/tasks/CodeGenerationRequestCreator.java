@@ -98,45 +98,43 @@ public class CodeGenerationRequestCreator {
     static List<List<Token>> identifyAugCodeSections(List<Token> tokens,
             File srcFile, List<Exception> errors) { 
         List<List<Token>> groups = new ArrayList<>();
-        final int DISABLE_SCAN = 1;
-        final int IN_GEN_CODE = 2;
-        int escapeMode = 0;
-        Token genCodeStartToken = null;
+        boolean inSkipMode = false;
+        Token skipCodeStartToken = null;
         // group tokens which strictly follow each other consecutively in line numbers.
         int expectedLineNumber = 0;
         List<Token> currentGroup = new ArrayList<>();
         for (Token t : tokens) {
-            // As long as we are inside a generated code section, ignore all
-            // directives until we hit a directive indicating end of generated code
+            // As long as we are inside a skip code section, ignore all
+            // directives until we hit a directive indicating end of skip code
             // section.
-            // Similarly, as long as a disable scan is in force, ignore all
-            // directives until we hit an enable scan.
-            // Note that the effect then is that generated code section doesn't recognize
-            // enable/disable scan directives, and enable/disable scan directives don't recognize
-            // generated code directives.
-            if (escapeMode != 0) {
-                if (escapeMode == DISABLE_SCAN &&
-                        t.type == Token.DIRECTIVE_TYPE_ENABLE_SCAN) {
-                    escapeMode = 0;
+            if (inSkipMode) {
+                if (t.type == Token.DIRECTIVE_TYPE_SKIP_CODE_START) {
+                    GenericTaskException error = createException(
+                        "Expecting end of previous " +
+                        (skipCodeStartToken.isGeneratedCodeMarker ? "generated" : "skipped") + 
+                        " code section before encountering another start directive", 
+                        t, srcFile);
+                    saveOrThrowError(error, errors);
+                    skipCodeStartToken = t;
                 }
-                if (escapeMode == IN_GEN_CODE) {
-                    if (t.type == Token.DIRECTIVE_TYPE_GEN_CODE_START) {
+                if (t.type == Token.DIRECTIVE_TYPE_SKIP_CODE_END) {
+                    if (t.isGeneratedCodeMarker != skipCodeStartToken.isGeneratedCodeMarker) {
                         GenericTaskException error = createException(
-                            "Could not find end of generated code section", 
-                            genCodeStartToken, srcFile);
+                            "Different end directive encountered for " +                            
+                            (skipCodeStartToken.isGeneratedCodeMarker ? "generated" : "skipped") + 
+                            " code section",
+                            t, srcFile);
                         saveOrThrowError(error, errors);
-                        genCodeStartToken = t;
                     }
-                    if (t.type == Token.DIRECTIVE_TYPE_GEN_CODE_END) {
-                        escapeMode = 0;
-                        genCodeStartToken = null;
-                        // ensure newline ending.
-                        if (t.newline == null) {
-                            GenericTaskException error = createException(
-                                "Generated code section must end with a newline",
-                                t, srcFile);
-                            saveOrThrowError(error, errors);
-                        }
+                    inSkipMode = false;
+                    skipCodeStartToken = null;
+                    // ensure newline ending.
+                    if (t.newline == null) {
+                        GenericTaskException error = createException(
+                            (t.isGeneratedCodeMarker ? "Generated" : "Skip") + 
+                            " code directive must end with a newline",
+                            t, srcFile);
+                        saveOrThrowError(error, errors);
                     }
                 }
                 continue;
@@ -179,18 +177,17 @@ public class CodeGenerationRequestCreator {
                         // set to 0 so a new aug/emb token is definitely added. 
                         expectedLineNumber = 0;
                     }
-                    if (t.type == Token.DIRECTIVE_TYPE_GEN_CODE_END) {
+                    if (t.type == Token.DIRECTIVE_TYPE_SKIP_CODE_END) {
                         GenericTaskException error = createException(
-                            "Could not find start of generated code section",
+                            "Encountered end directive for " +
+                            (t.isGeneratedCodeMarker ? "generated" : "skipped") +
+                            " code section without a previous start directive.",
                             t, srcFile);
                         saveOrThrowError(error, errors);
                     }
-                    if (t.type == Token.DIRECTIVE_TYPE_DISABLE_SCAN) {
-                        escapeMode = DISABLE_SCAN;
-                    }
-                    if (t.type == Token.DIRECTIVE_TYPE_GEN_CODE_START) {
-                        escapeMode = IN_GEN_CODE;
-                        genCodeStartToken = t;
+                    if (t.type == Token.DIRECTIVE_TYPE_SKIP_CODE_START) {
+                        inSkipMode = true;
+                        skipCodeStartToken = t;
                     }
                     break;
             }
@@ -199,10 +196,12 @@ public class CodeGenerationRequestCreator {
             // Create final group.
             groups.add(currentGroup);
         }
-        if (escapeMode == IN_GEN_CODE) {
+        if (inSkipMode) {
             GenericTaskException error = createException(
-                "Could not find end of generated code section", 
-                genCodeStartToken, srcFile);
+                "Could not find end of " +
+                (skipCodeStartToken.isGeneratedCodeMarker ? "generated" : "skipped") +
+                " code section", 
+                skipCodeStartToken, srcFile);
             saveOrThrowError(error, errors);
         }
         return groups;
@@ -253,7 +252,7 @@ public class CodeGenerationRequestCreator {
             if (t.type == Token.TYPE_BLANK) {
                 continue;
             }
-            if (t.type == Token.DIRECTIVE_TYPE_GEN_CODE_START) {
+            if (t.type == Token.DIRECTIVE_TYPE_SKIP_CODE_START && t.isGeneratedCodeMarker) {
                 startIndex = i;
                 break;
             }
@@ -273,7 +272,13 @@ public class CodeGenerationRequestCreator {
         // search for gen code end.
         for (int i = startIndex + 1; i < sourceTokens.size(); i++) {
             Token t = sourceTokens.get(i);
-            if (t.type == Token.DIRECTIVE_TYPE_GEN_CODE_END) {
+            // skip all other tokens, except for gen/skip code starts, and
+            // skip code end. These three are interpreted as section breakers, and
+            // hence current search must end.
+            if (t.type == Token.DIRECTIVE_TYPE_SKIP_CODE_END) {
+                if (!t.isGeneratedCodeMarker) {
+                    break;
+                }
                 GeneratedCodeDescriptor generatedCodeDescriptor = new GeneratedCodeDescriptor();
                 generatedCodeDescriptor.setStartDirectiveStartPos(st.startPos);
                 generatedCodeDescriptor.setStartDirectiveEndPos(st.endPos);
@@ -281,15 +286,8 @@ public class CodeGenerationRequestCreator {
                 generatedCodeDescriptor.setEndDirectiveEndPos(t.endPos);
                 return generatedCodeDescriptor;
             }
-
-            // skip any other token, except for gen code start, which
-            // is interpreted as start of another section, and hence
-            // current search must end.
-            if (t.type == Token.DIRECTIVE_TYPE_GEN_CODE_START) {
+            else if (t.type == Token.DIRECTIVE_TYPE_SKIP_CODE_START) {
                 break;
-            }
-            else {
-                continue;
             }
         }
 

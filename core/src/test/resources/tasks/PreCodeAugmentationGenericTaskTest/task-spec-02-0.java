@@ -1,6 +1,6 @@
 package /*GS*/com.aaronicsubstances.vision.members;
 //DISABLE
-//GS
+//G1
 import/*GS*/ //GS
 javax.ws.rs.GET;
 /*GE*/import javax.ws.rs.Path;
@@ -53,13 +53,13 @@ Object getSmsConfig()/*GS*/ {
 		//JS )
 
 		//GS*/
-        //DISABLE
+        //G1S ABL
         return /*GE*/smsConfigJson;
  //GE
     }
 //DISABLE    
     @GET
-    //GS
+    //G1
     //ENABLE
 @Path("update-config")
     public Object getUpdateConfig() {

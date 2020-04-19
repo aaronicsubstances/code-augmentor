@@ -1,6 +1,6 @@
     private static final JsonSlurper JSON_PARSER = new JsonSlurper();
     
-    static void completeExecute($PLUGIN_BASE_TASK_TYPE task, boolean resolvedVerbose,
+    static void completeExecute(AbstractMojo task, boolean resolvedVerbose,
             int resolvedAugCodeSpecIndex, int resolvedGenCodeFileIndex,
             File resolvedAugCodeFile, File resolvedGenCodeFile, 
             GenericTaskExtensionFunction resolvedScriptEvalFunction,
@@ -9,29 +9,29 @@
             File resolvedGroovyScriptDir, String resolvedGroovyEntryScriptName) throws Exception {
         // validate
         if (resolvedAugCodeFile == null) {
-            if (task instanceof $PLUGIN_PROCESS_TASK_TYPE) {
+            if (task instanceof ProcessingMojo) {
                 int i = resolvedAugCodeSpecIndex;
-                throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE($VAL_ERROR_PROCESS_NULL_AUG_CODE_FILE);
+                throw new MojoExecutionException("invalid null value found at augCodeSpecs[" + i + "]?.destFile");
             }
             else {
-                throw new RuntimeException($VAL_ERROR_RUN_NULL_AUG_CODE_FILE);
+                throw new RuntimeException("unexpected absence of augCodeFile");
             }
         }
         if (resolvedGenCodeFile == null) {
-            if (task instanceof $PLUGIN_PROCESS_TASK_TYPE) {
+            if (task instanceof ProcessingMojo) {
                 int i = resolvedGenCodeFileIndex;
-                throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE($VAL_ERROR_PROCESS_NULL_GEN_CODE_FILE);
+                throw new MojoExecutionException("invaid null value found at generatedCodeFiles[" + i + "]");
             }
             else {
-                throw new RuntimeException($VAL_ERROR_RUN_NULL_GEN_CODE_FILE);
+                throw new RuntimeException("unexpected absence of genCodeFile");
             }
         }
         // either eval function or groovy script dir is required.
         if (resolvedScriptEvalFunction == null && resolvedGroovyScriptDir == null) {
-            throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE($VAL_ERROR_NO_GROOVY_SCRIPT_DIR);
+            throw new MojoExecutionException("groovyScriptDir property is required");
         }
 
-        $LOG_REFERENCE
+        Log logger = task.getLog();
 
         ProcessCodeGenericTask genericTask = new ProcessCodeGenericTask();
         genericTask.setLogAppender(TaskUtils.createLogAppender(task, resolvedVerbose));
@@ -42,7 +42,17 @@
         if (resolvedVerbose) {
             // Print plugin task properties and any extra useful values for user.
             // As much as possible use generic task properties.
-            $LOG_PROCESS_TASK_PROPERTIES
+            logger.info("Configuration properties:");
+            if (task instanceof ProcessingMojo) {
+                logger.info("\taugCodeSpecIndex: " + resolvedAugCodeSpecIndex);
+                logger.info("\tgenCodeFileIndex: " + resolvedGenCodeFileIndex);
+            }
+            logger.info("\tgroovyScriptDir: " + resolvedGroovyScriptDir);
+            logger.info("\tgroovyEntryScriptName: " + resolvedGroovyEntryScriptName);
+            logger.info("\tgenericTask.inputFile: " + resolvedAugCodeFile);
+            logger.info("\tgenericTask.outputFile: " + resolvedGenCodeFile);
+            logger.info("\tgenericTask.logAppender: " + genericTask.getLogAppender());
+            logger.info("\tgenericTask.jsonParseFunction: " + genericTask.getJsonParseFunction());
         }
 
         List<Throwable> scriptErrors = new ArrayList<>();

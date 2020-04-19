@@ -23,8 +23,8 @@ public class CodeAugmentorPluginExtension {
     private final ListProperty<String> genCodeEndDirectives;
     private final ListProperty<String> embeddedStringDirectives;
     private final ListProperty<String> embeddedJsonDirectives;
-    private final ListProperty<String> enableScanDirectives;
-    private final ListProperty<String> disableScanDirectives;
+    private final ListProperty<String> skipCodeStartDirectives;
+    private final ListProperty<String> skipCodeEndDirectives;
 
     // extra config for generate completion.
     private final ListProperty<Object> generatedCodeFiles;
@@ -57,8 +57,8 @@ public class CodeAugmentorPluginExtension {
         genCodeEndDirectives = objectFactory.listProperty(String.class);
         embeddedStringDirectives = objectFactory.listProperty(String.class);
         embeddedJsonDirectives = objectFactory.listProperty(String.class);
-        enableScanDirectives = objectFactory.listProperty(String.class);
-        disableScanDirectives = objectFactory.listProperty(String.class);
+        skipCodeStartDirectives = objectFactory.listProperty(String.class);
+        skipCodeEndDirectives = objectFactory.listProperty(String.class);
 
         generatedCodeFiles = objectFactory.listProperty(Object.class);
         destDir = objectFactory.property(Object.class);
@@ -121,12 +121,12 @@ public class CodeAugmentorPluginExtension {
         return embeddedJsonDirectives;
     }
 
-    public ListProperty<String> getEnableScanDirectives() {
-        return enableScanDirectives;
+    public ListProperty<String> getSkipCodeStartDirectives() {
+        return skipCodeStartDirectives;
     }
 
-    public ListProperty<String> getDisableScanDirectives() {
-        return disableScanDirectives;
+    public ListProperty<String> getSkipCodeEndDirectives() {
+        return skipCodeEndDirectives;
     }
 
     public ListProperty<Object> getGeneratedCodeFiles() {

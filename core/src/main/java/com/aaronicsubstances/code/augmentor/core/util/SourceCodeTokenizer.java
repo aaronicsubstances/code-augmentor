@@ -9,8 +9,8 @@ public class SourceCodeTokenizer {
     private final List<String> genCodeEndDirectives;
     private final List<String> embeddedStringDirectives;
     private final List<String> embeddedJsonDirectives;
-    private final List<String> enableScanDirectives;
-    private final List<String> disableScanDirectives;
+    private final List<String> skipCodeStartDirectives;
+    private final List<String> skipCodeEndDirectives;
     private final List<List<String>> augCodeDirectiveSets;
 
     public SourceCodeTokenizer(
@@ -18,15 +18,15 @@ public class SourceCodeTokenizer {
             List<String> genCodeEndDirectives,
             List<String> embeddedStringDirectives,
             List<String> embeddedJsonDirectives,
-            List<String> enableScanDirectives, 
-            List<String> disableScanDirectives,
+            List<String> skipCodeStartDirectives, 
+            List<String> skipCodeEndDirectives,
             List<List<String>> augCodeDirectiveSets) {
         this.genCodeStartDirectives = genCodeStartDirectives;
         this.genCodeEndDirectives = genCodeEndDirectives;
         this.embeddedStringDirectives = embeddedStringDirectives;
         this.embeddedJsonDirectives = embeddedJsonDirectives;
-        this.enableScanDirectives = enableScanDirectives;
-        this.disableScanDirectives = disableScanDirectives;
+        this.skipCodeStartDirectives = skipCodeStartDirectives;
+        this.skipCodeEndDirectives = skipCodeEndDirectives;
         this.augCodeDirectiveSets = augCodeDirectiveSets;
     }
 
@@ -48,13 +48,17 @@ public class SourceCodeTokenizer {
                 List<Token> candidateTokens = new ArrayList<>();
                 for (String d : genCodeStartDirectives) {
                     if (lineWithoutIndent.startsWith(d)) {
-                        candidateTokens.add(createToken(Token.DIRECTIVE_TYPE_GEN_CODE_START, d, line));
+                        Token c = createToken(Token.DIRECTIVE_TYPE_SKIP_CODE_START, d, line);
+                        c.isGeneratedCodeMarker = true;
+                        candidateTokens.add(c);
                     }
                 }
                 
                 for (String d : genCodeEndDirectives) {
                     if (lineWithoutIndent.startsWith(d)) {
-                        candidateTokens.add(createToken(Token.DIRECTIVE_TYPE_GEN_CODE_END, d, line));
+                        Token c = createToken(Token.DIRECTIVE_TYPE_SKIP_CODE_END, d, line);
+                        c.isGeneratedCodeMarker = true;
+                        candidateTokens.add(c);
                     }
                 }
                 
@@ -70,18 +74,18 @@ public class SourceCodeTokenizer {
                     }
                 }
                 
-                if (enableScanDirectives != null) {
-                    for (String d : enableScanDirectives) {
+                if (skipCodeStartDirectives != null) {
+                    for (String d : skipCodeStartDirectives) {
                         if (lineWithoutIndent.startsWith(d)) {
-                            candidateTokens.add(createToken(Token.DIRECTIVE_TYPE_ENABLE_SCAN, d, line));
+                            candidateTokens.add(createToken(Token.DIRECTIVE_TYPE_SKIP_CODE_START, d, line));
                         }
                     }
                 }
                 
-                if (disableScanDirectives != null) {
-                    for (String d : disableScanDirectives) {
+                if (skipCodeEndDirectives != null) {
+                    for (String d : skipCodeEndDirectives) {
                         if (lineWithoutIndent.startsWith(d)) {
-                            candidateTokens.add(createToken(Token.DIRECTIVE_TYPE_DISABLE_SCAN, d, line));
+                            candidateTokens.add(createToken(Token.DIRECTIVE_TYPE_SKIP_CODE_END, d, line));
                         }
                     }
                 }

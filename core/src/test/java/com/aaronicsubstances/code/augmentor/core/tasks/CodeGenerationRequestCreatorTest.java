@@ -111,8 +111,7 @@ public class CodeGenerationRequestCreatorTest {
 
     @DataProvider
     public Object[][] createTestIdentifyAugCodeSectionsData() {
-        // test with initial data excluding enable/disable scans, or
-        // generated code sections.
+        // test with initial data excluding skip code sections.
         List<Token> secondTokenList = Arrays.asList(
             newTokenWithLnNum(1, "//00"), newTokenWithLnNum(3, "//01"),
             newTokenWithLnNum(5, "//01"), newTokenWithLnNum(7, "//01"));
@@ -150,17 +149,18 @@ public class CodeGenerationRequestCreatorTest {
         List<Token> sixthList = Arrays.asList(
             newTokenWithLnNum(10, "//01"));
 
-        // test disable scan.
+        // test skipping code section.
         List<Token> seventhList = new ArrayList<>(fifthTokenList);
-        seventhList.add(0, newTokenWithLnNum(1, "//--"));
+        seventhList.add(0, newTokenWithLnNum(1, "//++"));
+        seventhList.add(newTokenWithLnNum(1, "//--"));
 
-        // test that generated code section doesn't recognize
-        // disable/enable scans.
+        // test that generated code section doesn't overlap skipped code sections.
         List<Token> eighthList = new ArrayList<>(fifthTokenList);
-        eighthList.add(newTokenWithLnNum(21, "//GS"));
-        eighthList.add(newTokenWithLnNum(22, "//--"));
-        eighthList.add(newTokenWithLnNum(23, "//GE"));
         eighthList.add(newTokenWithLnNum(24, "//ES"));
+        eighthList.add(newTokenWithLnNum(25, "//GS"));
+        eighthList.add(newTokenWithLnNum(26, "//GE"));
+        eighthList.add(newTokenWithLnNum(27, "//++"));
+        eighthList.add(newTokenWithLnNum(28, "//--"));
 
         List<List<Token>> eighthGroup = Arrays.asList(
             Arrays.asList(
@@ -174,24 +174,27 @@ public class CodeGenerationRequestCreatorTest {
             Arrays.asList(
                 newTokenWithLnNum(24, "//ES")));
         
-        // test that disable/enable scans don't recognize generated code section.
+        // test that skipped code section don't overlap generated code section.
         List<Token> ninthTokenList = Arrays.asList(
-            newTokenWithLnNum(10, "//--"), newTokenWithLnNum(11, "//01"),
-            newTokenWithLnNum(12, "//--"), newTokenWithLnNum(13, "//01"),
-            newTokenWithLnNum(14, "//GS"), newTokenWithLnNum(15, "//GE"),
+            newTokenWithLnNum(10, "//++"), newTokenWithLnNum(11, "//01"),
+            newTokenWithLnNum(12, "//--"), newTokenWithLnNum(13, "//GS"),
+            newTokenWithLnNum(14, "//01"), newTokenWithLnNum(15, "//GE"),
             newTokenWithLnNum(22, "//02"), newTokenWithLnNum(33, "//01"),
-            newTokenWithLnNum(36, "//++"), newTokenWithLnNum(37, "//01"),
-            newTokenWithLnNum(38, "//++"), newTokenWithLnNum(39, "//03"));
+            newTokenWithLnNum(34, "//++"), newTokenWithLnNum(35, "//01"),
+            newTokenWithLnNum(36, "//--"), newTokenWithLnNum(38, "//01"),
+            newTokenWithLnNum(39, "//03"));
         List<List<Token>> ninthGroup = Arrays.asList(
             Arrays.asList(
-                newTokenWithLnNum(37, "//01")),
+                newTokenWithLnNum(22, "//02")),
             Arrays.asList(
-                newTokenWithLnNum(39, "//03")));
+                newTokenWithLnNum(33, "//01")),
+            Arrays.asList(
+                newTokenWithLnNum(38, "//01"), newTokenWithLnNum(39, "//03")));
  
         List<Token> tenthTokenList = Arrays.asList(
-            newTokenWithLnNum(10, "//01"), newTokenWithLnNum(11, "//--"),
-            newTokenWithLnNum(12, "//GE"), newTokenWithLnNum(13, "//GS"),
-            newTokenWithLnNum(14, "//++"), newTokenWithLnNum(15, "//03"));
+            newTokenWithLnNum(10, "//01"), newTokenWithLnNum(11, "//++"),
+            newTokenWithLnNum(12, "//02"), newTokenWithLnNum(13, "//03"),
+            newTokenWithLnNum(14, "//--"), newTokenWithLnNum(15, "//03"));
         List<List<Token>> tenthGroup = Arrays.asList(
             Arrays.asList(
                 newTokenWithLnNum(10, "//01")),
@@ -500,18 +503,21 @@ public class CodeGenerationRequestCreatorTest {
         public Token toToken(String newline) {
             int type, augCodeSpecIndex = 0;
             String directiveContent;
+            boolean isGeneratedCodeMarker = false;
             final int commonMarkerLen = 4;
             if (text.equals("")) {
                 type = Token.TYPE_BLANK;
                 directiveContent = null;
             }
             else if (text.startsWith("//GE")) {
-                type = Token.DIRECTIVE_TYPE_GEN_CODE_END;
+                type = Token.DIRECTIVE_TYPE_SKIP_CODE_END;
                 directiveContent = text.substring(commonMarkerLen);
+                isGeneratedCodeMarker = true;
             }
             else if (text.startsWith("//GS")) {
-                type = Token.DIRECTIVE_TYPE_GEN_CODE_START;
+                type = Token.DIRECTIVE_TYPE_SKIP_CODE_START;
                 directiveContent = text.substring(commonMarkerLen);
+                isGeneratedCodeMarker = true;
             }
             else if (text.startsWith("//ES")) {
                 type = Token.DIRECTIVE_TYPE_EMB_STRING;
@@ -522,11 +528,11 @@ public class CodeGenerationRequestCreatorTest {
                 directiveContent = text.substring(commonMarkerLen);
             }
             else if (text.startsWith("//++")) {
-                type = Token.DIRECTIVE_TYPE_ENABLE_SCAN;
+                type = Token.DIRECTIVE_TYPE_SKIP_CODE_START;
                 directiveContent = text.substring(commonMarkerLen);
             }
             else if (text.startsWith("//--")) {
-                type = Token.DIRECTIVE_TYPE_DISABLE_SCAN;
+                type = Token.DIRECTIVE_TYPE_SKIP_CODE_END;
                 directiveContent = text.substring(commonMarkerLen);
             }
             else {
@@ -548,6 +554,7 @@ public class CodeGenerationRequestCreatorTest {
             if (directiveContent != null) {
                 t.directiveContent = directiveContent;
                 t.directiveMarker = text.substring(0, commonMarkerLen);
+                t.isGeneratedCodeMarker = isGeneratedCodeMarker;
             }
             t.augCodeSpecIndex = augCodeSpecIndex;
             if (!noNewline) {

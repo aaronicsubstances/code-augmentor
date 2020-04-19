@@ -38,8 +38,8 @@ public class CodeAugmentorPlugin implements Plugin<Project> {
         extension.getGenCodeEndDirectives().convention(Arrays.asList("//:GEN_CODE_END:"));
         extension.getEmbeddedStringDirectives().convention(Arrays.asList("//:STR:"));
         extension.getEmbeddedJsonDirectives().convention(Arrays.asList("//:JSON:"));
-        extension.getEnableScanDirectives().convention(Arrays.asList("//:ENABLE_SCAN:"));
-        extension.getDisableScanDirectives().convention(Arrays.asList("//:DISABLE_SCAN:"));
+        extension.getSkipCodeStartDirectives().convention(Arrays.asList("//:SKIP_CODE_START:"));
+        extension.getSkipCodeEndDirectives().convention(Arrays.asList("//:SKIP_CODE_END:"));
         extension.getAugCodeDirectives().convention(defaultAugCodeDirectives);
         
         AugCodeDirectiveSpec defaultAugCodeSpec = new AugCodeDirectiveSpec(project);
@@ -73,8 +73,8 @@ public class CodeAugmentorPlugin implements Plugin<Project> {
                 prepareTask.getGenCodeEndDirectives().set(extension.getGenCodeEndDirectives());
                 prepareTask.getEmbeddedStringDirectives().set(extension.getEmbeddedStringDirectives());
                 prepareTask.getEmbeddedJsonDirectives().set(extension.getEmbeddedJsonDirectives());
-                prepareTask.getEnableScanDirectives().set(extension.getEnableScanDirectives());
-                prepareTask.getDisableScanDirectives().set(extension.getDisableScanDirectives());
+                prepareTask.getSkipCodeStartDirectives().set(extension.getSkipCodeStartDirectives());
+                prepareTask.getSkipCodeEndDirectives().set(extension.getSkipCodeEndDirectives());
             }
         });
         project.getTasks().register("codeAugmentorProcess", ProcessingTask.class, new Action<ProcessingTask>() {
@@ -123,8 +123,8 @@ public class CodeAugmentorPlugin implements Plugin<Project> {
                 runTask.getGenCodeEndDirectives().set(extension.getGenCodeEndDirectives());
                 runTask.getEmbeddedStringDirectives().set(extension.getEmbeddedStringDirectives());
                 runTask.getEmbeddedJsonDirectives().set(extension.getEmbeddedJsonDirectives());
-                runTask.getEnableScanDirectives().set(extension.getEnableScanDirectives());
-                runTask.getDisableScanDirectives().set(extension.getDisableScanDirectives());
+                runTask.getSkipCodeStartDirectives().set(extension.getSkipCodeStartDirectives());
+                runTask.getSkipCodeEndDirectives().set(extension.getSkipCodeEndDirectives());
                 runTask.getGroovyScriptDir().set(extension.getGroovyScriptDir());
                 runTask.getGroovyEntryScriptName().set(extension.getGroovyEntryScriptName());
                 runTask.getScriptEvalFunction().set(extension.getScriptEvalFunction());

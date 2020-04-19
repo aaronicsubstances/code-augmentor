@@ -2,7 +2,7 @@
     {
         "lineNumber": 1,
         "index": 0,
-        "type": 6,
+        "type": 2,
         "text": "    //--<?php\r\n",
         "startPos": 0,
         "endPos": 15,
@@ -38,6 +38,7 @@
         "augCodeSpecIndex": 0,
         "indent": "  ",
         "directiveMarker": "#GS",
+        "isGeneratedCodeMarker": true,
         "directiveContent": " *  Export your array to csv",
         "newline": "\r\n"
     },
@@ -72,7 +73,7 @@
     {
         "lineNumber": 6,
         "index": 5,
-        "type": 6,
+        "type": 2,
         "text": "    //-- \r\n",
         "startPos": 136,
         "endPos": 147,
@@ -170,7 +171,7 @@
     {
         "lineNumber": 13,
         "index": 12,
-        "type": 5,
+        "type": 1,
         "text": " //--<<    /#PHP7/ all record must be an array\r\n",
         "startPos": 360,
         "endPos": 408,
@@ -235,6 +236,7 @@
         "indent": "",
         "directiveMarker": "#GE",
         "directiveContent": "    }",
+        "isGeneratedCodeMarker": true,
         "newline": "\r\n"
     },
     {
@@ -268,7 +270,7 @@
     {
         "lineNumber": 20,
         "index": 19,
-        "type": 6,
+        "type": 2,
         "text": "    //--}\r\n",
         "startPos": 555,
         "endPos": 566,
@@ -352,7 +354,7 @@
     {
         "lineNumber": 26,
         "index": 25,
-        "type": 6,
+        "type": 2,
         "text": "  //--  $ret = '';\r\n",
         "startPos": 747,
         "endPos": 767,
@@ -506,7 +508,7 @@
     {
         "lineNumber": 37,
         "index": 36,
-        "type": 6,
+        "type": 2,
         "text": " //--        $ret .= '\"' . str_replace('\"','\"\"',$field) . '\"';\r\n",
         "startPos": 1155,
         "endPos": 1219,

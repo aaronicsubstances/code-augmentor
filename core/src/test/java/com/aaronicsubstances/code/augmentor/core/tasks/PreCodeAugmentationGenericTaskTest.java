@@ -27,7 +27,7 @@ public class PreCodeAugmentationGenericTaskTest {
         public String[] relativePaths;
         public String[] genCodeStartDirectives, genCodeEndDirectives;
         public String[] embeddedStringDirectives, embeddedJsonDirectives;
-        public String[] enableScanDirectives, disableScanDirectives;
+        public String[] skipCodeStartDirectives, skipCodeEndDirectives;
         public AugCodeSpec[] augCodeDirectives;
 
         public String prepFile;
@@ -72,11 +72,11 @@ public class PreCodeAugmentationGenericTaskTest {
         task.setEmbeddedStringDirectives(Arrays.asList(
             taskSpec.embeddedStringDirectives));
         task.setEmbeddedJsonDirectives(Arrays.asList(taskSpec.embeddedJsonDirectives));
-        if (taskSpec.enableScanDirectives != null) {
-            task.setEnableScanDirectives(Arrays.asList(taskSpec.enableScanDirectives));
+        if (taskSpec.skipCodeStartDirectives != null) {
+            task.setSkipCodeStartDirectives(Arrays.asList(taskSpec.skipCodeStartDirectives));
         }
-        if (taskSpec.disableScanDirectives != null) {
-            task.setDisableScanDirectives(Arrays.asList(taskSpec.disableScanDirectives));
+        if (taskSpec.skipCodeEndDirectives != null) {
+            task.setSkipCodeEndDirectives(Arrays.asList(taskSpec.skipCodeEndDirectives));
         }
 
         if (taskSpec.loggingEnabled) {

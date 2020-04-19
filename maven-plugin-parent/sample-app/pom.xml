@@ -49,16 +49,17 @@
                   <includes>**/*.java</includes>
                 </fileSet>
               </fileSets>
-              <scriptDir>../codeAugmentorScripts</scriptDir>
-              <verbose>true</verbose>
+              <groovyScriptDir>../codeAugmentorScripts</groovyScriptDir>
+              <verbose>false</verbose>
           </configuration>
           <executions>
             <execution>
             <phase>compile</phase>
               <goals>
-                <goal>prepare</goal>
+                <!--<goal>prepare</goal>
                 <goal>process</goal>
-                <goal>generate</goal>
+                <goal>complete</goal>-->
+                <goal>run</goal>
               </goals>
             </execution>
           </executions>

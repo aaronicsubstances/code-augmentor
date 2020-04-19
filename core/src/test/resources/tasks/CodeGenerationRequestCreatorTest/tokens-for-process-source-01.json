@@ -27,15 +27,11 @@
         "endPos": 90
     },
     {
-        "type": 6,
-        "augCodeSpecIndex": 0,
-        "indent": "",
-        "directiveMarker": "//--",
-        "directiveContent": "",
+        "type": 50,
         "index": 3,
         "lineNumber": 4,
         "startPos": 90,
-        "text": "//--\r\n",
+        "text": "//-+\r\n",
         "newline": "\r\n",
         "endPos": 96
     },
@@ -68,7 +64,8 @@
         "startPos": 116,
         "text": "#GS\r\n",
         "newline": "\r\n",
-        "endPos": 121
+        "endPos": 121,
+        "isGeneratedCodeMarker": true
     },
     {
         "type": 50,
@@ -94,7 +91,8 @@
         "startPos": 126,
         "text": "#GE\r\n",
         "newline": "\r\n",
-        "endPos": 131
+        "endPos": 131,
+        "isGeneratedCodeMarker": true
     },
     {
         "text": "\t\r\n",
@@ -106,15 +104,11 @@
         "endPos": 134
     },
     {
-        "type": 5,
-        "augCodeSpecIndex": 0,
-        "indent": "",
-        "directiveMarker": "//--<<",
-        "directiveContent": "",
+        "type": 50,
         "index": 10,
         "lineNumber": 11,
         "startPos": 134,
-        "text": "//--<<\r\n",
+        "text": "// -<<\r\n",
         "newline": "\r\n",
         "endPos": 142
     },

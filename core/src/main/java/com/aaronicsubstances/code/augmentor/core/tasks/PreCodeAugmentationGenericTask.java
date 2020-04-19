@@ -29,8 +29,8 @@ public class PreCodeAugmentationGenericTask {
     private List<String> genCodeEndDirectives;
     private List<String> embeddedStringDirectives;
 	private List<String> embeddedJsonDirectives;
-    private List<String> enableScanDirectives;
-    private List<String> disableScanDirectives;
+    private List<String> skipCodeStartDirectives;
+    private List<String> skipCodeEndDirectives;
     private List<AugCodeProcessingSpec> augCodeProcessingSpecs;
     private Charset charset;
     private File prepFile;
@@ -64,7 +64,7 @@ public class PreCodeAugmentationGenericTask {
         SourceCodeTokenizer tokenizer = new SourceCodeTokenizer(
                 genCodeStartDirectives, genCodeEndDirectives, 
                 embeddedStringDirectives, embeddedJsonDirectives,
-                enableScanDirectives, disableScanDirectives,
+                skipCodeStartDirectives, skipCodeEndDirectives,
                 augCodeDirectiveSets);
 
         List<List<AugmentingCode>> specAugCodesList = new ArrayList<>();
@@ -220,20 +220,20 @@ public class PreCodeAugmentationGenericTask {
         this.embeddedJsonDirectives = embeddedJsonDirectives;
 	}
 
-    public List<String> getEnableScanDirectives() {
-        return enableScanDirectives;
+    public List<String> getSkipCodeStartDirectives() {
+        return skipCodeStartDirectives;
     }
 
-    public void setEnableScanDirectives(List<String> enableScanDirectives) {
-        this.enableScanDirectives = enableScanDirectives;
+    public void setSkipCodeStartDirectives(List<String> skipCodeEndDirectives) {
+        this.skipCodeStartDirectives = skipCodeEndDirectives;
     }
 
-    public List<String> getDisableScanDirectives() {
-        return disableScanDirectives;
+    public List<String> getSkipCodeEndDirectives() {
+        return skipCodeEndDirectives;
     }
 
-    public void setDisableScanDirectives(List<String> disableScanDirectives) {
-        this.disableScanDirectives = disableScanDirectives;
+    public void setSkipCodeEndDirectives(List<String> skipCodeEndDirectives) {
+        this.skipCodeEndDirectives = skipCodeEndDirectives;
     }
 
     public List<AugCodeProcessingSpec> getAugCodeProcessingSpecs() {

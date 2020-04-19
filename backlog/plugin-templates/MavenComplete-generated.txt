@@ -1,53 +1,3 @@
-package com.aaronicsubstances.code.augmentor.maven;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.List;
-
-import com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTask;
-import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
-
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugin.logging.Log;
-import org.apache.maven.plugins.annotations.Mojo;
-
-/**
- * Completes code generation.
- */
-@Mojo(name = "complete")
-public class CompletionMojo extends AbstractPluginMojo {
-
-    @Override
-    public void execute() throws MojoExecutionException, MojoFailureException {
-        try {
-            String resolvedEncoding = getEncoding();
-            boolean resolvedVerbose = isVerbose();
-            File resolvedPrepFile = getPrepFile();
-            List<File> resolvedGenCodeFiles = Arrays.asList(getGeneratedCodeFiles());
-            File resolvedDestDir = getDestDir();
-            File resolvedChangeSetInfoFile = getChangeSetInfoFile();
-            completeExecute(this, resolvedEncoding, resolvedVerbose, resolvedPrepFile, 
-                resolvedGenCodeFiles, resolvedDestDir, resolvedChangeSetInfoFile);
-        }
-        catch (MojoExecutionException ex) {
-            throw ex;
-        }
-        catch (MojoFailureException ex) {
-            throw ex;
-        }
-        catch (Throwable ex) {
-            throw new MojoFailureException("General plugin error: " + ex, ex);
-        }
-    }
-
-//:SKIP_CODE_START:
     static void completeExecute(AbstractMojo task, String resolvedEncoding,
             boolean resolvedVerbose, File resolvedPrepFile,
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
@@ -137,5 +87,3 @@ public class CompletionMojo extends AbstractPluginMojo {
             throw new MojoExecutionException(outOfSyncMsg.toString());
         }
     }
-//:SKIP_CODE_END:
-}

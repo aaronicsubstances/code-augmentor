@@ -1,6 +1,81 @@
+package com.aaronicsubstances.code.augmentor.maven;
+
+import java.io.File;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskExtensionFunction;
+import com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeGenericTask;
+
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.codehaus.groovy.control.CompilerConfiguration;
+
+import groovy.json.JsonSlurper;
+import groovy.lang.Binding;
+import groovy.util.GroovyScriptEngine;
+
+/**
+ * Processes augmenting code into generated code using Groovy.
+ *
+ */
+@Mojo(name = "process")
+public class ProcessingMojo extends AbstractPluginMojo {
+
+    @Parameter( required=true )
+    private File groovyScriptDir;
+
+    @Override
+    public void execute() throws MojoExecutionException, MojoFailureException {
+        try {
+            // validate
+            int augCodeSpecIndex = getAugCodeSpecIndex();
+            AugCodeDirectiveSpec[] augCodeSpecs = getAugCodeSpecs();
+            if (augCodeSpecIndex < 0 || augCodeSpecIndex >= augCodeSpecs.length) {
+                throw new MojoFailureException(String.format(
+                    "parameter 'augCodeSpecIndex' is invalid: %s is outside valid range " +
+                    "of 0 ..< %s", augCodeSpecIndex, augCodeSpecs.length));
+            }
+            int genCodeFileIndex = getGenCodeFileIndex();
+            File[] genCodeFiles = getGeneratedCodeFiles();
+            if (genCodeFileIndex < 0 || genCodeFileIndex >= genCodeFiles.length) {
+                throw new MojoFailureException(String.format(
+                    "parameter 'genCodeFileIndex' is invalid: %s is outside valid range " +
+                    "of 0 ..< %s", genCodeFileIndex, genCodeFiles.length));
+            }
+
+            boolean resolvedVerbose = isVerbose();
+            File resolvedAugCodeFile = null;
+            if (augCodeSpecs[augCodeSpecIndex] != null) {
+                resolvedAugCodeFile = augCodeSpecs[augCodeSpecIndex].getDestFile();
+            }
+            File resolvedGenCodeFile = genCodeFiles[genCodeFileIndex];
+            String resolvedGroovyEntryScriptName = getGroovyEntryScriptName();
+
+            completeExecute(this, resolvedVerbose, augCodeSpecIndex, genCodeFileIndex, 
+                resolvedAugCodeFile, resolvedGenCodeFile, null, null, null,
+                groovyScriptDir, resolvedGroovyEntryScriptName);
+        }
+        catch (MojoExecutionException ex) {
+            throw ex;
+        }
+        catch (MojoFailureException ex) {
+            throw ex;
+        }
+        catch (Throwable ex) {
+            throw new MojoFailureException("General plugin error: " + ex, ex);
+        }
+    }
+
+//:SKIP_CODE_START:
     private static final JsonSlurper JSON_PARSER = new JsonSlurper();
     
-    static void completeExecute(DefaultTask task, boolean resolvedVerbose,
+    static void completeExecute(AbstractMojo task, boolean resolvedVerbose,
             int resolvedAugCodeSpecIndex, int resolvedGenCodeFileIndex,
             File resolvedAugCodeFile, File resolvedGenCodeFile, 
             GenericTaskExtensionFunction resolvedScriptEvalFunction,
@@ -9,18 +84,18 @@
             File resolvedGroovyScriptDir, String resolvedGroovyEntryScriptName) throws Exception {
         // validate
         if (resolvedAugCodeFile == null) {
-            if (task instanceof ProcessingTask) {
+            if (task instanceof ProcessingMojo) {
                 int i = resolvedAugCodeSpecIndex;
-                throw new GradleException("invalid null value found at augCodeSpecs[" + i + "]?.destFile");
+                throw new MojoExecutionException("invalid null value found at augCodeSpecs[" + i + "]?.destFile");
             }
             else {
                 throw new RuntimeException("unexpected absence of augCodeFile");
             }
         }
         if (resolvedGenCodeFile == null) {
-            if (task instanceof ProcessingTask) {
+            if (task instanceof ProcessingMojo) {
                 int i = resolvedGenCodeFileIndex;
-                throw new GradleException("invaid null value found at generatedCodeFiles[" + i + "]");
+                throw new MojoExecutionException("invaid null value found at generatedCodeFiles[" + i + "]");
             }
             else {
                 throw new RuntimeException("unexpected absence of genCodeFile");
@@ -28,10 +103,10 @@
         }
         // either eval function or groovy script dir is required.
         if (resolvedScriptEvalFunction == null && resolvedGroovyScriptDir == null) {
-            throw new GradleException("groovyScriptDir property must be set if scriptEvalFunction is absent");
+            throw new MojoExecutionException("groovyScriptDir property is required");
         }
 
-        Logger logger = task.getLogger();
+        Log logger = task.getLog();
 
         ProcessCodeGenericTask genericTask = new ProcessCodeGenericTask();
         genericTask.setLogAppender(TaskUtils.createLogAppender(task, resolvedVerbose));
@@ -43,11 +118,10 @@
             // Print plugin task properties and any extra useful values for user.
             // As much as possible use generic task properties.
             logger.info("Configuration properties:");
-            if (task instanceof ProcessingTask) {
+            if (task instanceof ProcessingMojo) {
                 logger.info("\taugCodeSpecIndex: " + resolvedAugCodeSpecIndex);
                 logger.info("\tgenCodeFileIndex: " + resolvedGenCodeFileIndex);
             }
-            logger.info("\tscriptEvalFunction: " + resolvedScriptEvalFunction);
             logger.info("\tgroovyScriptDir: " + resolvedGroovyScriptDir);
             logger.info("\tgroovyEntryScriptName: " + resolvedGroovyEntryScriptName);
             logger.info("\tgenericTask.inputFile: " + resolvedAugCodeFile);
@@ -93,3 +167,5 @@
                 resolvedStackTraceLimitPrefixes, resolvedStackTraceFilterPrefixes);
         }
     }
+//:SKIP_CODE_END:
+}

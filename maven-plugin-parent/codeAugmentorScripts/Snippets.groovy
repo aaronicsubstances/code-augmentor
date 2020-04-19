@@ -19,7 +19,7 @@ static generateClassContents(augCode, context) {
         output << "${indent}this.${fieldSpec.name} = ${fieldSpec.name};" << newline;
         output << "}" << newline << newline;
     }
-    return "$output";
+    return output;
 }
 
 static generateMainClass(augCode, context) {
@@ -44,5 +44,5 @@ static generateMainClass(augCode, context) {
     out << indent * 2 << 'System.out.println("Hello from CodeAugmentor!");' << newline
     out << indent << '}' << newline
     out << '}'
-    return "$output"
+    return out
 }

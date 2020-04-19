@@ -80,7 +80,8 @@
         "startPos": 68,
         "text": "#GS\r\n",
         "newline": "\r\n",
-        "endPos": 73
+        "endPos": 73,
+        "isGeneratedCodeMarker": true
     },
     {
         "type": 50,
@@ -106,7 +107,8 @@
         "startPos": 78,
         "text": "#GE\r\n",
         "newline": "\r\n",
-        "endPos": 83
+        "endPos": 83,
+        "isGeneratedCodeMarker": true
     },
     {
         "text": "\tString driverClass = \"oracle.jdbc.driver.OracleDriver\";\r\n",
@@ -118,46 +120,46 @@
         "endPos": 141
     },
     {
-        "type": 6,
+        "type": 1,
         "augCodeSpecIndex": 0,
         "indent": "",
-        "directiveMarker": "//--",
+        "directiveMarker": "//--<<",
         "directiveContent": "",
         "index": 10,
         "lineNumber": 11,
         "startPos": 141,
-        "text": "//--\r\n",
+        "text": "//--<<\r\n",
         "newline": "\r\n",
-        "endPos": 147
+        "endPos": 149
     },
     {
         "text": "\r\n",
         "type": 20,
         "index": 11,
         "lineNumber": 12,
-        "startPos": 147,
+        "startPos": 149,
         "newline": "\r\n",
-        "endPos": 149
+        "endPos": 151
     },
     {
         "text": "\tConnection con;\r\n",
         "index": 12,
         "lineNumber": 13,
-        "startPos": 149,
+        "startPos": 151,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 167
+        "endPos": 169
     },
     {
-        "type": 5,
+        "type": 2,
         "augCodeSpecIndex": 0,
         "indent": "",
-        "directiveMarker": "//--<<",
+        "directiveMarker": "//--",
         "directiveContent": "",
         "index": 13,
         "lineNumber": 14,
-        "startPos": 167,
-        "text": "//--<<\r\n",
+        "startPos": 169,
+        "text": "//--\r\n",
         "newline": "\r\n",
         "endPos": 175
     },

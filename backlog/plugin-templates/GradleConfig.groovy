@@ -53,8 +53,8 @@ LOG_PREPARE_TASK_PROPERTIES = """logger.info("Configuration properties:");
             logger.info("\\tgenCodeEndDirectives: " + genericTask.getGenCodeEndDirectives());
             logger.info("\\tembeddedStringDirectives: " + genericTask.getEmbeddedStringDirectives());
             logger.info("\\tembeddedJsonDirectives: " + genericTask.getEmbeddedJsonDirectives());
-            logger.info("\\tenableScanDirectives: " + genericTask.getEnableScanDirectives());
-            logger.info("\\tdisableScanDirectives: " + genericTask.getDisableScanDirectives());
+            logger.info("\\tskipCodeStartDirectives: " + genericTask.getSkipCodeStartDirectives());
+            logger.info("\\tskipCodeEndDirectives: " + genericTask.getSkipCodeEndDirectives());
             
             if (task instanceof $PLUGIN_PREPARE_TASK_TYPE) {
                 logger.info("\\tprepFile: " + genericTask.getPrepFile());

@@ -64,8 +64,7 @@ public class CompletionTask extends DefaultTask {
         }
     }
 
-//
-//:GEN_CODE_START:
+//:SKIP_CODE_START:
     static void completeExecute(DefaultTask task, String resolvedEncoding,
             boolean resolvedVerbose, File resolvedPrepFile,
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
@@ -155,7 +154,7 @@ public class CompletionTask extends DefaultTask {
             throw new GradleException(outOfSyncMsg.toString());
         }
     }
-//:GEN_CODE_END:
+//:SKIP_CODE_END:
 
     @Internal
     public Property<Boolean> getVerbose() {

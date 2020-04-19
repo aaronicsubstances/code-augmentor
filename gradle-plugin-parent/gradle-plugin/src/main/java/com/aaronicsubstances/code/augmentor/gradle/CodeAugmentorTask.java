@@ -25,8 +25,8 @@ public class CodeAugmentorTask extends DefaultTask {
     private final ListProperty<String> genCodeEndDirectives;
     private final ListProperty<String> embeddedStringDirectives;
     private final ListProperty<String> embeddedJsonDirectives;
-    private final ListProperty<String> enableScanDirectives;
-    private final ListProperty<String> disableScanDirectives;
+    private final ListProperty<String> skipCodeStartDirectives;
+    private final ListProperty<String> skipCodeEndDirectives;
     
     private final Property<GenericTaskExtensionFunction> scriptEvalFunction;
     private final ListProperty<String> scriptErrorStackTraceFilterPrefixes;
@@ -51,8 +51,8 @@ public class CodeAugmentorTask extends DefaultTask {
         genCodeEndDirectives = objectFactory.listProperty(String.class);
         embeddedStringDirectives = objectFactory.listProperty(String.class);
         embeddedJsonDirectives = objectFactory.listProperty(String.class);
-        enableScanDirectives = objectFactory.listProperty(String.class);
-        disableScanDirectives = objectFactory.listProperty(String.class);
+        skipCodeStartDirectives = objectFactory.listProperty(String.class);
+        skipCodeEndDirectives = objectFactory.listProperty(String.class);
 
         scriptEvalFunction = objectFactory.property(GenericTaskExtensionFunction.class);
         scriptErrorStackTraceFilterPrefixes = objectFactory.listProperty(String.class);
@@ -79,8 +79,8 @@ public class CodeAugmentorTask extends DefaultTask {
             List<String> resolvedGenCodeEndDirectives = genCodeEndDirectives.get();
             List<String> resolvedEmbeddedStringDirectives = embeddedStringDirectives.get();
             List<String> resolvedEmbeddedJsonDirectives = embeddedJsonDirectives.get();
-            List<String> resolvedEnableScanDirectives = enableScanDirectives.get();
-            List<String> resolvedDisableScanDirectives = disableScanDirectives.get();
+            List<String> resolvedSkipCodeStartDirectives = skipCodeStartDirectives.get();
+            List<String> resolvedSkipCodeEndDirectives = skipCodeEndDirectives.get();
             List<List<String>> resolvedAugCodeSpecDirectives = Arrays.asList(
                 augCodeDirectives.get());
             List<File> resolvedAugCodeFiles = Arrays.asList(getProject().file(augCodeFile));
@@ -88,8 +88,8 @@ public class CodeAugmentorTask extends DefaultTask {
             PreparationTask.completeExecute(this, resolvedEncoding, resolvedVerbose,
                 resolvedFileSets, resolvedGenCodeStartDirectives,
                 resolvedGenCodeEndDirectives, resolvedEmbeddedStringDirectives,
-                resolvedEmbeddedJsonDirectives, resolvedEnableScanDirectives,
-                resolvedDisableScanDirectives, resolvedAugCodeSpecDirectives,
+                resolvedEmbeddedJsonDirectives, resolvedSkipCodeStartDirectives,
+                resolvedSkipCodeEndDirectives, resolvedAugCodeSpecDirectives,
                 resolvedAugCodeFiles, resolvedPrepFile);
 
             // Process aug codes file into gen codes file.
@@ -169,13 +169,13 @@ public class CodeAugmentorTask extends DefaultTask {
     }
 
     @Internal
-    public ListProperty<String> getEnableScanDirectives() {
-        return enableScanDirectives;
+    public ListProperty<String> getSkipCodeStartDirectives() {
+        return skipCodeStartDirectives;
     }
 
     @Internal
-    public ListProperty<String> getDisableScanDirectives() {
-        return disableScanDirectives;
+    public ListProperty<String> getSkipCodeEndDirectives() {
+        return skipCodeEndDirectives;
     }
 
     @Internal

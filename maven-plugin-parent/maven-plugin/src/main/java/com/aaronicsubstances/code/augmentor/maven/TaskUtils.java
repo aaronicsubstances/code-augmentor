@@ -1,5 +1,6 @@
 package com.aaronicsubstances.code.augmentor.maven;
 
+import java.io.File;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
@@ -40,7 +41,7 @@ public class TaskUtils {
         return logAppender;
     }
 
-    public static MojoExecutionException convertToMavenException(List<Throwable> allErrors) {
+    public static MojoExecutionException convertToPluginException(List<Throwable> allErrors) {
         return convertToPluginException(allErrors, false, false, null, null);
     }
 
@@ -52,4 +53,7 @@ public class TaskUtils {
             stackTraceLimitPrefixes, stackTraceFilterPrefixes);
         return new MojoExecutionException(allExMsg);
     }
+
+	public static void deleteDirContents(File dir) {
+	}
 }

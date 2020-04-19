@@ -8,6 +8,7 @@ import java.util.List;
 import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskExtensionFunction;
 import com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeGenericTask;
 
+import org.codehaus.groovy.control.CompilerConfiguration;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.logging.Logger;
@@ -97,8 +98,7 @@ public class ProcessingTask extends DefaultTask {
         }
     }
 
-//
-//:GEN_CODE_START:
+//:SKIP_CODE_START:
     private static final JsonSlurper JSON_PARSER = new JsonSlurper();
     
     static void completeExecute(DefaultTask task, boolean resolvedVerbose,
@@ -163,6 +163,9 @@ public class ProcessingTask extends DefaultTask {
             defaultGroovyUsed = true;
             URL[] scriptEngineRoots = new URL[]{ resolvedGroovyScriptDir.toURI().toURL() };
             GroovyScriptEngine scriptEngine = new GroovyScriptEngine(scriptEngineRoots);
+            CompilerConfiguration cc = new CompilerConfiguration();
+            cc.setRecompileGroovySource(false);
+            scriptEngine.setConfig(cc);
             Binding binding = new Binding();
             binding.setVariable("parentTask", genericTask);
             logger.info("Launching " + resolvedGroovyEntryScriptName + "...");
@@ -191,7 +194,7 @@ public class ProcessingTask extends DefaultTask {
                 resolvedStackTraceLimitPrefixes, resolvedStackTraceFilterPrefixes);
         }
     }
-//:GEN_CODE_END:
+//:SKIP_CODE_END:
 
     @Internal
     public Property<Integer> getAugCodeSpecIndex() {

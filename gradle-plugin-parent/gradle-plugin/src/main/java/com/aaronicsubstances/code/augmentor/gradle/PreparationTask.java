@@ -35,8 +35,8 @@ public class PreparationTask extends DefaultTask {
     private final ListProperty<String> genCodeEndDirectives;
     private final ListProperty<String> embeddedStringDirectives;
     private final ListProperty<String> embeddedJsonDirectives;
-    private final ListProperty<String> enableScanDirectives;
-    private final ListProperty<String> disableScanDirectives;
+    private final ListProperty<String> skipCodeStartDirectives;
+    private final ListProperty<String> skipCodeEndDirectives;
     
     public PreparationTask() {
         ObjectFactory objectFactory = getProject().getObjects();
@@ -49,8 +49,8 @@ public class PreparationTask extends DefaultTask {
         genCodeEndDirectives = objectFactory.listProperty(String.class);
         embeddedStringDirectives = objectFactory.listProperty(String.class);
         embeddedJsonDirectives = objectFactory.listProperty(String.class);
-        enableScanDirectives = objectFactory.listProperty(String.class);
-        disableScanDirectives = objectFactory.listProperty(String.class);
+        skipCodeStartDirectives = objectFactory.listProperty(String.class);
+        skipCodeEndDirectives = objectFactory.listProperty(String.class);
     }
 
     @TaskAction    
@@ -63,8 +63,8 @@ public class PreparationTask extends DefaultTask {
             List<String> resolvedGenCodeEndDirectives = genCodeEndDirectives.get();
             List<String> resolvedEmbeddedStringDirectives = embeddedStringDirectives.get();
             List<String> resolvedEmbeddedJsonDirectives = embeddedJsonDirectives.get();
-            List<String> resolvedEnableScanDirectives = enableScanDirectives.get();
-            List<String> resolvedDisableScanDirectives = disableScanDirectives.get();
+            List<String> resolvedSkipCodeStartDirectives = skipCodeStartDirectives.get();
+            List<String> resolvedSkipCodeEndDirectives = skipCodeEndDirectives.get();
             List<List<String>> resolvedAugCodeSpecDirectives = new ArrayList<>();
             List<File> resolvedAugCodeFiles = new ArrayList<>();
             List<AugCodeDirectiveSpec> resolvedAugCodeSpecs = augCodeSpecs.get();
@@ -83,8 +83,8 @@ public class PreparationTask extends DefaultTask {
             completeExecute(this, resolvedEncoding, resolvedVerbose,
                 resolvedFileSets, resolvedGenCodeStartDirectives,
                 resolvedGenCodeEndDirectives, resolvedEmbeddedStringDirectives,
-                resolvedEmbeddedJsonDirectives, resolvedEnableScanDirectives,
-                resolvedDisableScanDirectives, resolvedAugCodeSpecDirectives,
+                resolvedEmbeddedJsonDirectives, resolvedSkipCodeStartDirectives,
+                resolvedSkipCodeEndDirectives, resolvedAugCodeSpecDirectives,
                 resolvedAugCodeFiles, resolvedPrepFile);
         }
         catch (GradleException ex) {
@@ -95,8 +95,7 @@ public class PreparationTask extends DefaultTask {
         }
     }
 
-//
-//:GEN_CODE_START:
+//:SKIP_CODE_START:
     static void completeExecute(
             DefaultTask task,
             String resolvedEncoding, boolean resolvedVerbose, 
@@ -105,8 +104,8 @@ public class PreparationTask extends DefaultTask {
             List<String> resolvedGenCodeEndDirectives,
             List<String> resolvedEmbeddedStringDirectives,
             List<String> resolvedEmbeddedJsonDirectives,
-            List<String> resolvedEnableScanDirectives,
-            List<String> resolvedDisableScanDirectives,
+            List<String> resolvedSkipCodeStartDirectives,
+            List<String> resolvedSkipCodeEndDirectives,
             List<List<String>> resolvedAugCodeSpecDirectives,
             List<File> resolvedAugCodeFiles,
             File resolvedPrepFile) throws Exception {
@@ -170,10 +169,10 @@ public class PreparationTask extends DefaultTask {
         totalDirectiveCount += resolvedEmbeddedStringDirectives.size();
         allDirectives.addAll(resolvedEmbeddedJsonDirectives);
         totalDirectiveCount += resolvedEmbeddedJsonDirectives.size();
-        allDirectives.addAll(resolvedEnableScanDirectives);
-        totalDirectiveCount += resolvedEnableScanDirectives.size();
-        allDirectives.addAll(resolvedDisableScanDirectives);
-        totalDirectiveCount += resolvedDisableScanDirectives.size();
+        allDirectives.addAll(resolvedSkipCodeStartDirectives);
+        totalDirectiveCount += resolvedSkipCodeStartDirectives.size();
+        allDirectives.addAll(resolvedSkipCodeEndDirectives);
+        totalDirectiveCount += resolvedSkipCodeEndDirectives.size();
         
         for (List<String> resolvedAugCodeDirectives : resolvedAugCodeSpecDirectives) {
             allDirectives.addAll(resolvedAugCodeDirectives);
@@ -219,8 +218,8 @@ public class PreparationTask extends DefaultTask {
         genericTask.setGenCodeEndDirectives(resolvedGenCodeEndDirectives);
         genericTask.setEmbeddedStringDirectives(resolvedEmbeddedStringDirectives);
         genericTask.setEmbeddedJsonDirectives(resolvedEmbeddedJsonDirectives);
-        genericTask.setEnableScanDirectives(resolvedEnableScanDirectives);
-        genericTask.setDisableScanDirectives(resolvedDisableScanDirectives);
+        genericTask.setSkipCodeStartDirectives(resolvedSkipCodeStartDirectives);
+        genericTask.setSkipCodeEndDirectives(resolvedSkipCodeEndDirectives);
 
         List<AugCodeProcessingSpec> augCodeProcessingSpecs = new ArrayList<>();
         genericTask.setAugCodeProcessingSpecs(augCodeProcessingSpecs);
@@ -241,8 +240,8 @@ public class PreparationTask extends DefaultTask {
             logger.info("\tgenCodeEndDirectives: " + genericTask.getGenCodeEndDirectives());
             logger.info("\tembeddedStringDirectives: " + genericTask.getEmbeddedStringDirectives());
             logger.info("\tembeddedJsonDirectives: " + genericTask.getEmbeddedJsonDirectives());
-            logger.info("\tenableScanDirectives: " + genericTask.getEnableScanDirectives());
-            logger.info("\tdisableScanDirectives: " + genericTask.getDisableScanDirectives());
+            logger.info("\tskipCodeStartDirectives: " + genericTask.getSkipCodeStartDirectives());
+            logger.info("\tskipCodeEndDirectives: " + genericTask.getSkipCodeEndDirectives());
             
             if (task instanceof PreparationTask) {
                 logger.info("\tprepFile: " + genericTask.getPrepFile());
@@ -275,7 +274,7 @@ public class PreparationTask extends DefaultTask {
             throw TaskUtils.convertToPluginException(genericTask.getAllErrors());
         }
     }
-//:GEN_CODE_END:
+//:SKIP_CODE_END:
 
     @Internal
     public Property<Boolean> getVerbose() {
@@ -323,12 +322,12 @@ public class PreparationTask extends DefaultTask {
     }
 
     @Internal
-    public ListProperty<String> getEnableScanDirectives() {
-        return enableScanDirectives;
+    public ListProperty<String> getSkipCodeStartDirectives() {
+        return skipCodeStartDirectives;
     }
 
     @Internal
-    public ListProperty<String> getDisableScanDirectives() {
-        return disableScanDirectives;
+    public ListProperty<String> getSkipCodeEndDirectives() {
+        return skipCodeEndDirectives;
     }
 }

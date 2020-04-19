@@ -44,6 +44,7 @@ codeAugmentor {
 // and Gradle won't call tasks dependent on it.
 // So we are forced to run before compileJava on possibly 
 // uncompilable source code...
-compileJava.dependsOn codeAugmentorComplete
+/*compileJava.dependsOn codeAugmentorComplete
 codeAugmentorComplete.dependsOn codeAugmentorProcess
-codeAugmentorProcess.dependsOn codeAugmentorPrepare
+codeAugmentorProcess.dependsOn codeAugmentorPrepare*/
+compileJava.dependsOn codeAugmentorRun
