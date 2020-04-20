@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import com.aaronicsubstances.code.augmentor.core.TestResourceLoader;
 import com.aaronicsubstances.code.augmentor.core.models.CodeGenerationRequest;
 import com.aaronicsubstances.code.augmentor.core.models.PreCodeAugmentationResult;
+import com.aaronicsubstances.code.augmentor.core.models.SourceFileAugmentingCode;
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileDescriptor;
 import com.google.gson.Gson;
 
@@ -121,6 +122,11 @@ public class PreCodeAugmentationGenericTaskTest {
             File f = task.getAugCodeProcessingSpecs().get(i).getDestFile();
             CodeGenerationRequest expected = expectedRequests.get(i);
             CodeGenerationRequest actual = CodeGenerationRequest.deserialize(f);
+            // to enable easier testing, don't require dir (we won't know temp dir on every
+            // host dev't machine)
+            for (SourceFileAugmentingCode a : actual.getSourceFileAugmentingCodes()) {
+                a.setDir(null);
+            }
             assertEquals(actual, expected, "Unexpected contents found in " + f);
         }
     }

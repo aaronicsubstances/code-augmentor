@@ -70,8 +70,10 @@ public class CodeAugmentationGenericTask {
             }
 
             // fetch applicable generated code per aug code descriptor.
-            List<String> generatedCodes = new ArrayList<>();
+            List<GeneratedCode> generatedCodes = new ArrayList<>();
+            List<String> replacementTexts = new ArrayList<>();
             List<int[]> replacementRanges = new ArrayList<>();
+            List<Integer> exactMatchAdjustments = new ArrayList<>();
             for (CodeSnippetDescriptor snippetDescriptor : sourceFileDescriptor.getCodeSnippets()) {
                 AugmentingCodeDescriptor augCodeDescriptor = snippetDescriptor.getAugmentingCodeDescriptor();
                 int augCodeIndex = augCodeDescriptor.getIndex();
@@ -92,7 +94,9 @@ public class CodeAugmentationGenericTask {
                         augCodeDescriptor, srcFile);
                 }
 
-                int[] replacementRange = determineReplacementRange(snippetDescriptor,
+                generatedCodes.add(genCode);
+
+                int[] replacementRange = CodeGenerationResponseProcessor.determineReplacementRange(snippetDescriptor,
                     genCode);
                 if (replacementRange != null) {
                     GenericTaskException warning = createException("Advanced replacement usage detected.", 
@@ -103,33 +107,51 @@ public class CodeAugmentationGenericTask {
 
                 String newline = augCodeDescriptor.getLineSeparator();
 
-                String formattedGenCode = ensureEndingNewline(genCode.getContent(),
-                    newline);
-                String indent = getEffectiveIndent(augCodeDescriptor, genCode);
-                if (!TaskUtils.isEmpty(indent)) {
-                    formattedGenCode = indentCode(formattedGenCode, indent);
+                String formattedGenCode = CodeGenerationResponseProcessor.ensureEndingNewline(
+                    genCode.getContent(), newline);
+                String indent = "";
+                boolean hasExactMatches = genCode.getExactMatchRanges() != null &&
+                    !genCode.getExactMatchRanges().isEmpty();
+                if (!hasExactMatches) {
+                    indent = CodeGenerationResponseProcessor.getEffectiveIndent(
+                        augCodeDescriptor, genCode);
+                    if (!indent.isEmpty()) {
+                        formattedGenCode = CodeGenerationResponseProcessor.indentCode(
+                            formattedGenCode, indent);
+                    }
                 }
+                int exactMatchAdjustment = 0;
                 if (replacementRange == null) {
                     // employ default behaviour of ensuring generated code
                     // occurs within directive markers. 
                     if (snippetDescriptor.getGeneratedCodeDescriptor() == null) {
-                        formattedGenCode = wrapInGeneratedCodeDirectives(formattedGenCode, 
-                            result.getGenCodeStartDirective(), result.getGenCodeEndDirective(),
-                            indent, newline);
+                        String startDrv = result.getGenCodeStartDirective();
+                        String endDrv = result.getGenCodeEndDirective();
+                        String wrapPrefix = indent + startDrv + newline;
+                        String wrapSuffix = indent + endDrv + newline;
+                        formattedGenCode = wrapPrefix + formattedGenCode + wrapSuffix;
+                        exactMatchAdjustment = wrapPrefix.length();
                     }
                 }
-                generatedCodes.add(formattedGenCode);
+                replacementTexts.add(formattedGenCode);
+                exactMatchAdjustments.add(exactMatchAdjustment);
             }
 
-            // Now merge generated code into source code.
+            // Now merge generated code into source code,
+            // and try and detect changes.
+            boolean changesDetected = false;
             SourceCodeTransformer transformer = new SourceCodeTransformer(sourceCode);
-            for (int i = 0; i < generatedCodes.size(); i++) {
-                String genCode = generatedCodes.get(i);
-                // use replacement range if specified.
+            for (int i = 0; i < replacementTexts.size(); i++) {
+                String replacmentText = replacementTexts.get(i);
                 int[] replacementRange = replacementRanges.get(i);
-                if (replacementRange != null) {        
-                    // expected for advanced usage only.            
-                    transformer.addTransform(genCode, replacementRange[0], replacementRange[1]);
+                String textToBeReplaced;
+
+                // use replacement range if specified.
+                if (replacementRange != null) {
+                    // expected for advanced usage only.
+                    transformer.addTransform(replacmentText, replacementRange[0], replacementRange[1]);
+                    textToBeReplaced = sourceCode.substring(replacementRange[0],
+                        replacementRange[1]);
                 }
                 else {
                     // resort to default behaviour
@@ -141,17 +163,37 @@ public class CodeAugmentationGenericTask {
                         // and ends just before the end directive marker.
                         int genCodeStartPos = genCodeDescriptor.getStartDirectiveEndPos();
                         int genCodeEndPos = genCodeDescriptor.getEndDirectiveStartPos(); 
-                        transformer.addTransform(genCode, genCodeStartPos, genCodeEndPos);
+                        transformer.addTransform(replacmentText, genCodeStartPos, genCodeEndPos);
+                        textToBeReplaced = sourceCode.substring(genCodeStartPos,
+                            genCodeEndPos);
                     }
                     else {
                         AugmentingCodeDescriptor augCodeDescriptor = snippetDescriptor.getAugmentingCodeDescriptor();
-                        transformer.addTransform(genCode, augCodeDescriptor.getEndPos());
+                        transformer.addTransform(replacmentText, augCodeDescriptor.getEndPos());
+                        textToBeReplaced = "";
+                    }
+                }
+                // check for changes only if we still haven't detected them.
+                if (changesDetected) {
+                    // skip this check.
+                }
+                else if (textToBeReplaced.equals(replacmentText)) {
+                    // definitely there are no changes then.
+                }
+                else {
+                    // determine whether changes are superficial or significant.
+                    GeneratedCode genCode = generatedCodes.get(i);
+                    int exactMatchAdjustment = exactMatchAdjustments.get(i);
+                    boolean similar = CodeGenerationResponseProcessor.areTextsSimiliar(
+                        textToBeReplaced, replacmentText,
+                        genCode.getExactMatchRanges(), exactMatchAdjustment);
+                    if (!similar) {
+                        changesDetected = true;
                     }
                 }
             }
 
-            String transformedCode = transformer.getTransformedText();
-            if (transformedCode.equals(sourceCode)) {
+            if (!changesDetected) {
                 TaskUtils.logVerbose(logAppender, "No changes needed for %s", srcFile);
             }
             else {
@@ -165,6 +207,8 @@ public class CodeAugmentationGenericTask {
                 File destSubDir = new File(destDir, destSubDirName);
                 File destFile = new File(destSubDir, sourceFileDescriptor.getRelativePath());
                 destFile.getParentFile().mkdirs();
+
+                String transformedCode = transformer.getTransformedText();
                 TaskUtils.writeFile(destFile, charset, transformedCode);
                 srcFiles.add(srcFile);
                 destFiles.add(destFile);
@@ -180,75 +224,6 @@ public class CodeAugmentationGenericTask {
         // close readers
         result.endDeserialize(resultReader);
         generatedCodeFetcher.close();
-    }
-
-    static int[] determineReplacementRange(CodeSnippetDescriptor snippetDescriptor, 
-            GeneratedCode genCode) {
-        if (!genCode.isReplaceGenCodeDirectives() && !genCode.isReplaceAugCodeDirectives()) {
-            return null;
-        }
-        AugmentingCodeDescriptor augCodeDescriptor = snippetDescriptor.getAugmentingCodeDescriptor();
-        GeneratedCodeDescriptor genCodeDescriptor = snippetDescriptor.getGeneratedCodeDescriptor();
-        if (genCode.isReplaceAugCodeDirectives()) {
-            int[] replacementRange = new int[]{ augCodeDescriptor.getStartPos(),
-                augCodeDescriptor.getEndPos() };
-            if (genCode.isReplaceGenCodeDirectives() && genCodeDescriptor != null) {
-                replacementRange[1] = genCodeDescriptor.getEndDirectiveEndPos();
-            }
-            return replacementRange;
-        }                   
-        else if (genCode.isReplaceGenCodeDirectives()) {
-            if (genCodeDescriptor != null) {
-                int[] replacementRange = new int[]{ augCodeDescriptor.getEndPos(),
-                    genCodeDescriptor.getEndDirectiveEndPos() };
-                return replacementRange;
-            }
-        }
-        return null;
-    }
-
-    static String ensureEndingNewline(String code, String newline) {
-        boolean genCodeEndsWithNewline = false;
-        if (!code.isEmpty()) {
-            char lastChar = code.charAt(code.length() - 1);
-            if (TaskUtils.isNewLine(lastChar)) {
-                genCodeEndsWithNewline = true;
-            }
-        }
-        if (!genCodeEndsWithNewline) {
-            code += newline;
-        }
-        return code;
-    }
-
-    static String getEffectiveIndent(AugmentingCodeDescriptor augCodeDescriptor, GeneratedCode genCode) {
-        String indent = genCode.getIndent();
-        if (indent == null) {
-            indent = augCodeDescriptor.getIndent();
-        }
-        return indent;
-    }
-
-    static String indentCode(String code, String indent) {
-        List<String> splitCode = TaskUtils.splitIntoLines(code);
-        StringBuilder codeBuffer = new StringBuilder();
-        for (int i = 0; i < splitCode.size(); i+=2) {
-            String line = splitCode.get(i);
-            if (!TaskUtils.isBlank(line)) {
-                codeBuffer.append(indent).append(line);
-            }
-            String terminator = splitCode.get(i + 1);
-            codeBuffer.append(terminator);
-        }
-        return codeBuffer.toString();
-    }
-
-    static String wrapInGeneratedCodeDirectives(String code, String genCodeStartDirective,
-            String genCodeEndDirective,
-            String indent, String newline) {
-        return indent + genCodeStartDirective + newline +
-            code +
-            indent + genCodeEndDirective + newline;
     }
 
     private static GenericTaskException createException(String errorMessage, 

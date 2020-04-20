@@ -7,6 +7,7 @@ import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 
 public class SourceFileAugmentingCode {
     private int fileIndex;
+    private String dir;
     private String relativePath;
     private List<AugmentingCode> augmentingCodes;
 
@@ -23,6 +24,14 @@ public class SourceFileAugmentingCode {
 
     public void setFileIndex(int fileIndex) {
         this.fileIndex = fileIndex;
+    }
+
+    public String getDir() {
+        return dir;
+    }
+
+    public void setDir(String dir) {
+        this.dir = dir;
     }
 
     public String getRelativePath() {
@@ -80,6 +89,7 @@ public class SourceFileAugmentingCode {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((augmentingCodes == null) ? 0 : augmentingCodes.hashCode());
+        result = prime * result + ((dir == null) ? 0 : dir.hashCode());
         result = prime * result + fileIndex;
         result = prime * result + ((relativePath == null) ? 0 : relativePath.hashCode());
         return result;
@@ -99,6 +109,11 @@ public class SourceFileAugmentingCode {
                 return false;
         } else if (!augmentingCodes.equals(other.augmentingCodes))
             return false;
+        if (dir == null) {
+            if (other.dir != null)
+                return false;
+        } else if (!dir.equals(other.dir))
+            return false;
         if (fileIndex != other.fileIndex)
             return false;
         if (relativePath == null) {
@@ -111,8 +126,7 @@ public class SourceFileAugmentingCode {
 
     @Override
     public String toString() {
-        return "SourceFileAugmentingCode{augmentingCodes=" + augmentingCodes +
-                ", fileIndex=" + fileIndex +
-                ", relativePath=" + relativePath + "}";
+        return "SourceFileAugmentingCode{augmentingCodes=" + augmentingCodes + ", dir=" + dir + ", fileIndex="
+                + fileIndex + ", relativePath=" + relativePath + "}";
     }
 }

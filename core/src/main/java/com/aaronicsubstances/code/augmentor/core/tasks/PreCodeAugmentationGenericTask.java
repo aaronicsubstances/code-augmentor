@@ -116,8 +116,9 @@ public class PreCodeAugmentationGenericTask {
                         }
                         identifiedAugCodeCount += specAugCodes.size();
                         SourceFileAugmentingCode sourceFileAugCode = new SourceFileAugmentingCode(specAugCodes);
-                        sourceFileAugCode.setFileIndex(i);
-                        sourceFileAugCode.setRelativePath(relativePath);
+                        sourceFileAugCode.setFileIndex(s.getFileIndex());
+                        sourceFileAugCode.setDir(s.getDir());
+                        sourceFileAugCode.setRelativePath(s.getRelativePath());
                         sourceFileAugCode.serialize(requestWriter);
                     }
                 }

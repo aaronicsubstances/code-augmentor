@@ -1,12 +1,89 @@
 package com.aaronicsubstances.code.augmentor.core.models;
 
+import java.util.List;
+
 public class GeneratedCode {
+
+    public static class ContentRange {
+        private int startPos;
+        private int endPos;
+
+        public ContentRange() {
+
+        }
+
+        public ContentRange(int startPos, int endPos) {
+            this.startPos = startPos;
+            this.endPos = endPos;
+		}
+
+		public int getStartPos() {
+            return startPos;
+        }
+
+        public void setStartPos(int startPos) {
+            this.startPos = startPos;
+        }
+
+        public int getEndPos() {
+            return endPos;
+        }
+
+        public void setEndPos(int endPos) {
+            this.endPos = endPos;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + endPos;
+            result = prime * result + startPos;
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            ContentRange other = (ContentRange) obj;
+            if (endPos != other.endPos)
+                return false;
+            if (startPos != other.startPos)
+                return false;
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            return "ContentRange{endPos=" + endPos + ", startPos=" + startPos + "}";
+        }
+    }
+
     private int index;
     private String content;
     private String indent;
     private boolean skipped;
     private boolean replaceAugCodeDirectives;
     private boolean replaceGenCodeDirectives;
+    private List<ContentRange> exactMatchRanges;
+
+    public GeneratedCode() {
+
+    }
+
+    public GeneratedCode(List<ContentRange> exactMatchRanges) {
+        this.exactMatchRanges = exactMatchRanges;        
+    }
+
+    // used by Groovy script
+    public ContentRange newExactMatchRange(int startPos, int endPos) {
+        return new ContentRange(startPos, endPos);
+    }
 
     public int getIndex() {
         return index;
@@ -56,11 +133,20 @@ public class GeneratedCode {
         this.replaceGenCodeDirectives = replaceGenCodeDirectives;
     }
 
+    public List<ContentRange> getExactMatchRanges() {
+        return exactMatchRanges;
+    }
+
+    public void setExactMatchRanges(List<ContentRange> exactMatchRanges) {
+        this.exactMatchRanges = exactMatchRanges;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((content == null) ? 0 : content.hashCode());
+        result = prime * result + ((exactMatchRanges == null) ? 0 : exactMatchRanges.hashCode());
         result = prime * result + ((indent == null) ? 0 : indent.hashCode());
         result = prime * result + index;
         result = prime * result + (replaceAugCodeDirectives ? 1231 : 1237);
@@ -83,6 +169,11 @@ public class GeneratedCode {
                 return false;
         } else if (!content.equals(other.content))
             return false;
+        if (exactMatchRanges == null) {
+            if (other.exactMatchRanges != null)
+                return false;
+        } else if (!exactMatchRanges.equals(other.exactMatchRanges))
+            return false;
         if (indent == null) {
             if (other.indent != null)
                 return false;
@@ -101,8 +192,8 @@ public class GeneratedCode {
 
     @Override
     public String toString() {
-        return "GeneratedCode{content=" + content + ", indent=" + indent + ", index="
-                + index + ", replaceAugCodeDirectives=" + replaceAugCodeDirectives + ", replaceGenCodeDirectives="
-                + replaceGenCodeDirectives + ", skipped=" + skipped + "}";
+        return "GeneratedCode{content=" + content + ", exactMatchRanges=" + exactMatchRanges + ", indent=" + indent
+                + ", index=" + index + ", replaceAugCodeDirectives=" + replaceAugCodeDirectives
+                + ", replaceGenCodeDirectives=" + replaceGenCodeDirectives + ", skipped=" + skipped + "}";
     }
 }

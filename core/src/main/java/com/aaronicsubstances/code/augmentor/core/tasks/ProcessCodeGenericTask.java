@@ -5,9 +5,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -39,15 +37,7 @@ public class ProcessCodeGenericTask {
         // create a context for sharing variables needed when
         // an aug code section is used more than once in a file, or
         // even throughout file sets.
-        Map<String, Object> context = new HashMap<>();
-        context.put("globalScope", new HashMap<>());
-        // provide convenience way to create GeneratedCode instances.
-        context.put("genCodeSupplier", new Supplier<GeneratedCode>() {
-            @Override
-            public GeneratedCode get() {
-                return new GeneratedCode();
-            }
-        });
+        ProcessCodeContext context = new ProcessCodeContext();
 
         CodeGenerationRequest codeGenRequest = new CodeGenerationRequest();
         CodeGenerationResponse codeGenResponse = new CodeGenerationResponse();
@@ -76,8 +66,8 @@ public class ProcessCodeGenericTask {
                 }
 
                 // set up context.
-                context.put("fileAugCodes", fileAugCodes);
-                context.put("fileScope", new HashMap<>());
+                context.setFileAugCodes(fileAugCodes);
+                context.getFileScope().clear();
 
                 SourceFileGeneratedCode fileGenCodes = new SourceFileGeneratedCode(new ArrayList<>());
                 fileGenCodes.setFileIndex(fileAugCodes.getFileIndex());
@@ -88,7 +78,7 @@ public class ProcessCodeGenericTask {
                 while (i < fileAugCodes.getAugmentingCodes().size()) {
                     AugmentingCode augCode = fileAugCodes.getAugmentingCodes().get(i);
                     String functionName = augCode.getBlocks().get(0).getContent().trim();
-                    context.put("augCodeIndex", i);
+                    context.setAugCodeIndex(i);
                     List<GeneratedCode> genCodes;
                     try {
                         genCodes = processAugCode(evalFunction, functionName, augCode, context);
@@ -130,9 +120,9 @@ public class ProcessCodeGenericTask {
         }
     }
     
-    //@SuppressWarnings("unchecked")
+    @SuppressWarnings("unchecked")
     List<GeneratedCode> processAugCode(GenericTaskExtensionFunction evalFunction, 
-            String functionName, AugmentingCode augCode, Map<String, Object> context) {
+            String functionName, AugmentingCode augCode, ProcessCodeContext context) {
         Object result;
         try {
             result = evalFunction.makeFunctionCall(new Object[]{ functionName, augCode, context });
@@ -146,32 +136,24 @@ public class ProcessCodeGenericTask {
             throw createException(context, "Received null result");
         }
         else if (result instanceof List) {
-            List listResult = (List) result;
+            List<GeneratedCode> listResult = (List<GeneratedCode>) result;
             if (listResult.isEmpty()) {
                 throw createException(context, "Received empty results");
             }
-            int augCodeIndexInContext = (int) context.get("augCodeIndex");
-            SourceFileAugmentingCode fileAugCodes = (SourceFileAugmentingCode) context.get("fileAugCodes");
+            int augCodeIndexInContext = context.getAugCodeIndex();
+            SourceFileAugmentingCode fileAugCodes = context.getFileAugCodes();
             for (int j = 0; j < listResult.size(); j++) {
-                Object listItem = listResult.get(j);
-                GeneratedCode genCode; 
+                GeneratedCode genCode = listResult.get(j);
                 // instead of throwing error, rather save them here so
                 // we can skip past whatever aug codes are targeted, and
                 // likely avoid superflous errors due to intermediate/dependent aug codes.
-                if (listItem == null) {
+                if (genCode == null) {
                     allErrors.add(createException(context, "Received null at index " + j));
                     break;
                 }
-                if (listItem instanceof GeneratedCode) {
-                    genCode = (GeneratedCode) listItem;
-                    if (genCode.getContent() == null) {
-                        allErrors.add(createException(context, "content property is not set at index " + j));
-                        break;
-                    }
-                }
-                else {
-                    genCode = new GeneratedCode();
-                    genCode.setContent(listItem.toString());
+                if (genCode.getContent() == null) {
+                    allErrors.add(createException(context, "content property is not set at index " + j));
+                    break;
                 }
                 if (augCodeIndexInContext + j >= fileAugCodes.getAugmentingCodes().size()) {
                     allErrors.add(createException(context, "No aug code found at offset " + j));
@@ -199,9 +181,9 @@ public class ProcessCodeGenericTask {
         }
     }
 
-    private static GenericTaskException createException(Map<String, Object> context, Object excOrMsg) {
-        int augCodeIndexInContext = (int) context.get("augCodeIndex");
-        SourceFileAugmentingCode fileAugCodes = (SourceFileAugmentingCode) context.get("fileAugCodes");
+    private static GenericTaskException createException(ProcessCodeContext context, Object excOrMsg) {
+        int augCodeIndexInContext = context.getAugCodeIndex();
+        SourceFileAugmentingCode fileAugCodes = context.getFileAugCodes();
         String srcPath = fileAugCodes.getRelativePath();
         AugmentingCode augCode = fileAugCodes.getAugmentingCodes().get(augCodeIndexInContext);
         String srcFileSnippet = augCode.getBlocks().get(0).getContent();
