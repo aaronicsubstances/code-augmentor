@@ -1,27 +1,40 @@
-    static void completeExecute($PLUGIN_BASE_TASK_TYPE task, String resolvedEncoding,
+    static void completeExecute(Task task, String resolvedEncoding,
             boolean resolvedVerbose, File resolvedPrepFile,
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
             File resolvedChangeSetInfoFile) throws Exception {
-        $COMPLETION_FILES_VALIDATION_CODE
+        // set up defaults
+        if (resolvedPrepFile == null) {
+            resolvedPrepFile = TaskUtils.getDefaultPrepFile(task);
+        }
+        if (resolvedGenCodeFiles.isEmpty()) {
+            resolvedGenCodeFiles.add(TaskUtils.getDefaultGenCodeFile(task));
+        }
+        if (resolvedChangeSetInfoFile == null) {
+            resolvedChangeSetInfoFile = TaskUtils.getDefaultChangeSetInfoFile(task);
+        }
+        if (resolvedDestDir == null) {
+            resolvedDestDir = TaskUtils.getDefaultDestDir(task);
+        }
         // validate
         Charset charset = Charset.forName(resolvedEncoding);
         for (int i = 0; i < resolvedGenCodeFiles.size(); i++) {
             File resolvedGenCodeFile = resolvedGenCodeFiles.get(i);
             if (resolvedGenCodeFile == null) {
-                if (task instanceof $PLUGIN_COMPLETE_TASK_TYPE) {
-                    throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE($VAL_ERROR_COMPLETE_NULL_GEN_CODE_FILE_AT_I);
+                if (task instanceof CompletionTask) {
+                    throw new BuildException("invaid null value found at genCodeSpecs[" + i + "]");
                 }
                 else {
-                    throw new RuntimeException($VAL_ERROR_RUN_NULL_GEN_CODE_FILE);
+                    throw new RuntimeException("unexpected absence of genCodeFile");
                 }
             }
         }
 
         // Validation complete. start execution by deleting contents
         // of destDir so generated output files is not confused with previous ones.
-        $LOG_REFERENCE
-        $LOG_DELETE_DEST_DIR
-        $DEST_DIR_CONTENT_DELETION_CODE
+        
+        task.log("Deleting contents of " + resolvedDestDir + "...");
+        
+        TaskUtils.deleteDirContents(resolvedDestDir);
 
         CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
         genericTask.setCharset(charset);
@@ -33,14 +46,24 @@
         if (resolvedVerbose) {
             // Print plugin task properties and any extra useful values for user.
             // As much as possible use generic task properties.
-            $LOG_COMPLETE_TASK_PROPERTIES
+            task.log("Configuration properties:");
+            task.log("\tencoding: " + genericTask.getCharset());
+            task.log("\tdestDir: " + genericTask.getDestDir());
+            if (task instanceof CompletionTask) {
+                task.log("\tprepFile: " + genericTask.getPrepFile());
+                for (int i = 0; i < genericTask.getGeneratedCodeFiles().size(); i++) {
+                    task.log("\tgenCodeSpecs[" + i + "].file: " + genericTask.getGeneratedCodeFiles().get(i));
+                }
+            }
+            task.log("\tchangeSetInfoFile: " + resolvedChangeSetInfoFile);
+            task.log("\tgenericTask.logAppender: " + genericTask.getLogAppender());
         }
 
         try {
             genericTask.execute();
         }
         catch (GenericTaskException ex) {
-            throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE(ex.getMessage(), ex.getCause());
+            throw new BuildException(ex.getMessage(), ex.getCause());
         }
 
         // Write out change set info file always even if there are no changes.
@@ -60,20 +83,20 @@
             fWriter.write(changeSetInfo.toString());
         }
         catch (IOException ex) {
-            throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE("Failed to write change set information to " +
+            throw new BuildException("Failed to write change set information to " +
                 resolvedChangeSetInfoFile, ex);
         }
 
         // fail build if there were changed files.
         if (!genericTask.getSrcFiles().isEmpty()) {
             StringBuilder outOfSyncMsg = new StringBuilder();
-            outOfSyncMsg.append("The following files are out of sync with generating code scripts:\\n");
+            outOfSyncMsg.append("The following files are out of sync with generating code scripts:\n");
             for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {
                 outOfSyncMsg.append(" ").append(i+1).append(". ");
                 outOfSyncMsg.append(genericTask.getSrcFiles().get(i).getPath());
-                outOfSyncMsg.append("\\n");
+                outOfSyncMsg.append("\n");
             }
 
-            throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE(outOfSyncMsg.toString());
+            throw new BuildException(outOfSyncMsg.toString());
         }
     }

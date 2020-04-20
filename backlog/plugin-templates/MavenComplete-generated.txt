@@ -2,6 +2,7 @@
             boolean resolvedVerbose, File resolvedPrepFile,
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
             File resolvedChangeSetInfoFile) throws Exception {
+        
         // validate
         Charset charset = Charset.forName(resolvedEncoding);
         for (int i = 0; i < resolvedGenCodeFiles.size(); i++) {

@@ -108,7 +108,7 @@ public class ProcessingTask extends DefaultTask {
             List<String> resolvedStackTraceLimitPrefixes, 
             List<String> resolvedStackTraceFilterPrefixes,
             File resolvedGroovyScriptDir, String resolvedGroovyEntryScriptName) throws Exception {
-        // validate
+        
         if (resolvedAugCodeFile == null) {
             if (task instanceof ProcessingTask) {
                 int i = resolvedAugCodeSpecIndex;
@@ -131,9 +131,7 @@ public class ProcessingTask extends DefaultTask {
         if (resolvedScriptEvalFunction == null && resolvedGroovyScriptDir == null) {
             throw new GradleException("groovyScriptDir property must be set if scriptEvalFunction is absent");
         }
-
         Logger logger = task.getLogger();
-
         ProcessCodeGenericTask genericTask = new ProcessCodeGenericTask();
         genericTask.setLogAppender(TaskUtils.createLogAppender(task, resolvedVerbose));
         genericTask.setInputFile(resolvedAugCodeFile);
@@ -148,9 +146,11 @@ public class ProcessingTask extends DefaultTask {
                 logger.info("\taugCodeSpecIndex: " + resolvedAugCodeSpecIndex);
                 logger.info("\tgenCodeFileIndex: " + resolvedGenCodeFileIndex);
             }
-            logger.info("\tscriptEvalFunction: " + resolvedScriptEvalFunction);
             logger.info("\tgroovyScriptDir: " + resolvedGroovyScriptDir);
             logger.info("\tgroovyEntryScriptName: " + resolvedGroovyEntryScriptName);
+            logger.info("\tscriptEvalFunction: " + resolvedScriptEvalFunction);
+            logger.info("\tstackTraceLimitPrefixes: " + resolvedStackTraceLimitPrefixes);
+            logger.info("\tstackTraceFilterPrefixes: " + resolvedStackTraceFilterPrefixes);
             logger.info("\tgenericTask.inputFile: " + resolvedAugCodeFile);
             logger.info("\tgenericTask.outputFile: " + resolvedGenCodeFile);
             logger.info("\tgenericTask.logAppender: " + genericTask.getLogAppender());

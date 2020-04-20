@@ -1,4 +1,4 @@
-package com.aaronicsubstances.code.augmentor.maven;
+package com.aaronicsubstances.code.augmentor.ant;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -6,60 +6,93 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTask;
 import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
 
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugin.logging.Log;
-import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.tools.ant.BuildException;
+import org.apache.tools.ant.Task;
 
-/**
- * Completes code generation.
- */
-@Mojo(name = "complete")
-public class CompletionMojo extends AbstractPluginMojo {
+public class CompletionTask extends Task {
+    private boolean verbose;
+    private String encoding;
+    private File prepFile;
+    private File destDir;
+    private File changeSetInfoFile;
+    private final List<GenCodeSpec> genCodeSpecs = new ArrayList<>();
 
-    @Override
-    public void execute() throws MojoExecutionException, MojoFailureException {
+    public void setVerbose(boolean verbose) {
+        this.verbose = verbose;
+    }
+
+    public void setEncoding(String encoding) {
+        this.encoding = encoding;
+    }
+
+    public void setDestDir(File destDir) {
+        this.destDir = destDir;
+    }
+
+    public void setPrepFile(File prepFile) {
+        this.prepFile = prepFile;
+    }
+
+    public void setChangeSetInfoFile(File changeSetInfoFile) {
+        this.changeSetInfoFile = changeSetInfoFile;
+    }
+
+    public void addConfiguredGenCodeSpec(GenCodeSpec spec) {
+        genCodeSpecs.add(spec);
+    }
+    
+    public void execute() {
         try {
-            String resolvedEncoding = getEncoding();
-            boolean resolvedVerbose = isVerbose();
-            File resolvedPrepFile = getPrepFile();
-            List<File> resolvedGenCodeFiles = Arrays.asList(getGeneratedCodeFiles());
-            File resolvedDestDir = getDestDir();
-            File resolvedChangeSetInfoFile = getChangeSetInfoFile();
-            completeExecute(this, resolvedEncoding, resolvedVerbose, resolvedPrepFile, 
-                resolvedGenCodeFiles, resolvedDestDir, resolvedChangeSetInfoFile);
+            List<File> resolvedGenCodeFiles = new ArrayList<>();
+            for (GenCodeSpec genCodeSpec : genCodeSpecs) {
+                File genCodeFile = null;
+                if (genCodeSpec != null) {
+                    genCodeFile = genCodeSpec.getFile();
+                }
+                resolvedGenCodeFiles.add(genCodeFile);
+            }
+            completeExecute(this, encoding, verbose, prepFile, 
+                resolvedGenCodeFiles, destDir, changeSetInfoFile);
         }
-        catch (MojoExecutionException ex) {
-            throw ex;
-        }
-        catch (MojoFailureException ex) {
+        catch (BuildException ex) {
             throw ex;
         }
         catch (Throwable ex) {
-            throw new MojoFailureException("General plugin error: " + ex, ex);
+            throw new BuildException("General error: " + ex, ex);
         }
     }
 
 //:SKIP_CODE_START:
-    static void completeExecute(AbstractMojo task, String resolvedEncoding,
+    static void completeExecute(Task task, String resolvedEncoding,
             boolean resolvedVerbose, File resolvedPrepFile,
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
             File resolvedChangeSetInfoFile) throws Exception {
-        
+        // set up defaults
+        if (resolvedPrepFile == null) {
+            resolvedPrepFile = TaskUtils.getDefaultPrepFile(task);
+        }
+        if (resolvedGenCodeFiles.isEmpty()) {
+            resolvedGenCodeFiles.add(TaskUtils.getDefaultGenCodeFile(task));
+        }
+        if (resolvedChangeSetInfoFile == null) {
+            resolvedChangeSetInfoFile = TaskUtils.getDefaultChangeSetInfoFile(task);
+        }
+        if (resolvedDestDir == null) {
+            resolvedDestDir = TaskUtils.getDefaultDestDir(task);
+        }
         // validate
         Charset charset = Charset.forName(resolvedEncoding);
         for (int i = 0; i < resolvedGenCodeFiles.size(); i++) {
             File resolvedGenCodeFile = resolvedGenCodeFiles.get(i);
             if (resolvedGenCodeFile == null) {
-                if (task instanceof CompletionMojo) {
-                    throw new MojoExecutionException("invaid null value found at generatedCodeFiles[" + i + "]");
+                if (task instanceof CompletionTask) {
+                    throw new BuildException("invaid null value found at genCodeSpecs[" + i + "]");
                 }
                 else {
                     throw new RuntimeException("unexpected absence of genCodeFile");
@@ -69,8 +102,8 @@ public class CompletionMojo extends AbstractPluginMojo {
 
         // Validation complete. start execution by deleting contents
         // of destDir so generated output files is not confused with previous ones.
-        Log logger = task.getLog();
-        logger.info("Deleting contents of " + resolvedDestDir + "...");
+        
+        task.log("Deleting contents of " + resolvedDestDir + "...");
         
         TaskUtils.deleteDirContents(resolvedDestDir);
 
@@ -84,24 +117,24 @@ public class CompletionMojo extends AbstractPluginMojo {
         if (resolvedVerbose) {
             // Print plugin task properties and any extra useful values for user.
             // As much as possible use generic task properties.
-            logger.info("Configuration properties:");
-            logger.info("\tencoding: " + genericTask.getCharset());
-            logger.info("\tdestDir: " + genericTask.getDestDir());
-            if (task instanceof CompletionMojo) {
-                logger.info("\tprepFile: " + genericTask.getPrepFile());
+            task.log("Configuration properties:");
+            task.log("\tencoding: " + genericTask.getCharset());
+            task.log("\tdestDir: " + genericTask.getDestDir());
+            if (task instanceof CompletionTask) {
+                task.log("\tprepFile: " + genericTask.getPrepFile());
                 for (int i = 0; i < genericTask.getGeneratedCodeFiles().size(); i++) {
-                    logger.info("\tgeneratedCodeFiles[" + i + "]: " + genericTask.getGeneratedCodeFiles().get(i));
+                    task.log("\tgenCodeSpecs[" + i + "].file: " + genericTask.getGeneratedCodeFiles().get(i));
                 }
             }
-            logger.info("\tchangeSetInfoFile: " + resolvedChangeSetInfoFile);
-            logger.info("\tgenericTask.logAppender: " + genericTask.getLogAppender());
+            task.log("\tchangeSetInfoFile: " + resolvedChangeSetInfoFile);
+            task.log("\tgenericTask.logAppender: " + genericTask.getLogAppender());
         }
 
         try {
             genericTask.execute();
         }
         catch (GenericTaskException ex) {
-            throw new MojoExecutionException(ex.getMessage(), ex.getCause());
+            throw new BuildException(ex.getMessage(), ex.getCause());
         }
 
         // Write out change set info file always even if there are no changes.
@@ -121,7 +154,7 @@ public class CompletionMojo extends AbstractPluginMojo {
             fWriter.write(changeSetInfo.toString());
         }
         catch (IOException ex) {
-            throw new MojoExecutionException("Failed to write change set information to " +
+            throw new BuildException("Failed to write change set information to " +
                 resolvedChangeSetInfoFile, ex);
         }
 
@@ -135,7 +168,7 @@ public class CompletionMojo extends AbstractPluginMojo {
                 outOfSyncMsg.append("\n");
             }
 
-            throw new MojoExecutionException(outOfSyncMsg.toString());
+            throw new BuildException(outOfSyncMsg.toString());
         }
     }
 //:SKIP_CODE_END:

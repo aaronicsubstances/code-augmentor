@@ -69,6 +69,7 @@ public class CompletionTask extends DefaultTask {
             boolean resolvedVerbose, File resolvedPrepFile,
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
             File resolvedChangeSetInfoFile) throws Exception {
+        
         // validate
         Charset charset = Charset.forName(resolvedEncoding);
         for (int i = 0; i < resolvedGenCodeFiles.size(); i++) {
@@ -85,6 +86,7 @@ public class CompletionTask extends DefaultTask {
 
         // Validation complete. start execution by deleting contents
         // of destDir so generated output files is not confused with previous ones.
+        
         Logger logger = task.getLogger();
         logger.info("Deleting contents of " + resolvedDestDir + "...");
         

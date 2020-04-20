@@ -1,36 +1,26 @@
     private static final JsonSlurper JSON_PARSER = new JsonSlurper();
     
-    static void completeExecute(DefaultTask task, boolean resolvedVerbose,
+    static void completeExecute(Task task, boolean resolvedVerbose,
             int resolvedAugCodeSpecIndex, int resolvedGenCodeFileIndex,
             File resolvedAugCodeFile, File resolvedGenCodeFile, 
             GenericTaskExtensionFunction resolvedScriptEvalFunction,
             List<String> resolvedStackTraceLimitPrefixes, 
             List<String> resolvedStackTraceFilterPrefixes,
             File resolvedGroovyScriptDir, String resolvedGroovyEntryScriptName) throws Exception {
-        
+        // set up defaults
         if (resolvedAugCodeFile == null) {
-            if (task instanceof ProcessingTask) {
-                int i = resolvedAugCodeSpecIndex;
-                throw new GradleException("invalid null value found at augCodeSpecs[" + i + "]?.destFile");
-            }
-            else {
-                throw new RuntimeException("unexpected absence of augCodeFile");
-            }
+            resolvedAugCodeFile = TaskUtils.getDefaultAugCodeFile(task);
         }
         if (resolvedGenCodeFile == null) {
-            if (task instanceof ProcessingTask) {
-                int i = resolvedGenCodeFileIndex;
-                throw new GradleException("invaid null value found at generatedCodeFiles[" + i + "]");
-            }
-            else {
-                throw new RuntimeException("unexpected absence of genCodeFile");
-            }
+            resolvedGenCodeFile = TaskUtils.getDefaultGenCodeFile(task);
+        }
+        if (resolvedGroovyEntryScriptName == null) {
+            resolvedGroovyEntryScriptName = "main.groovy";
         }
         // either eval function or groovy script dir is required.
         if (resolvedScriptEvalFunction == null && resolvedGroovyScriptDir == null) {
-            throw new GradleException("groovyScriptDir property must be set if scriptEvalFunction is absent");
+            throw new BuildException("groovyScriptDir property is required if scriptEvalFunction is absent");
         }
-        Logger logger = task.getLogger();
         ProcessCodeGenericTask genericTask = new ProcessCodeGenericTask();
         genericTask.setLogAppender(TaskUtils.createLogAppender(task, resolvedVerbose));
         genericTask.setInputFile(resolvedAugCodeFile);
@@ -40,20 +30,16 @@
         if (resolvedVerbose) {
             // Print plugin task properties and any extra useful values for user.
             // As much as possible use generic task properties.
-            logger.info("Configuration properties:");
-            if (task instanceof ProcessingTask) {
-                logger.info("\taugCodeSpecIndex: " + resolvedAugCodeSpecIndex);
-                logger.info("\tgenCodeFileIndex: " + resolvedGenCodeFileIndex);
-            }
-            logger.info("\tgroovyScriptDir: " + resolvedGroovyScriptDir);
-            logger.info("\tgroovyEntryScriptName: " + resolvedGroovyEntryScriptName);
-            logger.info("\tscriptEvalFunction: " + resolvedScriptEvalFunction);
-            logger.info("\tstackTraceLimitPrefixes: " + resolvedStackTraceLimitPrefixes);
-            logger.info("\tstackTraceFilterPrefixes: " + resolvedStackTraceFilterPrefixes);
-            logger.info("\tgenericTask.inputFile: " + resolvedAugCodeFile);
-            logger.info("\tgenericTask.outputFile: " + resolvedGenCodeFile);
-            logger.info("\tgenericTask.logAppender: " + genericTask.getLogAppender());
-            logger.info("\tgenericTask.jsonParseFunction: " + genericTask.getJsonParseFunction());
+            task.log("Configuration properties:");
+            task.log("\tgroovyScriptDir: " + resolvedGroovyScriptDir);
+            task.log("\tgroovyEntryScriptName: " + resolvedGroovyEntryScriptName);
+            task.log("\taugCodeFile: " + resolvedAugCodeFile);
+            task.log("\tgenCodeFile: " + resolvedGenCodeFile);
+            task.log("\tscriptEvalFunction: " + resolvedScriptEvalFunction);
+            task.log("\tstackTraceLimitPrefixes: " + resolvedStackTraceLimitPrefixes);
+            task.log("\tstackTraceFilterPrefixes: " + resolvedStackTraceFilterPrefixes);
+            task.log("\tgenericTask.logAppender: " + genericTask.getLogAppender());
+            task.log("\tgenericTask.jsonParseFunction: " + genericTask.getJsonParseFunction());
         }
 
         List<Throwable> scriptErrors = new ArrayList<>();
@@ -67,7 +53,7 @@
             scriptEngine.setConfig(cc);
             Binding binding = new Binding();
             binding.setVariable("parentTask", genericTask);
-            logger.info("Launching " + resolvedGroovyEntryScriptName + "...");
+            task.log("Launching " + resolvedGroovyEntryScriptName + "...");
             scriptErrors = new ArrayList<>();
             try {
                 scriptEngine.run(resolvedGroovyEntryScriptName, binding);

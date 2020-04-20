@@ -7,32 +7,11 @@
             List<String> resolvedStackTraceLimitPrefixes, 
             List<String> resolvedStackTraceFilterPrefixes,
             File resolvedGroovyScriptDir, String resolvedGroovyEntryScriptName) throws Exception {
-        // validate
-        if (resolvedAugCodeFile == null) {
-            if (task instanceof $PLUGIN_PROCESS_TASK_TYPE) {
-                int i = resolvedAugCodeSpecIndex;
-                throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE($VAL_ERROR_PROCESS_NULL_AUG_CODE_FILE);
-            }
-            else {
-                throw new RuntimeException($VAL_ERROR_RUN_NULL_AUG_CODE_FILE);
-            }
-        }
-        if (resolvedGenCodeFile == null) {
-            if (task instanceof $PLUGIN_PROCESS_TASK_TYPE) {
-                int i = resolvedGenCodeFileIndex;
-                throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE($VAL_ERROR_PROCESS_NULL_GEN_CODE_FILE);
-            }
-            else {
-                throw new RuntimeException($VAL_ERROR_RUN_NULL_GEN_CODE_FILE);
-            }
-        }
+        $PROCESS_FILES_VALIDATION_CODE
         // either eval function or groovy script dir is required.
         if (resolvedScriptEvalFunction == null && resolvedGroovyScriptDir == null) {
             throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE($VAL_ERROR_NO_GROOVY_SCRIPT_DIR);
-        }
-
-        $LOG_REFERENCE
-
+        }$LOG_REFERENCE
         ProcessCodeGenericTask genericTask = new ProcessCodeGenericTask();
         genericTask.setLogAppender(TaskUtils.createLogAppender(task, resolvedVerbose));
         genericTask.setInputFile(resolvedAugCodeFile);
@@ -56,7 +35,7 @@
             scriptEngine.setConfig(cc);
             Binding binding = new Binding();
             binding.setVariable("parentTask", genericTask);
-            logger.info("Launching " + resolvedGroovyEntryScriptName + "...");
+            $LOG_CALLING_GROOVY
             scriptErrors = new ArrayList<>();
             try {
                 scriptEngine.run(resolvedGroovyEntryScriptName, binding);

@@ -93,18 +93,12 @@ public class PreparationMojo extends AbstractPluginMojo {
             List<File> resolvedAugCodeFiles,
             File resolvedPrepFile) throws Exception {
         
-        // validate
-        if (resolvedFileSets.isEmpty()) {
-            throw new MojoExecutionException("at least 1 element is required in fileSets");
-        }
-        Charset charset = Charset.forName(resolvedEncoding); // validate encoding.
         if (resolvedGenCodeStartDirectives.isEmpty()) {
             throw new MojoExecutionException("at least 1 element is required in genCodeStartDirectives");
         }
         if (resolvedGenCodeEndDirectives.isEmpty()) {
             throw new MojoExecutionException("at least 1 element is required in genCodeEndDirectives");
         }
-
         if (resolvedAugCodeSpecDirectives.isEmpty()) {
             if (task instanceof PreparationMojo) {
                 throw new MojoExecutionException("at least 1 element is required in augCodeSpecs");
@@ -113,6 +107,11 @@ public class PreparationMojo extends AbstractPluginMojo {
                 throw new RuntimeException("unexpected absence of augCodeDirectives");
             }
         }
+        // validate
+        if (resolvedFileSets.isEmpty()) {
+            throw new MojoExecutionException("at least 1 element is required in fileSets");
+        }
+        Charset charset = Charset.forName(resolvedEncoding); // validate encoding.
         for (int i = 0; i < resolvedAugCodeSpecDirectives.size(); i++) {
             List<String> resolvedAugCodeDirectives = resolvedAugCodeSpecDirectives.get(i);
             if (resolvedAugCodeDirectives.isEmpty()) {

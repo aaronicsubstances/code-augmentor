@@ -1,7 +1,7 @@
 package com.aaronicsubstances.code.augmentor.app;
 
 import java.io.File;
-import java.io.IOException;
+import java.net.URL;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -10,16 +10,18 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.codehaus.groovy.control.CompilerConfiguration;
 
-import groovy.lang.GroovyShell;
+import groovy.lang.Binding;
+import groovy.util.GroovyScriptEngine;
 
 public class Main {
     private static final String APP_NAME =  "codeaugmentor-app";
 
-    public static void main(String[] args) throws IOException {
-        Option fileOpt = Option.builder("f").longOpt("file")
-                                .argName( "file" ).hasArg()
-                                .desc( "use given buildfile" )
+    public static void main(String[] args) throws Exception {
+        Option fileOpt = Option.builder("d").longOpt("dir")
+                                .argName( "dir" ).hasArg()
+                                .desc( "use given directory" )
                                 .build();
         Option helpOpt = Option.builder("h").longOpt("help")
                                 .desc("help information")
@@ -43,12 +45,18 @@ public class Main {
             formatter.printHelp(APP_NAME, options );
             return;
         }
-        String filePath = cmd.getOptionValue('f');
-        if (filePath == null) {
-            filePath = "build.groovy";
+        File scriptDir = new File(".");
+        String scriptDirPath = cmd.getOptionValue('d');
+        if (scriptDirPath != null) {
+            scriptDir = new File(scriptDirPath);
         }
-        GroovyShell groovyShell = new GroovyShell();
-        File file = new File(filePath);
-        groovyShell.run(file, args);
+        URL[] scriptEngineRoots = new URL[]{ scriptDir.toURI().toURL() };
+        GroovyScriptEngine scriptEngine = new GroovyScriptEngine(scriptEngineRoots);
+        CompilerConfiguration cc = new CompilerConfiguration();
+        cc.setRecompileGroovySource(false);
+        scriptEngine.setConfig(cc);
+        Binding binding = new Binding();
+        binding.setVariable("args", args);
+        scriptEngine.run("main.groovy", binding);
     }
 }

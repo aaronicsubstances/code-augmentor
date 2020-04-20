@@ -1,5 +1,5 @@
     static void completeExecute(
-            AbstractMojo task,
+            Task task,
             String resolvedEncoding, boolean resolvedVerbose, 
             List<FileSet> resolvedFileSets,
             List<String> resolvedGenCodeStartDirectives,
@@ -11,42 +11,55 @@
             List<List<String>> resolvedAugCodeSpecDirectives,
             List<File> resolvedAugCodeFiles,
             File resolvedPrepFile) throws Exception {
-        
+        // set up defaults
         if (resolvedGenCodeStartDirectives.isEmpty()) {
-            throw new MojoExecutionException("at least 1 element is required in genCodeStartDirectives");
+            resolvedGenCodeStartDirectives.add("//:GEN_CODE_START:");
         }
         if (resolvedGenCodeEndDirectives.isEmpty()) {
-            throw new MojoExecutionException("at least 1 element is required in genCodeEndDirectives");
+            resolvedGenCodeEndDirectives.add("//:GEN_CODE_END:");
+        }
+        if (resolvedEmbeddedStringDirectives.isEmpty()) {
+            resolvedEmbeddedStringDirectives.add("//:STR:");
+        }
+        if (resolvedEmbeddedJsonDirectives.isEmpty()) {
+            resolvedEmbeddedJsonDirectives.add("//:JSON:");
+        }
+        if (resolvedSkipCodeStartDirectives.isEmpty()) {
+            resolvedSkipCodeStartDirectives.add("//:SKIP_CODE_START:");
+        }
+        if (resolvedSkipCodeEndDirectives.isEmpty()) {
+            resolvedSkipCodeEndDirectives.add("//:SKIP_CODE_END:");
         }
         if (resolvedAugCodeSpecDirectives.isEmpty()) {
-            if (task instanceof PreparationMojo) {
-                throw new MojoExecutionException("at least 1 element is required in augCodeSpecs");
-            }
-            else {
-                throw new RuntimeException("unexpected absence of augCodeDirectives");
-            }
+            resolvedAugCodeSpecDirectives.add(Arrays.asList("//:AUG_CODE:"));
+        }
+        if (resolvedAugCodeFiles.isEmpty()) {
+            resolvedAugCodeFiles.add(TaskUtils.getDefaultAugCodeFile(task));
+        }
+        if (resolvedPrepFile == null) {
+            resolvedPrepFile = TaskUtils.getDefaultPrepFile(task);
         }
         // validate
         if (resolvedFileSets.isEmpty()) {
-            throw new MojoExecutionException("at least 1 element is required in fileSets");
+            throw new BuildException("at least 1 element is required in srcDirs");
         }
         Charset charset = Charset.forName(resolvedEncoding); // validate encoding.
         for (int i = 0; i < resolvedAugCodeSpecDirectives.size(); i++) {
             List<String> resolvedAugCodeDirectives = resolvedAugCodeSpecDirectives.get(i);
             if (resolvedAugCodeDirectives.isEmpty()) {
-                if (task instanceof PreparationMojo) {
-                    throw new MojoExecutionException("at least 1 element is required in augCodeSpecs[" + i + "].directives");
+                if (task instanceof PrepareTask) {
+                    throw new BuildException("at least 1 element is required in augCodeSpecs[" + i + "].directives");
                 }
                 else {
-                    throw new MojoExecutionException("at least 1 element is required in augCodeDirectives");
+                    throw new BuildException("at least 1 element is required in augCodeDirectives");
                 }
             }
         }
         for (int i = 0; i < resolvedAugCodeFiles.size(); i++) {
             File resolvedAugCodeFile = resolvedAugCodeFiles.get(i);
             if (resolvedAugCodeFile == null) {
-                if (task instanceof PreparationMojo) {
-                    throw new MojoExecutionException("invalid null value found at augCodeSpecs[" + i + "]?.destFile");
+                if (task instanceof PrepareTask) {
+                    throw new BuildException("invalid null value found at augCodeSpecs[" + i + "]?.destFile");
                 }
                 else {
                     throw new RuntimeException("unexpected absence of augCodeFile");
@@ -55,7 +68,7 @@
         }
         for (int i = 0; i < resolvedFileSets.size(); i++) {
             if (resolvedFileSets.get(i) == null) {
-                throw new MojoExecutionException("invalid null value found at fileSets[" + i + "]");
+                throw new BuildException("invalid null value found at fileSets[" + i + "]");
             }
         }
 
@@ -80,31 +93,30 @@
             totalDirectiveCount += resolvedAugCodeDirectives.size();
         }
         if (totalDirectiveCount != allDirectives.stream().filter(x -> x != null && !x.trim().isEmpty()).count()) {
-            throw new MojoExecutionException("duplicates and/or blanks detected across directives");
+            throw new BuildException("duplicates and/or blanks detected across directives");
         }
 
         // Validation successful, so begin execution by fetching files inside file sets.
         List<File> baseDirs = new ArrayList<>();
         List<String> relativePaths = new ArrayList<>();
         
-        FileSetManager fileSetManager = new FileSetManager();
-        for (FileSet fileset : resolvedFileSets) {      
-            File baseDir = new File(fileset.getDirectory());
-            String[] includedFiles = fileSetManager.getIncludedFiles( fileset );
-            for (String includedFile : includedFiles) {
-                baseDirs.add(baseDir);
-                assert !includedFile.startsWith("/");
-                assert !includedFile.startsWith("\\");
-                relativePaths.add(includedFile);
+        for (FileSet srcDir : resolvedFileSets) {
+            DirectoryScanner ds = srcDir.getDirectoryScanner(task.getProject());
+            String[] includedFiles = ds.getIncludedFiles();
+            for (String filename : includedFiles) {
+                baseDirs.add(ds.getBasedir());
+                assert !filename.startsWith("/");
+                assert !filename.startsWith("\\");
+                relativePaths.add(filename);
             }
         }
 
-        Log logger = task.getLog();
+        
         if (relativePaths.isEmpty()) {
-            logger.warn("No files were found");
+            task.log("No files were found", Project.MSG_WARN);
         }
         else {
-            logger.info(String.format("Found %s file(s)", relativePaths.size()));
+            task.log(String.format("Found %s file(s)", relativePaths.size()));
         }
 
         PreCodeAugmentationGenericTask genericTask = new PreCodeAugmentationGenericTask();
@@ -133,39 +145,39 @@
         if (resolvedVerbose) {
             // Print plugin task properties and any extra useful values for user.
             // As much as possible use generic task properties.
-            logger.info("Configuration properties:");
-            logger.info("\tencoding: " + genericTask.getCharset());
-            logger.info("\tgenCodeStartDirectives: " + genericTask.getGenCodeStartDirectives());
-            logger.info("\tgenCodeEndDirectives: " + genericTask.getGenCodeEndDirectives());
-            logger.info("\tembeddedStringDirectives: " + genericTask.getEmbeddedStringDirectives());
-            logger.info("\tembeddedJsonDirectives: " + genericTask.getEmbeddedJsonDirectives());
-            logger.info("\tskipCodeStartDirectives: " + genericTask.getSkipCodeStartDirectives());
-            logger.info("\tskipCodeEndDirectives: " + genericTask.getSkipCodeEndDirectives());
+            task.log("Configuration properties:");
+            task.log("\tencoding: " + genericTask.getCharset());
+            task.log("\tgenCodeStartDirectives: " + genericTask.getGenCodeStartDirectives());
+            task.log("\tgenCodeEndDirectives: " + genericTask.getGenCodeEndDirectives());
+            task.log("\tembeddedStringDirectives: " + genericTask.getEmbeddedStringDirectives());
+            task.log("\tembeddedJsonDirectives: " + genericTask.getEmbeddedJsonDirectives());
+            task.log("\tskipCodeStartDirectives: " + genericTask.getSkipCodeStartDirectives());
+            task.log("\tskipCodeEndDirectives: " + genericTask.getSkipCodeEndDirectives());
             
-            if (task instanceof PreparationMojo) {
-                logger.info("\tprepFile: " + genericTask.getPrepFile());
+            if (task instanceof PrepareTask) {
+                task.log("\tprepFile: " + genericTask.getPrepFile());
                 for (int i = 0; i < genericTask.getAugCodeProcessingSpecs().size(); i++) {
                     AugCodeProcessingSpec augCodeSpec = genericTask.getAugCodeProcessingSpecs().get(i);
-                    logger.info("\taugCodeSpecs[" + i + "].directives: " + augCodeSpec.getDirectives());
-                    logger.info("\taugCodeSpecs[" + i + "].destFile: " + augCodeSpec.getDestFile());
+                    task.log("\taugCodeSpecs[" + i + "].directives: " + augCodeSpec.getDirectives());
+                    task.log("\taugCodeSpecs[" + i + "].destFile: " + augCodeSpec.getDestFile());
                 }
             }
             else {
-                logger.info("\taugCodeDirectives: " + 
+                task.log("\taugCodeDirectives: " + 
                     genericTask.getAugCodeProcessingSpecs().get(0).getDirectives());
             }
 
-            logger.info("\tfileSets: " + resolvedFileSets);
-            logger.info("\tgenericTask.logAppender: " + genericTask.getLogAppender());
-            logger.info("\tgenericTask.baseDirs: " + new HashSet<>(genericTask.getBaseDirs()));
-            logger.info("\tgenericTask.relativePaths: " + genericTask.getRelativePaths());
+            task.log("\tsrcDirs: " + resolvedFileSets);
+            task.log("\tgenericTask.logAppender: " + genericTask.getLogAppender());
+            task.log("\tgenericTask.baseDirs: " + new HashSet<>(genericTask.getBaseDirs()));
+            task.log("\tgenericTask.relativePaths: " + genericTask.getRelativePaths());
         }
         
         try {
             genericTask.execute();
         }
         catch (GenericTaskException ex) {
-            throw new MojoExecutionException(ex.getMessage(), ex.getCause());
+            throw new BuildException(ex.getMessage(), ex.getCause());
         }
 
         // fail build if there were errors.

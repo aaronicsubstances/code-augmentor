@@ -21,6 +21,44 @@ VAL_ERROR_PROCESS_NULL_AUG_CODE_FILE = VAL_ERROR_PREPARE_NULL_AUG_CODE_FILE_AT_I
 VAL_ERROR_PROCESS_NULL_GEN_CODE_FILE = VAL_ERROR_COMPLETE_NULL_GEN_CODE_FILE_AT_I
 VAL_ERROR_NO_GROOVY_SCRIPT_DIR = '"groovyScriptDir property must be set if scriptEvalFunction is absent"'
 
+PREPARE_FILES_VALIDATION_CODE = """
+        if (resolvedGenCodeStartDirectives.isEmpty()) {
+            throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE($VAL_ERROR_NO_GEN_CODE_START_DRV);
+        }
+        if (resolvedGenCodeEndDirectives.isEmpty()) {
+            throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE($VAL_ERROR_NO_GEN_CODE_END_DRV);
+        }
+        if (resolvedAugCodeSpecDirectives.isEmpty()) {
+            if (task instanceof $PLUGIN_PREPARE_TASK_TYPE) {
+                throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE($VAL_ERROR_PREPARE_NO_AUG_CODE_SPEC);
+            }
+            else {
+                throw new RuntimeException($VAL_ERROR_RUN_NO_AUG_CODE_SPEC);
+            }
+        }"""
+
+PROCESS_FILES_VALIDATION_CODE = """
+        if (resolvedAugCodeFile == null) {
+            if (task instanceof $PLUGIN_PROCESS_TASK_TYPE) {
+                int i = resolvedAugCodeSpecIndex;
+                throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE($VAL_ERROR_PROCESS_NULL_AUG_CODE_FILE);
+            }
+            else {
+                throw new RuntimeException($VAL_ERROR_RUN_NULL_AUG_CODE_FILE);
+            }
+        }
+        if (resolvedGenCodeFile == null) {
+            if (task instanceof $PLUGIN_PROCESS_TASK_TYPE) {
+                int i = resolvedGenCodeFileIndex;
+                throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE($VAL_ERROR_PROCESS_NULL_GEN_CODE_FILE);
+            }
+            else {
+                throw new RuntimeException($VAL_ERROR_RUN_NULL_GEN_CODE_FILE);
+            }
+        }"""
+
+COMPLETION_FILES_VALIDATION_CODE = ''
+
 // use equivalent of 2 tabs
 FILE_SET_EXTRACTION_CODE = '''
         for (ConfigurableFileTree fileTree : resolvedFileSets) {
@@ -36,15 +74,16 @@ FILE_SET_EXTRACTION_CODE = '''
                 relativePaths.add(relativePath);
             }
         }'''
-        
 
 DEST_DIR_CONTENT_DELETION_CODE = '''
         task.getProject().delete(task.getProject().fileTree(resolvedDestDir));'''
 
-LOG_REFERENCE = 'Logger logger = task.getLogger();'
+LOG_REFERENCE = '''
+        Logger logger = task.getLogger();'''
 LOG_NO_FILES_FOUND = 'logger.warn("No files were found");'
 LOG_ONE_OR_MORE_FILE_COUNT = 'logger.info(String.format("Found %s file(s)", relativePaths.size()));'
 LOG_DELETE_DEST_DIR = 'logger.info("Deleting contents of " + resolvedDestDir + "...");'
+LOG_CALLING_GROOVY = 'logger.info("Launching " + resolvedGroovyEntryScriptName + "...");'
 
 // use equivalent of 3 tabs
 LOG_PREPARE_TASK_PROPERTIES = """logger.info("Configuration properties:");
@@ -79,9 +118,11 @@ LOG_PROCESS_TASK_PROPERTIES = """logger.info("Configuration properties:");
                 logger.info("\\taugCodeSpecIndex: " + resolvedAugCodeSpecIndex);
                 logger.info("\\tgenCodeFileIndex: " + resolvedGenCodeFileIndex);
             }
-            logger.info("\\tscriptEvalFunction: " + resolvedScriptEvalFunction);
             logger.info("\\tgroovyScriptDir: " + resolvedGroovyScriptDir);
             logger.info("\\tgroovyEntryScriptName: " + resolvedGroovyEntryScriptName);
+            logger.info("\\tscriptEvalFunction: " + resolvedScriptEvalFunction);
+            logger.info("\\tstackTraceLimitPrefixes: " + resolvedStackTraceLimitPrefixes);
+            logger.info("\\tstackTraceFilterPrefixes: " + resolvedStackTraceFilterPrefixes);
             logger.info("\\tgenericTask.inputFile: " + resolvedAugCodeFile);
             logger.info("\\tgenericTask.outputFile: " + resolvedGenCodeFile);
             logger.info("\\tgenericTask.logAppender: " + genericTask.getLogAppender());

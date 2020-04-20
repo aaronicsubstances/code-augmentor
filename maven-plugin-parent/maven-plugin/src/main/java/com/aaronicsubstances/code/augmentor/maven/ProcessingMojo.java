@@ -82,7 +82,7 @@ public class ProcessingMojo extends AbstractPluginMojo {
             List<String> resolvedStackTraceLimitPrefixes, 
             List<String> resolvedStackTraceFilterPrefixes,
             File resolvedGroovyScriptDir, String resolvedGroovyEntryScriptName) throws Exception {
-        // validate
+        
         if (resolvedAugCodeFile == null) {
             if (task instanceof ProcessingMojo) {
                 int i = resolvedAugCodeSpecIndex;
@@ -104,10 +104,7 @@ public class ProcessingMojo extends AbstractPluginMojo {
         // either eval function or groovy script dir is required.
         if (resolvedScriptEvalFunction == null && resolvedGroovyScriptDir == null) {
             throw new MojoExecutionException("groovyScriptDir property is required");
-        }
-
-        Log logger = task.getLog();
-
+        }Log logger = task.getLog();
         ProcessCodeGenericTask genericTask = new ProcessCodeGenericTask();
         genericTask.setLogAppender(TaskUtils.createLogAppender(task, resolvedVerbose));
         genericTask.setInputFile(resolvedAugCodeFile);

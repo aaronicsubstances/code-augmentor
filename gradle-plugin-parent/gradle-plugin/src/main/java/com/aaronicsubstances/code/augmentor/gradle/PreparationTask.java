@@ -110,18 +110,12 @@ public class PreparationTask extends DefaultTask {
             List<File> resolvedAugCodeFiles,
             File resolvedPrepFile) throws Exception {
         
-        // validate
-        if (resolvedFileSets.isEmpty()) {
-            throw new GradleException("at least 1 element is required in fileSets");
-        }
-        Charset charset = Charset.forName(resolvedEncoding); // validate encoding.
         if (resolvedGenCodeStartDirectives.isEmpty()) {
             throw new GradleException("at least 1 element is required in genCodeStartDirectives");
         }
         if (resolvedGenCodeEndDirectives.isEmpty()) {
             throw new GradleException("at least 1 element is required in genCodeEndDirectives");
         }
-
         if (resolvedAugCodeSpecDirectives.isEmpty()) {
             if (task instanceof PreparationTask) {
                 throw new GradleException("at least 1 element is required in augCodeSpecs");
@@ -130,6 +124,11 @@ public class PreparationTask extends DefaultTask {
                 throw new RuntimeException("unexpected absence of augCodeDirectives");
             }
         }
+        // validate
+        if (resolvedFileSets.isEmpty()) {
+            throw new GradleException("at least 1 element is required in fileSets");
+        }
+        Charset charset = Charset.forName(resolvedEncoding); // validate encoding.
         for (int i = 0; i < resolvedAugCodeSpecDirectives.size(); i++) {
             List<String> resolvedAugCodeDirectives = resolvedAugCodeSpecDirectives.get(i);
             if (resolvedAugCodeDirectives.isEmpty()) {
@@ -200,6 +199,7 @@ public class PreparationTask extends DefaultTask {
             }
         }
 
+        
         Logger logger = task.getLogger();
         if (relativePaths.isEmpty()) {
             logger.warn("No files were found");
