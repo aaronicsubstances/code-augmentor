@@ -40,14 +40,14 @@ public class TaskUtils {
     }
 
     public static GradleException convertToPluginException(List<Throwable> allErrors) {
-        return convertToPluginException(allErrors, false, false, null, null);
+        return convertToPluginException(allErrors, false, null, null);
     }
 
     public static GradleException convertToPluginException(List<Throwable> allErrors,
-            boolean includeStackTraces, boolean useDefaultGroovyPrefixes, 
-            List<String> stackTraceFilterPrefixes, List<String> stackTraceLimitPrefixes) {
+            boolean includeStackTraces, 
+            List<String> stackTraceLimitPrefixes, List<String> stackTraceFilterPrefixes) {
         String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(allErrors,
-            includeStackTraces, useDefaultGroovyPrefixes,
+            includeStackTraces,
             stackTraceLimitPrefixes, stackTraceFilterPrefixes);
         return new GradleException(allExMsg);
     }

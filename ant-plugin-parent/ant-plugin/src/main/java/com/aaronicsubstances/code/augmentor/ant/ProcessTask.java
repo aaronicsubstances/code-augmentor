@@ -16,13 +16,13 @@ import org.codehaus.groovy.control.CompilerConfiguration;
 
 import groovy.json.JsonSlurper;
 import groovy.lang.Binding;
+import groovy.lang.Closure;
 import groovy.util.GroovyScriptEngine;
 
 public class ProcessTask extends Task {
     private boolean verbose;
     private File augCodeFile;
     private File genCodeFile;
-    private GenericTaskExtensionFunction scriptEvalFunction;
     private String stackTraceLimitPrefixes;
     private String stackTraceFilterPrefixes;
     private File groovyScriptDir;
@@ -38,10 +38,6 @@ public class ProcessTask extends Task {
 
     public void setGenCodeFile(File genCodeFile) {
         this.genCodeFile = genCodeFile;
-    }
-
-    public void setScriptEvalFunction(GenericTaskExtensionFunction scriptEvalFunction) {
-        this.scriptEvalFunction = scriptEvalFunction;
     }
 
     public void setStackTraceLimitPrefixes(String stackTraceLimitPrefixes) {
@@ -70,15 +66,22 @@ public class ProcessTask extends Task {
                     .collect(Collectors.toList());
             }
             List<String> resolvedStackTraceFilterPrefixes = new ArrayList<>();
-            if (resolvedStackTraceFilterPrefixes != null) {                
+            if (stackTraceFilterPrefixes != null) {                
                 resolvedStackTraceFilterPrefixes = Arrays.stream(stackTraceFilterPrefixes.split(",", -1))
                     .map(x -> x.trim())
                     .filter(x -> !x.isEmpty())
                     .collect(Collectors.toList());
             }
             
+            GenericTaskExtensionFunction resolvedScriptEvalFunction = null;
+            Closure<?> evalClosure = (Closure<?>)getProject().getReference("scriptEvalFunction");
+            if (evalClosure != null) {
+                resolvedScriptEvalFunction = args -> {
+                    return evalClosure.call(Arrays.asList(args));
+                };
+            }
             completeExecute(this, verbose, 0, 0, augCodeFile, genCodeFile, 
-                scriptEvalFunction, resolvedStackTraceLimitPrefixes, 
+                resolvedScriptEvalFunction, resolvedStackTraceLimitPrefixes, 
                 resolvedStackTraceFilterPrefixes, groovyScriptDir, 
                 groovyEntryScriptName);
         }
@@ -112,7 +115,7 @@ public class ProcessTask extends Task {
         }
         // either eval function or groovy script dir is required.
         if (resolvedScriptEvalFunction == null && resolvedGroovyScriptDir == null) {
-            throw new BuildException("groovyScriptDir property is required if scriptEvalFunction is absent");
+            throw new BuildException("groovyScriptDir property is required if scriptEvalFunction reference is absent");
         }
         ProcessCodeGenericTask genericTask = new ProcessCodeGenericTask();
         genericTask.setLogAppender(TaskUtils.createLogAppender(task, resolvedVerbose));
@@ -136,9 +139,7 @@ public class ProcessTask extends Task {
         }
 
         List<Throwable> scriptErrors = new ArrayList<>();
-        boolean defaultGroovyUsed = false;
         if (resolvedScriptEvalFunction == null) {
-            defaultGroovyUsed = true;
             URL[] scriptEngineRoots = new URL[]{ resolvedGroovyScriptDir.toURI().toURL() };
             GroovyScriptEngine scriptEngine = new GroovyScriptEngine(scriptEngineRoots);
             CompilerConfiguration cc = new CompilerConfiguration();
@@ -168,7 +169,7 @@ public class ProcessTask extends Task {
 
         // fail build if there were errors.
         if (!scriptErrors.isEmpty()) {
-            throw TaskUtils.convertToPluginException(scriptErrors, true, defaultGroovyUsed,
+            throw TaskUtils.convertToPluginException(scriptErrors, true,
                 resolvedStackTraceLimitPrefixes, resolvedStackTraceFilterPrefixes);
         }
     }

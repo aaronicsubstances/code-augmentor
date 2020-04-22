@@ -14,7 +14,7 @@ public class ProcessCodeContext {
     private int augCodeIndex;
 
     // used by Groovy script.
-    public GeneratedCode newGenCodeInst() {
+    public GeneratedCode newGenCode() {
         return new GeneratedCode(new ArrayList<>());
     }
 

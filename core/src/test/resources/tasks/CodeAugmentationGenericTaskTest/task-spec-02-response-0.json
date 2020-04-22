@@ -4,7 +4,9 @@
 		"fileIndex": 0,
 		"generatedCodes": [{
 			"index" : 0,
-			"content" : "char f;"
+			"contentParts" : [{
+                "content": "char f;"}
+            ]
 		}]
 	}
 ]

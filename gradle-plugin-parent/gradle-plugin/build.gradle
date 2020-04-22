@@ -21,7 +21,6 @@ repositories {
 dependencies {
 	implementation 'com.aaronicsubstances:codeaugmentor-core:1.0-SNAPSHOT'
 
-	testImplementation 'org.codehaus.groovy:groovy-all:2.5.7'
     testImplementation 'org.spockframework:spock-core:1.3-groovy-2.5'
 }
 

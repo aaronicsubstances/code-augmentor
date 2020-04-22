@@ -22,8 +22,7 @@
         
         Logger logger = task.getLogger();
         logger.info("Deleting contents of " + resolvedDestDir + "...");
-        
-        task.getProject().delete(task.getProject().fileTree(resolvedDestDir));
+        task.getProject().delete(resolvedDestDir);
 
         CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
         genericTask.setCharset(charset);

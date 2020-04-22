@@ -21,7 +21,7 @@
         // of destDir so generated output files is not confused with previous ones.
         $LOG_REFERENCE
         $LOG_DELETE_DEST_DIR
-        $DEST_DIR_CONTENT_DELETION_CODE
+        $DEST_DIR_DELETION_CODE
 
         CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
         genericTask.setCharset(charset);

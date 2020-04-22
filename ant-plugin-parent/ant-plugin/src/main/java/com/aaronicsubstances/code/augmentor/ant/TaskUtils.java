@@ -36,14 +36,14 @@ public class TaskUtils {
     }
 
     public static BuildException convertToPluginException(List<Throwable> allErrors) {
-        return convertToPluginException(allErrors, false, false, null, null);
+        return convertToPluginException(allErrors, false, null, null);
     }
 
     public static BuildException convertToPluginException(List<Throwable> allErrors,
-            boolean includeStackTraces, boolean useDefaultGroovyPrefixes, 
-            List<String> stackTraceFilterPrefixes, List<String> stackTraceLimitPrefixes) {
+            boolean includeStackTraces, 
+            List<String> stackTraceLimitPrefixes, List<String> stackTraceFilterPrefixes) {
         String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(allErrors,
-            includeStackTraces, useDefaultGroovyPrefixes,
+            includeStackTraces,
             stackTraceLimitPrefixes, stackTraceFilterPrefixes);
         return new BuildException(allExMsg);
     }
@@ -73,29 +73,4 @@ public class TaskUtils {
 	public static File getDefaultDestDir(Task task) {
 		return new File(getDefaultBuildDir(task), "generated");
 	}
-
-    public static void deleteDirContents(File dir) {
-        File[] contents = dir.listFiles();
-        if (contents != null) {
-            for (File f : contents) {
-                try {
-                    deleteDirContentsRecursively(f);
-                }
-                catch (Exception ignore) {}
-            }
-        }
-    }
-    
-    private static void deleteDirContentsRecursively(File file) {
-        File[] contents = file.listFiles();
-        if (contents != null) {
-            for (File f : contents) {
-                try {
-                    deleteDirContentsRecursively(f);
-                    file.delete();
-                }
-                catch (Exception ignore) {}
-            }
-        }
-    }
 }

@@ -15,6 +15,8 @@ import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Task;
 
+import groovy.util.Eval;
+
 public class CompletionTask extends Task {
     private boolean verbose;
     private String encoding;
@@ -74,6 +76,9 @@ public class CompletionTask extends Task {
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
             File resolvedChangeSetInfoFile) throws Exception {
         // set up defaults
+        if (resolvedEncoding == null) {
+            resolvedEncoding = "UTF-8";
+        }
         if (resolvedPrepFile == null) {
             resolvedPrepFile = TaskUtils.getDefaultPrepFile(task);
         }
@@ -104,8 +109,7 @@ public class CompletionTask extends Task {
         // of destDir so generated output files is not confused with previous ones.
         
         task.log("Deleting contents of " + resolvedDestDir + "...");
-        
-        TaskUtils.deleteDirContents(resolvedDestDir);
+        Eval.me("x", resolvedDestDir, "x.deleteDir()");
 
         CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
         genericTask.setCharset(charset);

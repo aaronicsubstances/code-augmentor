@@ -4,41 +4,41 @@ import java.util.List;
 
 public class GeneratedCode {
 
-    public static class ContentRange {
-        private int startPos;
-        private int endPos;
+    public static class ContentPart {
+        private String content;
+        private boolean exactMatch;
 
-        public ContentRange() {
+        public ContentPart() {
 
         }
 
-        public ContentRange(int startPos, int endPos) {
-            this.startPos = startPos;
-            this.endPos = endPos;
-		}
-
-		public int getStartPos() {
-            return startPos;
+        public ContentPart(String content, boolean exactMatch) {
+            this.content = content;
+            this.exactMatch = exactMatch;
         }
 
-        public void setStartPos(int startPos) {
-            this.startPos = startPos;
+        public String getContent() {
+            return content;
         }
 
-        public int getEndPos() {
-            return endPos;
+        public void setContent(String content) {
+            this.content = content;
         }
 
-        public void setEndPos(int endPos) {
-            this.endPos = endPos;
+        public boolean isExactMatch() {
+            return exactMatch;
+        }
+
+        public void setExactMatch(boolean exactMatch) {
+            this.exactMatch = exactMatch;
         }
 
         @Override
         public int hashCode() {
             final int prime = 31;
             int result = 1;
-            result = prime * result + endPos;
-            result = prime * result + startPos;
+            result = prime * result + ((content == null) ? 0 : content.hashCode());
+            result = prime * result + (exactMatch ? 1231 : 1237);
             return result;
         }
 
@@ -50,39 +50,46 @@ public class GeneratedCode {
                 return false;
             if (getClass() != obj.getClass())
                 return false;
-            ContentRange other = (ContentRange) obj;
-            if (endPos != other.endPos)
+            ContentPart other = (ContentPart) obj;
+            if (content == null) {
+                if (other.content != null)
+                    return false;
+            } else if (!content.equals(other.content))
                 return false;
-            if (startPos != other.startPos)
+            if (exactMatch != other.exactMatch)
                 return false;
             return true;
         }
 
         @Override
         public String toString() {
-            return "ContentRange{endPos=" + endPos + ", startPos=" + startPos + "}";
+            return "ContentPart{content=" + content + ", exactMatch=" + exactMatch + "}";
         }
     }
 
     private int index;
-    private String content;
+    private List<ContentPart> contentParts;
     private String indent;
     private boolean skipped;
     private boolean replaceAugCodeDirectives;
     private boolean replaceGenCodeDirectives;
-    private List<ContentRange> exactMatchRanges;
 
     public GeneratedCode() {
 
     }
 
-    public GeneratedCode(List<ContentRange> exactMatchRanges) {
-        this.exactMatchRanges = exactMatchRanges;        
+    public GeneratedCode(List<ContentPart> contentParts) {
+        this.contentParts = contentParts;        
     }
 
-    // used by Groovy script
-    public ContentRange newExactMatchRange(int startPos, int endPos) {
-        return new ContentRange(startPos, endPos);
+    // Intended for use by Groovy scripts
+    public ContentPart newPart(String content) {
+        return new ContentPart(content, false);
+    }
+
+    // Intended for use by Groovy scripts
+    public ContentPart newPart(String content, boolean exactMatch) {
+        return new ContentPart(content, exactMatch);
     }
 
     public int getIndex() {
@@ -91,14 +98,6 @@ public class GeneratedCode {
 
     public void setIndex(int index) {
         this.index = index;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
-        this.content = content;
     }
 
     public String getIndent() {
@@ -133,20 +132,27 @@ public class GeneratedCode {
         this.replaceGenCodeDirectives = replaceGenCodeDirectives;
     }
 
-    public List<ContentRange> getExactMatchRanges() {
-        return exactMatchRanges;
+    public List<ContentPart> getContentParts() {
+        return contentParts;
     }
 
-    public void setExactMatchRanges(List<ContentRange> exactMatchRanges) {
-        this.exactMatchRanges = exactMatchRanges;
+    public void setContentParts(List<ContentPart> contentParts) {
+        this.contentParts = contentParts;
     }
+
+	public String getWholeContent() {
+        StringBuilder wholeContent = new StringBuilder();
+        for (ContentPart part : contentParts) {
+            wholeContent.append(part.content);
+        }
+		return wholeContent.toString();
+	}
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((content == null) ? 0 : content.hashCode());
-        result = prime * result + ((exactMatchRanges == null) ? 0 : exactMatchRanges.hashCode());
+        result = prime * result + ((contentParts == null) ? 0 : contentParts.hashCode());
         result = prime * result + ((indent == null) ? 0 : indent.hashCode());
         result = prime * result + index;
         result = prime * result + (replaceAugCodeDirectives ? 1231 : 1237);
@@ -164,15 +170,10 @@ public class GeneratedCode {
         if (getClass() != obj.getClass())
             return false;
         GeneratedCode other = (GeneratedCode) obj;
-        if (content == null) {
-            if (other.content != null)
+        if (contentParts == null) {
+            if (other.contentParts != null)
                 return false;
-        } else if (!content.equals(other.content))
-            return false;
-        if (exactMatchRanges == null) {
-            if (other.exactMatchRanges != null)
-                return false;
-        } else if (!exactMatchRanges.equals(other.exactMatchRanges))
+        } else if (!contentParts.equals(other.contentParts))
             return false;
         if (indent == null) {
             if (other.indent != null)
@@ -192,8 +193,8 @@ public class GeneratedCode {
 
     @Override
     public String toString() {
-        return "GeneratedCode{content=" + content + ", exactMatchRanges=" + exactMatchRanges + ", indent=" + indent
-                + ", index=" + index + ", replaceAugCodeDirectives=" + replaceAugCodeDirectives
-                + ", replaceGenCodeDirectives=" + replaceGenCodeDirectives + ", skipped=" + skipped + "}";
+        return "GeneratedCode{contentParts=" + contentParts + ", indent=" + indent + ", index=" + index
+                + ", replaceAugCodeDirectives=" + replaceAugCodeDirectives + ", replaceGenCodeDirectives="
+                + replaceGenCodeDirectives + ", skipped=" + skipped + "}";
     }
 }

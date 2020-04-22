@@ -19,9 +19,12 @@ VAL_ERROR_COMPLETE_NULL_GEN_CODE_FILE_AT_I = '"invaid null value found at genCod
 VAL_ERROR_RUN_NULL_GEN_CODE_FILE = '"unexpected absence of genCodeFile"'
 VAL_ERROR_PROCESS_NULL_AUG_CODE_FILE = VAL_ERROR_PREPARE_NULL_AUG_CODE_FILE_AT_I
 VAL_ERROR_PROCESS_NULL_GEN_CODE_FILE = VAL_ERROR_COMPLETE_NULL_GEN_CODE_FILE_AT_I
-VAL_ERROR_NO_GROOVY_SCRIPT_DIR = '"groovyScriptDir property is required if scriptEvalFunction is absent"'
+VAL_ERROR_NO_GROOVY_SCRIPT_DIR = '"groovyScriptDir property is required if scriptEvalFunction reference is absent"'
 
 PREPARE_FILES_VALIDATION_CODE = '''// set up defaults
+        if (resolvedEncoding == null) {
+            resolvedEncoding = "UTF-8";
+        }
         if (resolvedGenCodeStartDirectives.isEmpty()) {
             resolvedGenCodeStartDirectives.add("//:GEN_CODE_START:");
         }
@@ -62,6 +65,9 @@ PROCESS_FILES_VALIDATION_CODE = '''// set up defaults
         }'''
 
 COMPLETION_FILES_VALIDATION_CODE = '''// set up defaults
+        if (resolvedEncoding == null) {
+            resolvedEncoding = "UTF-8";
+        }
         if (resolvedPrepFile == null) {
             resolvedPrepFile = TaskUtils.getDefaultPrepFile(task);
         }
@@ -88,8 +94,7 @@ FILE_SET_EXTRACTION_CODE = '''
             }
         }'''
 
-DEST_DIR_CONTENT_DELETION_CODE = '''
-        TaskUtils.deleteDirContents(resolvedDestDir);'''
+DEST_DIR_DELETION_CODE = 'Eval.me("x", resolvedDestDir, "x.deleteDir()");'
 
 LOG_REFERENCE = ''
 LOG_NO_FILES_FOUND = 'task.log("No files were found", Project.MSG_WARN);'

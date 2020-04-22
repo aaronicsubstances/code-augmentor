@@ -1,6 +1,5 @@
 package com.aaronicsubstances.code.augmentor.maven;
 
-import java.io.File;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
@@ -42,40 +41,15 @@ public class TaskUtils {
     }
 
     public static MojoExecutionException convertToPluginException(List<Throwable> allErrors) {
-        return convertToPluginException(allErrors, false, false, null, null);
+        return convertToPluginException(allErrors, false, null, null);
     }
 
     public static MojoExecutionException convertToPluginException(List<Throwable> allErrors,
-            boolean includeStackTraces, boolean useDefaultGroovyPrefixes, 
-            List<String> stackTraceFilterPrefixes, List<String> stackTraceLimitPrefixes) {
+            boolean includeStackTraces,
+            List<String> stackTraceLimitPrefixes, List<String> stackTraceFilterPrefixes) {
         String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(allErrors,
-            includeStackTraces, useDefaultGroovyPrefixes,
+            includeStackTraces,
             stackTraceLimitPrefixes, stackTraceFilterPrefixes);
         return new MojoExecutionException(allExMsg);
-    }
-
-    public static void deleteDirContents(File dir) {
-        File[] contents = dir.listFiles();
-        if (contents != null) {
-            for (File f : contents) {
-                try {
-                    deleteDirContentsRecursively(f);
-                }
-                catch (Exception ignore) {}
-            }
-        }
-    }
-    
-    private static void deleteDirContentsRecursively(File file) {
-        File[] contents = file.listFiles();
-        if (contents != null) {
-            for (File f : contents) {
-                try {
-                    deleteDirContentsRecursively(f);
-                    file.delete();
-                }
-                catch (Exception ignore) {}
-            }
-        }
     }
 }

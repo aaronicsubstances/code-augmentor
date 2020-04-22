@@ -17,6 +17,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.shared.utils.io.FileUtils;
 
 /**
  * Completes code generation.
@@ -70,9 +71,8 @@ public class CompletionMojo extends AbstractPluginMojo {
         // Validation complete. start execution by deleting contents
         // of destDir so generated output files is not confused with previous ones.
         Log logger = task.getLog();
-        logger.info("Deleting contents of " + resolvedDestDir + "...");
-        
-        TaskUtils.deleteDirContents(resolvedDestDir);
+        logger.info("Deleting " + resolvedDestDir + "...");
+        FileUtils.deleteDirectory(resolvedDestDir);
 
         CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
         genericTask.setCharset(charset);

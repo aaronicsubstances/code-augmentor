@@ -73,13 +73,12 @@ FILE_SET_EXTRACTION_CODE = '''
             }
         }'''
 
-DEST_DIR_CONTENT_DELETION_CODE = '''
-        TaskUtils.deleteDirContents(resolvedDestDir);'''
+DEST_DIR_DELETION_CODE = 'FileUtils.deleteDirectory(resolvedDestDir);'
 
 LOG_REFERENCE = 'Log logger = task.getLog();'
 LOG_NO_FILES_FOUND = 'logger.warn("No files were found");'
 LOG_ONE_OR_MORE_FILE_COUNT = 'logger.info(String.format("Found %s file(s)", relativePaths.size()));'
-LOG_DELETE_DEST_DIR = 'logger.info("Deleting contents of " + resolvedDestDir + "...");'
+LOG_DELETE_DEST_DIR = 'logger.info("Deleting " + resolvedDestDir + "...");'
 LOG_CALLING_GROOVY = 'logger.info("Launching " + resolvedGroovyEntryScriptName + "...");'
 
 // use equivalent of 3 tabs

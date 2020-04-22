@@ -1,6 +1,5 @@
 package com.aaronicsubstances.code.augmentor.core.tasks;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -9,7 +8,7 @@ import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.AugmentingCodeDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.GeneratedCodeDescriptor;
-import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode.ContentRange;
+import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode.ContentPart;
 import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 
 public class CodeGenerationResponseProcessor {
@@ -60,6 +59,13 @@ public class CodeGenerationResponseProcessor {
     }
 
     static String getEffectiveIndent(AugmentingCodeDescriptor augCodeDescriptor, GeneratedCode genCode) {
+        // don't indent code if generated code contains any content part requiring exact
+        // matching.
+        for (ContentPart part : genCode.getContentParts()) {
+            if (part.isExactMatch()) {
+                return "";
+            }
+        }
         String indent = genCode.getIndent();
         if (indent == null) {
             indent = augCodeDescriptor.getIndent();
@@ -80,36 +86,57 @@ public class CodeGenerationResponseProcessor {
         }
         return codeBuffer.toString();
     }
+    
+    static String wrapInGeneratedCodeDirectives(String code, String genCodeStartDirective,
+            String genCodeEndDirective,
+            String indent, String newline) {
+        return indent + genCodeStartDirective + newline +
+            code +
+            indent + genCodeEndDirective + newline;
+    }
 
-	public static boolean areTextsSimiliar(String textToBeReplaced, String replacmentText,
-			List<ContentRange> exactMatchRanges, int exactMatchAdjustment) {
+	public static boolean areTextsSimilar(String textToBeReplaced, String replacementText,
+			List<ContentPart> contentParts) {
+        long exactMatchCount = contentParts.stream().filter(x -> x.isExactMatch()).count();
+        if (exactMatchCount == contentParts.size()) {
+            return replacementText.equals(textToBeReplaced);
+        }
         // build regex out of replacement text and match it against all of textToBeReplaced
         StringBuilder regexBuilder = new StringBuilder();
-        if (exactMatchRanges == null || exactMatchRanges.isEmpty()) {
-            appendReplacementTextRegex(regexBuilder, replacmentText, true, true);
+        if (exactMatchCount == 0) {
+            appendReplacementTextRegex(regexBuilder, replacementText, true, true);
         }
         else {
             // Else exact matches exist. 
-            // In that case split replacementText into parts, where each part
-            // is annotated with 3 pieces of information: includedInExactMatch,
-            // hasNewlineStart, hasNewlineEnd
-            
-            List<Boolean> includedStates = new ArrayList<>();
-            List<Boolean> startsNewlineStates = new ArrayList<>();
-            List<Boolean> endsWithNewlineStates = new ArrayList<>();
-            List<String> sections = partitionReplacementText(replacmentText, exactMatchRanges,
-                exactMatchAdjustment, includedStates, startsNewlineStates, 
-                endsWithNewlineStates);
-            for (int i = 0; i < sections.size(); i++) {
-                String section = sections.get(i);
-                if (includedStates.get(i)) {
-                    regexBuilder.append(Pattern.quote(section));
+            // In that case annotate each part with 3 pieces of information: includedInExactMatch,
+            // hasNewlineStart, hasNewlineEnd.
+            for (int i = 0; i < contentParts.size(); i++) {
+                ContentPart part = contentParts.get(i);
+                String content = part.getContent();
+                if (content.isEmpty()) {
+                    continue;
+                }
+                if (!part.isExactMatch()) {
+                    boolean startsNewline = true;
+                    if (i > 0) {
+                        String prevContent = contentParts.get(i - 1).getContent();
+                        char prevContentLastChar = prevContent.charAt(prevContent.length() - 1);
+                        if (!TaskUtils.isNewLine(prevContentLastChar)) {
+                            startsNewline = false;
+                        }
+                    }
+
+                    boolean endsWithNewline = true;
+                    if (i < contentParts.size() - 1) {
+                        char lastContentChar = content.charAt(content.length() - 1);
+                        endsWithNewline = TaskUtils.isNewLine(lastContentChar);
+                    }
+
+                    appendReplacementTextRegex(regexBuilder, content, startsNewline, 
+                        endsWithNewline);
                 }
                 else {
-                    boolean startsNewline = startsNewlineStates.get(i);
-                    boolean endsWithNewline = endsWithNewlineStates.get(i);
-                    appendReplacementTextRegex(regexBuilder, section, startsNewline, 
-                        endsWithNewline);
+                    regexBuilder.append(Pattern.quote(content));
                 }
             }
         }
@@ -118,88 +145,9 @@ public class CodeGenerationResponseProcessor {
         return similar;
 	}
 
-    private static List<String> partitionReplacementText(String replacementText,
-            List<ContentRange> exactMatchRanges, int exactMatchAdjustment,
-            List<Boolean> includedStates,
-            List<Boolean> startWithNewlineStates,
-            List<Boolean> endWithNewlineStates) {
-        List<String> sections = new ArrayList<>();
-        int startTextIndex = 0;
-        for (int i = 0; i < exactMatchRanges.size(); i++) {
-            ContentRange exactMatchRange = exactMatchRanges.get(i);
-            if (exactMatchRange == null) {
-                continue;
-            }
-            int effStartPos = exactMatchRange.getStartPos() + exactMatchAdjustment;
-            int effEndPos = exactMatchRange.getEndPos() + exactMatchAdjustment;
-            if (effStartPos < 0 || effStartPos >= replacementText.length()) {
-                continue;
-            }
-            if (effEndPos < 0 || effEndPos >= replacementText.length()) {
-                continue;
-            }
-            if (effEndPos < effStartPos) {
-                continue;
-            }
-            if (startTextIndex < effStartPos) {
-                // meaning ranges are not sorted.
-                continue;
-            }
-            String relaxedMatchSection = replacementText.substring(startTextIndex, effEndPos);
-            if (!relaxedMatchSection.isEmpty()) {
-                sections.add(relaxedMatchSection);
-                includedStates.add(false);
-                boolean startsNewline = true;
-                if (startTextIndex > 0) {
-                    char prevChar = replacementText.charAt(startTextIndex - 1);
-                    if (!TaskUtils.isNewLine(prevChar)) {
-                        startsNewline = false;
-                    }
-                }
-                startWithNewlineStates.add(startsNewline);
-
-                boolean endsNewline = true;
-                if (effEndPos < replacementText.length()) {
-                    char lastSectionChar = replacementText.charAt(effEndPos - 1);
-                    if (!TaskUtils.isNewLine(lastSectionChar)) {
-                        startsNewline = false;
-                    }
-                }
-                endWithNewlineStates.add(endsNewline);
-            }
-            String exactMatchSection = replacementText.substring(effStartPos, effEndPos);
-            if (!exactMatchSection.isEmpty()) {
-                sections.add(exactMatchSection);
-                includedStates.add(true);
-                // don't really care about these, except for maintaining
-                // corresponding indices.
-                startWithNewlineStates.add(false);
-                endWithNewlineStates.add(false);
-            }
-            startTextIndex = effEndPos;
-        }
-
-        // deal with remainder.
-        String remainder = replacementText.substring(startTextIndex);
-        if (!remainder.isEmpty()) {
-            sections.add(remainder);
-            includedStates.add(false);
-            boolean startsNewline = true;
-            if (startTextIndex > 0) {
-                char prevChar = replacementText.charAt(startTextIndex - 1);
-                if (!TaskUtils.isNewLine(prevChar)) {
-                    startsNewline = false;
-                }
-            }
-            startWithNewlineStates.add(startsNewline);
-            endWithNewlineStates.add(true);
-        }
-        
-        return sections;
-    }
-
     private static void appendReplacementTextRegex(StringBuilder regexBuilder, String section,
-            boolean startsNewline, boolean endsWithNewline) {
+            boolean firstSplitStartsOnNewline, 
+            boolean lastSplitEndsWithNewline) {
         // if there are no exact matches concerns, then we can
         // split the section into lines, and introduce relaxation that
         // all non newline whitespace(NNWS for short) occuring within
@@ -212,7 +160,7 @@ public class CodeGenerationResponseProcessor {
             // only ignore leading indent test if we are on
             // first line and it does not start with a newline in
             // original larger text.
-            if (i > 0 || startsNewline) {
+            if (i > 0 || firstSplitStartsOnNewline) {
                 regexBuilder.append("[ \f\t]*");
             }
             Matcher nnWsMatcher = NON_NEWLINE_WS_MULTIPLE_REGEX.matcher(line);
@@ -227,22 +175,24 @@ public class CodeGenerationResponseProcessor {
                 midNnwsTestAdded = true;
             }
             // cater for remainder and if not empty, deal with trailing indent test.
-            // if remainder is empty, then it means the last NNWS test has to
-            // be modified from 'at least one' to 'zero or more' to serve as a
-            // trailing indent test.
             if (start < line.length()) {
                 regexBuilder.append(Pattern.quote(line.substring(start)));
                 // determine trailing indent similarity test
                 // only ignore trailing indent test if we are on
                 // last line and it does not end with a newline in
                 // original larger text. 
-                if (i + 2 < splitText.size() || endsWithNewline) {
+                if (i + 2 < splitText.size() || lastSplitEndsWithNewline) {
                     regexBuilder.append("[ \f\t]*");
                 }
             }
-            else if (midNnwsTestAdded) {
-                if (i + 2 < splitText.size() || endsWithNewline) {
-                    regexBuilder.setCharAt(regexBuilder.length() - 1, '*');
+            else {
+                // if remainder is empty, then it means the last NNWS test has to
+                // be modified from 'at least one' to 'zero or more' to serve as a
+                // trailing indent test.
+                if (midNnwsTestAdded) {
+                    if (i + 2 < splitText.size() || lastSplitEndsWithNewline) {
+                        regexBuilder.setCharAt(regexBuilder.length() - 1, '*');
+                    }
                 }
             }
             String terminator = splitText.get(i + 1);

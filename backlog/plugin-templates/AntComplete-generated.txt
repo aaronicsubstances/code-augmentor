@@ -3,6 +3,9 @@
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
             File resolvedChangeSetInfoFile) throws Exception {
         // set up defaults
+        if (resolvedEncoding == null) {
+            resolvedEncoding = "UTF-8";
+        }
         if (resolvedPrepFile == null) {
             resolvedPrepFile = TaskUtils.getDefaultPrepFile(task);
         }
@@ -33,8 +36,7 @@
         // of destDir so generated output files is not confused with previous ones.
         
         task.log("Deleting contents of " + resolvedDestDir + "...");
-        
-        TaskUtils.deleteDirContents(resolvedDestDir);
+        Eval.me("x", resolvedDestDir, "x.deleteDir()");
 
         CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
         genericTask.setCharset(charset);

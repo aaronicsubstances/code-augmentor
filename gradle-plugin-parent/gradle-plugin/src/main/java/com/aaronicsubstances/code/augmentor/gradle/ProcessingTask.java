@@ -158,9 +158,7 @@ public class ProcessingTask extends DefaultTask {
         }
 
         List<Throwable> scriptErrors = new ArrayList<>();
-        boolean defaultGroovyUsed = false;
         if (resolvedScriptEvalFunction == null) {
-            defaultGroovyUsed = true;
             URL[] scriptEngineRoots = new URL[]{ resolvedGroovyScriptDir.toURI().toURL() };
             GroovyScriptEngine scriptEngine = new GroovyScriptEngine(scriptEngineRoots);
             CompilerConfiguration cc = new CompilerConfiguration();
@@ -190,7 +188,7 @@ public class ProcessingTask extends DefaultTask {
 
         // fail build if there were errors.
         if (!scriptErrors.isEmpty()) {
-            throw TaskUtils.convertToPluginException(scriptErrors, true, defaultGroovyUsed,
+            throw TaskUtils.convertToPluginException(scriptErrors, true,
                 resolvedStackTraceLimitPrefixes, resolvedStackTraceFilterPrefixes);
         }
     }

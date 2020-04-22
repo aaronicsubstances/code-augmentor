@@ -12,6 +12,8 @@ import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.types.FileSet;
 
+import groovy.lang.Closure;
+
 public class CodeAugmentorTask extends Task {
     private String encoding;
     private boolean verbose;
@@ -24,7 +26,6 @@ public class CodeAugmentorTask extends Task {
     private final List<String> skipCodeEndDirectives = new ArrayList<>();
     private final List<String> augCodeDirectives = new ArrayList<>();
     
-    private GenericTaskExtensionFunction scriptEvalFunction;
     private String stackTraceLimitPrefixes;
     private String stackTraceFilterPrefixes;
     private File groovyScriptDir;
@@ -32,6 +33,10 @@ public class CodeAugmentorTask extends Task {
 
     private File destDir;
     private File changeSetInfoFile;
+
+    private File prepFile;
+    private File augCodeFile;
+    private File genCodeFile;
 
     public void setEncoding(String encoding) {
         this.encoding = encoding;
@@ -101,10 +106,6 @@ public class CodeAugmentorTask extends Task {
         augCodeDirectives.add(val);
     }
 
-    public void setScriptEvalFunction(GenericTaskExtensionFunction scriptEvalFunction) {
-        this.scriptEvalFunction = scriptEvalFunction;
-    }
-
     public void setStackTraceLimitPrefixes(String stackTraceLimitPrefixes) {
         this.stackTraceLimitPrefixes = stackTraceLimitPrefixes;
     }
@@ -129,6 +130,18 @@ public class CodeAugmentorTask extends Task {
         this.changeSetInfoFile = changeSetInfoFile;
     }
 
+    public void setPrepFile(File prepFile) {
+        this.prepFile = prepFile;
+    }
+
+    public void setAugCodeFile(File augCodeFile) {
+        this.augCodeFile = augCodeFile;
+    }
+
+    public void setGenCodeFile(File genCodeFile) {
+        this.genCodeFile = genCodeFile;
+    }
+
     public void execute() {
         try {
             // prepare...
@@ -138,14 +151,17 @@ public class CodeAugmentorTask extends Task {
             if (!augCodeDirectives.isEmpty()) {
                 resolvedAugCodeDirectives.add(augCodeDirectives);
             }
+            List<File> augCodeFiles = new ArrayList<>();
+            if (augCodeFile != null) {
+                augCodeFiles.add(augCodeFile);
+            }
             PrepareTask.completeExecute(this, encoding, verbose, srcDirs, 
                 genCodeStartDirectives, genCodeEndDirectives, 
                 embeddedStringDirectives, embeddedJsonDirectives, 
                 skipCodeStartDirectives, skipCodeEndDirectives, 
                 resolvedAugCodeDirectives, 
-                // use modifiable list so default can be added to it. 
-                new ArrayList<>(),
-                null);
+                augCodeFiles,
+                prepFile);
 
             // process...
             List<String> resolvedStackTraceLimitPrefixes = new ArrayList<>();
@@ -156,23 +172,33 @@ public class CodeAugmentorTask extends Task {
                     .collect(Collectors.toList());
             }
             List<String> resolvedStackTraceFilterPrefixes = new ArrayList<>();
-            if (resolvedStackTraceFilterPrefixes != null) {                
+            if (stackTraceFilterPrefixes != null) {                
                 resolvedStackTraceFilterPrefixes = Arrays.stream(stackTraceFilterPrefixes.split(",", -1))
                     .map(x -> x.trim())
                     .filter(x -> !x.isEmpty())
                     .collect(Collectors.toList());
             }
             
-            ProcessTask.completeExecute(this, verbose, 0, 0, null, null, 
-                scriptEvalFunction, resolvedStackTraceLimitPrefixes, 
+            GenericTaskExtensionFunction resolvedScriptEvalFunction = null;
+            Closure<?> evalClosure = (Closure<?>)getProject().getReference("scriptEvalFunction");
+            if (evalClosure != null) {
+                resolvedScriptEvalFunction = args -> {
+                    return evalClosure.call(Arrays.asList(args));
+                };
+            }
+            
+            ProcessTask.completeExecute(this, verbose, 0, 0, augCodeFile, genCodeFile, 
+            resolvedScriptEvalFunction, resolvedStackTraceLimitPrefixes, 
                 resolvedStackTraceFilterPrefixes, groovyScriptDir, 
                 groovyEntryScriptName);
 
             // complete.
-            CompletionTask.completeExecute(this, encoding, verbose, null, 
-                // use modifiable list so deault can be added later on.
-                new ArrayList<>(), 
-                destDir, changeSetInfoFile);
+            List<File> genCodeFiles = new ArrayList<>();
+            if (genCodeFile != null) {
+                genCodeFiles.add(genCodeFile);
+            }
+            CompletionTask.completeExecute(this, encoding, verbose, prepFile,
+                genCodeFiles, destDir, changeSetInfoFile);
         }
         catch (BuildException ex) {
             throw ex;

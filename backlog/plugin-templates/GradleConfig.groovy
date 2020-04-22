@@ -75,8 +75,7 @@ FILE_SET_EXTRACTION_CODE = '''
             }
         }'''
 
-DEST_DIR_CONTENT_DELETION_CODE = '''
-        task.getProject().delete(task.getProject().fileTree(resolvedDestDir));'''
+DEST_DIR_DELETION_CODE = 'task.getProject().delete(resolvedDestDir);'
 
 LOG_REFERENCE = '''
         Logger logger = task.getLogger();'''

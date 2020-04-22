@@ -16,7 +16,7 @@ import com.aaronicsubstances.code.augmentor.core.models.CodeGenerationResponse;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.AugmentingCodeDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.GeneratedCodeDescriptor;
-import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode.ContentRange;
+import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode.ContentPart;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode;
 import com.aaronicsubstances.code.augmentor.core.models.PreCodeAugmentationResult;
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileAugmentingCode;
@@ -265,16 +265,14 @@ public class PersistenceTest {
                             generatedCode.setSkipped(randGen.nextBoolean());
                             generatedCode.setReplaceAugCodeDirectives(randGen.nextBoolean());
                             generatedCode.setReplaceGenCodeDirectives(randGen.nextBoolean());
-                            generatedCode.setContent(generateRandomString(randGen, true));
 
                             if (randGen.nextBoolean()) {
-                                generatedCode.setExactMatchRanges(new ArrayList<>());
+                                generatedCode.setContentParts(new ArrayList<>());
                                 int exactMatchRangeSize = randGen.nextInt(6);
                                 for (int k = 0; k < exactMatchRangeSize; k++) {
-                                    int startPos = randGen.nextInt(45);
-                                    int endPos = startPos + randGen.nextInt(45);
-                                    ContentRange range = new ContentRange(startPos, endPos);
-                                    generatedCode.getExactMatchRanges().add(range);
+                                    String content = generateRandomString(randGen, true);
+                                    ContentPart part = new ContentPart(content, randGen.nextBoolean());
+                                    generatedCode.getContentParts().add(part);
                                 }
                             }
                         }

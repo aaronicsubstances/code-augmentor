@@ -17,6 +17,7 @@ import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode;
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileAugmentingCode;
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileGeneratedCode;
 import com.aaronicsubstances.code.augmentor.core.models.AugmentingCode.Block;
+import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode.ContentPart;
 import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 
 public class ProcessCodeGenericTask {
@@ -97,8 +98,8 @@ public class ProcessCodeGenericTask {
 
                 // now write out generated code for file if no errors are found.
                 if (allErrors.size() > beginErrorCount) {
-                    TaskUtils.logWarn(logAppender, "%s error(s) encountered in %s. %s", 
-                        allErrors.size() - beginErrorCount, fileAugCodes.getFileIndex(), srcFile);
+                    TaskUtils.logWarn(logAppender, "%s error(s) encountered in %s", 
+                        allErrors.size() - beginErrorCount, srcFile);
                 }
                 else if (allErrors.isEmpty()) {
                     fileGenCodes.serialize(responseWriter);
@@ -131,28 +132,24 @@ public class ProcessCodeGenericTask {
             throw createException(context, ex);
         }
     
-        // validate return result: content must be set.        
+        // Validate eval function return result.
+        // As much as possible, record errors rather than throw them so
+        // we can skip past whatever aug codes are targeted, and
+        // likely avoid superflous errors due to intermediate/dependent aug codes.     
         if (result == null) {
             throw createException(context, "Received null result");
         }
         else if (result instanceof List) {
             List<GeneratedCode> listResult = (List<GeneratedCode>) result;
             if (listResult.isEmpty()) {
-                throw createException(context, "Received empty results");
+                throw createException(context, "Received empty list");
             }
             int augCodeIndexInContext = context.getAugCodeIndex();
             SourceFileAugmentingCode fileAugCodes = context.getFileAugCodes();
             for (int j = 0; j < listResult.size(); j++) {
                 GeneratedCode genCode = listResult.get(j);
-                // instead of throwing error, rather save them here so
-                // we can skip past whatever aug codes are targeted, and
-                // likely avoid superflous errors due to intermediate/dependent aug codes.
                 if (genCode == null) {
-                    allErrors.add(createException(context, "Received null at index " + j));
-                    break;
-                }
-                if (genCode.getContent() == null) {
-                    allErrors.add(createException(context, "content property is not set at index " + j));
+                    allErrors.add(createException(context, "Found null list item at index " + j));
                     break;
                 }
                 if (augCodeIndexInContext + j >= fileAugCodes.getAugmentingCodes().size()) {
@@ -162,22 +159,40 @@ public class ProcessCodeGenericTask {
                 AugmentingCode correspondingAugCode = fileAugCodes.getAugmentingCodes().get(
                     augCodeIndexInContext + j);
                 genCode.setIndex(correspondingAugCode.getIndex());
+                validateContentParts(genCode, j, context);
             }
             return listResult;
         }
         else if (result instanceof GeneratedCode) {
             GeneratedCode genCode = (GeneratedCode) result;
-            if (genCode.getContent() == null) {
-                throw createException(context, "content property is not set");
-            }
             genCode.setIndex(augCode.getIndex());
+            validateContentParts(genCode, -1, context);
             return Arrays.asList(genCode);
         }
         else {
-            GeneratedCode genCode = new GeneratedCode();
-            genCode.setContent(result.toString());
+            GeneratedCode genCode = new GeneratedCode(new ArrayList<>());
             genCode.setIndex(augCode.getIndex());
+            genCode.getContentParts().add(new ContentPart(result.toString(), false));
             return Arrays.asList(genCode);
+        }
+    }
+
+    private void validateContentParts(GeneratedCode genCode, int genCodeIndex,
+            ProcessCodeContext context) {
+        String errorSuffix = "";
+        if (genCodeIndex != -1) {
+            errorSuffix = "in list item at index " + genCodeIndex;
+        }
+        List<ContentPart> parts = genCode.getContentParts();
+        if (parts == null || parts.isEmpty()) {
+            allErrors.add(createException(context, "Found null/empty content parts" + errorSuffix));
+        }
+        for (int i = 0; i < parts.size(); i++) {
+            ContentPart part = parts.get(i);
+            if (part == null || part.getContent() == null) {
+                allErrors.add(createException(context, "Found null part/content at index " + i +
+                    errorSuffix));
+            }
         }
     }
 

@@ -9,8 +9,8 @@ public abstract class AbstractPluginMojo extends AbstractMojo {
     @Parameter( required = false)
     private boolean verbose = false;
 
-    @Parameter( defaultValue="${project.build.sourceEncoding}", readonly=true, required=true )
-    private String encoding;
+    @Parameter( defaultValue="${project.build.sourceEncoding}", required=false )
+    private String encoding = "UTF-8";
 
     @Parameter( defaultValue = "${project.build.directory}/codeAugmentor/augCodes.json", 
         readonly = true, required = true )

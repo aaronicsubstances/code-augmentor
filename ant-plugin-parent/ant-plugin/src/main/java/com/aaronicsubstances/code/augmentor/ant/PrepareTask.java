@@ -143,6 +143,9 @@ public class PrepareTask extends Task {
             List<File> resolvedAugCodeFiles,
             File resolvedPrepFile) throws Exception {
         // set up defaults
+        if (resolvedEncoding == null) {
+            resolvedEncoding = "UTF-8";
+        }
         if (resolvedGenCodeStartDirectives.isEmpty()) {
             resolvedGenCodeStartDirectives.add("//:GEN_CODE_START:");
         }

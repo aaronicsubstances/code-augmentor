@@ -47,20 +47,13 @@ public class GenericTaskException extends RuntimeException {
     }
 
     public static String toExceptionMessageWithScriptConsideration(
-            List<Throwable> allErrors,
-            boolean includeStackTraces, boolean useDefaultGroovyPrefixes, 
+            List<Throwable> allErrors, boolean includeStackTraces,
             List<String> stackTraceLimitPrefixes, List<String> stackTraceFilterPrefixes) {
-        // set up prefixes
-        if (stackTraceLimitPrefixes == null) {
-            stackTraceLimitPrefixes = Arrays.asList();
-        }
-        if (stackTraceFilterPrefixes == null) {
-            stackTraceFilterPrefixes = Arrays.asList();
-        }
-        if (useDefaultGroovyPrefixes && stackTraceLimitPrefixes.isEmpty()) {
+        // set up default prefixes
+        if (stackTraceLimitPrefixes == null || stackTraceLimitPrefixes.isEmpty()) {
             stackTraceLimitPrefixes = Arrays.asList("groovy.util.GroovyScriptEngine");
         }
-        if (useDefaultGroovyPrefixes && stackTraceFilterPrefixes.isEmpty()) {
+        if (stackTraceFilterPrefixes == null || stackTraceFilterPrefixes.isEmpty()) {
             stackTraceFilterPrefixes = Arrays.asList("com.sun.", "sun.", 
                 "groovy.lang.", "org.codehaus.groovy.");
         }

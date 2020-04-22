@@ -32,7 +32,7 @@ class CodeAugmentorTaskFunctionalTest extends Specification {
         })
         """
         File workerFile = new File(scriptDir, "Worker.groovy")
-        workerFile << """static generateMainClass(augCode, context) {
+        workerFile << '''static generateMainClass(augCode, context) {
             def className = augCode.args[0].trim()
             // split class name if it has package name in it.
             def simpleClassName = className
@@ -43,19 +43,20 @@ class CodeAugmentorTaskFunctionalTest extends Specification {
                 simpleClassName = className[periodIndex + 1 .. -1]
             }
             // now generate main class file contents
-            StringBuilder out = new StringBuilder()
+            def g = context.newGenCode()
+            def out = g.contentParts
             String indent = ' ' * 4 
             if (pkgName) {
-                out << 'package ' << pkgName << ';' << '\\n\\n'
+                out << g.newPart("package $pkgName;\\n\\n")
             }
-            out << 'public class ' << simpleClassName << ' {\\n\\n'
-            out << indent << 'public static void main(String[] args) {\\n'
-            out << indent * 2 << 'System.out.println("Hello from CodeAugmentor!");' << '\\n'
-            out << indent << '}\\n'
-            out << '}'
-            return out.toString()
+            out << g.newPart("public class $simpleClassName {\\n\\n")
+            out << g.newPart("${indent}public static void main(String[] args) {\\n")
+            out << g.newPart("${indent * 2}System.out.println(\\"Hello from CodeAugmentor!\\");\\n")
+            out << g.newPart(indent) << g.newPart('}\\n')
+            out << g.newPart('}')
+            return g
         }
-        """
+        '''
         srcFolder = testProjectDir.newFolder("src")
         File srcPkgFolder = testProjectDir.newFolder("src", "com")
         File mainSrcFile = new File(srcPkgFolder, "Main.java")
@@ -77,6 +78,7 @@ class CodeAugmentorTaskFunctionalTest extends Specification {
             "CodeAugmentationTaskFunctionalTest")
         undeletedWorkingDir.mkdir()
         new File(undeletedWorkingDir, "Main-copy.java").bytes = mainSrcFile.bytes
+        new File(undeletedWorkingDir, "Worker-copy.groovy").bytes = workerFile.bytes
         undeletedDestDir = new File(undeletedWorkingDir, "generated")
         undeletedDestDir.mkdir()
     }
