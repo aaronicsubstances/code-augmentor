@@ -84,9 +84,13 @@ public class Main {
             @Override
             public Object makeFunctionCall(Object[] args) {
                 String functionName = (String) args[0];
-                entryScript.getBinding().setVariable("augCode", args[1]);
-                entryScript.getBinding().setVariable("context", args[2]);
-                return entryScript.evaluate(functionName + "(augCode, context)");
+                String disambiguatingPrefix = "SCRIPT_EVAL_FUNCTION_ARG_";
+                String augCodeVarName = disambiguatingPrefix + "augCode";
+                String contextVarName = disambiguatingPrefix + "context";
+                entryScript.getBinding().setVariable(augCodeVarName, args[1]);
+                entryScript.getBinding().setVariable(contextVarName, args[2]);
+                return entryScript.evaluate(functionName + "(" +
+                    augCodeVarName + ", " + contextVarName + ")");
             }
         });
 
