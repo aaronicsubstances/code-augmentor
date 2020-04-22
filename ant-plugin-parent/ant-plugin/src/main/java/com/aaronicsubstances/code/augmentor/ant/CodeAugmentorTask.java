@@ -180,11 +180,15 @@ public class CodeAugmentorTask extends Task {
             }
             
             GenericTaskExtensionFunction resolvedScriptEvalFunction = null;
-            Closure<?> evalClosure = (Closure<?>)getProject().getReference("scriptEvalFunction");
-            if (evalClosure != null) {
+            Object evalFunction = getProject().getReference("scriptEvalFunction");
+            if (evalFunction instanceof Closure<?>) {
+                Closure<?> evalClosure = (Closure<?>) evalFunction;
                 resolvedScriptEvalFunction = args -> {
                     return evalClosure.call(Arrays.asList(args));
                 };
+            }
+            else {
+                resolvedScriptEvalFunction = (GenericTaskExtensionFunction) evalFunction;
             }
             
             ProcessTask.completeExecute(this, verbose, 0, 0, augCodeFile, genCodeFile, 

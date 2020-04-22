@@ -5,6 +5,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
 import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskExtensionFunction;
 import com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeGenericTask;
 
@@ -187,9 +188,11 @@ public class ProcessingTask extends DefaultTask {
         scriptErrors.addAll(genericTask.getAllErrors());
 
         // fail build if there were errors.
-        if (!scriptErrors.isEmpty()) {
-            throw TaskUtils.convertToPluginException(scriptErrors, true,
+        if (!genericTask.getAllErrors().isEmpty()) {
+            String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(
+                genericTask.getAllErrors(), true, 
                 resolvedStackTraceLimitPrefixes, resolvedStackTraceFilterPrefixes);
+            throw new GradleException(allExMsg);
         }
     }
 //:SKIP_CODE_END:

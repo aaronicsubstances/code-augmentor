@@ -23,7 +23,3 @@ static generateMainClass(augCode, context) {
     out << g.newPart('}')
     return g
 }
-
-static testFunc(augCode, context) {
-    println("It works")
-}

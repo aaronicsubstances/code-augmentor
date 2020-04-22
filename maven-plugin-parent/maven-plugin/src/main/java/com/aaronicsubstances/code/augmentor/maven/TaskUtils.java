@@ -1,14 +1,11 @@
 package com.aaronicsubstances.code.augmentor.maven;
 
-import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
-import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
 import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskLogLevel;
 
 import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 
 public class TaskUtils {
@@ -38,18 +35,5 @@ public class TaskUtils {
             }
         };
         return logAppender;
-    }
-
-    public static MojoExecutionException convertToPluginException(List<Throwable> allErrors) {
-        return convertToPluginException(allErrors, false, null, null);
-    }
-
-    public static MojoExecutionException convertToPluginException(List<Throwable> allErrors,
-            boolean includeStackTraces,
-            List<String> stackTraceLimitPrefixes, List<String> stackTraceFilterPrefixes) {
-        String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(allErrors,
-            includeStackTraces,
-            stackTraceLimitPrefixes, stackTraceFilterPrefixes);
-        return new MojoExecutionException(allExMsg);
     }
 }

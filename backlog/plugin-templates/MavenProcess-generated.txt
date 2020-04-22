@@ -82,8 +82,10 @@
         scriptErrors.addAll(genericTask.getAllErrors());
 
         // fail build if there were errors.
-        if (!scriptErrors.isEmpty()) {
-            throw TaskUtils.convertToPluginException(scriptErrors, true,
+        if (!genericTask.getAllErrors().isEmpty()) {
+            String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(
+                genericTask.getAllErrors(), true, 
                 resolvedStackTraceLimitPrefixes, resolvedStackTraceFilterPrefixes);
+            throw new MojoExecutionException(allExMsg);
         }
     }

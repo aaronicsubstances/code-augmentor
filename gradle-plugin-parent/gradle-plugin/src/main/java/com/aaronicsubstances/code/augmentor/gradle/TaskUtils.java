@@ -1,13 +1,10 @@
 package com.aaronicsubstances.code.augmentor.gradle;
 
-import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
-import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
 import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskLogLevel;
 
-import org.gradle.api.GradleException;
 import org.gradle.api.Task;
 import org.gradle.api.logging.Logger;
 
@@ -37,18 +34,5 @@ public class TaskUtils {
             }
         };
         return logAppender;
-    }
-
-    public static GradleException convertToPluginException(List<Throwable> allErrors) {
-        return convertToPluginException(allErrors, false, null, null);
-    }
-
-    public static GradleException convertToPluginException(List<Throwable> allErrors,
-            boolean includeStackTraces, 
-            List<String> stackTraceLimitPrefixes, List<String> stackTraceFilterPrefixes) {
-        String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(allErrors,
-            includeStackTraces,
-            stackTraceLimitPrefixes, stackTraceFilterPrefixes);
-        return new GradleException(allExMsg);
     }
 }

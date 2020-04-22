@@ -7,6 +7,7 @@ import com.aaronicsubstances.code.augmentor.ant.CodeAugmentorTask;
 import com.aaronicsubstances.code.augmentor.ant.CompletionTask;
 import com.aaronicsubstances.code.augmentor.ant.PrepareTask;
 import com.aaronicsubstances.code.augmentor.ant.ProcessTask;
+import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskExtensionFunction;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -20,6 +21,7 @@ import org.codehaus.groovy.control.CompilerConfiguration;
 
 import groovy.ant.AntBuilder;
 import groovy.lang.Binding;
+import groovy.lang.Script;
 import groovy.util.GroovyScriptEngine;
 
 public class Main {
@@ -62,12 +64,14 @@ public class Main {
         scriptEngine.setConfig(cc);
         Binding binding = new Binding();
         binding.setVariable("args", cmd);
-        AntBuilder antBuilder = createAntBuilder(scriptDir);
+        Script entryScript = scriptEngine.createScript("main.groovy", binding);
+        AntBuilder antBuilder = createAntBuilder(scriptDir, entryScript);
         binding.setVariable("ant", antBuilder);
-        scriptEngine.run("main.groovy", binding);
+        binding.setVariable("defaultStackTraceLimitPrefixes", Main.class.getName());
+        entryScript.run();
     }
 
-    private static AntBuilder createAntBuilder(File scriptDir) {
+    private static AntBuilder createAntBuilder(File scriptDir, Script entryScript) {
         AntBuilder antBuilder = new AntBuilder();
         Project antProject = antBuilder.getProject();
         antProject.setBaseDir(scriptDir);
@@ -75,6 +79,17 @@ public class Main {
         antProject.addTaskDefinition("code_aug_prepare", PrepareTask.class);
         antProject.addTaskDefinition("code_aug_process", ProcessTask.class);
         antProject.addTaskDefinition("code_aug_complete", CompletionTask.class);
+
+        antProject.addReference("scriptEvalFunction", new GenericTaskExtensionFunction() {
+            @Override
+            public Object makeFunctionCall(Object[] args) {
+                String functionName = (String) args[0];
+                entryScript.getBinding().setVariable("augCode", args[1]);
+                entryScript.getBinding().setVariable("context", args[2]);
+                return entryScript.evaluate(functionName + "(augCode, context)");
+            }
+        });
+
         return antBuilder;
     }
 }

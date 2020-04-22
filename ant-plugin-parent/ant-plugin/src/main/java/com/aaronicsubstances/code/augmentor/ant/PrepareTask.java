@@ -316,7 +316,9 @@ public class PrepareTask extends Task {
 
         // fail build if there were errors.
         if (!genericTask.getAllErrors().isEmpty()) {
-            throw TaskUtils.convertToPluginException(genericTask.getAllErrors());
+            String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(
+                genericTask.getAllErrors(), false, null, null);
+            throw new BuildException(allExMsg);
         }
     }
 //:SKIP_CODE_END:

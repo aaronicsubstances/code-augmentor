@@ -57,12 +57,25 @@ public class GenericTaskException extends RuntimeException {
             stackTraceFilterPrefixes = Arrays.asList("com.sun.", "sun.", 
                 "groovy.lang.", "org.codehaus.groovy.");
         }
+        // try and fetch numerical stack trace limit prefixes as
+        // a workaround for experimenting with the stack trace prefixes to use.
+        List<Integer> hardLimits = new ArrayList<>();
+        for (String stackTraceLimitPrefix : stackTraceLimitPrefixes) {
+            try {
+                int maxFilteredSize = Integer.parseInt(stackTraceLimitPrefix);
+                if (maxFilteredSize >= 0) {
+                    hardLimits.add(maxFilteredSize);
+                }
+            }
+            catch (NumberFormatException ignore) {}
+        }
         final String STACKTRACE_SANITIZER_FILTERED_OUT_TEXT = "...";
 
         StringBuilder allExMsg = new StringBuilder();
         allExMsg.append(allErrors.size()).append(" error(s) found.\n");
         for (Throwable ex : allErrors) {
             Throwable cause = ex;
+            int causeIndex = 0;
             while (cause != null) {
                 if (cause == ex) {
                     allExMsg.append(cause.getMessage());
@@ -73,8 +86,18 @@ public class GenericTaskException extends RuntimeException {
                 allExMsg.append("\n");
                 
                 if (includeStackTraces) {
+                    // Pick out the next hard limit to use.
+                    // If we have out of hard limits, just use the
+                    // last one available.
+                    int hardLimit = -1;
+                    if (!hardLimits.isEmpty()) {
+                        hardLimit = hardLimits.get(hardLimits.size() - 1);
+                        if (causeIndex < hardLimits.size()) {
+                            hardLimit = hardLimits.get(causeIndex);
+                        }
+                    }
                     List<StackTraceElement> stackTrace = sanitizeStackTrace(cause,
-                        stackTraceLimitPrefixes, stackTraceFilterPrefixes);
+                        stackTraceLimitPrefixes, stackTraceFilterPrefixes, hardLimit);
                     for (StackTraceElement elem : stackTrace) {
                         allExMsg.append("\t");
                         if (elem == null) {
@@ -88,6 +111,7 @@ public class GenericTaskException extends RuntimeException {
                     }
                 }
                 cause = cause.getCause();
+                causeIndex++;
             }
         }
         for (int i = 0; i < 40; i++) {
@@ -101,7 +125,8 @@ public class GenericTaskException extends RuntimeException {
     }
 
     private static List<StackTraceElement> sanitizeStackTrace(Throwable t,
-            List<String> stackTraceLimitPrefixes, List<String> stackTraceFilterPrefixes) {        
+            List<String> stackTraceLimitPrefixes, List<String> stackTraceFilterPrefixes,
+            int maxFilteredSize) {        
         // Only show stack trace if it includes limit prefixes.
         // Also skip irrelevant stack trace elements using filter prefixes.
         List<StackTraceElement> filtered = new ArrayList<>();        
@@ -115,16 +140,16 @@ public class GenericTaskException extends RuntimeException {
                 .findAny().isPresent())
             .findAny();
         if (!relevanceSearch.isPresent()) {
-            return filtered;
+            if (maxFilteredSize == -1) {
+                return filtered;
+            }
         }
         for (StackTraceElement elem : stackTrace) {
+            if (maxFilteredSize != -1 && filtered.size() >= maxFilteredSize) {
+                break;
+            }
+            Optional<String> elemSearch;
             if (elem.getClassName() != null) {
-                Optional<String> elemSearch = stackTraceLimitPrefixes.stream()
-                    .filter(x -> elem.getClassName().startsWith(x))
-                    .findAny();
-                if (elemSearch.isPresent()) {
-                    break;
-                }
                 elemSearch = stackTraceFilterPrefixes.stream()
                     .filter(x -> elem.getClassName().startsWith(x))
                     .findAny();
@@ -136,6 +161,14 @@ public class GenericTaskException extends RuntimeException {
                 }
             }
             filtered.add(elem);
+            if (maxFilteredSize == -1) {
+                elemSearch = stackTraceLimitPrefixes.stream()
+                    .filter(x -> elem.getClassName().startsWith(x))
+                    .findAny();
+                if (elemSearch.isPresent()) {
+                    break;
+                }
+            }
         }
         // Remove trailing null unless it will lead to emptiness
         if (!filtered.isEmpty() && filtered.get(filtered.size() - 1) == null) {

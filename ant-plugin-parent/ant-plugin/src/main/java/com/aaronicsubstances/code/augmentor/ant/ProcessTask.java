@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
 import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskExtensionFunction;
 import com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeGenericTask;
 
@@ -74,11 +75,15 @@ public class ProcessTask extends Task {
             }
             
             GenericTaskExtensionFunction resolvedScriptEvalFunction = null;
-            Closure<?> evalClosure = (Closure<?>)getProject().getReference("scriptEvalFunction");
-            if (evalClosure != null) {
+            Object evalFunction = getProject().getReference("scriptEvalFunction");
+            if (evalFunction instanceof Closure<?>) {
+                Closure<?> evalClosure = (Closure<?>) evalFunction;
                 resolvedScriptEvalFunction = args -> {
                     return evalClosure.call(Arrays.asList(args));
                 };
+            }
+            else {
+                resolvedScriptEvalFunction = (GenericTaskExtensionFunction) evalFunction;
             }
             completeExecute(this, verbose, 0, 0, augCodeFile, genCodeFile, 
                 resolvedScriptEvalFunction, resolvedStackTraceLimitPrefixes, 
@@ -168,9 +173,11 @@ public class ProcessTask extends Task {
         scriptErrors.addAll(genericTask.getAllErrors());
 
         // fail build if there were errors.
-        if (!scriptErrors.isEmpty()) {
-            throw TaskUtils.convertToPluginException(scriptErrors, true,
+        if (!genericTask.getAllErrors().isEmpty()) {
+            String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(
+                genericTask.getAllErrors(), true, 
                 resolvedStackTraceLimitPrefixes, resolvedStackTraceFilterPrefixes);
+            throw new BuildException(allExMsg);
         }
     }
 //:SKIP_CODE_END:

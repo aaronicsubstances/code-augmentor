@@ -1,14 +1,11 @@
 package com.aaronicsubstances.code.augmentor.ant;
 
 import java.io.File;
-import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
-import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
 import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskLogLevel;
 
-import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 
@@ -33,19 +30,6 @@ public class TaskUtils {
             }
         };
         return logAppender;
-    }
-
-    public static BuildException convertToPluginException(List<Throwable> allErrors) {
-        return convertToPluginException(allErrors, false, null, null);
-    }
-
-    public static BuildException convertToPluginException(List<Throwable> allErrors,
-            boolean includeStackTraces, 
-            List<String> stackTraceLimitPrefixes, List<String> stackTraceFilterPrefixes) {
-        String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(allErrors,
-            includeStackTraces,
-            stackTraceLimitPrefixes, stackTraceFilterPrefixes);
-        return new BuildException(allExMsg);
     }
 
     public static File getDefaultBuildDir(Task task) {
