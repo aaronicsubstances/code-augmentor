@@ -1,9 +1,9 @@
 { "contentStreamingEnabled": false }
 [
 	{
-		"fileIndex": 0,
+		"fileId": 1,
 		"generatedCodes": [{
-			"index" : 0,
+			"id" : 1,
 			"contentParts" : [{
                 "content": "char f;"}
             ]

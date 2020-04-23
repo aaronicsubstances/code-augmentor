@@ -79,7 +79,7 @@ public class AugmentingCode {
         }
     }
 
-    private int index;
+    private int id;
     private List<Block> blocks;
     private String directiveMarker;
     private String indent;
@@ -97,12 +97,12 @@ public class AugmentingCode {
         this.blocks = blocks;
     }
 
-    public int getIndex() {
-        return index;
+    public int getId() {
+        return id;
     }
 
-    public void setIndex(int index) {
-        this.index = index;
+    public void setId(int id) {
+        this.id = id;
     }
 
     public List<Block> getBlocks() {
@@ -161,7 +161,7 @@ public class AugmentingCode {
         result = prime * result + ((blocks == null) ? 0 : blocks.hashCode());
         result = prime * result + ((directiveMarker == null) ? 0 : directiveMarker.hashCode());
         result = prime * result + ((indent == null) ? 0 : indent.hashCode());
-        result = prime * result + index;
+        result = prime * result + id;
         result = prime * result + lineNumber;
         result = prime * result + ((lineSeparator == null) ? 0 : lineSeparator.hashCode());
         return result;
@@ -196,7 +196,7 @@ public class AugmentingCode {
                 return false;
         } else if (!indent.equals(other.indent))
             return false;
-        if (index != other.index)
+        if (id != other.id)
             return false;
         if (lineNumber != other.lineNumber)
             return false;
@@ -211,7 +211,7 @@ public class AugmentingCode {
     @Override
     public String toString() {
         return "AugmentingCode{args=" + args + ", blocks=" + blocks + ", directiveMarker=" + directiveMarker
-                + ", indent=" + indent + ", index=" + index + ", lineNumber=" + lineNumber + ", lineSeparator="
+                + ", indent=" + indent + ", id=" + id + ", lineNumber=" + lineNumber + ", lineSeparator="
                 + lineSeparator + "}";
     }
 }

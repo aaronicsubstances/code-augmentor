@@ -124,7 +124,7 @@ public class GeneratedCodeFetcherTest {
                     fileAugCodeIndices.add(augCodeIndex);
 
                     GeneratedCode dummyGenCode = new GeneratedCode();
-                    dummyGenCode.setIndex(augCodeIndex);
+                    dummyGenCode.setId(augCodeIndex);
                     dummyGenCode.setSkipped(true);
 
                     expectedResults.put(fileIndex + "|" + augCodeIndex, dummyGenCode);
@@ -137,13 +137,13 @@ public class GeneratedCodeFetcherTest {
                     if (!codeGenRes.getSourceFileGeneratedCodes().isEmpty()) {
                         lastGenCodeWrapper = codeGenRes.getSourceFileGeneratedCodes().get(
                             codeGenRes.getSourceFileGeneratedCodes().size() - 1);
-                        if (lastGenCodeWrapper.getFileIndex() != fileIndex) {
+                        if (lastGenCodeWrapper.getFileId() != fileIndex) {
                             lastGenCodeWrapper = null; 
                         }
                     }
                     if (lastGenCodeWrapper == null) {
                         lastGenCodeWrapper = new SourceFileGeneratedCode(new ArrayList<>());
-                        lastGenCodeWrapper.setFileIndex(fileIndex);
+                        lastGenCodeWrapper.setFileId(fileIndex);
                         codeGenRes.getSourceFileGeneratedCodes().add(lastGenCodeWrapper);
                     }
                     lastGenCodeWrapper.getGeneratedCodes().add(dummyGenCode);

@@ -66,7 +66,7 @@ public class CodeAugmentationGenericTask {
                 }
             }
 
-            if (!generatedCodeFetcher.prepareForFile(sourceFileDescriptor.getFileIndex())) {
+            if (!generatedCodeFetcher.prepareForFile(sourceFileDescriptor.getFileId())) {
                 throw createException("Could not locate generated codes",
                     null, srcFile);
             }
@@ -77,10 +77,10 @@ public class CodeAugmentationGenericTask {
             List<int[]> replacementRanges = new ArrayList<>();
             for (CodeSnippetDescriptor snippetDescriptor : sourceFileDescriptor.getCodeSnippets()) {
                 AugmentingCodeDescriptor augCodeDescriptor = snippetDescriptor.getAugmentingCodeDescriptor();
-                int augCodeIndex = augCodeDescriptor.getIndex();
+                int augCodeIndex = augCodeDescriptor.getId();
 
                 GeneratedCode genCode = generatedCodeFetcher.getGeneratedCode(
-                    sourceFileDescriptor.getFileIndex(), augCodeIndex);
+                    sourceFileDescriptor.getFileId(), augCodeIndex);
                 if (genCode == null) {
                     throw createException("Could not find generated code", augCodeDescriptor, srcFile);
                 }

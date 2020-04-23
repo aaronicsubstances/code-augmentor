@@ -6,7 +6,7 @@ import com.aaronicsubstances.code.augmentor.core.util.PersistenceUtil;
 import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 
 public class SourceFileAugmentingCode {
-    private int fileIndex;
+    private int fileId;
     private String dir;
     private String relativePath;
     private List<AugmentingCode> augmentingCodes;
@@ -18,12 +18,12 @@ public class SourceFileAugmentingCode {
         this.augmentingCodes = augmentingCodes;
     }
 
-    public int getFileIndex() {
-        return fileIndex;
+    public int getFileId() {
+        return fileId;
     }
 
-    public void setFileIndex(int fileIndex) {
-        this.fileIndex = fileIndex;
+    public void setFileId(int fileId) {
+        this.fileId = fileId;
     }
 
     public String getDir() {
@@ -90,7 +90,7 @@ public class SourceFileAugmentingCode {
         int result = 1;
         result = prime * result + ((augmentingCodes == null) ? 0 : augmentingCodes.hashCode());
         result = prime * result + ((dir == null) ? 0 : dir.hashCode());
-        result = prime * result + fileIndex;
+        result = prime * result + fileId;
         result = prime * result + ((relativePath == null) ? 0 : relativePath.hashCode());
         return result;
     }
@@ -114,7 +114,7 @@ public class SourceFileAugmentingCode {
                 return false;
         } else if (!dir.equals(other.dir))
             return false;
-        if (fileIndex != other.fileIndex)
+        if (fileId != other.fileId)
             return false;
         if (relativePath == null) {
             if (other.relativePath != null)
@@ -126,7 +126,7 @@ public class SourceFileAugmentingCode {
 
     @Override
     public String toString() {
-        return "SourceFileAugmentingCode{augmentingCodes=" + augmentingCodes + ", dir=" + dir + ", fileIndex="
-                + fileIndex + ", relativePath=" + relativePath + "}";
+        return "SourceFileAugmentingCode{augmentingCodes=" + augmentingCodes + ", dir=" + dir + ", fileId="
+                + fileId + ", relativePath=" + relativePath + "}";
     }
 }

@@ -3,19 +3,19 @@ package com.aaronicsubstances.code.augmentor.core.models;
 public class CodeSnippetDescriptor {
 
     public static class AugmentingCodeDescriptor {
-        private int index = 0;
+        private int id = 0;
         private int startPos = 0;
         private int endPos = 0;
         private String indent;
         private int lineNumber;
         private String lineSeparator;
 
-        public int getIndex() {
-            return index;
+        public int getId() {
+            return id;
         }
 
-        public void setIndex(int index) {
-            this.index = index;
+        public void setId(int id) {
+            this.id = id;
         }
 
         public int getStartPos() {
@@ -64,7 +64,7 @@ public class CodeSnippetDescriptor {
             int result = 1;
             result = prime * result + endPos;
             result = prime * result + ((indent == null) ? 0 : indent.hashCode());
-            result = prime * result + index;
+            result = prime * result + id;
             result = prime * result + lineNumber;
             result = prime * result + ((lineSeparator == null) ? 0 : lineSeparator.hashCode());
             result = prime * result + startPos;
@@ -87,7 +87,7 @@ public class CodeSnippetDescriptor {
                     return false;
             } else if (!indent.equals(other.indent))
                 return false;
-            if (index != other.index)
+            if (id != other.id)
                 return false;
             if (lineNumber != other.lineNumber)
                 return false;
@@ -103,7 +103,7 @@ public class CodeSnippetDescriptor {
 
         @Override
         public String toString() {
-            return "AugmentingCodeDescriptor{endPos=" + endPos + ", indent=" + indent + ", index=" + index
+            return "AugmentingCodeDescriptor{endPos=" + endPos + ", indent=" + indent + ", id=" + id
                     + ", lineNumber=" + lineNumber + ", lineSeparator=" + lineSeparator + ", startPos=" + startPos
                     + "}";
         }

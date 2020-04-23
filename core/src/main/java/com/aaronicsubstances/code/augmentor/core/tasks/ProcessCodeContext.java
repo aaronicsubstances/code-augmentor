@@ -6,6 +6,7 @@ import java.util.Map;
 
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode;
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileAugmentingCode;
+import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode.ContentPart;
 
 public class ProcessCodeContext {
     private final Map<String, Object> globalScope = new HashMap<>();
@@ -13,9 +14,19 @@ public class ProcessCodeContext {
     private SourceFileAugmentingCode fileAugCodes;
     private int augCodeIndex;
 
-    // used by Groovy script.
+    // Intended for use by Groovy scripts
     public GeneratedCode newGenCode() {
         return new GeneratedCode(new ArrayList<>());
+    }
+
+    // Intended for use by Groovy scripts
+    public ContentPart newContent(String content) {
+        return new ContentPart(content, false);
+    }
+
+    // Intended for use by Groovy scripts
+    public ContentPart newContent(String content, boolean exactMatch) {
+        return new ContentPart(content, exactMatch);
     }
 
     public Map<String, Object> getGlobalScope() {

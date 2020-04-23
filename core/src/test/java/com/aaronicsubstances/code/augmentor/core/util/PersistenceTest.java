@@ -88,7 +88,7 @@ public class PersistenceTest {
                         SourceFileDescriptor s = new SourceFileDescriptor(new ArrayList<>());
                         instance.getFileDescriptors().add(s);
 
-                        s.setFileIndex(i);
+                        s.setFileId(i);
                         s.setRelativePath(generateRandomString(randGen, false));
                         s.setDir(generateRandomString(randGen, false));
                         s.setContentHash(generateRandomString(randGen, false));
@@ -165,7 +165,7 @@ public class PersistenceTest {
                         SourceFileAugmentingCode fileAugCode = new SourceFileAugmentingCode(
                             codeSnippets);
                         files.add(fileAugCode);
-                        fileAugCode.setFileIndex(i);
+                        fileAugCode.setFileId(i);
                         fileAugCode.setDir(generateRandomString(randGen, false));
                         fileAugCode.setRelativePath(generateRandomString(randGen, false));
 
@@ -174,7 +174,7 @@ public class PersistenceTest {
                             AugmentingCode codeSnippet = new AugmentingCode(new ArrayList<>());
                             codeSnippets.add(codeSnippet);
                             
-                            codeSnippet.setIndex(i);
+                            codeSnippet.setId(i);
                             codeSnippet.setDirectiveMarker(generateRandomString(randGen, false));
                             codeSnippet.setIndent(randomIndent(randGen));
                             codeSnippet.setLineNumber(randGen.nextInt());
@@ -254,13 +254,13 @@ public class PersistenceTest {
                         List<GeneratedCode> generatedCodeList = new ArrayList<>();
                         SourceFileGeneratedCode file = new SourceFileGeneratedCode(generatedCodeList);
                         files.add(file);
-                        file.setFileIndex(i);
+                        file.setFileId(i);
                         int generatedCodeListSize = randGen.nextInt(5);
                         for (int j = 0; j < generatedCodeListSize; j++) {
                             GeneratedCode generatedCode = new GeneratedCode();
                             generatedCodeList.add(generatedCode);
 
-                            generatedCode.setIndex(j);
+                            generatedCode.setId(j);
                             generatedCode.setIndent(randomIndent(randGen));
                             generatedCode.setSkipped(randGen.nextBoolean());
                             generatedCode.setReplaceAugCodeDirectives(randGen.nextBoolean());
@@ -297,7 +297,7 @@ public class PersistenceTest {
         c.setAugmentingCodeDescriptor(d);
         d.setStartPos(randGen.nextInt(1000));
         d.setEndPos(randGen.nextInt(1000));
-        d.setIndex(randGen.nextInt(200));
+        d.setId(randGen.nextInt(200));
         d.setIndent(randomIndent(randGen));
         d.setLineNumber(randGen.nextInt());
         return c;

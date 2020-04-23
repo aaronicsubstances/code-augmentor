@@ -31,7 +31,7 @@ class CodeAugmentorTaskFunctionalTest extends Specification {
         })
         """
         File workerFile = new File(scriptDir, "Worker.groovy")
-        workerFile << '''static generateMainClass(augCode, context) {
+        workerFile << '''static generateMainClass(augCode, c) {
             def className = augCode.args[0].trim()
             // split class name if it has package name in it.
             def simpleClassName = className
@@ -42,17 +42,17 @@ class CodeAugmentorTaskFunctionalTest extends Specification {
                 simpleClassName = className[periodIndex + 1 .. -1]
             }
             // now generate main class file contents
-            def g = context.newGenCode()
+            def g = c.newGenCode()
             def out = g.contentParts
             String indent = ' ' * 4 
             if (pkgName) {
-                out << g.newPart("package $pkgName;\\n\\n")
+                out << c.newContent("package $pkgName;\\n\\n")
             }
-            out << g.newPart("public class $simpleClassName {\\n\\n")
-            out << g.newPart("${indent}public static void main(String[] args) {\\n")
-            out << g.newPart("${indent * 2}System.out.println(\\"Hello from CodeAugmentor!\\");\\n")
-            out << g.newPart(indent) << g.newPart('}\\n')
-            out << g.newPart('}')
+            out << c.newContent("public class $simpleClassName {\\n\\n")
+            out << c.newContent("${indent}public static void main(String[] args) {\\n")
+            out << c.newContent("${indent * 2}System.out.println(\\"Hello from CodeAugmentor!\\");\\n")
+            out << c.newContent(indent) << c.newContent('}\\n')
+            out << c.newContent('}')
             return g
         }
         '''

@@ -6,7 +6,7 @@ import com.aaronicsubstances.code.augmentor.core.util.PersistenceUtil;
 import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 
 public class SourceFileDescriptor {
-    private int fileIndex;
+    private int fileId;
     private String dir;
     private String relativePath;
     private List<CodeSnippetDescriptor> codeSnippets;
@@ -19,12 +19,12 @@ public class SourceFileDescriptor {
         this.codeSnippets = codeSnippets;
     }
 
-    public int getFileIndex() {
-        return fileIndex;
+    public int getFileId() {
+        return fileId;
     }
 
-    public void setFileIndex(int fileIndex) {
-        this.fileIndex = fileIndex;
+    public void setFileId(int fileId) {
+        this.fileId = fileId;
     }
 
     public String getDir() {
@@ -139,6 +139,6 @@ public class SourceFileDescriptor {
     @Override
     public String toString() {
         return "SourceFileDescriptor{codeSnippets=" + codeSnippets + ", contentHash=" + contentHash + ", dir=" + dir
-                + ", relativePath=" + relativePath + "}";
+                + ", fileId=" + fileId + ", relativePath=" + relativePath + "}";
     }
 }

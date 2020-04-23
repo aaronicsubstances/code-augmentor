@@ -78,14 +78,15 @@ public class CodeAugmentationGenericTaskTest {
         List<String> expectedGeneratedCodes = new ArrayList<>();
         // transfer class path resources for original source files to
         // temp directory.
-        for (SourceFileDescriptor f : prepResult.getFileDescriptors()) {
+        for (int i = 0; i < prepResult.getFileDescriptors().size(); i++) {
+            SourceFileDescriptor f = prepResult.getFileDescriptors().get(i);
             assertNull(f.getDir());
             String contents = TestResourceLoader.loadResourceNewlinesNormalized(
                 f.getRelativePath(), getClass(), "\r\n");
             FileUtils.write(new File(task.getSrcDir(), f.getRelativePath()), contents, task.getCharset());
 
             // fetch expected generated codes.
-            if (expectedChangeSetIndices.contains(f.getFileIndex())) {
+            if (expectedChangeSetIndices.contains(i)) {
                 String baseName = FilenameUtils.getBaseName(f.getRelativePath());
                 String ext = FilenameUtils.getExtension(f.getRelativePath());
                 String expGenGode = TestResourceLoader.loadResourceNewlinesNormalized(

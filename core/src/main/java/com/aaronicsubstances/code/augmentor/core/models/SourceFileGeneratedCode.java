@@ -6,7 +6,7 @@ import com.aaronicsubstances.code.augmentor.core.util.PersistenceUtil;
 import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 
 public class SourceFileGeneratedCode {
-    private int fileIndex;
+    private int fileId;
     private List<GeneratedCode> generatedCodes;
 
     public SourceFileGeneratedCode() {
@@ -17,12 +17,12 @@ public class SourceFileGeneratedCode {
         this.generatedCodes = generatedCodes;
     }
     
-    public int getFileIndex() {
-        return fileIndex;
+    public int getFileId() {
+        return fileId;
     }
 
-    public void setFileIndex(int fileIndex) {
-        this.fileIndex = fileIndex;
+    public void setFileId(int fileId) {
+        this.fileId = fileId;
     }
 
     public List<GeneratedCode> getGeneratedCodes() {
@@ -71,7 +71,7 @@ public class SourceFileGeneratedCode {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + fileIndex;
+        result = prime * result + fileId;
         result = prime * result + ((generatedCodes == null) ? 0 : generatedCodes.hashCode());
         return result;
     }
@@ -85,7 +85,7 @@ public class SourceFileGeneratedCode {
         if (getClass() != obj.getClass())
             return false;
         SourceFileGeneratedCode other = (SourceFileGeneratedCode) obj;
-        if (fileIndex != other.fileIndex)
+        if (fileId != other.fileId)
             return false;
         if (generatedCodes == null) {
             if (other.generatedCodes != null)
@@ -97,7 +97,7 @@ public class SourceFileGeneratedCode {
 
     @Override
     public String toString() {
-        return "SourceFileGeneratedCode{fileIndex=" + fileIndex + 
+        return "SourceFileGeneratedCode{fileId=" + fileId + 
             ", generatedCodes=" + generatedCodes + "}";
     }
 }

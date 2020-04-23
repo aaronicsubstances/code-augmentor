@@ -6,8 +6,10 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import com.aaronicsubstances.code.augmentor.core.models.AugmentingCode;
 import com.aaronicsubstances.code.augmentor.core.models.CodeGenerationRequest;
@@ -79,30 +81,37 @@ public class ProcessCodeGenericTask {
                 context.getFileScope().clear();
 
                 SourceFileGeneratedCode fileGenCodes = new SourceFileGeneratedCode(new ArrayList<>());
-                fileGenCodes.setFileIndex(fileAugCodes.getFileIndex());
+                fileGenCodes.setFileId(fileAugCodes.getFileId());
+
+                // Deterministic looping already ensures that once an aug code
+                // is processed, it won't be processed again.
+                // forwardProcessedAugCodeIndices is vital only for multiple aug
+                // code results, in which all but the current one have to be
+                // stored to prevent another pass of processing on them.
+                List<Integer> forwardProcessedAugCodeIds = new ArrayList<>();
 
                 // now process all aug codes.
                 int beginErrorCount = allErrors.size();
-                int i = 0;
-                while (i < fileAugCodes.getAugmentingCodes().size()) {
+                for (int i = 0; i < fileAugCodes.getAugmentingCodes().size(); i++) {
                     AugmentingCode augCode = fileAugCodes.getAugmentingCodes().get(i);
+                    if (forwardProcessedAugCodeIds.contains(augCode.getId())) {
+                        continue;
+                    }
                     String functionName = augCode.getBlocks().get(0).getContent().trim();
                     context.setAugCodeIndex(i);
-                    List<GeneratedCode> genCodes;
                     try {
-                        genCodes = processAugCode(evalFunction, functionName, augCode, context);
+                        List<GeneratedCode> genCodes = processAugCode(evalFunction, functionName, 
+                            augCode, context, forwardProcessedAugCodeIds);
+                        fileGenCodes.getGeneratedCodes().addAll(genCodes);
                     }
                     catch (GenericTaskException ex) {
                         allErrors.add(ex);
-                        i++;
-                        continue;
                     }
-                    if (genCodes.isEmpty()) {
-                        throw new RuntimeException("Should not have empty results here");
-                    }
-                    fileGenCodes.getGeneratedCodes().addAll(genCodes);
-                    i += genCodes.size();
                 }
+
+                // Sort by id
+                fileGenCodes.getGeneratedCodes().sort((g1, g2) -> 
+                    Integer.compare(g1.getId(), g2.getId()));
 
                 // now write out generated code for file if no errors are found.
                 if (allErrors.size() > beginErrorCount) {
@@ -131,7 +140,8 @@ public class ProcessCodeGenericTask {
     
     @SuppressWarnings("unchecked")
     List<GeneratedCode> processAugCode(EvalFunction evalFunction, 
-            String functionName, AugmentingCode augCode, ProcessCodeContext context) {
+            String functionName, AugmentingCode augCode, ProcessCodeContext context,
+            List<Integer> forwardProcessedAugCodeIds) {
         Object result;
         try {
             result = evalFunction.apply(functionName, augCode, context);
@@ -154,34 +164,90 @@ public class ProcessCodeGenericTask {
             }
             int augCodeIndexInContext = context.getAugCodeIndex();
             SourceFileAugmentingCode fileAugCodes = context.getFileAugCodes();
+            validateAugCodeIndices(augCode.getId(), listResult, context);
             for (int j = 0; j < listResult.size(); j++) {
                 GeneratedCode genCode = listResult.get(j);
                 if (genCode == null) {
                     allErrors.add(createException(context, "Found null list item at index " + j));
-                    break;
+                    continue;
                 }
-                if (augCodeIndexInContext + j >= fileAugCodes.getAugmentingCodes().size()) {
-                    allErrors.add(createException(context, "No aug code found at offset " + j));
-                    break;
+                if (genCode.getId() <= 0) {
+                    if (augCodeIndexInContext + j >= fileAugCodes.getAugmentingCodes().size()) {
+                        allErrors.add(createException(context, "No aug code found at offset " + j));
+                        continue;
+                    }
+                    AugmentingCode correspondingAugCode = fileAugCodes.getAugmentingCodes().get(
+                        augCodeIndexInContext + j);
+                    genCode.setId(correspondingAugCode.getId());
                 }
-                AugmentingCode correspondingAugCode = fileAugCodes.getAugmentingCodes().get(
-                    augCodeIndexInContext + j);
-                genCode.setIndex(correspondingAugCode.getIndex());
+                else {
+                    if (genCode.getId() < augCode.getId() || 
+                            forwardProcessedAugCodeIds.contains(genCode.getId())) {
+                        allErrors.add(createException(context, "Aug code with id " + genCode.getId() +
+                            " has already been processed."));
+                        continue;
+                    }
+                    Optional<AugmentingCode> correspondingAugCode = fileAugCodes.getAugmentingCodes().stream().
+                        filter(x -> x.getId() == genCode.getId()).findAny();
+                    if (!correspondingAugCode.isPresent()) {                        
+                        allErrors.add(createException(context, "Aug code with id " + genCode.getId() +
+                            " was not found."));
+                        continue;
+                    }
+                    genCode.setId(correspondingAugCode.get().getId());
+                }
                 validateContentParts(genCode, j, context);
+                forwardProcessedAugCodeIds.add(genCode.getId());
             }
             return listResult;
         }
         else if (result instanceof GeneratedCode) {
             GeneratedCode genCode = (GeneratedCode) result;
-            genCode.setIndex(augCode.getIndex());
+            genCode.setId(augCode.getId());
+            validateContentParts(genCode, -1, context);
+            return Arrays.asList(genCode);
+        }
+        else if (result instanceof ContentPart) {
+            GeneratedCode genCode = new GeneratedCode(Arrays.asList((ContentPart) result));
+            genCode.setId(augCode.getId());
             validateContentParts(genCode, -1, context);
             return Arrays.asList(genCode);
         }
         else {
             GeneratedCode genCode = new GeneratedCode(new ArrayList<>());
-            genCode.setIndex(augCode.getIndex());
+            genCode.setId(augCode.getId());
             genCode.getContentParts().add(new ContentPart(result.toString(), false));
+            validateContentParts(genCode, -1, context);
             return Arrays.asList(genCode);
+        }
+    }
+
+    private void validateAugCodeIndices(int currentAugCodeId, List<GeneratedCode> listResult,
+            ProcessCodeContext context) {
+        List<Integer> ids = listResult.stream().map(x -> x.getId())
+            .collect(Collectors.toList());
+        // For aug code indices to be valid,
+        // either they are not set, ie they are all not positive,
+        if (ids.stream().allMatch(x -> x <= 0)) {
+            return;
+        }
+        // OR, they meet all of the ff conditions:
+        //   1. they have all been set, ie they are all positive.
+        //   2. they are distinct. can be out of order, but musts be distinct.
+        //   3. they must include current aug code id.
+        if (!ids.stream().allMatch(x -> x > 0)) {
+            throw createException(context, "Not all aug code ids are set: " + ids +
+                ". If any aug code id is set, then all must be set as well.");
+        }
+        if (ids.stream().distinct().count() != listResult.size()) {
+            throw createException(context, "Duplicates detected among provided aug code ids: " +
+                ids);
+        }
+        if (!ids.contains(currentAugCodeId)) {
+            throw createException(context, 
+                "Current aug code id " + currentAugCodeId +
+                " not found amoung provided ids: " + ids +
+                ". If all aug code ids are set, then current aug code id must be set as well.");
         }
     }
 

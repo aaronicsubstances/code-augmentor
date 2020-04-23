@@ -10,16 +10,15 @@ static generateMainClass(augCode, context) {
         simpleClassName = className[periodIndex + 1 .. -1]
     }
     // now generate main class file contents
-    def g = context.newGenCode()
-    def out = g.contentParts
+    def out = new StringBuilder()
     String indent = ' ' * 4 
     if (pkgName) {
-        out << g.newPart("package $pkgName;$newline$newline")
+        out << "package $pkgName;$newline$newline"
     }
-    out << g.newPart("public class $simpleClassName {$newline$newline")
-    out << g.newPart("${indent}public static void main(String[] args) {$newline")
-    out << g.newPart("${indent * 2}System.out.println(\"Hello from CodeAugmentor!\");$newline")
-    out << g.newPart(indent) << g.newPart("}$newline")
-    out << g.newPart('}')
-    return g
+    out << "public class $simpleClassName {$newline$newline"
+    out << "${indent}public static void main(String[] args) {$newline"
+    out << "${indent * 2}System.out.println(\"Hello from CodeAugmentor!\");$newline"
+    out << indent << "}$newline"
+    out << '}'
+    return context.newContent("$out", true)
 }

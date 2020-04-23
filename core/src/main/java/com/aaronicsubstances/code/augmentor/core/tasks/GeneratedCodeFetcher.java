@@ -73,7 +73,7 @@ public class GeneratedCodeFetcher {
                     // meaning no more files
                     continue;
                 }
-                else if (fileIndex == fileGenCode.getFileIndex()) {
+                else if (fileIndex == fileGenCode.getFileId()) {
                     found = true;
                     continue;
                 }
@@ -81,7 +81,7 @@ public class GeneratedCodeFetcher {
                     // this part assumes file ids are in ascending order.
                     // So if peeking reveals file with id higher than fileIndex,
                     // then it means we are not going to find fileIndex.
-                    if (fileIndex < fileGenCode.getFileIndex()) {                        
+                    if (fileIndex < fileGenCode.getFileId()) {                        
                         continue;
                     }
                 }
@@ -89,7 +89,7 @@ public class GeneratedCodeFetcher {
             Object rdr = codeGenerationResponseReaders.get(i);
             fileGenCode = SourceFileGeneratedCode.deserialize(rdr);
             lastFetches.set(i, fileGenCode);
-            if (fileGenCode != null && fileIndex == fileGenCode.getFileIndex()) {
+            if (fileGenCode != null && fileIndex == fileGenCode.getFileId()) {
                 found = true;
             }
         }
@@ -100,9 +100,9 @@ public class GeneratedCodeFetcher {
         GeneratedCode nextGenCode = null;
         for (int i = 0; i < lastFetches.size(); i++) {
             SourceFileGeneratedCode fileGenCode = lastFetches.get(i);
-            if (fileGenCode != null && fileGenCode.getFileIndex() == fileIndex) {
+            if (fileGenCode != null && fileGenCode.getFileId() == fileIndex) {
                 Optional<GeneratedCode> genCodeOpt = fileGenCode.getGeneratedCodes()
-                    .stream().filter(x -> x.getIndex() == augCodeIndex).findFirst();
+                    .stream().filter(x -> x.getId() == augCodeIndex).findFirst();
                     
                 if (genCodeOpt.isPresent()) {
                     nextGenCode = genCodeOpt.get();

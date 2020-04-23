@@ -1,11 +1,11 @@
 { "contentStreamingEnabled": false, "genCodeStartDirective": "//GS", "genCodeEndDirective": "//GE" }
 [
 	{
-		"fileIndex": 1,
+		"fileId": 1,
 		"relativePath": "task-spec-01-0.java",
 		"codeSnippets": [{
 			"augmentingCodeDescriptor": {
-				"index" : 1,
+				"id" : 1,
 				"startPos" : 510,
 				"endPos" : 598,
 				"indent" : "",
@@ -21,11 +21,11 @@
 		}]
 	},
 	{
-		"fileIndex": 2,
+		"fileId": 2,
 		"relativePath": "task-spec-01-1.java",
 		"codeSnippets": [{
 			"augmentingCodeDescriptor": {
-				"index" : 1,
+				"id" : 1,
 				"startPos" : 799,
 				"endPos" : 822,
 				"indent" : "",

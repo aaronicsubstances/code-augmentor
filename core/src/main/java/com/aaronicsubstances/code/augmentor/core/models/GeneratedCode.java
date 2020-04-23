@@ -67,7 +67,7 @@ public class GeneratedCode {
         }
     }
 
-    private int index;
+    private int id;
     private List<ContentPart> contentParts;
     private String indent;
     private boolean skipped;
@@ -82,22 +82,12 @@ public class GeneratedCode {
         this.contentParts = contentParts;        
     }
 
-    // Intended for use by Groovy scripts
-    public ContentPart newPart(String content) {
-        return new ContentPart(content, false);
+    public int getId() {
+        return id;
     }
 
-    // Intended for use by Groovy scripts
-    public ContentPart newPart(String content, boolean exactMatch) {
-        return new ContentPart(content, exactMatch);
-    }
-
-    public int getIndex() {
-        return index;
-    }
-
-    public void setIndex(int index) {
-        this.index = index;
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getIndent() {
@@ -154,7 +144,7 @@ public class GeneratedCode {
         int result = 1;
         result = prime * result + ((contentParts == null) ? 0 : contentParts.hashCode());
         result = prime * result + ((indent == null) ? 0 : indent.hashCode());
-        result = prime * result + index;
+        result = prime * result + id;
         result = prime * result + (replaceAugCodeDirectives ? 1231 : 1237);
         result = prime * result + (replaceGenCodeDirectives ? 1231 : 1237);
         result = prime * result + (skipped ? 1231 : 1237);
@@ -180,7 +170,7 @@ public class GeneratedCode {
                 return false;
         } else if (!indent.equals(other.indent))
             return false;
-        if (index != other.index)
+        if (id != other.id)
             return false;
         if (replaceAugCodeDirectives != other.replaceAugCodeDirectives)
             return false;
@@ -193,7 +183,7 @@ public class GeneratedCode {
 
     @Override
     public String toString() {
-        return "GeneratedCode{contentParts=" + contentParts + ", indent=" + indent + ", index=" + index
+        return "GeneratedCode{contentParts=" + contentParts + ", indent=" + indent + ", id=" + id
                 + ", replaceAugCodeDirectives=" + replaceAugCodeDirectives + ", replaceGenCodeDirectives="
                 + replaceGenCodeDirectives + ", skipped=" + skipped + "}";
     }

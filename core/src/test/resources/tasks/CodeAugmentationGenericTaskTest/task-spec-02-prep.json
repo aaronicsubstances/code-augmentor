@@ -1,11 +1,11 @@
 { "contentStreamingEnabled": false, "genCodeStartDirective": "//GS", "genCodeEndDirective": "//GE" }
 [
 	{
-		"fileIndex": 0,
+		"fileId": 1,
 		"relativePath": "task-spec-02-0.java",
 		"codeSnippets": [{
 			"augmentingCodeDescriptor": {
-				"index" : 0,
+				"id" : 1,
 				"startPos" : 1026,
 				"endPos" : 1065,
 				"indent" : "\t\t",

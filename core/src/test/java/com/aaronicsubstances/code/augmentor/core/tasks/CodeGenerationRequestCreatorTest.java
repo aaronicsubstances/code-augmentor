@@ -83,7 +83,7 @@ public class CodeGenerationRequestCreatorTest {
             int lineNumber, Block... blocks) {
         AugmentingCode augCode = new AugmentingCode(Arrays.asList(blocks));
         augCode.setDirectiveMarker(directiveMarker);
-        augCode.setIndex(index);
+        augCode.setId(index);
         augCode.setLineNumber(lineNumber);
         augCode.setIndent(indent != null ? indent : "");
         augCode.setLineSeparator(newline);
@@ -96,7 +96,7 @@ public class CodeGenerationRequestCreatorTest {
         augCodeDesc.setIndent(indent != null ? indent : "");
         augCodeDesc.setStartPos(startPos);
         augCodeDesc.setEndPos(endPos);
-        augCodeDesc.setIndex(index);
+        augCodeDesc.setId(index);
         augCodeDesc.setLineNumber(lineNumber);
         augCodeDesc.setLineSeparator(newline);
         return augCodeDesc;
