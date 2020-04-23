@@ -301,10 +301,10 @@ public class PrepareTask extends Task {
                     genericTask.getAugCodeProcessingSpecs().get(0).getDirectives());
             }
 
-            task.log("\tsrcDirs: " + resolvedFileSets);
             task.log("\tgenericTask.logAppender: " + genericTask.getLogAppender());
             task.log("\tgenericTask.baseDirs: " + new HashSet<>(genericTask.getBaseDirs()));
-            task.log("\tgenericTask.relativePaths: " + genericTask.getRelativePaths());
+            // ant's FileSet.toString() prints relative paths of its files
+            task.log("\tsrcDirs: " + resolvedFileSets);
         }
         
         try {

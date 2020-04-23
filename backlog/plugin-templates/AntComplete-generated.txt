@@ -36,7 +36,7 @@
         // of destDir so generated output files is not confused with previous ones.
         
         task.log("Deleting contents of " + resolvedDestDir + "...");
-        Eval.me("x", resolvedDestDir, "x.deleteDir()");
+        TaskUtils.deleteDir(resolvedDestDir);
 
         CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
         genericTask.setCharset(charset);

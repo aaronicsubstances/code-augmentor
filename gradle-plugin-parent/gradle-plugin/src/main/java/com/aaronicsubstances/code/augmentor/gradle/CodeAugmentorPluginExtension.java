@@ -1,7 +1,5 @@
 package com.aaronicsubstances.code.augmentor.gradle;
 
-import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskExtensionFunction;
-
 import org.gradle.api.Project;
 import org.gradle.api.file.ConfigurableFileTree;
 import org.gradle.api.model.ObjectFactory;
@@ -32,9 +30,6 @@ public class CodeAugmentorPluginExtension {
     private final Property<Object> changeSetInfoFile;
 
     // config for process task.
-    private final Property<GenericTaskExtensionFunction> scriptEvalFunction;
-    private final ListProperty<String> scriptErrorStackTraceFilterPrefixes;
-    private final ListProperty<String> scriptErrorStackTraceLimitPrefixes;
     private final Property<Object> groovyScriptDir;
     private final Property<String> groovyEntryScriptName;
 
@@ -64,9 +59,6 @@ public class CodeAugmentorPluginExtension {
         destDir = objectFactory.property(Object.class);
         changeSetInfoFile = objectFactory.property(Object.class);
 
-        scriptEvalFunction = objectFactory.property(GenericTaskExtensionFunction.class);
-        scriptErrorStackTraceFilterPrefixes = objectFactory.listProperty(String.class);
-        scriptErrorStackTraceLimitPrefixes = objectFactory.listProperty(String.class);
         groovyScriptDir = objectFactory.property(Object.class);
         groovyEntryScriptName = objectFactory.property(String.class);
         augCodeSpecIndex = objectFactory.property(Integer.class);
@@ -79,10 +71,6 @@ public class CodeAugmentorPluginExtension {
         AugCodeDirectiveSpec augCodeDirectiveSpec = new AugCodeDirectiveSpec(project);
         project.configure(augCodeDirectiveSpec, closure);
         return augCodeDirectiveSpec;
-    }
-
-    public GenericTaskExtensionFunction acceptScriptEvalFunction(GenericTaskExtensionFunction fxn) {
-        return fxn;
     }
 
     public Property<String> getEncoding() {
@@ -139,18 +127,6 @@ public class CodeAugmentorPluginExtension {
 
     public Property<Object> getDestDir() {
         return destDir;
-    }
-
-    public Property<GenericTaskExtensionFunction> getScriptEvalFunction() {
-        return scriptEvalFunction;
-    }
-
-    public ListProperty<String> getScriptErrorStackTraceFilterPrefixes() {
-        return scriptErrorStackTraceFilterPrefixes;
-    }
-
-    public ListProperty<String> getScriptErrorStackTraceLimitPrefixes() {
-        return scriptErrorStackTraceLimitPrefixes;
     }
 
 	public Property<Object> getGroovyScriptDir() {

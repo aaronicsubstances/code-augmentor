@@ -32,6 +32,19 @@ public class TaskUtils {
         return logAppender;
     }
 
+	public static void deleteDir(File dir) {
+        // ignore unsuccessful deletion and any errors.
+        File[] contents = dir.listFiles();
+        if (contents != null) {
+            for (File content : contents) {
+                if (content.isDirectory()) {
+                    deleteDir(content);
+                }
+                content.delete();
+            }
+        }
+	}
+
     public static File getDefaultBuildDir(Task task) {
         File defaultBuildDir = new File(new File(task.getProject().getBaseDir(), "build"),
             "codeAugmentor");

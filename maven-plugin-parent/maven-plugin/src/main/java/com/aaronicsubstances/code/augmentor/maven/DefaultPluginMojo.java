@@ -52,7 +52,7 @@ public class DefaultPluginMojo extends AbstractPluginMojo {
             // process...
             String resolvedGroovyEntryScriptName = getGroovyEntryScriptName();
             ProcessingMojo.completeExecute(this, resolvedVerbose, 0, 0, 
-                resolvedAugCodeFile, resolvedGenCodeFile, null, null, null,
+                resolvedAugCodeFile, resolvedGenCodeFile,
                 groovyScriptDir, resolvedGroovyEntryScriptName);
 
             // complete...

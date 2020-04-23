@@ -90,9 +90,6 @@ public class CodeAugmentorPlugin implements Plugin<Project> {
                 processTask.getAugCodeSpecIndex().set(extension.getAugCodeSpecIndex());
                 processTask.getGeneratedCodeFiles().set(extension.getGeneratedCodeFiles());
                 processTask.getGenCodeFileIndex().set(extension.getGenCodeFileIndex());
-                processTask.getScriptEvalFunction().set(extension.getScriptEvalFunction());
-                processTask.getScriptErrorStackTraceFilterPrefixes().set(extension.getScriptErrorStackTraceFilterPrefixes());
-                processTask.getScriptErrorStackTraceLimitPrefixes().set(extension.getScriptErrorStackTraceLimitPrefixes());
             }
         });
         project.getTasks().register("codeAugmentorComplete", CompletionTask.class, new Action<CompletionTask>() {
@@ -127,9 +124,6 @@ public class CodeAugmentorPlugin implements Plugin<Project> {
                 runTask.getSkipCodeEndDirectives().set(extension.getSkipCodeEndDirectives());
                 runTask.getGroovyScriptDir().set(extension.getGroovyScriptDir());
                 runTask.getGroovyEntryScriptName().set(extension.getGroovyEntryScriptName());
-                runTask.getScriptEvalFunction().set(extension.getScriptEvalFunction());
-                runTask.getScriptErrorStackTraceFilterPrefixes().set(extension.getScriptErrorStackTraceFilterPrefixes());
-                runTask.getScriptErrorStackTraceLimitPrefixes().set(extension.getScriptErrorStackTraceLimitPrefixes());
                 runTask.getDestDir().set(extension.getDestDir());
                 runTask.getChangeSetInfoFile().set(extension.getChangeSetInfoFile());
 

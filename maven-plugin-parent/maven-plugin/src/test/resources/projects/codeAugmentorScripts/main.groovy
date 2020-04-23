@@ -1,6 +1,5 @@
-parentTask.execute({ args ->
-    def functionName = args[0]
-    binding.augCode = args[1]
-    binding.context = args[2]
-    evaluate(functionName + '(augCode, context)')
+parentTask.execute({ functionName, augCode, context ->
+    binding.codeAugmentorVariable_augCode = augCode
+    binding.codeAugmentorVariable_context = context
+    evaluate(functionName + '(codeAugmentorVariable_augCode, codeAugmentorVariable_context)')
 })

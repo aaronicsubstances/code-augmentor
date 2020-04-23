@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
-import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskExtensionFunction;
 import com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeGenericTask;
 
 import org.apache.maven.plugin.AbstractMojo;
@@ -59,7 +58,7 @@ public class ProcessingMojo extends AbstractPluginMojo {
             String resolvedGroovyEntryScriptName = getGroovyEntryScriptName();
 
             completeExecute(this, resolvedVerbose, augCodeSpecIndex, genCodeFileIndex, 
-                resolvedAugCodeFile, resolvedGenCodeFile, null, null, null,
+                resolvedAugCodeFile, resolvedGenCodeFile,
                 groovyScriptDir, resolvedGroovyEntryScriptName);
         }
         catch (MojoExecutionException ex) {
@@ -78,10 +77,7 @@ public class ProcessingMojo extends AbstractPluginMojo {
     
     static void completeExecute(AbstractMojo task, boolean resolvedVerbose,
             int resolvedAugCodeSpecIndex, int resolvedGenCodeFileIndex,
-            File resolvedAugCodeFile, File resolvedGenCodeFile, 
-            GenericTaskExtensionFunction resolvedScriptEvalFunction,
-            List<String> resolvedStackTraceLimitPrefixes, 
-            List<String> resolvedStackTraceFilterPrefixes,
+            File resolvedAugCodeFile, File resolvedGenCodeFile,
             File resolvedGroovyScriptDir, String resolvedGroovyEntryScriptName) throws Exception {
         
         if (resolvedAugCodeFile == null) {
@@ -102,8 +98,8 @@ public class ProcessingMojo extends AbstractPluginMojo {
                 throw new RuntimeException("unexpected absence of genCodeFile");
             }
         }
-        // either eval function or groovy script dir is required.
-        if (resolvedScriptEvalFunction == null && resolvedGroovyScriptDir == null) {
+        // groovy script dir is required.
+        if (resolvedGroovyScriptDir == null) {
             throw new MojoExecutionException("groovyScriptDir property is required");
         }Log logger = task.getLog();
         ProcessCodeGenericTask genericTask = new ProcessCodeGenericTask();
@@ -128,40 +124,28 @@ public class ProcessingMojo extends AbstractPluginMojo {
             logger.info("\tgenericTask.jsonParseFunction: " + genericTask.getJsonParseFunction());
         }
 
+        URL[] scriptEngineRoots = new URL[]{ resolvedGroovyScriptDir.toURI().toURL() };
+        GroovyScriptEngine scriptEngine = new GroovyScriptEngine(scriptEngineRoots);
+        CompilerConfiguration cc = new CompilerConfiguration();
+        cc.setRecompileGroovySource(false);
+        scriptEngine.setConfig(cc);
+        Binding binding = new Binding();
+        binding.setVariable("parentTask", genericTask);
+        logger.info("Launching " + resolvedGroovyEntryScriptName + "...");        
         List<Throwable> scriptErrors = new ArrayList<>();
-        if (resolvedScriptEvalFunction == null) {
-            URL[] scriptEngineRoots = new URL[]{ resolvedGroovyScriptDir.toURI().toURL() };
-            GroovyScriptEngine scriptEngine = new GroovyScriptEngine(scriptEngineRoots);
-            CompilerConfiguration cc = new CompilerConfiguration();
-            cc.setRecompileGroovySource(false);
-            scriptEngine.setConfig(cc);
-            Binding binding = new Binding();
-            binding.setVariable("parentTask", genericTask);
-            logger.info("Launching " + resolvedGroovyEntryScriptName + "...");
-            scriptErrors = new ArrayList<>();
-            try {
-                scriptEngine.run(resolvedGroovyEntryScriptName, binding);
-            }
-            catch (Throwable t) {
-                scriptErrors.add(t);
-            }
+        try {
+            scriptEngine.run(resolvedGroovyEntryScriptName, binding);
         }
-        else {
-            try {
-                genericTask.execute(resolvedScriptEvalFunction);
-            }
-            catch (Throwable t) {
-                scriptErrors.add(t);
-            }
+        catch (Throwable t) {
+            scriptErrors.add(t);
         }
 
         scriptErrors.addAll(genericTask.getAllErrors());
 
         // fail build if there were errors.
-        if (!genericTask.getAllErrors().isEmpty()) {
+        if (!scriptErrors.isEmpty()) {
             String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(
-                genericTask.getAllErrors(), true, 
-                resolvedStackTraceLimitPrefixes, resolvedStackTraceFilterPrefixes);
+                scriptErrors, true, null, null);
             throw new MojoExecutionException(allExMsg);
         }
     }

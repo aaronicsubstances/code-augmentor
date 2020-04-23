@@ -2,7 +2,6 @@ PLUGIN_BASE_TASK_TYPE = 'Task'
 PLUGIN_FILE_SET_TYPE = 'FileSet'
 PLUGIN_EXECUTION_EXCEPTION_TYPE = 'BuildException'
 PLUGIN_PREPARE_TASK_TYPE = 'PrepareTask'
-PLUGIN_PROCESS_TASK_TYPE = 'ProcessTask'
 PLUGIN_COMPLETE_TASK_TYPE = 'CompletionTask'
 
 VAL_ERROR_NO_FILESET = '"at least 1 element is required in srcDirs"'
@@ -17,9 +16,6 @@ VAL_ERROR_RUN_NULL_AUG_CODE_FILE = '"unexpected absence of augCodeFile"'
 VAL_ERROR_NULL_FILE_SET_AT_I = '"invalid null value found at fileSets[" + i + "]"'
 VAL_ERROR_COMPLETE_NULL_GEN_CODE_FILE_AT_I = '"invaid null value found at genCodeSpecs[" + i + "]"'
 VAL_ERROR_RUN_NULL_GEN_CODE_FILE = '"unexpected absence of genCodeFile"'
-VAL_ERROR_PROCESS_NULL_AUG_CODE_FILE = VAL_ERROR_PREPARE_NULL_AUG_CODE_FILE_AT_I
-VAL_ERROR_PROCESS_NULL_GEN_CODE_FILE = VAL_ERROR_COMPLETE_NULL_GEN_CODE_FILE_AT_I
-VAL_ERROR_NO_GROOVY_SCRIPT_DIR = '"groovyScriptDir property is required if scriptEvalFunction reference is absent"'
 
 PREPARE_FILES_VALIDATION_CODE = '''// set up defaults
         if (resolvedEncoding == null) {
@@ -53,17 +49,6 @@ PREPARE_FILES_VALIDATION_CODE = '''// set up defaults
             resolvedPrepFile = TaskUtils.getDefaultPrepFile(task);
         }'''
 
-PROCESS_FILES_VALIDATION_CODE = '''// set up defaults
-        if (resolvedAugCodeFile == null) {
-            resolvedAugCodeFile = TaskUtils.getDefaultAugCodeFile(task);
-        }
-        if (resolvedGenCodeFile == null) {
-            resolvedGenCodeFile = TaskUtils.getDefaultGenCodeFile(task);
-        }
-        if (resolvedGroovyEntryScriptName == null) {
-            resolvedGroovyEntryScriptName = "main.groovy";
-        }'''
-
 COMPLETION_FILES_VALIDATION_CODE = '''// set up defaults
         if (resolvedEncoding == null) {
             resolvedEncoding = "UTF-8";
@@ -94,13 +79,12 @@ FILE_SET_EXTRACTION_CODE = '''
             }
         }'''
 
-DEST_DIR_DELETION_CODE = 'Eval.me("x", resolvedDestDir, "x.deleteDir()");'
+DEST_DIR_DELETION_CODE = 'TaskUtils.deleteDir(resolvedDestDir);'
 
 LOG_REFERENCE = ''
 LOG_NO_FILES_FOUND = 'task.log("No files were found", Project.MSG_WARN);'
 LOG_ONE_OR_MORE_FILE_COUNT = 'task.log(String.format("Found %s file(s)", relativePaths.size()));'
 LOG_DELETE_DEST_DIR = 'task.log("Deleting contents of " + resolvedDestDir + "...");'
-LOG_CALLING_GROOVY = 'task.log("Launching " + resolvedGroovyEntryScriptName + "...");'
 
 // use equivalent of 3 tabs
 LOG_PREPARE_TASK_PROPERTIES = """task.log("Configuration properties:");
@@ -125,21 +109,10 @@ LOG_PREPARE_TASK_PROPERTIES = """task.log("Configuration properties:");
                     genericTask.getAugCodeProcessingSpecs().get(0).getDirectives());
             }
 
-            task.log("\\tsrcDirs: " + resolvedFileSets);
             task.log("\\tgenericTask.logAppender: " + genericTask.getLogAppender());
             task.log("\\tgenericTask.baseDirs: " + new HashSet<>(genericTask.getBaseDirs()));
-            task.log("\\tgenericTask.relativePaths: " + genericTask.getRelativePaths());"""
-            
-LOG_PROCESS_TASK_PROPERTIES = """task.log("Configuration properties:");
-            task.log("\\tgroovyScriptDir: " + resolvedGroovyScriptDir);
-            task.log("\\tgroovyEntryScriptName: " + resolvedGroovyEntryScriptName);
-            task.log("\\taugCodeFile: " + resolvedAugCodeFile);
-            task.log("\\tgenCodeFile: " + resolvedGenCodeFile);
-            task.log("\\tscriptEvalFunction: " + resolvedScriptEvalFunction);
-            task.log("\\tstackTraceLimitPrefixes: " + resolvedStackTraceLimitPrefixes);
-            task.log("\\tstackTraceFilterPrefixes: " + resolvedStackTraceFilterPrefixes);
-            task.log("\\tgenericTask.logAppender: " + genericTask.getLogAppender());
-            task.log("\\tgenericTask.jsonParseFunction: " + genericTask.getJsonParseFunction());"""
+            // ant's FileSet.toString() prints relative paths of its files
+            task.log("\\tsrcDirs: " + resolvedFileSets);"""
 
 LOG_COMPLETE_TASK_PROPERTIES = """task.log("Configuration properties:");
             task.log("\\tencoding: " + genericTask.getCharset());

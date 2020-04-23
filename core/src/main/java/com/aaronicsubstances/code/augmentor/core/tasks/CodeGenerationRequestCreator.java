@@ -49,7 +49,7 @@ public class CodeGenerationRequestCreator {
             
             // a. create aug code descriptor.
             AugmentingCodeDescriptor augCodeDescriptor = new AugmentingCodeDescriptor();
-            augCodeDescriptor.setIndex(i);
+            augCodeDescriptor.setIndex(i + 1); // 1-based, so 0 signals not set.
             augCodeDescriptor.setStartPos(firstToken.startPos);
             augCodeDescriptor.setLineNumber(firstToken.lineNumber);
             augCodeDescriptor.setEndPos(lastToken.endPos);
@@ -71,7 +71,7 @@ public class CodeGenerationRequestCreator {
             List<Integer> blockDelimiters = new ArrayList<>();
             List<Block> blocks = createAugmentingCodeBlocks(augCodeSection, blockDelimiters);
             AugmentingCode augmentingCode = new AugmentingCode(blocks);
-            augmentingCode.setIndex(i);
+            augmentingCode.setIndex(augCodeDescriptor.getIndex());
             augmentingCode.setIndent(augCodeDescriptor.getIndent());
             augmentingCode.setDirectiveMarker(firstToken.directiveMarker);
             augmentingCode.setLineNumber(augCodeDescriptor.getLineNumber());

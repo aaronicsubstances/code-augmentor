@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
-import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskExtensionFunction;
 import com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeGenericTask;
 
 import org.codehaus.groovy.control.CompilerConfiguration;
@@ -31,9 +30,6 @@ public class ProcessingTask extends DefaultTask {
     private final Property<Integer> genCodeFileIndex;
     private final Property<Object> groovyScriptDir;
     private final Property<String> groovyEntryScriptName;
-    private final Property<GenericTaskExtensionFunction> scriptEvalFunction;
-    private final ListProperty<String> scriptErrorStackTraceFilterPrefixes;
-    private final ListProperty<String> scriptErrorStackTraceLimitPrefixes;
     
     public ProcessingTask() {
         ObjectFactory objectFactory = getProject().getObjects();
@@ -44,9 +40,6 @@ public class ProcessingTask extends DefaultTask {
         genCodeFileIndex = objectFactory.property(Integer.class);
         groovyScriptDir = objectFactory.property(Object.class);
         groovyEntryScriptName = objectFactory.property(String.class);
-        scriptEvalFunction = objectFactory.property(GenericTaskExtensionFunction.class);
-        scriptErrorStackTraceFilterPrefixes = objectFactory.listProperty(String.class);
-        scriptErrorStackTraceLimitPrefixes = objectFactory.listProperty(String.class);
     }
 
     @TaskAction
@@ -73,23 +66,15 @@ public class ProcessingTask extends DefaultTask {
             Object genCodeFile = resolvedGenCodeFiles.get(resolvedGenCodeFileIndex);
             File resolvedGenCodeFile = getProject().file(genCodeFile);
             
-            GenericTaskExtensionFunction resolvedScriptEvalFunction = null;
-            if (scriptEvalFunction.isPresent()) {
-                resolvedScriptEvalFunction = scriptEvalFunction.get();
-            }
             File resolvedGroovyScriptDir = null;
             if (groovyScriptDir.isPresent()) {
                 resolvedGroovyScriptDir = getProject().file(groovyScriptDir);
             }
             String resolvedGroovyEntryScriptName = groovyEntryScriptName.get();
             
-            List<String> resolvedStackTraceLimitPrefixes = scriptErrorStackTraceLimitPrefixes.get();
-            List<String> resolvedStackTraceFilterPrefixes = scriptErrorStackTraceFilterPrefixes.get();
             completeExecute(this, resolvedVerbose, resolvedAugCodeSpecIndex, 
                 resolvedGenCodeFileIndex, resolvedAugCodeFile, resolvedGenCodeFile,
-                resolvedScriptEvalFunction, resolvedStackTraceLimitPrefixes,
-                resolvedStackTraceFilterPrefixes, resolvedGroovyScriptDir,
-                resolvedGroovyEntryScriptName);
+                resolvedGroovyScriptDir, resolvedGroovyEntryScriptName);
         }
         catch (GradleException ex) {
             throw ex;
@@ -104,10 +89,7 @@ public class ProcessingTask extends DefaultTask {
     
     static void completeExecute(DefaultTask task, boolean resolvedVerbose,
             int resolvedAugCodeSpecIndex, int resolvedGenCodeFileIndex,
-            File resolvedAugCodeFile, File resolvedGenCodeFile, 
-            GenericTaskExtensionFunction resolvedScriptEvalFunction,
-            List<String> resolvedStackTraceLimitPrefixes, 
-            List<String> resolvedStackTraceFilterPrefixes,
+            File resolvedAugCodeFile, File resolvedGenCodeFile,
             File resolvedGroovyScriptDir, String resolvedGroovyEntryScriptName) throws Exception {
         
         if (resolvedAugCodeFile == null) {
@@ -128,9 +110,9 @@ public class ProcessingTask extends DefaultTask {
                 throw new RuntimeException("unexpected absence of genCodeFile");
             }
         }
-        // either eval function or groovy script dir is required.
-        if (resolvedScriptEvalFunction == null && resolvedGroovyScriptDir == null) {
-            throw new GradleException("groovyScriptDir property must be set if scriptEvalFunction is absent");
+        // groovy script dir is required.
+        if (resolvedGroovyScriptDir == null) {
+            throw new GradleException("groovyScriptDir property is required");
         }
         Logger logger = task.getLogger();
         ProcessCodeGenericTask genericTask = new ProcessCodeGenericTask();
@@ -149,49 +131,34 @@ public class ProcessingTask extends DefaultTask {
             }
             logger.info("\tgroovyScriptDir: " + resolvedGroovyScriptDir);
             logger.info("\tgroovyEntryScriptName: " + resolvedGroovyEntryScriptName);
-            logger.info("\tscriptEvalFunction: " + resolvedScriptEvalFunction);
-            logger.info("\tstackTraceLimitPrefixes: " + resolvedStackTraceLimitPrefixes);
-            logger.info("\tstackTraceFilterPrefixes: " + resolvedStackTraceFilterPrefixes);
             logger.info("\tgenericTask.inputFile: " + resolvedAugCodeFile);
             logger.info("\tgenericTask.outputFile: " + resolvedGenCodeFile);
             logger.info("\tgenericTask.logAppender: " + genericTask.getLogAppender());
             logger.info("\tgenericTask.jsonParseFunction: " + genericTask.getJsonParseFunction());
         }
 
+        URL[] scriptEngineRoots = new URL[]{ resolvedGroovyScriptDir.toURI().toURL() };
+        GroovyScriptEngine scriptEngine = new GroovyScriptEngine(scriptEngineRoots);
+        CompilerConfiguration cc = new CompilerConfiguration();
+        cc.setRecompileGroovySource(false);
+        scriptEngine.setConfig(cc);
+        Binding binding = new Binding();
+        binding.setVariable("parentTask", genericTask);
+        logger.info("Launching " + resolvedGroovyEntryScriptName + "...");        
         List<Throwable> scriptErrors = new ArrayList<>();
-        if (resolvedScriptEvalFunction == null) {
-            URL[] scriptEngineRoots = new URL[]{ resolvedGroovyScriptDir.toURI().toURL() };
-            GroovyScriptEngine scriptEngine = new GroovyScriptEngine(scriptEngineRoots);
-            CompilerConfiguration cc = new CompilerConfiguration();
-            cc.setRecompileGroovySource(false);
-            scriptEngine.setConfig(cc);
-            Binding binding = new Binding();
-            binding.setVariable("parentTask", genericTask);
-            logger.info("Launching " + resolvedGroovyEntryScriptName + "...");
-            scriptErrors = new ArrayList<>();
-            try {
-                scriptEngine.run(resolvedGroovyEntryScriptName, binding);
-            }
-            catch (Throwable t) {
-                scriptErrors.add(t);
-            }
+        try {
+            scriptEngine.run(resolvedGroovyEntryScriptName, binding);
         }
-        else {
-            try {
-                genericTask.execute(resolvedScriptEvalFunction);
-            }
-            catch (Throwable t) {
-                scriptErrors.add(t);
-            }
+        catch (Throwable t) {
+            scriptErrors.add(t);
         }
 
         scriptErrors.addAll(genericTask.getAllErrors());
 
         // fail build if there were errors.
-        if (!genericTask.getAllErrors().isEmpty()) {
+        if (!scriptErrors.isEmpty()) {
             String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(
-                genericTask.getAllErrors(), true, 
-                resolvedStackTraceLimitPrefixes, resolvedStackTraceFilterPrefixes);
+                scriptErrors, true, null, null);
             throw new GradleException(allExMsg);
         }
     }
@@ -205,21 +172,6 @@ public class ProcessingTask extends DefaultTask {
     @Internal
     public Property<Integer> getGenCodeFileIndex() {
         return genCodeFileIndex;
-    }
-
-    @Internal
-    public Property<GenericTaskExtensionFunction> getScriptEvalFunction() {
-        return scriptEvalFunction;
-    }
-
-    @Internal
-    public ListProperty<String> getScriptErrorStackTraceFilterPrefixes() {
-        return scriptErrorStackTraceFilterPrefixes;
-    }
-
-    @Internal
-    public ListProperty<String> getScriptErrorStackTraceLimitPrefixes() {
-        return scriptErrorStackTraceLimitPrefixes;
     }
 
     @Internal

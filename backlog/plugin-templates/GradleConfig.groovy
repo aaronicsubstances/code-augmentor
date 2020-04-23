@@ -19,7 +19,7 @@ VAL_ERROR_COMPLETE_NULL_GEN_CODE_FILE_AT_I = '"invaid null value found at genera
 VAL_ERROR_RUN_NULL_GEN_CODE_FILE = '"unexpected absence of genCodeFile"'
 VAL_ERROR_PROCESS_NULL_AUG_CODE_FILE = VAL_ERROR_PREPARE_NULL_AUG_CODE_FILE_AT_I
 VAL_ERROR_PROCESS_NULL_GEN_CODE_FILE = VAL_ERROR_COMPLETE_NULL_GEN_CODE_FILE_AT_I
-VAL_ERROR_NO_GROOVY_SCRIPT_DIR = '"groovyScriptDir property must be set if scriptEvalFunction is absent"'
+VAL_ERROR_NO_GROOVY_SCRIPT_DIR = '"groovyScriptDir property is required"'
 
 PREPARE_FILES_VALIDATION_CODE = """
         if (resolvedGenCodeStartDirectives.isEmpty()) {
@@ -119,9 +119,6 @@ LOG_PROCESS_TASK_PROPERTIES = """logger.info("Configuration properties:");
             }
             logger.info("\\tgroovyScriptDir: " + resolvedGroovyScriptDir);
             logger.info("\\tgroovyEntryScriptName: " + resolvedGroovyEntryScriptName);
-            logger.info("\\tscriptEvalFunction: " + resolvedScriptEvalFunction);
-            logger.info("\\tstackTraceLimitPrefixes: " + resolvedStackTraceLimitPrefixes);
-            logger.info("\\tstackTraceFilterPrefixes: " + resolvedStackTraceFilterPrefixes);
             logger.info("\\tgenericTask.inputFile: " + resolvedAugCodeFile);
             logger.info("\\tgenericTask.outputFile: " + resolvedGenCodeFile);
             logger.info("\\tgenericTask.logAppender: " + genericTask.getLogAppender());

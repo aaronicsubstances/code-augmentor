@@ -6,13 +6,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskExtensionFunction;
-
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.types.FileSet;
-
-import groovy.lang.Closure;
 
 public class CodeAugmentorTask extends Task {
     private String encoding;
@@ -28,8 +24,6 @@ public class CodeAugmentorTask extends Task {
     
     private String stackTraceLimitPrefixes;
     private String stackTraceFilterPrefixes;
-    private File groovyScriptDir;
-    private String groovyEntryScriptName;
 
     private File destDir;
     private File changeSetInfoFile;
@@ -114,14 +108,6 @@ public class CodeAugmentorTask extends Task {
         this.stackTraceFilterPrefixes = stackTraceFilterPrefixes;
     }
 
-    public void setGroovyScriptDir(File groovyScriptDir) {
-        this.groovyScriptDir = groovyScriptDir;
-    }
-
-    public void setGroovyEntryScriptName(String groovyEntryScriptName) {
-        this.groovyEntryScriptName = groovyEntryScriptName;
-    }
-
     public void setDestDir(File destDir) {
         this.destDir = destDir;
     }
@@ -179,22 +165,8 @@ public class CodeAugmentorTask extends Task {
                     .collect(Collectors.toList());
             }
             
-            GenericTaskExtensionFunction resolvedScriptEvalFunction = null;
-            Object evalFunction = getProject().getReference("scriptEvalFunction");
-            if (evalFunction instanceof Closure<?>) {
-                Closure<?> evalClosure = (Closure<?>) evalFunction;
-                resolvedScriptEvalFunction = args -> {
-                    return evalClosure.call(Arrays.asList(args));
-                };
-            }
-            else {
-                resolvedScriptEvalFunction = (GenericTaskExtensionFunction) evalFunction;
-            }
-            
             ProcessTask.completeExecute(this, verbose, 0, 0, augCodeFile, genCodeFile, 
-            resolvedScriptEvalFunction, resolvedStackTraceLimitPrefixes, 
-                resolvedStackTraceFilterPrefixes, groovyScriptDir, 
-                groovyEntryScriptName);
+                resolvedStackTraceLimitPrefixes, resolvedStackTraceFilterPrefixes);
 
             // complete.
             List<File> genCodeFiles = new ArrayList<>();

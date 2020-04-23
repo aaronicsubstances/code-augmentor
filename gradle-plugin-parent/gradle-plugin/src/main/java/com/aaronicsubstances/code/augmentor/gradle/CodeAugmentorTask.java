@@ -4,8 +4,6 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
-import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskExtensionFunction;
-
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.ConfigurableFileTree;
@@ -28,9 +26,6 @@ public class CodeAugmentorTask extends DefaultTask {
     private final ListProperty<String> skipCodeStartDirectives;
     private final ListProperty<String> skipCodeEndDirectives;
     
-    private final Property<GenericTaskExtensionFunction> scriptEvalFunction;
-    private final ListProperty<String> scriptErrorStackTraceFilterPrefixes;
-    private final ListProperty<String> scriptErrorStackTraceLimitPrefixes;
     private final Property<Object> groovyScriptDir;
     private final Property<String> groovyEntryScriptName;
 
@@ -54,9 +49,6 @@ public class CodeAugmentorTask extends DefaultTask {
         skipCodeStartDirectives = objectFactory.listProperty(String.class);
         skipCodeEndDirectives = objectFactory.listProperty(String.class);
 
-        scriptEvalFunction = objectFactory.property(GenericTaskExtensionFunction.class);
-        scriptErrorStackTraceFilterPrefixes = objectFactory.listProperty(String.class);
-        scriptErrorStackTraceLimitPrefixes = objectFactory.listProperty(String.class);
         groovyScriptDir = objectFactory.property(Object.class);
         groovyEntryScriptName = objectFactory.property(String.class);
         
@@ -95,23 +87,15 @@ public class CodeAugmentorTask extends DefaultTask {
             // Process aug codes file into gen codes file.
             File resolvedAugCodeFile = getProject().file(augCodeFile);
             File resolvedGenCodeFile = getProject().file(genCodeFile);
-            GenericTaskExtensionFunction resolvedScriptEvalFunction = null;
-            if (scriptEvalFunction.isPresent()) {
-                resolvedScriptEvalFunction = scriptEvalFunction.get();
-            }
             File resolvedGroovyScriptDir = null;
             if (groovyScriptDir.isPresent()) {
                 resolvedGroovyScriptDir = getProject().file(groovyScriptDir);
             }
             String resolvedGroovyEntryScriptName = groovyEntryScriptName.get();
             
-            List<String> resolvedStackTraceLimitPrefixes = scriptErrorStackTraceLimitPrefixes.get();
-            List<String> resolvedStackTraceFilterPrefixes = scriptErrorStackTraceFilterPrefixes.get();
             ProcessingTask.completeExecute(this, resolvedVerbose, 0, 0, 
                 resolvedAugCodeFile, resolvedGenCodeFile,
-                resolvedScriptEvalFunction, resolvedStackTraceLimitPrefixes,
-                resolvedStackTraceFilterPrefixes, resolvedGroovyScriptDir,
-                resolvedGroovyEntryScriptName);
+                resolvedGroovyScriptDir, resolvedGroovyEntryScriptName);
 
             // Finish off code augmentation with gen codes file.
             File resolvedDestDir = getProject().file(destDir);
@@ -176,21 +160,6 @@ public class CodeAugmentorTask extends DefaultTask {
     @Internal
     public ListProperty<String> getSkipCodeEndDirectives() {
         return skipCodeEndDirectives;
-    }
-
-    @Internal
-    public Property<GenericTaskExtensionFunction> getScriptEvalFunction() {
-        return scriptEvalFunction;
-    }
-
-    @Internal
-    public ListProperty<String> getScriptErrorStackTraceFilterPrefixes() {
-        return scriptErrorStackTraceFilterPrefixes;
-    }
-
-    @Internal
-    public ListProperty<String> getScriptErrorStackTraceLimitPrefixes() {
-        return scriptErrorStackTraceLimitPrefixes;
     }
 
     @Internal

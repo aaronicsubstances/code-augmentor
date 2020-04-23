@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.aaronicsubstances.code.augmentor.core.models.AugmentingCode;
@@ -21,16 +20,25 @@ import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode.ContentPar
 import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 
 public class ProcessCodeGenericTask {
+
+    public interface JsonParseFunction {
+        Object parse(String json) throws Exception;
+    }
+
+    public interface EvalFunction {
+        Object apply(String function, AugmentingCode augCode, ProcessCodeContext context);
+    }
+
     // input properties
     private BiConsumer<GenericTaskLogLevel, Supplier<String>> logAppender;
     private File inputFile;
     private File outputFile;
-    private Function<String, Object> jsonParseFunction;
+    private JsonParseFunction jsonParseFunction;
     
     // output properties
     private final List<Throwable> allErrors = new ArrayList<>();
 
-    public void execute(GenericTaskExtensionFunction evalFunction) throws Exception {
+    public void execute(EvalFunction evalFunction) throws Exception {
         allErrors.clear();
         // ensure dir exists for outputFile
         outputFile.getParentFile().mkdirs();
@@ -57,7 +65,7 @@ public class ProcessCodeGenericTask {
                     augCode.setArgs(new ArrayList<>());
                     for (Block block : augCode.getBlocks()) {
                         if (block.isJsonify()) {
-                            Object parsedArg = jsonParseFunction.apply(block.getContent());
+                            Object parsedArg = jsonParseFunction.parse(block.getContent());
                             augCode.getArgs().add(parsedArg);
                         }
                         else if (block.isStringify()) {
@@ -122,11 +130,11 @@ public class ProcessCodeGenericTask {
     }
     
     @SuppressWarnings("unchecked")
-    List<GeneratedCode> processAugCode(GenericTaskExtensionFunction evalFunction, 
+    List<GeneratedCode> processAugCode(EvalFunction evalFunction, 
             String functionName, AugmentingCode augCode, ProcessCodeContext context) {
         Object result;
         try {
-            result = evalFunction.makeFunctionCall(new Object[]{ functionName, augCode, context });
+            result = evalFunction.apply(functionName, augCode, context);
         }
         catch (Throwable ex) {
             throw createException(context, ex);
@@ -239,11 +247,11 @@ public class ProcessCodeGenericTask {
         this.outputFile = outputFile;
     }
 
-    public Function<String, Object> getJsonParseFunction() {
+    public JsonParseFunction getJsonParseFunction() {
         return jsonParseFunction;
     }
 
-    public void setJsonParseFunction(Function<String, Object> jsonParseFunction) {
+    public void setJsonParseFunction(JsonParseFunction jsonParseFunction) {
         this.jsonParseFunction = jsonParseFunction;
     }
 

@@ -39,32 +39,32 @@ public class CodeGenerationRequestCreatorTest {
     @DataProvider
     public Object[][] createTestProcessSourceFileData() {
         List<CodeSnippetDescriptor> bodySnippets2 = Arrays.asList(
-            new CodeSnippetDescriptor(createAugCodeDescriptor("\r\n", "  ", 0, 261, 290, 13), null),
-            new CodeSnippetDescriptor(createAugCodeDescriptor("\r\n", "", 1, 294, 301, 17), null)
+            new CodeSnippetDescriptor(createAugCodeDescriptor("\r\n", "  ", 1, 261, 290, 13), null),
+            new CodeSnippetDescriptor(createAugCodeDescriptor("\r\n", "", 2, 294, 301, 17), null)
         );
         List<AugmentingCode> augCodes20 = Arrays.asList(
-            createAugCode("\r\n", "  ", 0, "#PHP", 13,
+            createAugCode("\r\n", "  ", 1, "#PHP", 13,
                 new Block("", false, false),
                 new Block("", true, false),
                 new Block("[]", false, true))            
         );
         List<AugmentingCode> augCodes21 = Arrays.asList(
-            createAugCode("\r\n", "", 1, "#PHP7", 17, new Block("", false, false))
+            createAugCode("\r\n", "", 2, "#PHP7", 17, new Block("", false, false))
         );
         
         List<CodeSnippetDescriptor> bodySnippets4 = Arrays.asList(
-            new CodeSnippetDescriptor(createAugCodeDescriptor("\r\n", "    ", 0, 27, 58, 2), null),
-            new CodeSnippetDescriptor(createAugCodeDescriptor("\r\n", "", 1, 61, 68, 6),
+            new CodeSnippetDescriptor(createAugCodeDescriptor("\r\n", "    ", 1, 27, 58, 2), null),
+            new CodeSnippetDescriptor(createAugCodeDescriptor("\r\n", "", 2, 61, 68, 6),
                 new GeneratedCodeDescriptor(68, 73, 78, 83))
         );
         List<AugmentingCode> augCodes40 = Arrays.asList(
-            createAugCode("\r\n", "    ", 0, "#PHP", 2,
+            createAugCode("\r\n", "    ", 1, "#PHP", 2,
                 new Block("", false, false),
                 new Block("", true, false),
                 new Block("12", false, true))            
         );
         List<AugmentingCode> augCodes41 = Arrays.asList(
-            createAugCode("\r\n", "", 1, "#PHP7", 6, new Block("", false, false))
+            createAugCode("\r\n", "", 2, "#PHP7", 6, new Block("", false, false))
         );
         return new Object[][] {
             new Object[]{ "tokens-for-process-source-00.json", 

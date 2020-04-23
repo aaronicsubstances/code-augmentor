@@ -90,7 +90,7 @@ public class PreCodeAugmentationGenericTask {
             List<Exception> errors = new ArrayList<>();
 
             SourceFileDescriptor s = new SourceFileDescriptor();
-            s.setFileIndex(i);
+            s.setFileIndex(i + 1); // 1-based, so 0 signals not set.
             s.setDir(baseDir.getPath());
             s.setRelativePath(relativePath);
             s.setContentHash(inputHash);

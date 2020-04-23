@@ -1,10 +1,10 @@
 { "contentStreamingEnabled": false }
 [
 	{
-		"fileIndex": 0,
+		"fileIndex": 1,
 		"relativePath": "task-spec-01-0.java",
 		"augmentingCodes": [{
-			"index" : 0,
+			"index" : 1,
 			"directiveMarker" : "//JS",
 			"indent": "",
             "lineNumber": 29,
@@ -16,10 +16,10 @@
 		}]
 	},
 	{
-		"fileIndex": 1,
+		"fileIndex": 2,
 		"relativePath": "task-spec-01-1.java",
 		"augmentingCodes": [{
-			"index" : 0,
+			"index" : 1,
 			"directiveMarker" : "//JS",
 			"indent": "",
             "lineNumber": 44,

@@ -1,0 +1,33 @@
+<project name="basic-ant" default="default">
+    <description>Basic ANT project testing CodeAugmentor-app</description>
+    
+    <!-- uncomment this if running outside CodeAugmentor-app -->
+    <!--<taskdef resource="CodeAugmentorTasks.xml" onerror="failall"/>-->
+    
+    <property name="src.dir" location="src" />
+    <property name="build.dir" location="build" />
+    
+    <target name="clean" description="deletes build directory">
+        <delete dir="${build.dir}" />
+    </target>
+    
+    <target name="prepare" description="prepares code augmentor">
+        <code_aug_prepare verbose="true">
+            <srcDir dir="${src.dir}"
+                includes="**/*.java" />
+        </code_aug_prepare>
+    </target>
+    
+    <target name="process" description="process code augmentor parse results">
+        
+    </target>
+    
+    <target name="complete" description="completes code augmentor operation">
+        <!--<code_aug_complete>
+            
+        </code_aug_complete>-->
+    </target>
+    
+    <target name="default" description="runs entire code augmentor operation"
+        depends="prepare,process,complete" />
+</project>

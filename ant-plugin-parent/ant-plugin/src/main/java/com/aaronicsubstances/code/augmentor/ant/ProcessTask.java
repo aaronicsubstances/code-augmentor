@@ -1,33 +1,28 @@
 package com.aaronicsubstances.code.augmentor.ant;
 
 import java.io.File;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
-import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskExtensionFunction;
 import com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeGenericTask;
 
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Task;
-import org.codehaus.groovy.control.CompilerConfiguration;
-
-import groovy.json.JsonSlurper;
-import groovy.lang.Binding;
-import groovy.lang.Closure;
-import groovy.util.GroovyScriptEngine;
 
 public class ProcessTask extends Task {
+    public static final String PROJECT_REFERENCE_JSON_PARSE_FUNCTION = 
+        "codeAugmentor.jsonParseFunction";
+    public static final String PROJECT_REFERENCE_SCRIPT_EVAL_FUNCTION = 
+        "codeAugmentor.scriptEvalFunction";
+
     private boolean verbose;
     private File augCodeFile;
     private File genCodeFile;
     private String stackTraceLimitPrefixes;
     private String stackTraceFilterPrefixes;
-    private File groovyScriptDir;
-    private String groovyEntryScriptName;
 
     public void setVerbose(boolean verbose) {
         this.verbose = verbose;
@@ -49,14 +44,6 @@ public class ProcessTask extends Task {
         this.stackTraceFilterPrefixes = stackTraceFilterPrefixes;
     }
 
-    public void setGroovyScriptDir(File groovyScriptDir) {
-        this.groovyScriptDir = groovyScriptDir;
-    }
-
-    public void setGroovyEntryScriptName(String groovyEntryScriptName) {
-        this.groovyEntryScriptName = groovyEntryScriptName;
-    }
-
     public void execute() {
         try {
             List<String> resolvedStackTraceLimitPrefixes = new ArrayList<>();
@@ -73,22 +60,9 @@ public class ProcessTask extends Task {
                     .filter(x -> !x.isEmpty())
                     .collect(Collectors.toList());
             }
-            
-            GenericTaskExtensionFunction resolvedScriptEvalFunction = null;
-            Object evalFunction = getProject().getReference("scriptEvalFunction");
-            if (evalFunction instanceof Closure<?>) {
-                Closure<?> evalClosure = (Closure<?>) evalFunction;
-                resolvedScriptEvalFunction = args -> {
-                    return evalClosure.call(Arrays.asList(args));
-                };
-            }
-            else {
-                resolvedScriptEvalFunction = (GenericTaskExtensionFunction) evalFunction;
-            }
+                
             completeExecute(this, verbose, 0, 0, augCodeFile, genCodeFile, 
-                resolvedScriptEvalFunction, resolvedStackTraceLimitPrefixes, 
-                resolvedStackTraceFilterPrefixes, groovyScriptDir, 
-                groovyEntryScriptName);
+                resolvedStackTraceLimitPrefixes, resolvedStackTraceFilterPrefixes);
         }
         catch (BuildException ex) {
             throw ex;
@@ -97,17 +71,12 @@ public class ProcessTask extends Task {
             throw new BuildException("General error: " + ex, ex);
         }
     }
-
-//:SKIP_CODE_START:
-    private static final JsonSlurper JSON_PARSER = new JsonSlurper();
     
     static void completeExecute(Task task, boolean resolvedVerbose,
             int resolvedAugCodeSpecIndex, int resolvedGenCodeFileIndex,
-            File resolvedAugCodeFile, File resolvedGenCodeFile, 
-            GenericTaskExtensionFunction resolvedScriptEvalFunction,
+            File resolvedAugCodeFile, File resolvedGenCodeFile,
             List<String> resolvedStackTraceLimitPrefixes, 
-            List<String> resolvedStackTraceFilterPrefixes,
-            File resolvedGroovyScriptDir, String resolvedGroovyEntryScriptName) throws Exception {
+            List<String> resolvedStackTraceFilterPrefixes) throws Exception {
         // set up defaults
         if (resolvedAugCodeFile == null) {
             resolvedAugCodeFile = TaskUtils.getDefaultAugCodeFile(task);
@@ -115,28 +84,41 @@ public class ProcessTask extends Task {
         if (resolvedGenCodeFile == null) {
             resolvedGenCodeFile = TaskUtils.getDefaultGenCodeFile(task);
         }
-        if (resolvedGroovyEntryScriptName == null) {
-            resolvedGroovyEntryScriptName = "main.groovy";
+        
+        // json parse function is required.            
+        ProcessCodeGenericTask.JsonParseFunction resolvedJsonParseFunction = 
+            (ProcessCodeGenericTask.JsonParseFunction) task.getProject().getReference(
+                PROJECT_REFERENCE_JSON_PARSE_FUNCTION);
+        if (resolvedJsonParseFunction == null) {
+            throw new BuildException(PROJECT_REFERENCE_JSON_PARSE_FUNCTION +
+                " reference is not set");
         }
-        // either eval function or groovy script dir is required.
-        if (resolvedScriptEvalFunction == null && resolvedGroovyScriptDir == null) {
-            throw new BuildException("groovyScriptDir property is required if scriptEvalFunction reference is absent");
+
+        // eval function is required.            
+        ProcessCodeGenericTask.EvalFunction resolvedScriptEvalFunction = 
+            (ProcessCodeGenericTask.EvalFunction) task.getProject().getReference(
+                PROJECT_REFERENCE_SCRIPT_EVAL_FUNCTION);
+        if (resolvedScriptEvalFunction == null) {
+            throw new BuildException(PROJECT_REFERENCE_SCRIPT_EVAL_FUNCTION +
+                " reference is not set");
         }
+
         ProcessCodeGenericTask genericTask = new ProcessCodeGenericTask();
         genericTask.setLogAppender(TaskUtils.createLogAppender(task, resolvedVerbose));
         genericTask.setInputFile(resolvedAugCodeFile);
         genericTask.setOutputFile(resolvedGenCodeFile);
-        genericTask.setJsonParseFunction(s -> JSON_PARSER.parseText(s));
+        genericTask.setJsonParseFunction(resolvedJsonParseFunction);
 
         if (resolvedVerbose) {
             // Print plugin task properties and any extra useful values for user.
             // As much as possible use generic task properties.
             task.log("Configuration properties:");
-            task.log("\tgroovyScriptDir: " + resolvedGroovyScriptDir);
-            task.log("\tgroovyEntryScriptName: " + resolvedGroovyEntryScriptName);
             task.log("\taugCodeFile: " + resolvedAugCodeFile);
             task.log("\tgenCodeFile: " + resolvedGenCodeFile);
-            task.log("\tscriptEvalFunction: " + resolvedScriptEvalFunction);
+            task.log("\t" + PROJECT_REFERENCE_JSON_PARSE_FUNCTION +
+                 " reference: " + resolvedJsonParseFunction);
+            task.log("\t" + PROJECT_REFERENCE_SCRIPT_EVAL_FUNCTION +
+                 " reference: " + resolvedScriptEvalFunction);
             task.log("\tstackTraceLimitPrefixes: " + resolvedStackTraceLimitPrefixes);
             task.log("\tstackTraceFilterPrefixes: " + resolvedStackTraceFilterPrefixes);
             task.log("\tgenericTask.logAppender: " + genericTask.getLogAppender());
@@ -144,41 +126,21 @@ public class ProcessTask extends Task {
         }
 
         List<Throwable> scriptErrors = new ArrayList<>();
-        if (resolvedScriptEvalFunction == null) {
-            URL[] scriptEngineRoots = new URL[]{ resolvedGroovyScriptDir.toURI().toURL() };
-            GroovyScriptEngine scriptEngine = new GroovyScriptEngine(scriptEngineRoots);
-            CompilerConfiguration cc = new CompilerConfiguration();
-            cc.setRecompileGroovySource(false);
-            scriptEngine.setConfig(cc);
-            Binding binding = new Binding();
-            binding.setVariable("parentTask", genericTask);
-            task.log("Launching " + resolvedGroovyEntryScriptName + "...");
-            scriptErrors = new ArrayList<>();
-            try {
-                scriptEngine.run(resolvedGroovyEntryScriptName, binding);
-            }
-            catch (Throwable t) {
-                scriptErrors.add(t);
-            }
+        try {
+            genericTask.execute(resolvedScriptEvalFunction);
         }
-        else {
-            try {
-                genericTask.execute(resolvedScriptEvalFunction);
-            }
-            catch (Throwable t) {
-                scriptErrors.add(t);
-            }
+        catch (Throwable t) {
+            scriptErrors.add(t);
         }
 
         scriptErrors.addAll(genericTask.getAllErrors());
 
         // fail build if there were errors.
-        if (!genericTask.getAllErrors().isEmpty()) {
+        if (!scriptErrors.isEmpty()) {
             String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(
-                genericTask.getAllErrors(), true, 
+                scriptErrors, true, 
                 resolvedStackTraceLimitPrefixes, resolvedStackTraceFilterPrefixes);
             throw new BuildException(allExMsg);
         }
     }
-//:SKIP_CODE_END:
 }

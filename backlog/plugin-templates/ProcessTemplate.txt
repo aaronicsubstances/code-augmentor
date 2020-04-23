@@ -2,14 +2,11 @@
     
     static void completeExecute($PLUGIN_BASE_TASK_TYPE task, boolean resolvedVerbose,
             int resolvedAugCodeSpecIndex, int resolvedGenCodeFileIndex,
-            File resolvedAugCodeFile, File resolvedGenCodeFile, 
-            GenericTaskExtensionFunction resolvedScriptEvalFunction,
-            List<String> resolvedStackTraceLimitPrefixes, 
-            List<String> resolvedStackTraceFilterPrefixes,
+            File resolvedAugCodeFile, File resolvedGenCodeFile,
             File resolvedGroovyScriptDir, String resolvedGroovyEntryScriptName) throws Exception {
         $PROCESS_FILES_VALIDATION_CODE
-        // either eval function or groovy script dir is required.
-        if (resolvedScriptEvalFunction == null && resolvedGroovyScriptDir == null) {
+        // groovy script dir is required.
+        if (resolvedGroovyScriptDir == null) {
             throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE($VAL_ERROR_NO_GROOVY_SCRIPT_DIR);
         }$LOG_REFERENCE
         ProcessCodeGenericTask genericTask = new ProcessCodeGenericTask();
@@ -24,40 +21,28 @@
             $LOG_PROCESS_TASK_PROPERTIES
         }
 
+        URL[] scriptEngineRoots = new URL[]{ resolvedGroovyScriptDir.toURI().toURL() };
+        GroovyScriptEngine scriptEngine = new GroovyScriptEngine(scriptEngineRoots);
+        CompilerConfiguration cc = new CompilerConfiguration();
+        cc.setRecompileGroovySource(false);
+        scriptEngine.setConfig(cc);
+        Binding binding = new Binding();
+        binding.setVariable("parentTask", genericTask);
+        $LOG_CALLING_GROOVY        
         List<Throwable> scriptErrors = new ArrayList<>();
-        if (resolvedScriptEvalFunction == null) {
-            URL[] scriptEngineRoots = new URL[]{ resolvedGroovyScriptDir.toURI().toURL() };
-            GroovyScriptEngine scriptEngine = new GroovyScriptEngine(scriptEngineRoots);
-            CompilerConfiguration cc = new CompilerConfiguration();
-            cc.setRecompileGroovySource(false);
-            scriptEngine.setConfig(cc);
-            Binding binding = new Binding();
-            binding.setVariable("parentTask", genericTask);
-            $LOG_CALLING_GROOVY
-            scriptErrors = new ArrayList<>();
-            try {
-                scriptEngine.run(resolvedGroovyEntryScriptName, binding);
-            }
-            catch (Throwable t) {
-                scriptErrors.add(t);
-            }
+        try {
+            scriptEngine.run(resolvedGroovyEntryScriptName, binding);
         }
-        else {
-            try {
-                genericTask.execute(resolvedScriptEvalFunction);
-            }
-            catch (Throwable t) {
-                scriptErrors.add(t);
-            }
+        catch (Throwable t) {
+            scriptErrors.add(t);
         }
 
         scriptErrors.addAll(genericTask.getAllErrors());
 
         // fail build if there were errors.
-        if (!genericTask.getAllErrors().isEmpty()) {
+        if (!scriptErrors.isEmpty()) {
             String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(
-                genericTask.getAllErrors(), true, 
-                resolvedStackTraceLimitPrefixes, resolvedStackTraceFilterPrefixes);
+                scriptErrors, true, null, null);
             throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE(allExMsg);
         }
     }
