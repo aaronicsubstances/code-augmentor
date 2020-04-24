@@ -74,7 +74,14 @@
                 resolvedChangeSetInfoFile, ex);
         }
 
-        // fail build if there were changed files.
+        // fail build if there were errors.
+        if (!genericTask.getAllErrors().isEmpty()) {
+            String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(
+                genericTask.getAllErrors(), false, null, null);
+            throw new MojoExecutionException(allExMsg);
+        }
+
+        // also fail build if there were changed files.
         if (!genericTask.getSrcFiles().isEmpty()) {
             StringBuilder outOfSyncMsg = new StringBuilder();
             outOfSyncMsg.append("The following files are out of sync with generating code scripts:\n");

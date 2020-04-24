@@ -1,3 +1,70 @@
+package com.aaronicsubstances.code.augmentor.gradle;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.Charset;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTask;
+import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
+
+import org.gradle.api.DefaultTask;
+import org.gradle.api.GradleException;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.TaskAction;
+
+/**
+ * Completes code generation.
+ */
+public class CompletionTask extends DefaultTask {
+    private final Property<Boolean> verbose;
+    private final Property<String> encoding;
+    private final ListProperty<Object> generatedCodeFiles;
+    private final Property<Object> prepFile;
+    private final Property<Object> destDir;
+    private final Property<Object> changeSetInfoFile;
+    
+    public CompletionTask() {
+        ObjectFactory objectFactory = getProject().getObjects();
+        verbose = objectFactory.property(Boolean.class);
+        encoding = objectFactory.property(String.class);
+        prepFile = objectFactory.property(Object.class);
+        generatedCodeFiles = objectFactory.listProperty(Object.class);
+        destDir = objectFactory.property(Object.class);
+        changeSetInfoFile = objectFactory.property(Object.class);
+    }
+
+    @TaskAction    
+    public void execute() throws GradleException {
+        try {
+            boolean resolvedVerbose = verbose.get();
+            String resolvedEncoding = encoding.get();
+            File resolvedPrepFile = getProject().file(prepFile);
+            List<File> resolvedGenCodeFiles = generatedCodeFiles.get().
+                stream().map(x -> getProject().file(x)).collect(Collectors.toList());
+            File resolvedDestDir = getProject().file(destDir);
+            File resolvedChangeSetInfoFile = getProject().file(changeSetInfoFile);
+            completeExecute(this, resolvedEncoding, resolvedVerbose,
+                resolvedPrepFile, resolvedGenCodeFiles, resolvedDestDir,
+                resolvedChangeSetInfoFile);
+        }
+        catch (GradleException ex) {
+            throw ex;
+        }
+        catch (Throwable ex) {
+            throw new GradleException("General plugin error: " + ex, ex);
+        }
+    }
+
+//:SKIP_CODE_START:
     static void completeExecute(DefaultTask task, String resolvedEncoding,
             boolean resolvedVerbose, File resolvedPrepFile,
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
@@ -95,3 +162,41 @@
             throw new GradleException(outOfSyncMsg.toString());
         }
     }
+//:SKIP_CODE_END:
+
+    @Internal
+    public Property<Boolean> getVerbose() {
+        return verbose;
+    }
+
+    /**
+     * External source file encoding.
+     * Task-generated files are always read and written in UTF-8.
+     * @return encoding used to read and write external source code files. 
+     */
+
+    @Internal
+    public Property<String> getEncoding() {
+        return encoding;
+    }
+
+    @Internal
+    public ListProperty<Object> getGeneratedCodeFiles() {
+        return generatedCodeFiles;
+    }
+
+    @Internal
+    public Property<Object> getPrepFile() {
+        return prepFile;
+    }
+
+    @Internal
+    public Property<Object> getDestDir() {
+        return destDir;
+    }
+
+    @Internal
+    public Property<Object> getChangeSetInfoFile() {
+        return changeSetInfoFile;
+    }
+}

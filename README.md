@@ -50,7 +50,7 @@ Usually, code duplication is frowned upon because it increases likelihood of err
 
 **The goal of *CodeAugmentor* is to compensate for the cost of passing over waterfall software architectures** (such as code duplication), by employing **data-driven programming** techniques. These techinques aim to have a single point of truth (SPOT) data specification from which a number of related code sections can be generated. Many possiblities for code quality improvement become possible. For example, the programmer can:
 
-   * automatically generate code snippets commonly occuring in some pattern.
+   * generate code snippets commonly occuring as boilerplate.
    * automate the process of synchronizing similar code sections in multiple places.
    * implement patterns which are much easier/less time consuming to do with code generation than with code (re)design.
    * generate documentation in a format not natively supported by programming environment (or simply for his/her own purposes).
@@ -70,7 +70,7 @@ By employing *CodeAugmentor*, one can develop a strategy of settling for a simpl
 
 ## Artifacts to be published
  
-   * Standalone command line application will be published for use with any programming language, with the requirement of a Java 8+ execution environment (JRE).
+   * Standalone command line application will be published for use with any programming language.
    * Plugins will be published for Ant, Maven and Gradle for scripting with Groovy, and for easier integration with Java and Android IDEs.
    * Packages will be published for NodeJS, Python 3 and PHP 7.
 

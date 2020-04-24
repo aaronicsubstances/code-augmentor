@@ -1,3 +1,74 @@
+package com.aaronicsubstances.code.augmentor.ant;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTask;
+import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
+
+import org.apache.tools.ant.BuildException;
+import org.apache.tools.ant.Task;
+
+public class CompletionTask extends Task {
+    private boolean verbose;
+    private String encoding;
+    private File prepFile;
+    private File destDir;
+    private File changeSetInfoFile;
+    private final List<GenCodeSpec> genCodeSpecs = new ArrayList<>();
+
+    public void setVerbose(boolean verbose) {
+        this.verbose = verbose;
+    }
+
+    public void setEncoding(String encoding) {
+        this.encoding = encoding;
+    }
+
+    public void setDestDir(File destDir) {
+        this.destDir = destDir;
+    }
+
+    public void setPrepFile(File prepFile) {
+        this.prepFile = prepFile;
+    }
+
+    public void setChangeSetInfoFile(File changeSetInfoFile) {
+        this.changeSetInfoFile = changeSetInfoFile;
+    }
+
+    public void addConfiguredGenCodeSpec(GenCodeSpec spec) {
+        genCodeSpecs.add(spec);
+    }
+    
+    public void execute() {
+        try {
+            List<File> resolvedGenCodeFiles = new ArrayList<>();
+            for (GenCodeSpec genCodeSpec : genCodeSpecs) {
+                File genCodeFile = null;
+                if (genCodeSpec != null) {
+                    genCodeFile = genCodeSpec.getFile();
+                }
+                resolvedGenCodeFiles.add(genCodeFile);
+            }
+            completeExecute(this, encoding, verbose, prepFile, 
+                resolvedGenCodeFiles, destDir, changeSetInfoFile);
+        }
+        catch (BuildException ex) {
+            throw ex;
+        }
+        catch (Throwable ex) {
+            throw new BuildException("General error: " + ex, ex);
+        }
+    }
+
+//:SKIP_CODE_START:
     static void completeExecute(Task task, String resolvedEncoding,
             boolean resolvedVerbose, File resolvedPrepFile,
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
@@ -109,3 +180,5 @@
             throw new BuildException(outOfSyncMsg.toString());
         }
     }
+//:SKIP_CODE_END:
+}

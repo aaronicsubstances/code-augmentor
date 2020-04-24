@@ -1,30 +1,66 @@
-    static void completeExecute(Task task, String resolvedEncoding,
+package com.aaronicsubstances.code.augmentor.maven;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.List;
+
+import com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTask;
+import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
+
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.shared.utils.io.FileUtils;
+
+/**
+ * Completes code generation.
+ */
+@Mojo(name = "complete")
+public class CompletionMojo extends AbstractPluginMojo {
+
+    @Override
+    public void execute() throws MojoExecutionException, MojoFailureException {
+        try {
+            String resolvedEncoding = getEncoding();
+            boolean resolvedVerbose = isVerbose();
+            File resolvedPrepFile = getPrepFile();
+            List<File> resolvedGenCodeFiles = Arrays.asList(getGeneratedCodeFiles());
+            File resolvedDestDir = getDestDir();
+            File resolvedChangeSetInfoFile = getChangeSetInfoFile();
+            completeExecute(this, resolvedEncoding, resolvedVerbose, resolvedPrepFile, 
+                resolvedGenCodeFiles, resolvedDestDir, resolvedChangeSetInfoFile);
+        }
+        catch (MojoExecutionException ex) {
+            throw ex;
+        }
+        catch (MojoFailureException ex) {
+            throw ex;
+        }
+        catch (Throwable ex) {
+            throw new MojoFailureException("General plugin error: " + ex, ex);
+        }
+    }
+
+//:SKIP_CODE_START:
+    static void completeExecute(AbstractMojo task, String resolvedEncoding,
             boolean resolvedVerbose, File resolvedPrepFile,
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
             File resolvedChangeSetInfoFile) throws Exception {
-        // set up defaults
-        if (resolvedEncoding == null) {
-            resolvedEncoding = "UTF-8";
-        }
-        if (resolvedPrepFile == null) {
-            resolvedPrepFile = TaskUtils.getDefaultPrepFile(task);
-        }
-        if (resolvedGenCodeFiles.isEmpty()) {
-            resolvedGenCodeFiles.add(TaskUtils.getDefaultGenCodeFile(task));
-        }
-        if (resolvedChangeSetInfoFile == null) {
-            resolvedChangeSetInfoFile = TaskUtils.getDefaultChangeSetInfoFile(task);
-        }
-        if (resolvedDestDir == null) {
-            resolvedDestDir = TaskUtils.getDefaultDestDir(task);
-        }
+        
         // validate
         Charset charset = Charset.forName(resolvedEncoding);
         for (int i = 0; i < resolvedGenCodeFiles.size(); i++) {
             File resolvedGenCodeFile = resolvedGenCodeFiles.get(i);
             if (resolvedGenCodeFile == null) {
-                if (task instanceof CompletionTask) {
-                    throw new BuildException("invaid null value found at genCodeSpecs[" + i + "]");
+                if (task instanceof CompletionMojo) {
+                    throw new MojoExecutionException("invaid null value found at generatedCodeFiles[" + i + "]");
                 }
                 else {
                     throw new RuntimeException("unexpected absence of genCodeFile");
@@ -34,9 +70,9 @@
 
         // Validation complete. start execution by deleting contents
         // of destDir so generated output files is not confused with previous ones.
-        
-        task.log("Deleting contents of " + resolvedDestDir + "...");
-        TaskUtils.deleteDir(resolvedDestDir);
+        Log logger = task.getLog();
+        logger.info("Deleting " + resolvedDestDir + "...");
+        FileUtils.deleteDirectory(resolvedDestDir);
 
         CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
         genericTask.setCharset(charset);
@@ -48,24 +84,24 @@
         if (resolvedVerbose) {
             // Print plugin task properties and any extra useful values for user.
             // As much as possible use generic task properties.
-            task.log("Configuration properties:");
-            task.log("\tencoding: " + genericTask.getCharset());
-            task.log("\tdestDir: " + genericTask.getDestDir());
-            if (task instanceof CompletionTask) {
-                task.log("\tprepFile: " + genericTask.getPrepFile());
+            logger.info("Configuration properties:");
+            logger.info("\tencoding: " + genericTask.getCharset());
+            logger.info("\tdestDir: " + genericTask.getDestDir());
+            if (task instanceof CompletionMojo) {
+                logger.info("\tprepFile: " + genericTask.getPrepFile());
                 for (int i = 0; i < genericTask.getGeneratedCodeFiles().size(); i++) {
-                    task.log("\tgenCodeSpecs[" + i + "].file: " + genericTask.getGeneratedCodeFiles().get(i));
+                    logger.info("\tgeneratedCodeFiles[" + i + "]: " + genericTask.getGeneratedCodeFiles().get(i));
                 }
             }
-            task.log("\tchangeSetInfoFile: " + resolvedChangeSetInfoFile);
-            task.log("\tgenericTask.logAppender: " + genericTask.getLogAppender());
+            logger.info("\tchangeSetInfoFile: " + resolvedChangeSetInfoFile);
+            logger.info("\tgenericTask.logAppender: " + genericTask.getLogAppender());
         }
 
         try {
             genericTask.execute();
         }
         catch (GenericTaskException ex) {
-            throw new BuildException(ex.getMessage(), ex.getCause());
+            throw new MojoExecutionException(ex.getMessage(), ex.getCause());
         }
 
         // Write out change set info file always even if there are no changes.
@@ -85,7 +121,7 @@
             fWriter.write(changeSetInfo.toString());
         }
         catch (IOException ex) {
-            throw new BuildException("Failed to write change set information to " +
+            throw new MojoExecutionException("Failed to write change set information to " +
                 resolvedChangeSetInfoFile, ex);
         }
 
@@ -93,7 +129,7 @@
         if (!genericTask.getAllErrors().isEmpty()) {
             String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(
                 genericTask.getAllErrors(), false, null, null);
-            throw new BuildException(allExMsg);
+            throw new MojoExecutionException(allExMsg);
         }
 
         // also fail build if there were changed files.
@@ -106,6 +142,8 @@
                 outOfSyncMsg.append("\n");
             }
 
-            throw new BuildException(outOfSyncMsg.toString());
+            throw new MojoExecutionException(outOfSyncMsg.toString());
         }
     }
+//:SKIP_CODE_END:
+}
