@@ -89,6 +89,7 @@ public class AugmentingCode {
     // used to attach results of processing aug codes.
     // not persisted
     private transient List<Object> args;
+    private transient boolean processed;
 
     public AugmentingCode() {
     }
@@ -153,6 +154,14 @@ public class AugmentingCode {
         this.args = args;
     }
 
+    public boolean isProcessed() {
+        return processed;
+    }
+
+    public void setProcessed(boolean processed) {
+        this.processed = processed;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -160,10 +169,11 @@ public class AugmentingCode {
         result = prime * result + ((args == null) ? 0 : args.hashCode());
         result = prime * result + ((blocks == null) ? 0 : blocks.hashCode());
         result = prime * result + ((directiveMarker == null) ? 0 : directiveMarker.hashCode());
-        result = prime * result + ((indent == null) ? 0 : indent.hashCode());
         result = prime * result + id;
+        result = prime * result + ((indent == null) ? 0 : indent.hashCode());
         result = prime * result + lineNumber;
         result = prime * result + ((lineSeparator == null) ? 0 : lineSeparator.hashCode());
+        result = prime * result + (processed ? 1231 : 1237);
         return result;
     }
 
@@ -191,12 +201,12 @@ public class AugmentingCode {
                 return false;
         } else if (!directiveMarker.equals(other.directiveMarker))
             return false;
+        if (id != other.id)
+            return false;
         if (indent == null) {
             if (other.indent != null)
                 return false;
         } else if (!indent.equals(other.indent))
-            return false;
-        if (id != other.id)
             return false;
         if (lineNumber != other.lineNumber)
             return false;
@@ -205,13 +215,15 @@ public class AugmentingCode {
                 return false;
         } else if (!lineSeparator.equals(other.lineSeparator))
             return false;
+        if (processed != other.processed)
+            return false;
         return true;
     }
 
     @Override
     public String toString() {
-        return "AugmentingCode{args=" + args + ", blocks=" + blocks + ", directiveMarker=" + directiveMarker
-                + ", indent=" + indent + ", id=" + id + ", lineNumber=" + lineNumber + ", lineSeparator="
-                + lineSeparator + "}";
+        return "AugmentingCode{args=" + args + ", blocks=" + blocks + ", directiveMarker=" + directiveMarker + ", id="
+                + id + ", indent=" + indent + ", lineNumber=" + lineNumber + ", lineSeparator=" + lineSeparator
+                + ", processed=" + processed + "}";
     }
 }

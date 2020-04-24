@@ -1,4 +1,4 @@
-package com.aaronicsubstances.code.augmentor.core.tasks;
+package com.aaronicsubstances.code.augmentor.core.util;
 
 import java.io.File;
 import java.io.StringReader;
@@ -56,7 +56,7 @@ public class GeneratedCodeFetcher {
         }
     }
     
-    public boolean prepareForFile(int fileIndex) throws Exception {
+    public boolean prepareForFile(int fileId) throws Exception {
         boolean firstPrepare = false;
         if (lastFetches.isEmpty()) {
             firstPrepare = true;
@@ -73,15 +73,15 @@ public class GeneratedCodeFetcher {
                     // meaning no more files
                     continue;
                 }
-                else if (fileIndex == fileGenCode.getFileId()) {
+                else if (fileId == fileGenCode.getFileId()) {
                     found = true;
                     continue;
                 }
                 else {
                     // this part assumes file ids are in ascending order.
-                    // So if peeking reveals file with id higher than fileIndex,
-                    // then it means we are not going to find fileIndex.
-                    if (fileIndex < fileGenCode.getFileId()) {                        
+                    // So if peeking reveals file with id higher than fileId,
+                    // then it means we are not going to find fileId.
+                    if (fileId < fileGenCode.getFileId()) {                        
                         continue;
                     }
                 }
@@ -89,20 +89,20 @@ public class GeneratedCodeFetcher {
             Object rdr = codeGenerationResponseReaders.get(i);
             fileGenCode = SourceFileGeneratedCode.deserialize(rdr);
             lastFetches.set(i, fileGenCode);
-            if (fileGenCode != null && fileIndex == fileGenCode.getFileId()) {
+            if (fileGenCode != null && fileId == fileGenCode.getFileId()) {
                 found = true;
             }
         }
         return found;
     }
 
-    public GeneratedCode getGeneratedCode(int fileIndex, int augCodeIndex) throws Exception {
+    public GeneratedCode getGeneratedCode(int fileId, int augCodeId) throws Exception {
         GeneratedCode nextGenCode = null;
         for (int i = 0; i < lastFetches.size(); i++) {
             SourceFileGeneratedCode fileGenCode = lastFetches.get(i);
-            if (fileGenCode != null && fileGenCode.getFileId() == fileIndex) {
+            if (fileGenCode != null && fileGenCode.getFileId() == fileId) {
                 Optional<GeneratedCode> genCodeOpt = fileGenCode.getGeneratedCodes()
-                    .stream().filter(x -> x.getId() == augCodeIndex).findFirst();
+                    .stream().filter(x -> x.getId() == augCodeId).findFirst();
                     
                 if (genCodeOpt.isPresent()) {
                     nextGenCode = genCodeOpt.get();

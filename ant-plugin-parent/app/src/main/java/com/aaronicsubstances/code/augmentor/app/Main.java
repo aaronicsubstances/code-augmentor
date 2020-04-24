@@ -2,6 +2,7 @@ package com.aaronicsubstances.code.augmentor.app;
 
 import java.io.File;
 import java.net.URL;
+import java.util.Arrays;
 
 import com.aaronicsubstances.code.augmentor.ant.CodeAugmentorTask;
 import com.aaronicsubstances.code.augmentor.ant.CompletionTask;
@@ -43,6 +44,10 @@ public class Main {
                                 .argName( "ant build file" ).hasArg()
                                 .desc( "use given Ant build XML file" )
                                 .build();
+        Option antTargetOpt = Option.builder("t").longOpt("target")
+                                .argName( "ant target" ).hasArg()
+                                .desc( "use given Ant build target" )
+                                .build();
         Option helpOpt = Option.builder("h").longOpt("help")
                                 .desc("help information")
                                 .build();
@@ -51,7 +56,9 @@ public class Main {
         exclusiveStartUpOptionGroup.addOption(dirOpt);
         exclusiveStartUpOptionGroup.addOption(fileOpt);
         Options options = new Options();
-        options.addOptionGroup(exclusiveStartUpOptionGroup).addOption(helpOpt);
+        options.addOptionGroup(exclusiveStartUpOptionGroup)
+            .addOption(antTargetOpt)
+            .addOption(helpOpt);
 
         if (hasHelp(helpOpt, args)) {
             HelpFormatter formatter = new HelpFormatter();
@@ -81,7 +88,7 @@ public class Main {
                         exclusiveStartUpOptionGroup);
             }
             String buildPath = cmd.getOptionValue(fileOpt.getOpt());
-            startAntBuild(new File(buildPath));
+            startAntBuild(new File(buildPath), cmd.getOptionValue(antTargetOpt.getOpt()));
         }
     }
     
@@ -119,7 +126,6 @@ public class Main {
         Script entryScript = scriptEngine.createScript("main.groovy", binding);
         AntBuilder antBuilder = createAntBuilder(scriptDir, entryScript);
         binding.setVariable("ant", antBuilder);
-        binding.setVariable("defaultStackTraceLimitPrefixes", Main.class.getName());
         entryScript.run();
     }
 
@@ -128,6 +134,9 @@ public class Main {
         Project antProject = antBuilder.getProject();
         antProject.setBaseDir(scriptDir);
         setUpTaskDefinitions(antProject);
+
+        antProject.addReference(ProcessTask.PROJECT_REFERENCE_DEFAULT_STACK_TRACE_LIMIT_PREFIXES, 
+            Arrays.asList(Main.class.getName()));
 
         antProject.addReference(ProcessTask.PROJECT_REFERENCE_JSON_PARSE_FUNCTION,
             new ProcessCodeGenericTask.JsonParseFunction(){
@@ -158,7 +167,7 @@ public class Main {
         return antBuilder;
     }
 
-    private static void startAntBuild(File buildFile) {
+    private static void startAntBuild(File buildFile, String target) {
         Project antProject = new Project();
         ProjectHelper helper = ProjectHelper.getProjectHelper();
         antProject.addReference(ProjectHelper.PROJECTHELPER_REFERENCE, helper);
@@ -171,6 +180,9 @@ public class Main {
         antProject.init();
         setUpTaskDefinitions(antProject);
         helper.parse(antProject, buildFile);
-        antProject.executeTarget(antProject.getDefaultTarget());
+        if (target == null || target.isEmpty()) {
+            target = antProject.getDefaultTarget();
+        }
+        antProject.executeTarget(target);
     }
 }

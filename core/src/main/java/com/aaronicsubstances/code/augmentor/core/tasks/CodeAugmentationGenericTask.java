@@ -18,6 +18,8 @@ import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode.ContentPar
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode;
 import com.aaronicsubstances.code.augmentor.core.models.PreCodeAugmentationResult;
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileDescriptor;
+import com.aaronicsubstances.code.augmentor.core.util.CodeGenerationResponseProcessor;
+import com.aaronicsubstances.code.augmentor.core.util.GeneratedCodeFetcher;
 import com.aaronicsubstances.code.augmentor.core.util.SourceCodeTransformer;
 import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 
@@ -77,10 +79,10 @@ public class CodeAugmentationGenericTask {
             List<int[]> replacementRanges = new ArrayList<>();
             for (CodeSnippetDescriptor snippetDescriptor : sourceFileDescriptor.getCodeSnippets()) {
                 AugmentingCodeDescriptor augCodeDescriptor = snippetDescriptor.getAugmentingCodeDescriptor();
-                int augCodeIndex = augCodeDescriptor.getId();
+                int augCodeId = augCodeDescriptor.getId();
 
                 GeneratedCode genCode = generatedCodeFetcher.getGeneratedCode(
-                    sourceFileDescriptor.getFileId(), augCodeIndex);
+                    sourceFileDescriptor.getFileId(), augCodeId);
                 if (genCode == null) {
                     throw createException("Could not find generated code", augCodeDescriptor, srcFile);
                 }

@@ -1,4 +1,4 @@
-package com.aaronicsubstances.code.augmentor.core.tasks;
+package com.aaronicsubstances.code.augmentor.core.util;
 
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -7,7 +7,6 @@ import static org.testng.Assert.*;
 
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -22,9 +21,9 @@ public class GeneratedCodeFetcherTest {
 
     @Test(dataProvider = "createTestGetGeneratedCodeData_0")
     public void testGetGeneratedCode_0(GeneratedCodeFetcher instance, 
-            int fileIndex, int augCodeIndex,
+            int fileId, int augCodeId,
             GeneratedCode expected) throws Exception {
-        GeneratedCode actual = instance.getGeneratedCode(fileIndex, augCodeIndex);
+        GeneratedCode actual = instance.getGeneratedCode(fileId, augCodeId);
         assertEquals(actual, expected);
     }
 
@@ -35,9 +34,9 @@ public class GeneratedCodeFetcherTest {
 
     @Test(dataProvider = "createTestGetGeneratedCodeData_1")
     public void testGetGeneratedCode_1(GeneratedCodeFetcher instance, 
-            int fileIndex, int augCodeIndex,
+            int fileId, int augCodeId,
             GeneratedCode expected) throws Exception {
-        GeneratedCode actual = instance.getGeneratedCode(fileIndex, augCodeIndex);
+        GeneratedCode actual = instance.getGeneratedCode(fileId, augCodeId);
         assertEquals(actual, expected);
     }
 
@@ -48,17 +47,17 @@ public class GeneratedCodeFetcherTest {
 
     @Test(dataProvider = "createTestGetGeneratedCodeData_2")
     public void testGetGeneratedCode_2(GeneratedCodeFetcher instance, 
-            int fileIndex, int augCodeIndex,
+            int fileId, int augCodeId,
             GeneratedCode expected) throws Exception {
-        GeneratedCode actual = instance.getGeneratedCode(fileIndex, augCodeIndex);
+        GeneratedCode actual = instance.getGeneratedCode(fileId, augCodeId);
         assertEquals(actual, expected);
     }
 
     @Test(dataProvider = "createTestGetGeneratedCodeData_5")
     public void testGetGeneratedCode_5(GeneratedCodeFetcher instance, 
-            int fileIndex, int augCodeIndex,
+            int fileId, int augCodeId,
             GeneratedCode expected) throws Exception {
-        GeneratedCode actual = instance.getGeneratedCode(fileIndex, augCodeIndex);
+        GeneratedCode actual = instance.getGeneratedCode(fileId, augCodeId);
         assertEquals(actual, expected);
     }
 
@@ -75,12 +74,12 @@ public class GeneratedCodeFetcherTest {
     static class GeneratedCodeFetcherTestDataProvider implements Iterator<Object[]> {
         // per test invocation control fields.
         int overallTestCount;
-        int indexIntoFileIndices;
+        int indexIntoFileIds;
         int perFileTestCount;
 
         // set up fields.
-        List<Integer> fileIndices = new ArrayList<>();
-        List<List<Integer>> allFileAugCodeIndices = new ArrayList<>();
+        List<Integer> fileIds = new ArrayList<>();
+        List<List<Integer>> allFileAugCodeIds = new ArrayList<>();
         Map<String, GeneratedCode> expectedResults = new HashMap<>();            
         GeneratedCodeFetcher instance = null;
 
@@ -105,45 +104,48 @@ public class GeneratedCodeFetcherTest {
             }
 
             // use this counter to check that implementation doesn't assume
-            // fileIndex or augCodeIndex start from 0 or increment by 1.
-            // Only requirement is both are unique and sorted in ascending order.
+            // fileId or augCodeId start from 0 or increment by 1.
+            // Only requirement is both are unique and file ids are sorted in ascending order.
             int runningCounter = 0;
 
             // randomly dump generated codes into buckets.
             for (int i = 0; i < srcFileDescriptorCount; i++) {
-                int fileIndex = runningCounter++ + (randGen.nextInt(2));
-                fileIndices.add(fileIndex);
+                int fileId = ++runningCounter + (randGen.nextInt(2));
+                fileIds.add(fileId);
 
-                List<Integer> fileAugCodeIndices = new ArrayList<>();
-                allFileAugCodeIndices.add(fileAugCodeIndices);
+                List<Integer> fileAugCodeIds = new ArrayList<>();
+                allFileAugCodeIds.add(fileAugCodeIds);
 
                 // ensure at least 1 aug code section.
                 int augCodeCount = 1 + randGen.nextInt(MAX_PER_FILE_AUG_CODE_COUNT);
                 for (int j = 0; j < augCodeCount; j++) {
-                    int augCodeIndex = runningCounter++ + (randGen.nextInt(2));
-                    fileAugCodeIndices.add(augCodeIndex);
+                    int augCodeId = ++runningCounter + (randGen.nextInt(2));
+                    if (randGen.nextBoolean()) {
+                        augCodeId = -augCodeId;
+                    }
+                    fileAugCodeIds.add(augCodeId);
 
                     GeneratedCode dummyGenCode = new GeneratedCode();
-                    dummyGenCode.setId(augCodeIndex);
+                    dummyGenCode.setId(augCodeId);
                     dummyGenCode.setSkipped(true);
 
-                    expectedResults.put(fileIndex + "|" + augCodeIndex, dummyGenCode);
+                    expectedResults.put(fileId + "|" + augCodeId, dummyGenCode);
 
                     // get a random CodeGenerationResponse bucket
-                    // to dump gen code corresponding to aug code index.
+                    // to dump gen code corresponding to aug code id.
                     int bucketIndex = randGen.nextInt(genFileCount);
                     CodeGenerationResponse codeGenRes = buckets.get(bucketIndex);
                     SourceFileGeneratedCode lastGenCodeWrapper = null;
                     if (!codeGenRes.getSourceFileGeneratedCodes().isEmpty()) {
                         lastGenCodeWrapper = codeGenRes.getSourceFileGeneratedCodes().get(
                             codeGenRes.getSourceFileGeneratedCodes().size() - 1);
-                        if (lastGenCodeWrapper.getFileId() != fileIndex) {
+                        if (lastGenCodeWrapper.getFileId() != fileId) {
                             lastGenCodeWrapper = null; 
                         }
                     }
                     if (lastGenCodeWrapper == null) {
                         lastGenCodeWrapper = new SourceFileGeneratedCode(new ArrayList<>());
-                        lastGenCodeWrapper.setFileId(fileIndex);
+                        lastGenCodeWrapper.setFileId(fileId);
                         codeGenRes.getSourceFileGeneratedCodes().add(lastGenCodeWrapper);
                     }
                     lastGenCodeWrapper.getGeneratedCodes().add(dummyGenCode);
@@ -164,21 +166,21 @@ public class GeneratedCodeFetcherTest {
             }
 
             // initialize control fields.
-            indexIntoFileIndices = 0;
+            indexIntoFileIds = 0;
             perFileTestCount = 0;
             overallTestCount = 0;
             
             // finally create generated code fetcher instance
-            int firstFileIndex = 0;
+            int firstFileId = 0;
             boolean expectedFoundResult = false;
-            if (!fileIndices.isEmpty()) {
-                firstFileIndex = fileIndices.get(0);
+            if (!fileIds.isEmpty()) {
+                firstFileId = fileIds.get(0);
                 expectedFoundResult = true;
             }
             boolean actualFoundResult;
             try {
                 instance = new GeneratedCodeFetcher(serializedBuckets.toArray());
-                actualFoundResult = instance.prepareForFile(firstFileIndex);
+                actualFoundResult = instance.prepareForFile(firstFileId);
             }
             catch (Exception ex) {
                 throw new RuntimeException(ex);
@@ -194,44 +196,46 @@ public class GeneratedCodeFetcherTest {
         @Override
         public Object[] next() {
             // set up return results. 
-            int fileIdx;               
-            int augCodeIndex;
+            int fileId;               
+            int augCodeId;
             GeneratedCode expected;
 
-            // start by getting aug code indices for current file index.
-            List<Integer> fileAugCodeIndices = null;
-            if (indexIntoFileIndices < fileIndices.size()) {
-                fileIdx = fileIndices.get(indexIntoFileIndices);
-                fileAugCodeIndices = allFileAugCodeIndices.get(indexIntoFileIndices);
+            // start by getting aug code ids for current file id.
+            List<Integer> fileAugCodeIds = null;
+            if (indexIntoFileIds < fileIds.size()) {
+                fileId = fileIds.get(indexIntoFileIds);
+                fileAugCodeIds = allFileAugCodeIds.get(indexIntoFileIds);
             }
             else {
-                fileIdx = randGen.nextInt();
+                fileId = randGen.nextInt();
             }
 
             // calculate how many times we may have generated miss result,
             // and hence determine whether we are in miss mode ... 
             int noResultCount = perFileTestCount;
-            if (fileAugCodeIndices != null) {
-                noResultCount -= fileAugCodeIndices.size();
+            if (fileAugCodeIds != null) {
+                noResultCount -= fileAugCodeIds.size();
             }
 
             if (noResultCount >= 0) {
                 expected = null;
-                // ensure augCodeIndex is invalid by adding
+                // ensure augCodeId is invalid by adding
                 // arbitrary positive amount to maximum of
-                // valid aug code indices.
-                augCodeIndex = randGen.nextInt(30);
+                // valid aug code ids.
+                augCodeId = randGen.nextInt(30);
                 // max() will fail if collection is empty, hence the check.
-                if (fileAugCodeIndices != null && !fileAugCodeIndices.isEmpty()) {
-                    augCodeIndex += 1 + Collections.max(fileAugCodeIndices);
-                    assertFalse(fileAugCodeIndices.contains(augCodeIndex));
+                if (fileAugCodeIds != null && !fileAugCodeIds.isEmpty()) {
+                    augCodeId += 1 + fileAugCodeIds.stream()
+                        .map(x -> Math.abs(x))
+                        .max(Integer::compareTo).get();
+                    assertFalse(fileAugCodeIds.contains(augCodeId));
                 }
             }
             else {
                 // ... if not then we are in find mode.
-                int randIndex = randGen.nextInt(fileAugCodeIndices.size());
-                augCodeIndex = fileAugCodeIndices.get(randIndex);
-                String key = fileIdx + "|" + augCodeIndex;
+                int randIndex = randGen.nextInt(fileAugCodeIds.size());
+                augCodeId = fileAugCodeIds.get(randIndex);
+                String key = fileId + "|" + augCodeId;
                 expected = expectedResults.get(key);
                 assertNotNull(expected);
             }
@@ -239,26 +243,26 @@ public class GeneratedCodeFetcherTest {
             perFileTestCount++;
             overallTestCount++;
             
-            // check whether we have exhausted all aug code indices per file way too
+            // check whether we have exhausted all aug code ids per file way too
             // many times, and advance to next file if that's the case.
             if (noResultCount > MAX_PER_FILE_MISS_COUNT) {
                 // advance to next file and reset some counters.
-                // no need to advance already past fileIndices data.
-                if (indexIntoFileIndices < fileIndices.size()) {
-                    indexIntoFileIndices++;
+                // no need to advance already past fileIds data.
+                if (indexIntoFileIds < fileIds.size()) {
+                    indexIntoFileIds++;
                     perFileTestCount = 0;
                 }
                 
                 // prepare for next file if we are not done.
-                int nextFileIdx = fileIdx + 1; // shouldn't exist if fileIdx is the last one.
+                int nextFileId = fileId + 1; // shouldn't exist if fileId is the last one.
                 boolean expectedFoundResult = false;
-                if (indexIntoFileIndices < fileIndices.size()) {
-                    nextFileIdx = fileIndices.get(indexIntoFileIndices);
+                if (indexIntoFileIds < fileIds.size()) {
+                    nextFileId = fileIds.get(indexIntoFileIds);
                     expectedFoundResult = true;
                 }
                 boolean actualFoundResult;
                 try {
-                    actualFoundResult = instance.prepareForFile(nextFileIdx);
+                    actualFoundResult = instance.prepareForFile(nextFileId);
                 }
                 catch (Exception ex) {
                     throw new RuntimeException(ex);
@@ -266,7 +270,7 @@ public class GeneratedCodeFetcherTest {
                 assertEquals(actualFoundResult, expectedFoundResult);
             }
 
-            return new Object[]{ instance, fileIdx, augCodeIndex, expected };
+            return new Object[]{ instance, fileId, augCodeId, expected };
         }
     }
 }

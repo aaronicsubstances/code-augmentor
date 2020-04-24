@@ -1,4 +1,4 @@
-package com.aaronicsubstances.code.augmentor.core.tasks;
+package com.aaronicsubstances.code.augmentor.core.util;
 
 import static org.testng.Assert.*;
 
@@ -13,7 +13,7 @@ import com.aaronicsubstances.code.augmentor.core.models.AugmentingCode.Block;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.AugmentingCodeDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.GeneratedCodeDescriptor;
-import com.aaronicsubstances.code.augmentor.core.util.Token;
+import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
 import com.google.gson.Gson;
 
 import org.testng.annotations.DataProvider;

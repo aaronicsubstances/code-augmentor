@@ -1,4 +1,4 @@
-package com.aaronicsubstances.code.augmentor.core.tasks;
+package com.aaronicsubstances.code.augmentor.core.util;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -12,8 +12,7 @@ import com.aaronicsubstances.code.augmentor.core.models.AugmentingCode.Block;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.AugmentingCodeDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.GeneratedCodeDescriptor;
-import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
-import com.aaronicsubstances.code.augmentor.core.util.Token;
+import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
 
 public class CodeGenerationRequestCreator {
     private static final Pattern GSON_ERROR_MESSAGE_REGEX = Pattern.compile(

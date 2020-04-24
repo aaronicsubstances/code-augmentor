@@ -17,6 +17,8 @@ public class ProcessTask extends Task {
         "codeAugmentor.jsonParseFunction";
     public static final String PROJECT_REFERENCE_SCRIPT_EVAL_FUNCTION = 
         "codeAugmentor.scriptEvalFunction";
+    public static String PROJECT_REFERENCE_DEFAULT_STACK_TRACE_LIMIT_PREFIXES = 
+        "codeAugmentor.defaultStackTraceLimitPrefixes";
 
     private boolean verbose;
     private File augCodeFile;
@@ -72,6 +74,7 @@ public class ProcessTask extends Task {
         }
     }
     
+    @SuppressWarnings("unchecked")
     static void completeExecute(Task task, boolean resolvedVerbose,
             int resolvedAugCodeSpecIndex, int resolvedGenCodeFileIndex,
             File resolvedAugCodeFile, File resolvedGenCodeFile,
@@ -103,6 +106,15 @@ public class ProcessTask extends Task {
                 " reference is not set");
         }
 
+        // make use of default stack trace limit prefix if present
+        if (resolvedStackTraceLimitPrefixes == null ||
+                resolvedStackTraceLimitPrefixes.isEmpty()) {
+            List<String> defaultStackTraceLimitPrefixes =
+                (List<String>) task.getProject().getReference(
+                    PROJECT_REFERENCE_DEFAULT_STACK_TRACE_LIMIT_PREFIXES);
+            resolvedStackTraceLimitPrefixes = defaultStackTraceLimitPrefixes;
+        }
+
         ProcessCodeGenericTask genericTask = new ProcessCodeGenericTask();
         genericTask.setLogAppender(TaskUtils.createLogAppender(task, resolvedVerbose));
         genericTask.setInputFile(resolvedAugCodeFile);
@@ -115,8 +127,6 @@ public class ProcessTask extends Task {
             task.log("Configuration properties:");
             task.log("\taugCodeFile: " + resolvedAugCodeFile);
             task.log("\tgenCodeFile: " + resolvedGenCodeFile);
-            task.log("\t" + PROJECT_REFERENCE_JSON_PARSE_FUNCTION +
-                 " reference: " + resolvedJsonParseFunction);
             task.log("\t" + PROJECT_REFERENCE_SCRIPT_EVAL_FUNCTION +
                  " reference: " + resolvedScriptEvalFunction);
             task.log("\tstackTraceLimitPrefixes: " + resolvedStackTraceLimitPrefixes);

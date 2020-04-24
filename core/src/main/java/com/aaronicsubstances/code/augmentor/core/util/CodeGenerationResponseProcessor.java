@@ -1,4 +1,4 @@
-package com.aaronicsubstances.code.augmentor.core.tasks;
+package com.aaronicsubstances.code.augmentor.core.util;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -9,12 +9,11 @@ import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.AugmentingCodeDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.GeneratedCodeDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode.ContentPart;
-import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 
 public class CodeGenerationResponseProcessor {
     private static final Pattern NON_NEWLINE_WS_MULTIPLE_REGEX = Pattern.compile("[ \t\f]+");
 
-    static int[] determineReplacementRange(CodeSnippetDescriptor snippetDescriptor, 
+    public static int[] determineReplacementRange(CodeSnippetDescriptor snippetDescriptor, 
             GeneratedCode genCode) {
         int[] replacementRange;
         AugmentingCodeDescriptor augCodeDescriptor = snippetDescriptor.getAugmentingCodeDescriptor();
@@ -44,7 +43,7 @@ public class CodeGenerationResponseProcessor {
         return replacementRange;
     }
 
-    static String ensureEndingNewline(String code, String newline) {
+    public static String ensureEndingNewline(String code, String newline) {
         boolean genCodeEndsWithNewline = false;
         if (!code.isEmpty()) {
             char lastChar = code.charAt(code.length() - 1);
@@ -58,7 +57,7 @@ public class CodeGenerationResponseProcessor {
         return code;
     }
 
-    static String getEffectiveIndent(AugmentingCodeDescriptor augCodeDescriptor, GeneratedCode genCode) {
+    public static String getEffectiveIndent(AugmentingCodeDescriptor augCodeDescriptor, GeneratedCode genCode) {
         // don't indent code if generated code contains any content part requiring exact
         // matching.
         for (ContentPart part : genCode.getContentParts()) {
@@ -73,7 +72,7 @@ public class CodeGenerationResponseProcessor {
         return indent;
     }
 
-    static String indentCode(String code, String indent) {
+    public static String indentCode(String code, String indent) {
         List<String> splitCode = TaskUtils.splitIntoLines(code);
         StringBuilder codeBuffer = new StringBuilder();
         for (int i = 0; i < splitCode.size(); i+=2) {
@@ -87,7 +86,7 @@ public class CodeGenerationResponseProcessor {
         return codeBuffer.toString();
     }
     
-    static String wrapInGeneratedCodeDirectives(String code, String genCodeStartDirective,
+    public static String wrapInGeneratedCodeDirectives(String code, String genCodeStartDirective,
             String genCodeEndDirective,
             String indent, String newline) {
         return indent + genCodeStartDirective + newline +
