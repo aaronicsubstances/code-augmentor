@@ -144,7 +144,9 @@ public class ProcessCodeGenericTask {
                 List<GeneratedCode> listResult = new ArrayList<>();
                 for (Object listItem : (Collection<Object>)result) {
                     GeneratedCode genCode = convertGenCodeItem(listItem);
-                    listResult.add(genCode);
+                    if (genCode != null) {
+                        listResult.add(genCode);
+                    }
                 }
                 return listResult;
             }

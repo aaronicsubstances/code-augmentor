@@ -1,12 +1,10 @@
-const assert = require('assert').strict;
 const fs = require('fs');
+const path = require('path');
 
 const lineReader = require('line-reader');
+
+/*
 const yargs = require('yargs');
-
-// Import modules with methods for generating code
-const yestest = require('./yestest');
-
 const argv = yargs
     .option('input-path', {
         alias: 'i',
@@ -23,69 +21,9 @@ const argv = yargs
     .demandOption(["input-path", "output-path"])
     .help()
     .alias('help', 'h')
-    .argv;
+    .argv;*/
 
-// begin writing output file.
-const writeStream = fs.createWriteStream(argv.outputPath);
-// send header.
-writeStream.write(JSON.stringify({}, '') + '\n');
-
-const context = {
-    globalScope: {}
-};
-
-// begin reading input file.
-let firstLineSeen = false;
-lineReader.eachLine(argv.inputPath, function(line, last) {
-    let fileAugCodes = JSON.parse(line);
-    // skip header.
-    if (!firstLineSeen) {
-        firstLineSeen = true;
-        return;
-    }
-    // fetch arguments, and parse any json argument found.
-    for (augCode of fileAugCodes.augmentingCodes) {
-        augCode.args = [];
-        for (block of augCode.blocks) {
-            if (block.jsonify) {
-                const parsedArg = JSON.parse(block.content);
-                augCode.args.push(parsedArg);
-            }
-            else if (block.stringify) {
-                augCode.args.push(block.content);
-            }
-        }
-    }
-
-    // set up context.
-    const fileGenCodes = { 
-        fileIndex: fileAugCodes.fileIndex,
-        generatedCodes: []
-    };
-    context.fileScope = {};
-    context.fileAugCodes = fileAugCodes;
-    
-    // now begin aug code processing.
-    let i = 0;
-    while (i < fileAugCodes.augmentingCodes.length) {
-        const augCode = fileAugCodes.augmentingCodes[i];
-        const functionName = augCode.blocks[0].content.trim();
-        context.augCodeIndex = i;
-        const genCodes = processAugCode(functionName, augCode, context);
-        assert.ok(genCodes.length);
-        for (let j = 0; j < genCodes.length; j++) {
-            const genCode = genCodes[j];
-            fileGenCodes.generatedCodes.push(genCode);
-        }
-        i += genCodes.length;
-    }
-    writeStream.write(JSON.stringify(fileGenCodes, '') + '\n');
-    if (last) {
-        writeStream.end();
-    }
-});
-
-const FUNCTION_NAME_REGEX = /^((yestest)\.)[a-zA-Z]\w*$/;
+/*const FUNCTION_NAME_REGEX = /^((yestest)\.)[a-zA-Z]\w*$/;
 function callUserFunction(functionName, augCode, context) {
     // validate name.
     if (!FUNCTION_NAME_REGEX.test(functionName)) {
@@ -95,54 +33,223 @@ function callUserFunction(functionName, augCode, context) {
     // name is valid. make function call "dynamically".
     const result = eval(functionName + "(augCode, context)");
     return result;
-}
+}*/
 
-function processAugCode(functionName, augCode, context) {
-    let result;
-    try {
-        result = callUserFunction(functionName, augCode, context);
-    }
-    catch (err) {
-        return createErrorGenCode(context.augCodeIndex, err);
-    }
-
-    // validate return result: must be array or string.
-    // also make all return results of array type.
-    if (Array.isArray(result)) {
-        if (result.length == 0) {
-            return createErrorGenCode(context.augCodeIndex, "Received empty results");
-        }
-        for (let j = 0; j < result.length; j++) {
-            const genCode = result[j];
-            if (context.augCodeIndex + j >= context.fileAugCodes.length) {
-                return createErrorGenCode(context.augCodeIndex, "No aug code found at offset " + j);
+exports.execute = function(config, evalFunction, cb=null) {
+    // set defaults for logging
+    if (!config.logVerbose) {
+        config.logVerbose = msg => {
+            if (config.verbose) {
+                console.log("[VERBOSE] " + msg);
             }
-            const correspondingAugCode = context.fileAugCodes.augmentingCodes[context.augCodeIndex + j];
-            genCode.index = correspondingAugCode.index;
+        };
+    }
+    if (!config.logInfo) {
+        config.logInfo = msg => {
+            console.log("[INFO] " + msg);
+        };
+    }
+    if (!config.logWarn) {
+        config.logWarn = msg => {
+            console.log("[WARN] " + msg);
+        };
+    }
+    config.allErrors = [];
+        
+    // ensure dir exists for outputFile
+    fs.mkdirSync(path.dirname(config.outputFile), {
+        recursive: true
+    });
+
+    const context = {
+        globalScope: {},
+        newGenCode: function() {
+            return {
+                id: 0,
+                contentParts: []   
+            }
+        },
+        newContent: function(content, exactMatch=false) {
+            return {
+                content, exactMatch
+            };
         }
-    }
-    else if (typeof result === 'string') {
-        result = [{
-            index: augCode.index,
-            content: result
-        }];
-    }
-    else {
-        // error.
-        if (result === null || typeof result === 'undefined') {
-            return createErrorGenCode(context.augCodeIndex, 'Received no result')
+    };
+
+    // begin serialize by writing header to output 
+    const codeGenResponse = fs.createWriteStream(config.outputFile);
+    codeGenResponse.write(JSON.stringify({}, '') + '\n');
+
+    // begin reading input file.
+    let headerSeen = false;
+    lineReader.eachLine(config.inputFile, function(line, last) {
+        // begin deserialize by reading header from input
+        if (!headerSeen) {
+            headerSeen = true;
+            return;
+        }
+        
+        let fileAugCodes = JSON.parse(line);
+
+        // set up context.
+        context.srcFile = path.join(fileAugCodes.dir,
+            fileAugCodes.relativePath);
+        context.fileAugCodes = fileAugCodes;
+        context.fileScope = {};
+        config.logVerbose(`Processing ${context.srcFile}`);
+
+        // fetch arguments, and parse any json argument found.
+        for (augCode of fileAugCodes.augmentingCodes) {
+            augCode.processed = false;
+            augCode.args = [];
+            for (block of augCode.blocks) {
+                if (block.jsonify) {
+                    const parsedArg = JSON.parse(block.content);
+                    augCode.args.push(parsedArg);
+                }
+                else if (block.stringify) {
+                    augCode.args.push(block.content);
+                }
+            }
+        }
+        
+        // now begin aug code processing.
+        const fileGenCodes = { 
+            fileId: fileAugCodes.fileId,
+            generatedCodes: []
+        };
+        const beginErrorCount = config.allErrors.length;
+        for (let i = 0; i < fileAugCodes.augmentingCodes.length; i++) {
+            const augCode = fileAugCodes.augmentingCodes[i];
+            if (augCode.processed) {
+                continue;
+            }
+
+            context.augCodeIndex = i;
+            const functionName = augCode.blocks[0].content.trim();
+            const genCodes = processAugCode(evalFunction, functionName,
+                augCode, context, config.allErrors);
+            for (genCode of genCodes) {
+                fileGenCodes.generatedCodes.push(genCode);
+            }
+        }
+                    
+        validateGeneratedCodeIds(fileGenCodes.generatedCodes, context, config.allErrors);
+        
+        if (config.allErrors.length > beginErrorCount) {
+            config.logWarn((config.allErrors.length - beginErrorCount) +
+                " error(s) encountered in " + context.srcFile);
+        }            
+
+        if (config.allErrors.length == 0) {
+            codeGenResponse.write(JSON.stringify(fileGenCodes, '') + '\n');
+        }
+        config.logInfo("Done processing " + context.srcFile);
+        if (last) {
+            codeGenResponse.end();
+        }
+    }, function(err) {
+        // completion function.
+        if (err) {
+            if (!cb) {
+                throw err;
+            }
+            cb(err);
         }
         else {
-            return createErrorGenCode(context.augCodeIndex, 'Received unexpected result type: ' + typeof result);
+            if (cb) {
+                cb();
+            }
         }
-    }
-    return result;
+    });
 }
 
-function createErrorGenCode(augCodeIndex, errOrMsg) {
-    return [{
-        index: augCodeIndex,
-        error: true,
-        body: errOrMsg.toString()
-    }];
+function processAugCode(evalFunction, functionName, augCode, context,
+        allErrors) {
+    try {
+        let result = evalFunction(functionName, augCode, context);
+        if (result === null || typeof result === 'undefined') {
+            return [];
+        }
+        let converted = [];
+        if (Array.isArray(result)) {
+            for (item of result) {
+                let convertedItem = convertGenCodeItem(item);
+                if (convertedItem) {
+                    converted.push(convertedItem);
+                }
+            }
+        }
+        else {
+            let genCode = convertGenCodeItem(result);
+            genCode.id = augCode.id;
+            converted.push(genCode);
+        }
+        return converted;
+    }
+    catch (excObj) {
+        createException(context, null, excObj, allErrors);
+        return [];
+    }
+}
+
+function convertGenCodeItem(item) {
+    if (item === null || typeof item === 'undefined') {
+        return null;
+    }
+    if (typeof item.contentParts !== 'undefined') {
+        // assume it is GeneratedCode instance and ensure
+        // existence of id field.
+        if (!item.id) {
+            item.id = 0;
+        }
+        return item;
+    }
+    else if (typeof item.content !== 'undefined') {
+        // assume it is ContentPart instance
+        return {
+            id: 0,
+            contentParts: [ item ]
+        };
+    }
+    else {
+        // assume string or stringify it.
+        return {
+            id: 0,
+            contentParts: [
+                {
+                    content: `${item}`,
+                    exactMatch: false
+                }
+            ]
+        };
+    }
+}
+
+function validateGeneratedCodeIds(fileGenCodeList, context, allErrors) {
+    let ids = fileGenCodeList.map(x => x.id);
+    if (ids.filter(x => x <= 0).length > 0) {
+        createException(context, 'At least one generated code id was not set. Found: ' + ids,
+            null, allErrors);
+    }
+    else {
+        let duplicateIds = ids.filter(x => ids.filter(y => x == y).length > 1);
+        if (duplicateIds.length > 0) {
+            createException(context, 'Generated code ids must be unique, but found duplicates: ' + ids,
+                null, allErrors);
+        }
+    }
+}
+
+function createException(context, message, evalEx, allErrors) {
+    let lineMessage = '';
+    let stackTrace = '';
+    if (evalEx) {
+        let augCode = context.fileAugCodes.augmentingCodes[context.augCodeIndex];
+        lineMessage = ` at line ${augCode.lineNumber}`;
+        message = augCode.blocks[0].content + `: ${evalEx.name}: ${evalEx.message}`;        
+        stackTrace = '\n' + evalEx.stack;
+    }
+    let exception = `in ${context.srcFile}${lineMessage}: ${message}${stackTrace}`;
+    allErrors.push(exception);
 }

@@ -23,11 +23,14 @@ def test_basic_eval_error(tmpdir):
     task = ProcessCodeTask()
     task.inputFile = os.path.join(os.path.dirname(__file__), 'basic_usage_aug_codes.json')
     task.outputFile = os.path.join(tmpdir, 'basic_eval_error.json')
-    task.execute('no dey')
+    task.execute(productionEvaler)
     assert task.allErrors
-    print(f'Expected errors, and found {len(task.allErrors)}')
+    print(f'\nExpected errors, and found {len(task.allErrors)}')
     for error in task.allErrors:
-        print(f'\t{error}', file=sys.stderr)
+        print(f'\t{error}')#, file=sys.stderr)
     
 def evaler(functionName, augCode, context):
     return 'Received: {0}: {1}, {2}'.format(functionName, augCode, context)
+    
+def productionEvaler(functionName, augCode, context):
+    return eval(functionName + '(augCode, context)')

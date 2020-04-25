@@ -143,7 +143,10 @@ class ProcessCodeTask {
             $converted = [];
             if (is_iterable($result)) {
                 foreach ($result as $item) {
-                    $converted[] = $this->convertGenCodeItem($item);
+                    $convertedItem = $this->convertGenCodeItem($item);
+                    if ($convertedItem) {
+                        $converted[] = $convertedItem;
+                    }
                 }
             }
             else {
@@ -154,7 +157,6 @@ class ProcessCodeTask {
             return $converted;
         }
         catch (\Throwable $evalEx) {
-            print "got here!";
             $this->createException($context, '', $evalEx);
             return [];
         }
