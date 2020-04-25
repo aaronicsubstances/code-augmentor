@@ -13,6 +13,8 @@ def test_basic_usage(tmpdir):
     task = ProcessCodeTask()
     task.inputFile = os.path.join(os.path.dirname(__file__), 'basic_usage_aug_codes.json')
     task.outputFile = os.path.join(tmpdir, 'basic_usage_gen_codes.json')
+    # print blank line for nice execute output
+    print
     task.execute(evaler)
     assert not task.allErrors
     print('Output successfully written to {0}'.format(task.outputFile))

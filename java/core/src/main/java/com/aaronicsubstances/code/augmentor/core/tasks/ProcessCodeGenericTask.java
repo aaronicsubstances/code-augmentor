@@ -133,31 +133,31 @@ public class ProcessCodeGenericTask {
     static List<GeneratedCode> processAugCode(EvalFunction evalFunction, 
             String functionName, AugmentingCode augCode, ProcessCodeContext context, 
             List<Throwable> errors) {
-        Object result = null;
         try {
-            result = evalFunction.apply(functionName, augCode, context);
+            Object result = evalFunction.apply(functionName, augCode, context);
+    
+            // Convert various alternative representations of List<GeneratedCode>     
+            if (result == null) {
+                return Arrays.asList();
+            }
+            else if (result instanceof Collection) {
+                List<GeneratedCode> listResult = new ArrayList<>();
+                for (Object listItem : (Collection<Object>)result) {
+                    GeneratedCode genCode = convertGenCodeItem(listItem);
+                    listResult.add(genCode);
+                }
+                return listResult;
+            }
+            else {
+                GeneratedCode genCode = convertGenCodeItem(result);
+                genCode.setId(augCode.getId());
+                return Arrays.asList(genCode);
+            }
         }
         catch (Throwable ex) {
             GenericTaskException evalEx = createException(context, null, ex);
             errors.add(evalEx);
-        }
-    
-        // Convert various alternative representations of List<GeneratedCode>     
-        if (result == null) {
             return Arrays.asList();
-        }
-        else if (result instanceof Collection) {
-            List<GeneratedCode> listResult = new ArrayList<>();
-            for (Object listItem : (Collection<Object>)result) {
-                GeneratedCode genCode = convertGenCodeItem(listItem);
-                listResult.add(genCode);
-            }
-            return listResult;
-        }
-        else {
-            GeneratedCode genCode = convertGenCodeItem(result);
-            genCode.setId(augCode.getId());
-            return Arrays.asList(genCode);
         }
     }
 

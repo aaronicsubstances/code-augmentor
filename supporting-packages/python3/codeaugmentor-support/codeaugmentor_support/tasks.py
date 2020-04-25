@@ -95,23 +95,23 @@ class ProcessCodeTask:
         print("[WARN] " + formatStr.format(*args, **kwargs))
     
     def _processAugCode(self, evalFunction, functionName, augCode, context):
-        result = None
         try:
             result = evalFunction(functionName, augCode, context)
+            
+            if result == None:
+                return []
+            converted = []
+            if isinstance(result, (list, tuple, set)):
+                for item in result:
+                    converted.append(self._convertGenCodeItem(item))
+            else:
+                genCode = self._convertGenCodeItem(result)
+                genCode['id'] = augCode['id']
+                converted.append(genCode)
+            return converted
         except BaseException as evalEx:
             self._createException(context, None, sys.exc_info() )
-            
-        if result == None:
             return []
-        converted = []
-        if isinstance(result, (list, tuple, set)):
-            for item in result:
-                converted.append(self._convertGenCodeItem(item))
-        else:
-            genCode = self._convertGenCodeItem(result)
-            genCode['id'] = augCode['id']
-            converted.append(genCode)
-        return converted
 
     def _convertGenCodeItem(self, item):
         if item == None:
@@ -127,7 +127,7 @@ class ProcessCodeTask:
         return genCode.toDict()
         
     def _validateGeneratedCodeIds(self, genCodes, context):
-        ids = [int(x['id']) for x in genCodes]
+        ids = [x['id'] for x in genCodes]
         if [x for x in ids if x <= 0]:
             self._createException('At least one generated code id was not set. Found: ' + str(ids))
         elif len(set(ids)) < len(ids):
