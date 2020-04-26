@@ -54,7 +54,7 @@ public class CodeGenerationRequestCreator {
             augCodeDescriptor.setEndPos(lastToken.endPos);
             augCodeDescriptor.setLineSeparator(lastToken.newline);
             String indent = augCodeSection.stream().map(x -> x.indent)
-                .min((x, y) -> new Integer(x.length()).compareTo(y.length())).get();
+                .min((x, y) -> Integer.compare(x.length(), y.length())).get();
             augCodeDescriptor.setIndent(indent);
 
             // b. create gen code descriptor.

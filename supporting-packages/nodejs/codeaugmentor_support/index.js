@@ -62,7 +62,6 @@ exports.execute = function(config, evalFunction, cb=null) {
     });
 
     const context = {
-        globalScope: {},
         newGenCode: function() {
             return {
                 id: 0,
@@ -85,6 +84,7 @@ exports.execute = function(config, evalFunction, cb=null) {
     lineReader.eachLine(config.inputFile, function(line, last) {
         // begin deserialize by reading header from input
         if (!headerSeen) {
+            context.globalScope = JSON.parse(line);
             headerSeen = true;
             return;
         }
@@ -174,10 +174,7 @@ function processAugCode(evalFunction, functionName, augCode, context,
         let converted = [];
         if (Array.isArray(result)) {
             for (item of result) {
-                let convertedItem = convertGenCodeItem(item);
-                if (convertedItem) {
-                    converted.push(convertedItem);
-                }
+                converted.push(convertGenCodeItem(item));
             }
         }
         else {
@@ -195,7 +192,7 @@ function processAugCode(evalFunction, functionName, augCode, context,
 
 function convertGenCodeItem(item) {
     if (item === null || typeof item === 'undefined') {
-        return null;
+        return { id: 0 };
     }
     if (typeof item.contentParts !== 'undefined') {
         // assume it is GeneratedCode instance and ensure

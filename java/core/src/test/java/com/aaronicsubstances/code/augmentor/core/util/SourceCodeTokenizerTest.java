@@ -30,11 +30,17 @@ public class SourceCodeTokenizerTest {
 			Arrays.asList("#PHP5", "#PHP7")
 		);
 
+		List<String> inlineGenCodeDirectives = Arrays.asList("#GG#");
+
+		List<String> nestedLevelStartMarkers = Arrays.asList("[[", "{{", "((");
+		List<String> nestedLevelEndMarkers = Arrays.asList("]]", "}}", "))");
+
 		SourceCodeTokenizer instance = new SourceCodeTokenizer(
 			genCodeStartDirectives, genCodeEndDirectives, 
 			embeddedStringDirectives, embeddedJsonDirectives, 
 			enableScanDirectives, disableScanDirectives, 
-			augCodeDirectiveSets);
+			augCodeDirectiveSets, inlineGenCodeDirectives,
+			nestedLevelStartMarkers, nestedLevelEndMarkers);
 		return instance;
 	}
 

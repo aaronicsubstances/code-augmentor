@@ -11,6 +11,7 @@ import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTask;
 import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
+import com.aaronicsubstances.code.augmentor.core.tasks.PluginUtils;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -34,8 +35,10 @@ public class CompletionMojo extends AbstractPluginMojo {
             List<File> resolvedGenCodeFiles = Arrays.asList(getGeneratedCodeFiles());
             File resolvedDestDir = getDestDir();
             File resolvedChangeSetInfoFile = getChangeSetInfoFile();
+            boolean resolvedFailOnChanges = getFailOnChanges();
             completeExecute(this, resolvedEncoding, resolvedVerbose, resolvedPrepFile, 
-                resolvedGenCodeFiles, resolvedDestDir, resolvedChangeSetInfoFile);
+                resolvedGenCodeFiles, resolvedDestDir, resolvedChangeSetInfoFile,
+                resolvedFailOnChanges);
         }
         catch (MojoExecutionException ex) {
             throw ex;
@@ -52,7 +55,8 @@ public class CompletionMojo extends AbstractPluginMojo {
     static void completeExecute(AbstractMojo task, String resolvedEncoding,
             boolean resolvedVerbose, File resolvedPrepFile,
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
-            File resolvedChangeSetInfoFile) throws Exception {
+            File resolvedChangeSetInfoFile,
+            boolean resolvedFailOnChanges) throws Exception {
         
         // validate
         Charset charset = Charset.forName(resolvedEncoding);
@@ -94,6 +98,7 @@ public class CompletionMojo extends AbstractPluginMojo {
                 }
             }
             logger.info("\tchangeSetInfoFile: " + resolvedChangeSetInfoFile);
+            logger.info("\tfailOnChanges: " + resolvedFailOnChanges);
             logger.info("\tgenericTask.logAppender: " + genericTask.getLogAppender());
         }
 
@@ -127,13 +132,13 @@ public class CompletionMojo extends AbstractPluginMojo {
 
         // fail build if there were errors.
         if (!genericTask.getAllErrors().isEmpty()) {
-            String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(
+            String allExMsg = PluginUtils.stringifyPossibleScriptErrors(
                 genericTask.getAllErrors(), false, null, null);
             throw new MojoExecutionException(allExMsg);
         }
 
         // also fail build if there were changed files.
-        if (!genericTask.getSrcFiles().isEmpty()) {
+        if (resolvedFailOnChanges && !genericTask.getSrcFiles().isEmpty()) {
             StringBuilder outOfSyncMsg = new StringBuilder();
             outOfSyncMsg.append("The following files are out of sync with generating code scripts:\n");
             for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {

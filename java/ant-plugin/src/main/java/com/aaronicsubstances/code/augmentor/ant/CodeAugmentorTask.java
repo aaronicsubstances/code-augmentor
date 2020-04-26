@@ -21,12 +21,16 @@ public class CodeAugmentorTask extends Task {
     private final List<String> skipCodeStartDirectives = new ArrayList<>();
     private final List<String> skipCodeEndDirectives = new ArrayList<>();
     private final List<String> augCodeDirectives = new ArrayList<>();
+    private final List<String> inlineGenCodeDirectives = new ArrayList<>();
+    private final List<String> nestedLevelStartMarkers = new ArrayList<>();
+    private final List<String> nestedLevelEndMarkers = new ArrayList<>();
     
     private String stackTraceLimitPrefixes;
     private String stackTraceFilterPrefixes;
 
     private File destDir;
     private File changeSetInfoFile;
+    private boolean failOnChanges;
 
     private File prepFile;
     private File augCodeFile;
@@ -92,6 +96,30 @@ public class CodeAugmentorTask extends Task {
         skipCodeEndDirectives.add(val);
     }
 
+    public void addConfiguredInlineGenCodeDirectives(Directive d) {
+        String val = null;
+        if (d.getValue() != null) {
+            val = d.getValue();
+        }
+        inlineGenCodeDirectives.add(val);
+    }
+
+    public void addConfiguredNestedLevelStartMarkers(Directive d) {
+        String val = null;
+        if (d.getValue() != null) {
+            val = d.getValue();
+        }
+        nestedLevelStartMarkers.add(val);
+    }
+
+    public void addConfiguredNestedLevelEndMarkers(Directive d) {
+        String val = null;
+        if (d.getValue() != null) {
+            val = d.getValue();
+        }
+        nestedLevelEndMarkers.add(val);
+    }
+
     public void addConfiguredAugCodeDirective(Directive d) {
         String val = null;
         if (d.getValue() != null) {
@@ -114,6 +142,10 @@ public class CodeAugmentorTask extends Task {
 
     public void setChangeSetInfoFile(File changeSetInfoFile) {
         this.changeSetInfoFile = changeSetInfoFile;
+    }
+
+    public void setFailOnChanges(boolean failOnChanges) {
+        this.failOnChanges = failOnChanges;
     }
 
     public void setPrepFile(File prepFile) {
@@ -147,7 +179,9 @@ public class CodeAugmentorTask extends Task {
                 skipCodeStartDirectives, skipCodeEndDirectives, 
                 resolvedAugCodeDirectives, 
                 augCodeFiles,
-                prepFile);
+                prepFile,
+                inlineGenCodeDirectives,
+                nestedLevelStartMarkers, nestedLevelEndMarkers);
 
             // process...
             List<String> resolvedStackTraceLimitPrefixes = new ArrayList<>();
@@ -174,7 +208,7 @@ public class CodeAugmentorTask extends Task {
                 genCodeFiles.add(genCodeFile);
             }
             CompletionTask.completeExecute(this, encoding, verbose, prepFile,
-                genCodeFiles, destDir, changeSetInfoFile);
+                genCodeFiles, destDir, changeSetInfoFile, failOnChanges);
         }
         catch (BuildException ex) {
             throw ex;

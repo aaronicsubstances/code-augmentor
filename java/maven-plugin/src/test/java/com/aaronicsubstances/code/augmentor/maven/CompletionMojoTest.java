@@ -7,6 +7,8 @@ import static org.testng.Assert.*;
 
 import java.io.File;
 
+import com.aaronicsubstances.code.augmentor.core.tasks.PluginUtils;
+
 public class CompletionMojoTest extends AbstractPluginMojoTest {
     
     @Test
@@ -17,7 +19,7 @@ public class CompletionMojoTest extends AbstractPluginMojoTest {
         File projectDir = new File(getTestProjectsDir(), "complete-mojo-project");
         assertTrue( projectDir.exists() );
         File output = File.createTempFile("stdout+err-", ".txt");
-        int actualExitCode = launchCommand(projectDir, output, "mvn", true, 
+        int actualExitCode = PluginUtils.execCommand(projectDir, output, output, "mvn", true, 
             "codeaugmentor:complete", "-e");
         String outputText = readText(output);
         assertEquals(actualExitCode, 0, outputText);

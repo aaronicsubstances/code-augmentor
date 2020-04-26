@@ -23,11 +23,15 @@ public class CodeAugmentorPluginExtension {
     private final ListProperty<String> embeddedJsonDirectives;
     private final ListProperty<String> skipCodeStartDirectives;
     private final ListProperty<String> skipCodeEndDirectives;
+    private final ListProperty<String> inlineGenCodeDirectives;
+    private final ListProperty<String> nestedLevelStartMarkers;
+    private final ListProperty<String> nestedLevelEndMarkers;
 
     // extra config for generate completion.
     private final ListProperty<Object> generatedCodeFiles;
     private final Property<Object> destDir;
     private final Property<Object> changeSetInfoFile;
+    private final Property<Boolean> failOnChanges;
 
     // config for process task.
     private final Property<Object> groovyScriptDir;
@@ -54,10 +58,14 @@ public class CodeAugmentorPluginExtension {
         embeddedJsonDirectives = objectFactory.listProperty(String.class);
         skipCodeStartDirectives = objectFactory.listProperty(String.class);
         skipCodeEndDirectives = objectFactory.listProperty(String.class);
+        inlineGenCodeDirectives = objectFactory.listProperty(String.class);
+        nestedLevelStartMarkers = objectFactory.listProperty(String.class);
+        nestedLevelEndMarkers = objectFactory.listProperty(String.class);
 
         generatedCodeFiles = objectFactory.listProperty(Object.class);
         destDir = objectFactory.property(Object.class);
         changeSetInfoFile = objectFactory.property(Object.class);
+        failOnChanges = objectFactory.property(Boolean.class);
 
         groovyScriptDir = objectFactory.property(Object.class);
         groovyEntryScriptName = objectFactory.property(String.class);
@@ -117,6 +125,18 @@ public class CodeAugmentorPluginExtension {
         return skipCodeEndDirectives;
     }
 
+    public ListProperty<String> getInlineGenCodeDirectives() {
+        return inlineGenCodeDirectives;
+    }
+
+    public ListProperty<String> getNestedLevelStartMarkers() {
+        return nestedLevelStartMarkers;
+    }
+
+    public ListProperty<String> getNestedLevelEndMarkers() {
+        return nestedLevelEndMarkers;
+    }
+
     public ListProperty<Object> getGeneratedCodeFiles() {
         return generatedCodeFiles;
     }
@@ -127,6 +147,10 @@ public class CodeAugmentorPluginExtension {
 
     public Property<Object> getDestDir() {
         return destDir;
+    }
+
+    public Property<Boolean> getFailOnChanges() {
+        return failOnChanges;
     }
 
 	public Property<Object> getGroovyScriptDir() {

@@ -55,6 +55,27 @@ public class ProcessCodeGenericTask {
         Object requestReader = null, responseWriter = null;
         try {
             requestReader = codeGenRequest.beginDeserialize(inputFile);
+            // populate global scope with file header line
+            context.getGlobalScope().put("genCodeStartDirective", 
+                codeGenRequest.getGenCodeStartDirective());
+            context.getGlobalScope().put("genCodeEndDirective", 
+                codeGenRequest.getGenCodeEndDirective());
+            context.getGlobalScope().put("skipCodeStartDirective", 
+                codeGenRequest.getSkipCodeStartDirective());
+            context.getGlobalScope().put("skipCodeEndDirective", 
+                codeGenRequest.getSkipCodeEndDirective());
+            context.getGlobalScope().put("embeddedStringDirective", 
+                codeGenRequest.getEmbeddedStringDirective());
+            context.getGlobalScope().put("embeddedJsonDirective", 
+                codeGenRequest.getEmbeddedJsonDirective());
+            context.getGlobalScope().put("augCodeDirective", 
+                codeGenRequest.getAugCodeDirective());
+            context.getGlobalScope().put("inlineGenCodeDirective", 
+                codeGenRequest.getInlineGenCodeDirective());
+            context.getGlobalScope().put("nestedLevelStartMarker", 
+                codeGenRequest.getNestedLevelStartMarker());
+            context.getGlobalScope().put("nestedLevelEndMarker", 
+                codeGenRequest.getNestedLevelEndMarker());
             responseWriter = codeGenResponse.beginSerialize(outputFile);
             SourceFileAugmentingCode fileAugCodes;
             while ((fileAugCodes = SourceFileAugmentingCode.deserialize(requestReader)) != null) {
@@ -144,9 +165,7 @@ public class ProcessCodeGenericTask {
                 List<GeneratedCode> listResult = new ArrayList<>();
                 for (Object listItem : (Collection<Object>)result) {
                     GeneratedCode genCode = convertGenCodeItem(listItem);
-                    if (genCode != null) {
-                        listResult.add(genCode);
-                    }
+                    listResult.add(genCode);
                 }
                 return listResult;
             }
@@ -165,7 +184,7 @@ public class ProcessCodeGenericTask {
 
     static GeneratedCode convertGenCodeItem(Object item) {
         if (item == null) {
-            return null;
+            return new GeneratedCode();
         }
         else if (item instanceof GeneratedCode) {
             GeneratedCode genCode = (GeneratedCode) item;

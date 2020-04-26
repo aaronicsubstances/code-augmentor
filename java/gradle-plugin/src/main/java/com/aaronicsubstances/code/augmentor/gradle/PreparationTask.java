@@ -9,6 +9,7 @@ import java.util.Set;
 
 import com.aaronicsubstances.code.augmentor.core.tasks.AugCodeProcessingSpec;
 import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
+import com.aaronicsubstances.code.augmentor.core.tasks.PluginUtils;
 import com.aaronicsubstances.code.augmentor.core.tasks.PreCodeAugmentationGenericTask;
 
 import org.gradle.api.DefaultTask;
@@ -37,6 +38,9 @@ public class PreparationTask extends DefaultTask {
     private final ListProperty<String> embeddedJsonDirectives;
     private final ListProperty<String> skipCodeStartDirectives;
     private final ListProperty<String> skipCodeEndDirectives;
+    private final ListProperty<String> inlineGenCodeDirectives;
+    private final ListProperty<String> nestedLevelStartMarkers;
+    private final ListProperty<String> nestedLevelEndMarkers;
     
     public PreparationTask() {
         ObjectFactory objectFactory = getProject().getObjects();
@@ -51,6 +55,9 @@ public class PreparationTask extends DefaultTask {
         embeddedJsonDirectives = objectFactory.listProperty(String.class);
         skipCodeStartDirectives = objectFactory.listProperty(String.class);
         skipCodeEndDirectives = objectFactory.listProperty(String.class);
+        inlineGenCodeDirectives = objectFactory.listProperty(String.class);
+        nestedLevelStartMarkers = objectFactory.listProperty(String.class);
+        nestedLevelEndMarkers = objectFactory.listProperty(String.class);
     }
 
     @TaskAction    
@@ -80,12 +87,17 @@ public class PreparationTask extends DefaultTask {
                 resolvedAugCodeFiles.add(resolvedDestFile);
             }
             File resolvedPrepFile = getProject().file(prepFile);
+            List<String> resolvedInlineGenCodeDirectives = inlineGenCodeDirectives.get();
+            List<String> resolvedNestedLevelStartMarkers = nestedLevelStartMarkers.get();
+            List<String> resolvedNestedLevelEndMarkers = nestedLevelEndMarkers.get();
             completeExecute(this, resolvedEncoding, resolvedVerbose,
                 resolvedFileSets, resolvedGenCodeStartDirectives,
                 resolvedGenCodeEndDirectives, resolvedEmbeddedStringDirectives,
                 resolvedEmbeddedJsonDirectives, resolvedSkipCodeStartDirectives,
                 resolvedSkipCodeEndDirectives, resolvedAugCodeSpecDirectives,
-                resolvedAugCodeFiles, resolvedPrepFile);
+                resolvedAugCodeFiles, resolvedPrepFile,
+                resolvedInlineGenCodeDirectives,
+                resolvedNestedLevelStartMarkers, resolvedNestedLevelEndMarkers);
         }
         catch (GradleException ex) {
             throw ex;
@@ -108,7 +120,10 @@ public class PreparationTask extends DefaultTask {
             List<String> resolvedSkipCodeEndDirectives,
             List<List<String>> resolvedAugCodeSpecDirectives,
             List<File> resolvedAugCodeFiles,
-            File resolvedPrepFile) throws Exception {
+            File resolvedPrepFile,
+            List<String> resolvedInlineGenCodeDirectives,
+            List<String> resolvedNestedLevelStartMarkers, 
+            List<String> resolvedNestedLevelEndMarkers) throws Exception {
         
         if (resolvedGenCodeStartDirectives.isEmpty()) {
             throw new GradleException("at least 1 element is required in genCodeStartDirectives");
@@ -172,6 +187,8 @@ public class PreparationTask extends DefaultTask {
         totalDirectiveCount += resolvedSkipCodeStartDirectives.size();
         allDirectives.addAll(resolvedSkipCodeEndDirectives);
         totalDirectiveCount += resolvedSkipCodeEndDirectives.size();
+        allDirectives.addAll(resolvedInlineGenCodeDirectives);
+        totalDirectiveCount += resolvedInlineGenCodeDirectives.size();
         
         for (List<String> resolvedAugCodeDirectives : resolvedAugCodeSpecDirectives) {
             allDirectives.addAll(resolvedAugCodeDirectives);
@@ -179,6 +196,17 @@ public class PreparationTask extends DefaultTask {
         }
         if (totalDirectiveCount != allDirectives.stream().filter(x -> x != null && !x.trim().isEmpty()).count()) {
             throw new GradleException("duplicates and/or blanks detected across directives");
+        }
+        
+        // Ensure uniqueness across markers.
+        allDirectives.clear();
+        totalDirectiveCount = 0;
+        allDirectives.addAll(resolvedNestedLevelStartMarkers);
+        totalDirectiveCount += resolvedNestedLevelStartMarkers.size();
+        allDirectives.addAll(resolvedNestedLevelEndMarkers);
+        totalDirectiveCount += resolvedNestedLevelEndMarkers.size();
+        if (totalDirectiveCount != allDirectives.stream().filter(x -> x != null && !x.trim().isEmpty()).count()) {
+            throw new GradleException("duplicates and/or blanks detected across nested level markers");
         }
 
         // Validation successful, so begin execution by fetching files inside file sets.
@@ -220,6 +248,9 @@ public class PreparationTask extends DefaultTask {
         genericTask.setEmbeddedJsonDirectives(resolvedEmbeddedJsonDirectives);
         genericTask.setSkipCodeStartDirectives(resolvedSkipCodeStartDirectives);
         genericTask.setSkipCodeEndDirectives(resolvedSkipCodeEndDirectives);
+        genericTask.setInlineGenCodeDirectives(resolvedInlineGenCodeDirectives);
+        genericTask.setNestedLevelStartMarkers(resolvedNestedLevelStartMarkers);
+        genericTask.setNestedLevelEndMarkers(resolvedNestedLevelEndMarkers);
 
         List<AugCodeProcessingSpec> augCodeProcessingSpecs = new ArrayList<>();
         genericTask.setAugCodeProcessingSpecs(augCodeProcessingSpecs);
@@ -242,6 +273,9 @@ public class PreparationTask extends DefaultTask {
             logger.info("\tembeddedJsonDirectives: " + genericTask.getEmbeddedJsonDirectives());
             logger.info("\tskipCodeStartDirectives: " + genericTask.getSkipCodeStartDirectives());
             logger.info("\tskipCodeEndDirectives: " + genericTask.getSkipCodeEndDirectives());
+            logger.info("\tinlineGenCodeDirectives: " + genericTask.getInlineGenCodeDirectives());
+            logger.info("\tnestedLevelStartMarkers: " + genericTask.getNestedLevelStartMarkers());
+            logger.info("\tnestedLevelEndMarkers: " + genericTask.getNestedLevelEndMarkers());
             
             if (task instanceof PreparationTask) {
                 logger.info("\tprepFile: " + genericTask.getPrepFile());
@@ -271,7 +305,7 @@ public class PreparationTask extends DefaultTask {
 
         // fail build if there were errors.
         if (!genericTask.getAllErrors().isEmpty()) {
-            String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(
+            String allExMsg = PluginUtils.stringifyPossibleScriptErrors(
                 genericTask.getAllErrors(), false, null, null);
             throw new GradleException(allExMsg);
         }
@@ -331,5 +365,20 @@ public class PreparationTask extends DefaultTask {
     @Internal
     public ListProperty<String> getSkipCodeEndDirectives() {
         return skipCodeEndDirectives;
+    }
+
+    @Internal
+    public ListProperty<String> getInlineGenCodeDirectives() {
+        return inlineGenCodeDirectives;
+    }
+
+    @Internal
+    public ListProperty<String> getNestedLevelStartMarkers() {
+        return nestedLevelStartMarkers;
+    }
+
+    @Internal
+    public ListProperty<String> getNestedLevelEndMarkers() {
+        return nestedLevelEndMarkers;
     }
 }

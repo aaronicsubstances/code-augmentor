@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTask;
 import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
+import com.aaronicsubstances.code.augmentor.core.tasks.PluginUtils;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -31,6 +32,7 @@ public class CompletionTask extends DefaultTask {
     private final Property<Object> prepFile;
     private final Property<Object> destDir;
     private final Property<Object> changeSetInfoFile;
+    private final Property<Boolean> failOnChanges;
     
     public CompletionTask() {
         ObjectFactory objectFactory = getProject().getObjects();
@@ -40,6 +42,7 @@ public class CompletionTask extends DefaultTask {
         generatedCodeFiles = objectFactory.listProperty(Object.class);
         destDir = objectFactory.property(Object.class);
         changeSetInfoFile = objectFactory.property(Object.class);
+        failOnChanges = objectFactory.property(Boolean.class);
     }
 
     @TaskAction    
@@ -52,9 +55,10 @@ public class CompletionTask extends DefaultTask {
                 stream().map(x -> getProject().file(x)).collect(Collectors.toList());
             File resolvedDestDir = getProject().file(destDir);
             File resolvedChangeSetInfoFile = getProject().file(changeSetInfoFile);
+            boolean resolvedFailOnChanges = failOnChanges.get();
             completeExecute(this, resolvedEncoding, resolvedVerbose,
                 resolvedPrepFile, resolvedGenCodeFiles, resolvedDestDir,
-                resolvedChangeSetInfoFile);
+                resolvedChangeSetInfoFile, resolvedFailOnChanges);
         }
         catch (GradleException ex) {
             throw ex;
@@ -68,7 +72,8 @@ public class CompletionTask extends DefaultTask {
     static void completeExecute(DefaultTask task, String resolvedEncoding,
             boolean resolvedVerbose, File resolvedPrepFile,
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
-            File resolvedChangeSetInfoFile) throws Exception {
+            File resolvedChangeSetInfoFile,
+            boolean resolvedFailOnChanges) throws Exception {
         
         // validate
         Charset charset = Charset.forName(resolvedEncoding);
@@ -111,6 +116,7 @@ public class CompletionTask extends DefaultTask {
                 }
             }
             logger.info("\tchangeSetInfoFile: " + resolvedChangeSetInfoFile);
+            logger.info("\tfailOnChanges: " + resolvedFailOnChanges);
             logger.info("\tgenericTask.logAppender: " + genericTask.getLogAppender());
         }
 
@@ -144,13 +150,13 @@ public class CompletionTask extends DefaultTask {
 
         // fail build if there were errors.
         if (!genericTask.getAllErrors().isEmpty()) {
-            String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(
+            String allExMsg = PluginUtils.stringifyPossibleScriptErrors(
                 genericTask.getAllErrors(), false, null, null);
             throw new GradleException(allExMsg);
         }
 
         // also fail build if there were changed files.
-        if (!genericTask.getSrcFiles().isEmpty()) {
+        if (resolvedFailOnChanges && !genericTask.getSrcFiles().isEmpty()) {
             StringBuilder outOfSyncMsg = new StringBuilder();
             outOfSyncMsg.append("The following files are out of sync with generating code scripts:\n");
             for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {
@@ -198,5 +204,10 @@ public class CompletionTask extends DefaultTask {
     @Internal
     public Property<Object> getChangeSetInfoFile() {
         return changeSetInfoFile;
+    }
+
+    @Internal
+    public Property<Boolean> getFailOnChanges() {
+        return failOnChanges;
     }
 }

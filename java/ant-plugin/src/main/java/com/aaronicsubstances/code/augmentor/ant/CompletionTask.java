@@ -11,6 +11,7 @@ import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTask;
 import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
+import com.aaronicsubstances.code.augmentor.core.tasks.PluginUtils;
 
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Task;
@@ -22,6 +23,7 @@ public class CompletionTask extends Task {
     private File destDir;
     private File changeSetInfoFile;
     private final List<GenCodeSpec> genCodeSpecs = new ArrayList<>();
+    private boolean failOnChanges;
 
     public void setVerbose(boolean verbose) {
         this.verbose = verbose;
@@ -43,6 +45,10 @@ public class CompletionTask extends Task {
         this.changeSetInfoFile = changeSetInfoFile;
     }
 
+    public void setFailOnChanges(boolean failOnChanges) {
+        this.failOnChanges = failOnChanges;
+    }
+
     public void addConfiguredGenCodeSpec(GenCodeSpec spec) {
         genCodeSpecs.add(spec);
     }
@@ -58,7 +64,7 @@ public class CompletionTask extends Task {
                 resolvedGenCodeFiles.add(genCodeFile);
             }
             completeExecute(this, encoding, verbose, prepFile, 
-                resolvedGenCodeFiles, destDir, changeSetInfoFile);
+                resolvedGenCodeFiles, destDir, changeSetInfoFile, failOnChanges);
         }
         catch (BuildException ex) {
             throw ex;
@@ -72,7 +78,8 @@ public class CompletionTask extends Task {
     static void completeExecute(Task task, String resolvedEncoding,
             boolean resolvedVerbose, File resolvedPrepFile,
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
-            File resolvedChangeSetInfoFile) throws Exception {
+            File resolvedChangeSetInfoFile,
+            boolean resolvedFailOnChanges) throws Exception {
         // set up defaults
         if (resolvedEncoding == null) {
             resolvedEncoding = "UTF-8";
@@ -107,7 +114,7 @@ public class CompletionTask extends Task {
         // of destDir so generated output files is not confused with previous ones.
         
         task.log("Deleting contents of " + resolvedDestDir + "...");
-        TaskUtils.deleteDir(resolvedDestDir);
+        PluginUtils.deleteDir(resolvedDestDir);
 
         CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
         genericTask.setCharset(charset);
@@ -129,6 +136,7 @@ public class CompletionTask extends Task {
                 }
             }
             task.log("\tchangeSetInfoFile: " + resolvedChangeSetInfoFile);
+            task.log("\tfailOnChanges: " + resolvedFailOnChanges);
             task.log("\tgenericTask.logAppender: " + genericTask.getLogAppender());
         }
 
@@ -162,13 +170,13 @@ public class CompletionTask extends Task {
 
         // fail build if there were errors.
         if (!genericTask.getAllErrors().isEmpty()) {
-            String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(
+            String allExMsg = PluginUtils.stringifyPossibleScriptErrors(
                 genericTask.getAllErrors(), false, null, null);
             throw new BuildException(allExMsg);
         }
 
         // also fail build if there were changed files.
-        if (!genericTask.getSrcFiles().isEmpty()) {
+        if (resolvedFailOnChanges && !genericTask.getSrcFiles().isEmpty()) {
             StringBuilder outOfSyncMsg = new StringBuilder();
             outOfSyncMsg.append("The following files are out of sync with generating code scripts:\n");
             for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {

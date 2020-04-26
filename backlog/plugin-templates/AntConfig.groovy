@@ -39,6 +39,15 @@ PREPARE_FILES_VALIDATION_CODE = '''// set up defaults
         if (resolvedSkipCodeEndDirectives.isEmpty()) {
             resolvedSkipCodeEndDirectives.add("//:SKIP_CODE_END:");
         }
+        if (resolvedInlineGenCodeDirectives.isEmpty()) {
+            resolvedInlineGenCodeDirectives.add("/*:GEN_CODE:*/");
+        }
+        if (resolvedNestedLevelStartMarkers.isEmpty()) {
+            resolvedNestedLevelStartMarkers.add("{");
+        }
+        if (resolvedNestedLevelEndMarkers.isEmpty()) {
+            resolvedNestedLevelEndMarkers.add("}");
+        }
         if (resolvedAugCodeSpecDirectives.isEmpty()) {
             resolvedAugCodeSpecDirectives.add(Arrays.asList("//:AUG_CODE:"));
         }
@@ -79,7 +88,7 @@ FILE_SET_EXTRACTION_CODE = '''
             }
         }'''
 
-DEST_DIR_DELETION_CODE = 'TaskUtils.deleteDir(resolvedDestDir);'
+DEST_DIR_DELETION_CODE = 'PluginUtils.deleteDir(resolvedDestDir);'
 
 LOG_REFERENCE = ''
 LOG_NO_FILES_FOUND = 'task.log("No files were found", Project.MSG_WARN);'
@@ -95,6 +104,9 @@ LOG_PREPARE_TASK_PROPERTIES = """task.log("Configuration properties:");
             task.log("\\tembeddedJsonDirectives: " + genericTask.getEmbeddedJsonDirectives());
             task.log("\\tskipCodeStartDirectives: " + genericTask.getSkipCodeStartDirectives());
             task.log("\\tskipCodeEndDirectives: " + genericTask.getSkipCodeEndDirectives());
+            task.log("\\tinlineGenCodeDirectives: " + genericTask.getInlineGenCodeDirectives());
+            task.log("\\tnestedLevelStartMarkers: " + genericTask.getNestedLevelStartMarkers());
+            task.log("\\tnestedLevelEndMarkers: " + genericTask.getNestedLevelEndMarkers());
             
             if (task instanceof $PLUGIN_PREPARE_TASK_TYPE) {
                 task.log("\\tprepFile: " + genericTask.getPrepFile());
@@ -124,4 +136,5 @@ LOG_COMPLETE_TASK_PROPERTIES = """task.log("Configuration properties:");
                 }
             }
             task.log("\\tchangeSetInfoFile: " + resolvedChangeSetInfoFile);
+            task.log("\\tfailOnChanges: " + resolvedFailOnChanges);
             task.log("\\tgenericTask.logAppender: " + genericTask.getLogAppender());"""

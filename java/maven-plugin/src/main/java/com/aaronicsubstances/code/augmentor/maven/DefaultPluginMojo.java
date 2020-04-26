@@ -35,6 +35,9 @@ public class DefaultPluginMojo extends AbstractPluginMojo {
             List<String> resolvedEmbeddedJsonDirectives = Arrays.asList(getEmbeddedJsonDirectives());
             List<String> resolvedSkipCodeStartDirectives = Arrays.asList(getSkipCodeStartDirectives());
             List<String> resolvedSkipCodeEndDirectives = Arrays.asList(getSkipCodeEndDirectives());
+            List<String> resolvedInlineGenCodeDirectives = Arrays.asList(getInlineGenCodeDirectives());
+            List<String> resolvedNestedLevelStartMarkers = Arrays.asList(getNestedLevelStartMarkers());
+            List<String> resolvedNestedLevelLEndMarkers = Arrays.asList(getNestedLevelEndMarkers());
 
             File resolvedPrepFile = getDefaultPrepFile();
             File resolvedAugCodeFile = getDefaultAugCodeFile();
@@ -47,7 +50,9 @@ public class DefaultPluginMojo extends AbstractPluginMojo {
                 resolvedEmbeddedStringDirectives, resolvedEmbeddedJsonDirectives, 
                 resolvedSkipCodeStartDirectives, resolvedSkipCodeEndDirectives, 
                 resolvedAugCodeSpecDirectives, resolvedAugCodeFiles, 
-                resolvedPrepFile);
+                resolvedPrepFile,
+                resolvedInlineGenCodeDirectives,
+                resolvedNestedLevelStartMarkers, resolvedNestedLevelLEndMarkers);
 
             // process...
             String resolvedGroovyEntryScriptName = getGroovyEntryScriptName();
@@ -59,8 +64,10 @@ public class DefaultPluginMojo extends AbstractPluginMojo {
             List<File> resolvedGenCodeFiles = Arrays.asList(resolvedGenCodeFile);
             File resolvedDestDir = getDestDir();
             File resolvedChangeSetInfoFile = getChangeSetInfoFile();
+            boolean resolvedFailOnChanges = getFailOnChanges();
             CompletionMojo.completeExecute(this, resolvedEncoding, resolvedVerbose, resolvedPrepFile, 
-                resolvedGenCodeFiles, resolvedDestDir, resolvedChangeSetInfoFile);
+                resolvedGenCodeFiles, resolvedDestDir, resolvedChangeSetInfoFile,
+                resolvedFailOnChanges);
 
         }
         catch (MojoExecutionException ex) {

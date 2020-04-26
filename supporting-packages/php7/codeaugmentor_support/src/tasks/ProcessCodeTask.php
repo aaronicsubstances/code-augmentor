@@ -40,6 +40,7 @@ class ProcessCodeTask {
            while (($line = fgets($codeGenRequest)) !== FALSE) {
                 // begin deserialize by reading header from input
                 if (!$headerSeen) {
+                    $context->globalScope = self::jsonParse($line);
                     $headerSeen = TRUE;
                     continue;
                 }
@@ -143,10 +144,7 @@ class ProcessCodeTask {
             $converted = [];
             if (is_iterable($result)) {
                 foreach ($result as $item) {
-                    $convertedItem = $this->convertGenCodeItem($item);
-                    if ($convertedItem) {
-                        $converted[] = $convertedItem;
-                    }
+                    $converted[] = $this->convertGenCodeItem($item);
                 }
             }
             else {
@@ -164,9 +162,9 @@ class ProcessCodeTask {
 
     private function convertGenCodeItem($item) : GeneratedCode {
         if ($item === NULL) {
-            return NULL;
+            $genCode = new GeneratedCode;
         }
-        if ($item instanceof GeneratedCode) {
+        elseif ($item instanceof GeneratedCode) {
             $genCode = $item;
         }
         elseif ($item instanceof ContentPart) {
@@ -216,11 +214,11 @@ class ProcessCodeTask {
     }
     
     private static function compactJsonDump(array $obj) : string {
-        return json_encode($obj, JSON_THROW_ON_ERROR);
+        return json_encode($obj, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
     }
     
     private static function jsonParse(string $str) : array {
-        return json_decode($str, TRUE, 512, JSON_THROW_ON_ERROR );
+        return json_decode($str, TRUE, 512, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
     }
     
     /**

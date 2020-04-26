@@ -34,6 +34,7 @@ class ProcessCodeTask:
             for line in codeGenRequest:
                 # begin deserialize by reading header from input
                 if not headerSeen:
+                    context.globalScope.update(json.loads(line))
                     headerSeen = True
                     continue
                     
@@ -103,9 +104,7 @@ class ProcessCodeTask:
             converted = []
             if isinstance(result, (list, tuple, set)):
                 for item in result:
-                    convertedItem = self._convertGenCodeItem(item)
-                    if convertedItem:
-                        converted.append(convertedItem)
+                    converted.append(self._convertGenCodeItem(item))
             else:
                 genCode = self._convertGenCodeItem(result)
                 genCode['id'] = augCode['id']
@@ -117,8 +116,8 @@ class ProcessCodeTask:
 
     def _convertGenCodeItem(self, item):
         if item == None:
-            return None
-        if isinstance(item, GeneratedCode):
+            genCode = GeneratedCode()
+        elif isinstance(item, GeneratedCode):
             genCode = item
         elif isinstance(item, ContentPart):
             genCode = GeneratedCode()

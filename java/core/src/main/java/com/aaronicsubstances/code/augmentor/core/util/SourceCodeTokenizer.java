@@ -12,6 +12,9 @@ public class SourceCodeTokenizer {
     private final List<String> skipCodeStartDirectives;
     private final List<String> skipCodeEndDirectives;
     private final List<List<String>> augCodeDirectiveSets;
+    private final List<String> inlineGenCodeDirectives;
+    private final List<String> nestedLevelStartMarkers;
+    private final List<String> nestedLevelEndMarkers;
 
     public SourceCodeTokenizer(
             List<String> genCodeStartDirectives,
@@ -20,7 +23,10 @@ public class SourceCodeTokenizer {
             List<String> embeddedJsonDirectives,
             List<String> skipCodeStartDirectives, 
             List<String> skipCodeEndDirectives,
-            List<List<String>> augCodeDirectiveSets) {
+            List<List<String>> augCodeDirectiveSets, 
+            List<String> inlineGenCodeDirectives, 
+            List<String> nestedLevelStartMarkers, 
+            List<String> nestedLevelEndMarkers) {
         this.genCodeStartDirectives = genCodeStartDirectives;
         this.genCodeEndDirectives = genCodeEndDirectives;
         this.embeddedStringDirectives = embeddedStringDirectives;
@@ -28,6 +34,9 @@ public class SourceCodeTokenizer {
         this.skipCodeStartDirectives = skipCodeStartDirectives;
         this.skipCodeEndDirectives = skipCodeEndDirectives;
         this.augCodeDirectiveSets = augCodeDirectiveSets;
+        this.inlineGenCodeDirectives = inlineGenCodeDirectives;
+        this.nestedLevelStartMarkers = nestedLevelStartMarkers;
+        this.nestedLevelEndMarkers = nestedLevelEndMarkers;
     }
 
     public List<Token> tokenizeSource(String source) {
@@ -59,6 +68,17 @@ public class SourceCodeTokenizer {
                         Token c = createToken(Token.DIRECTIVE_TYPE_SKIP_CODE_END, d, line);
                         c.isGeneratedCodeMarker = true;
                         candidateTokens.add(c);
+                    }
+                }
+                
+                if (inlineGenCodeDirectives != null) {
+                    for (String d : inlineGenCodeDirectives) {
+                        if (lineWithoutIndent.startsWith(d)) {
+                            Token c = createToken(Token.DIRECTIVE_TYPE_SKIP_CODE_START, d, line);
+                            c.isGeneratedCodeMarker = true;
+                            c.isInlineGeneratedCodeMarker = true;
+                            candidateTokens.add(c);
+                        }
                     }
                 }
                 
@@ -102,9 +122,40 @@ public class SourceCodeTokenizer {
                 }
 
                 Optional<Token> tOpt = candidateTokens.stream().max(
-                    (x, y) -> new Integer(x.directiveMarker.length()).compareTo(y.directiveMarker.length()));
+                    (x, y) -> Integer.compare(x.directiveMarker.length(), y.directiveMarker.length()));
                 if (tOpt.isPresent()) {
                     t = tOpt.get();
+                    if (t.type == Token.DIRECTIVE_TYPE_AUG_CODE) {
+                        String originalDirectiveContent = t.directiveContent;
+                        String longestMarker = null;
+                        // identify longest marker if any
+                        if (nestedLevelStartMarkers != null) {
+                            for (String m : nestedLevelStartMarkers) {
+                                if (t.directiveContent.startsWith(m)) {
+                                    if (longestMarker == null ||
+                                            m.length() > longestMarker.length()) {
+                                        // reset end marker
+                                        t.nestedLevelEndMarker = null;
+                                        longestMarker = t.nestedLevelStartMarker = m;
+                                        t.directiveContent = originalDirectiveContent.substring(m.length());
+                                    }
+                                }
+                            }
+                        }
+                        if (nestedLevelEndMarkers != null) {
+                            for (String m : nestedLevelEndMarkers) {
+                                if (t.directiveContent.startsWith(m)) {
+                                    if (longestMarker == null ||
+                                            m.length() > longestMarker.length()) {
+                                        // reset start marker
+                                        t.nestedLevelStartMarker = null;
+                                        longestMarker = t.nestedLevelEndMarker = m;
+                                        t.directiveContent = originalDirectiveContent.substring(m.length());
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
             if (t == null) {

@@ -5,7 +5,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
+import com.aaronicsubstances.code.augmentor.core.tasks.PluginUtils;
 import com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeGenericTask;
 
 import org.apache.maven.plugin.AbstractMojo;
@@ -144,7 +144,7 @@ public class ProcessingMojo extends AbstractPluginMojo {
 
         // fail build if there were errors.
         if (!scriptErrors.isEmpty()) {
-            String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(
+            String allExMsg = PluginUtils.stringifyPossibleScriptErrors(
                 scriptErrors, true, null, null);
             throw new MojoExecutionException(allExMsg);
         }

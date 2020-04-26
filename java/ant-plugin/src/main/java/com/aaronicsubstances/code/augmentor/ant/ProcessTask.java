@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
+import com.aaronicsubstances.code.augmentor.core.tasks.PluginUtils;
 import com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeGenericTask;
 
 import org.apache.tools.ant.BuildException;
@@ -147,7 +147,7 @@ public class ProcessTask extends Task {
 
         // fail build if there were errors.
         if (!scriptErrors.isEmpty()) {
-            String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(
+            String allExMsg = PluginUtils.stringifyPossibleScriptErrors(
                 scriptErrors, true, 
                 resolvedStackTraceLimitPrefixes, resolvedStackTraceFilterPrefixes);
             throw new BuildException(allExMsg);

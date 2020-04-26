@@ -25,12 +25,16 @@ public class CodeAugmentorTask extends DefaultTask {
     private final ListProperty<String> embeddedJsonDirectives;
     private final ListProperty<String> skipCodeStartDirectives;
     private final ListProperty<String> skipCodeEndDirectives;
+    private final ListProperty<String> inlineGenCodeDirectives;
+    private final ListProperty<String> nestedLevelStartMarkers;
+    private final ListProperty<String> nestedLevelEndMarkers;
     
     private final Property<Object> groovyScriptDir;
     private final Property<String> groovyEntryScriptName;
 
     private final Property<Object> destDir;
     private final Property<Object> changeSetInfoFile;
+    private final Property<Boolean> failOnChanges;
 
     private final Property<Object> prepFile;
     private final Property<Object> augCodeFile;
@@ -48,12 +52,16 @@ public class CodeAugmentorTask extends DefaultTask {
         embeddedJsonDirectives = objectFactory.listProperty(String.class);
         skipCodeStartDirectives = objectFactory.listProperty(String.class);
         skipCodeEndDirectives = objectFactory.listProperty(String.class);
+        inlineGenCodeDirectives = objectFactory.listProperty(String.class);
+        nestedLevelStartMarkers = objectFactory.listProperty(String.class);
+        nestedLevelEndMarkers = objectFactory.listProperty(String.class);
 
         groovyScriptDir = objectFactory.property(Object.class);
         groovyEntryScriptName = objectFactory.property(String.class);
         
         destDir = objectFactory.property(Object.class);
         changeSetInfoFile = objectFactory.property(Object.class);
+        failOnChanges = objectFactory.property(Boolean.class);
 
         prepFile = objectFactory.property(Object.class);
         augCodeFile = objectFactory.property(Object.class);
@@ -77,12 +85,17 @@ public class CodeAugmentorTask extends DefaultTask {
                 augCodeDirectives.get());
             List<File> resolvedAugCodeFiles = Arrays.asList(getProject().file(augCodeFile));
             File resolvedPrepFile = getProject().file(prepFile);
+            List<String> resolvedInlineGenCodeDirectives = inlineGenCodeDirectives.get();
+            List<String> resolvedNestedLevelStartMarkers = nestedLevelStartMarkers.get();
+            List<String> resolvedNestedLevelEndMarkers = nestedLevelEndMarkers.get();
             PreparationTask.completeExecute(this, resolvedEncoding, resolvedVerbose,
                 resolvedFileSets, resolvedGenCodeStartDirectives,
                 resolvedGenCodeEndDirectives, resolvedEmbeddedStringDirectives,
                 resolvedEmbeddedJsonDirectives, resolvedSkipCodeStartDirectives,
                 resolvedSkipCodeEndDirectives, resolvedAugCodeSpecDirectives,
-                resolvedAugCodeFiles, resolvedPrepFile);
+                resolvedAugCodeFiles, resolvedPrepFile,
+                resolvedInlineGenCodeDirectives, 
+                resolvedNestedLevelStartMarkers, resolvedNestedLevelEndMarkers);
 
             // Process aug codes file into gen codes file.
             File resolvedAugCodeFile = getProject().file(augCodeFile);
@@ -100,9 +113,10 @@ public class CodeAugmentorTask extends DefaultTask {
             // Finish off code augmentation with gen codes file.
             File resolvedDestDir = getProject().file(destDir);
             File resolvedChangeSetInfoFile = getProject().file(changeSetInfoFile);
+            boolean resolvedFailOnChanges = failOnChanges.get();
             CompletionTask.completeExecute(this, resolvedEncoding, resolvedVerbose,
                 resolvedPrepFile, Arrays.asList(resolvedGenCodeFile), resolvedDestDir,
-                resolvedChangeSetInfoFile);
+                resolvedChangeSetInfoFile, resolvedFailOnChanges);
         }
         catch (GradleException ex) {
             throw ex;
@@ -163,6 +177,21 @@ public class CodeAugmentorTask extends DefaultTask {
     }
 
     @Internal
+    public ListProperty<String> getInlineGenCodeDirectives() {
+        return inlineGenCodeDirectives;
+    }
+
+    @Internal
+    public ListProperty<String> getNestedLevelStartMarkers() {
+        return nestedLevelStartMarkers;
+    }
+
+    @Internal
+    public ListProperty<String> getNestedLevelEndMarkers() {
+        return nestedLevelEndMarkers;
+    }
+
+    @Internal
     public Property<Object> getGroovyScriptDir() {
         return groovyScriptDir;
     }
@@ -180,6 +209,11 @@ public class CodeAugmentorTask extends DefaultTask {
     @Internal
     public Property<Object> getChangeSetInfoFile() {
         return changeSetInfoFile;
+    }
+
+    @Internal
+    public Property<Boolean> getFailOnChanges() {
+        return failOnChanges;
     }
 
     @Internal

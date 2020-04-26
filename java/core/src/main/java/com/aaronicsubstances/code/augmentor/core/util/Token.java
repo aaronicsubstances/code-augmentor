@@ -23,6 +23,10 @@ public class Token {
     public String directiveContent;
     public String newline;
     public boolean isGeneratedCodeMarker;
+    public boolean isInlineGeneratedCodeMarker;
+    public String nestedLevelStartMarker;
+    public String nestedLevelEndMarker;
+    public int nestedLevelNumber;
 
     /**
      * Used for JSON serialization.
@@ -46,7 +50,11 @@ public class Token {
         result = prime * result + ((indent == null) ? 0 : indent.hashCode());
         result = prime * result + index;
         result = prime * result + (isGeneratedCodeMarker ? 1231 : 1237);
+        result = prime * result + (isInlineGeneratedCodeMarker ? 1231 : 1237);
         result = prime * result + lineNumber;
+        result = prime * result + ((nestedLevelEndMarker == null) ? 0 : nestedLevelEndMarker.hashCode());
+        result = prime * result + nestedLevelNumber;
+        result = prime * result + ((nestedLevelStartMarker == null) ? 0 : nestedLevelStartMarker.hashCode());
         result = prime * result + ((newline == null) ? 0 : newline.hashCode());
         result = prime * result + startPos;
         result = prime * result + ((text == null) ? 0 : text.hashCode());
@@ -86,7 +94,21 @@ public class Token {
             return false;
         if (isGeneratedCodeMarker != other.isGeneratedCodeMarker)
             return false;
+        if (isInlineGeneratedCodeMarker != other.isInlineGeneratedCodeMarker)
+            return false;
         if (lineNumber != other.lineNumber)
+            return false;
+        if (nestedLevelEndMarker == null) {
+            if (other.nestedLevelEndMarker != null)
+                return false;
+        } else if (!nestedLevelEndMarker.equals(other.nestedLevelEndMarker))
+            return false;
+        if (nestedLevelNumber != other.nestedLevelNumber)
+            return false;
+        if (nestedLevelStartMarker == null) {
+            if (other.nestedLevelStartMarker != null)
+                return false;
+        } else if (!nestedLevelStartMarker.equals(other.nestedLevelStartMarker))
             return false;
         if (newline == null) {
             if (other.newline != null)
@@ -109,7 +131,10 @@ public class Token {
     public String toString() {
         return "Token{augCodeSpecIndex=" + augCodeSpecIndex + ", directiveContent=" + directiveContent
                 + ", directiveMarker=" + directiveMarker + ", endPos=" + endPos + ", indent=" + indent + ", index="
-                + index + ", isGeneratedCodeMarker=" + isGeneratedCodeMarker + ", lineNumber=" + lineNumber
-                + ", newline=" + newline + ", startPos=" + startPos + ", text=" + text + ", type=" + type + "}";
+                + index + ", isGeneratedCodeMarker=" + isGeneratedCodeMarker + ", isInlineGeneratedCodeMarker="
+                + isInlineGeneratedCodeMarker + ", lineNumber=" + lineNumber + ", nestedLevelEndMarker="
+                + nestedLevelEndMarker + ", nestedLevelNumber=" + nestedLevelNumber + ", nestedLevelStartMarker="
+                + nestedLevelStartMarker + ", newline=" + newline + ", startPos=" + startPos + ", text=" + text
+                + ", type=" + type + "}";
     }
 }

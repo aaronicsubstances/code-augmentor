@@ -85,6 +85,9 @@ public class AugmentingCode {
     private String indent;
     private int lineNumber;
     private String lineSeparator;
+    private int nestedLevelNumber;
+    private boolean hasNestedLevelStartMarker;
+    private boolean hasNestedLevelEndMarker;
 
     // used to attach results of processing aug codes.
     // not persisted
@@ -146,6 +149,14 @@ public class AugmentingCode {
         this.lineSeparator = lineSeparator;
     }
 
+    public int getNestedLevelNumber() {
+        return nestedLevelNumber;
+    }
+
+    public void setNestedLevelNumber(int nestedLevelNumber) {
+        this.nestedLevelNumber = nestedLevelNumber;
+    }
+
     public List<Object> getArgs() {
         return args;
     }
@@ -162,6 +173,22 @@ public class AugmentingCode {
         this.processed = processed;
     }
 
+    public boolean getHasNestedLevelStartMarker() {
+        return hasNestedLevelStartMarker;
+    }
+
+    public void setHasNestedLevelStartMarker(boolean hasNestedLevelStartMarker) {
+        this.hasNestedLevelStartMarker = hasNestedLevelStartMarker;
+    }
+
+    public boolean getHasNestedLevelEndMarker() {
+        return hasNestedLevelEndMarker;
+    }
+
+    public void setHasNestedLevelEndMarker(boolean hasNestedLevelEndMarker) {
+        this.hasNestedLevelEndMarker = hasNestedLevelEndMarker;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -169,10 +196,13 @@ public class AugmentingCode {
         result = prime * result + ((args == null) ? 0 : args.hashCode());
         result = prime * result + ((blocks == null) ? 0 : blocks.hashCode());
         result = prime * result + ((directiveMarker == null) ? 0 : directiveMarker.hashCode());
+        result = prime * result + (hasNestedLevelEndMarker ? 1231 : 1237);
+        result = prime * result + (hasNestedLevelStartMarker ? 1231 : 1237);
         result = prime * result + id;
         result = prime * result + ((indent == null) ? 0 : indent.hashCode());
         result = prime * result + lineNumber;
         result = prime * result + ((lineSeparator == null) ? 0 : lineSeparator.hashCode());
+        result = prime * result + nestedLevelNumber;
         result = prime * result + (processed ? 1231 : 1237);
         return result;
     }
@@ -201,6 +231,10 @@ public class AugmentingCode {
                 return false;
         } else if (!directiveMarker.equals(other.directiveMarker))
             return false;
+        if (hasNestedLevelEndMarker != other.hasNestedLevelEndMarker)
+            return false;
+        if (hasNestedLevelStartMarker != other.hasNestedLevelStartMarker)
+            return false;
         if (id != other.id)
             return false;
         if (indent == null) {
@@ -215,6 +249,8 @@ public class AugmentingCode {
                 return false;
         } else if (!lineSeparator.equals(other.lineSeparator))
             return false;
+        if (nestedLevelNumber != other.nestedLevelNumber)
+            return false;
         if (processed != other.processed)
             return false;
         return true;
@@ -222,8 +258,10 @@ public class AugmentingCode {
 
     @Override
     public String toString() {
-        return "AugmentingCode{args=" + args + ", blocks=" + blocks + ", directiveMarker=" + directiveMarker + ", id="
-                + id + ", indent=" + indent + ", lineNumber=" + lineNumber + ", lineSeparator=" + lineSeparator
-                + ", processed=" + processed + "}";
+        return "AugmentingCode{args=" + args + ", blocks=" + blocks + ", directiveMarker=" + directiveMarker
+                + ", hasNestedLevelEndMarker=" + hasNestedLevelEndMarker + ", hasNestedLevelStartMarker="
+                + hasNestedLevelStartMarker + ", id=" + id + ", indent=" + indent + ", lineNumber=" + lineNumber
+                + ", lineSeparator=" + lineSeparator + ", nestedLevelNumber=" + nestedLevelNumber + ", processed="
+                + processed + "}";
     }
 }

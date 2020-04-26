@@ -10,7 +10,10 @@
             List<String> resolvedSkipCodeEndDirectives,
             List<List<String>> resolvedAugCodeSpecDirectives,
             List<File> resolvedAugCodeFiles,
-            File resolvedPrepFile) throws Exception {
+            File resolvedPrepFile,
+            List<String> resolvedInlineGenCodeDirectives,
+            List<String> resolvedNestedLevelStartMarkers, 
+            List<String> resolvedNestedLevelEndMarkers) throws Exception {
         
         if (resolvedGenCodeStartDirectives.isEmpty()) {
             throw new MojoExecutionException("at least 1 element is required in genCodeStartDirectives");
@@ -74,6 +77,8 @@
         totalDirectiveCount += resolvedSkipCodeStartDirectives.size();
         allDirectives.addAll(resolvedSkipCodeEndDirectives);
         totalDirectiveCount += resolvedSkipCodeEndDirectives.size();
+        allDirectives.addAll(resolvedInlineGenCodeDirectives);
+        totalDirectiveCount += resolvedInlineGenCodeDirectives.size();
         
         for (List<String> resolvedAugCodeDirectives : resolvedAugCodeSpecDirectives) {
             allDirectives.addAll(resolvedAugCodeDirectives);
@@ -81,6 +86,17 @@
         }
         if (totalDirectiveCount != allDirectives.stream().filter(x -> x != null && !x.trim().isEmpty()).count()) {
             throw new MojoExecutionException("duplicates and/or blanks detected across directives");
+        }
+        
+        // Ensure uniqueness across markers.
+        allDirectives.clear();
+        totalDirectiveCount = 0;
+        allDirectives.addAll(resolvedNestedLevelStartMarkers);
+        totalDirectiveCount += resolvedNestedLevelStartMarkers.size();
+        allDirectives.addAll(resolvedNestedLevelEndMarkers);
+        totalDirectiveCount += resolvedNestedLevelEndMarkers.size();
+        if (totalDirectiveCount != allDirectives.stream().filter(x -> x != null && !x.trim().isEmpty()).count()) {
+            throw new MojoExecutionException("duplicates and/or blanks detected across nested level markers");
         }
 
         // Validation successful, so begin execution by fetching files inside file sets.
@@ -119,6 +135,9 @@
         genericTask.setEmbeddedJsonDirectives(resolvedEmbeddedJsonDirectives);
         genericTask.setSkipCodeStartDirectives(resolvedSkipCodeStartDirectives);
         genericTask.setSkipCodeEndDirectives(resolvedSkipCodeEndDirectives);
+        genericTask.setInlineGenCodeDirectives(resolvedInlineGenCodeDirectives);
+        genericTask.setNestedLevelStartMarkers(resolvedNestedLevelStartMarkers);
+        genericTask.setNestedLevelEndMarkers(resolvedNestedLevelEndMarkers);
 
         List<AugCodeProcessingSpec> augCodeProcessingSpecs = new ArrayList<>();
         genericTask.setAugCodeProcessingSpecs(augCodeProcessingSpecs);
@@ -141,6 +160,9 @@
             logger.info("\tembeddedJsonDirectives: " + genericTask.getEmbeddedJsonDirectives());
             logger.info("\tskipCodeStartDirectives: " + genericTask.getSkipCodeStartDirectives());
             logger.info("\tskipCodeEndDirectives: " + genericTask.getSkipCodeEndDirectives());
+            logger.info("\tinlineGenCodeDirectives: " + genericTask.getInlineGenCodeDirectives());
+            logger.info("\tnestedLevelStartMarkers: " + genericTask.getNestedLevelStartMarkers());
+            logger.info("\tnestedLevelEndMarkers: " + genericTask.getNestedLevelEndMarkers());
             
             if (task instanceof PreparationMojo) {
                 logger.info("\tprepFile: " + genericTask.getPrepFile());
@@ -170,7 +192,7 @@
 
         // fail build if there were errors.
         if (!genericTask.getAllErrors().isEmpty()) {
-            String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(
+            String allExMsg = PluginUtils.stringifyPossibleScriptErrors(
                 genericTask.getAllErrors(), false, null, null);
             throw new MojoExecutionException(allExMsg);
         }

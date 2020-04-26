@@ -32,6 +32,9 @@ public class PreCodeAugmentationGenericTask {
 	private List<String> embeddedJsonDirectives;
     private List<String> skipCodeStartDirectives;
     private List<String> skipCodeEndDirectives;
+    private List<String> inlineGenCodeDirectives;
+    private List<String> nestedLevelStartMarkers;
+    private List<String> nestedLevelEndMarkers;
     private List<AugCodeProcessingSpec> augCodeProcessingSpecs;
     private Charset charset;
     private File prepFile;
@@ -66,7 +69,8 @@ public class PreCodeAugmentationGenericTask {
                 genCodeStartDirectives, genCodeEndDirectives, 
                 embeddedStringDirectives, embeddedJsonDirectives,
                 skipCodeStartDirectives, skipCodeEndDirectives,
-                augCodeDirectiveSets);
+                augCodeDirectiveSets, inlineGenCodeDirectives,
+                nestedLevelStartMarkers, nestedLevelEndMarkers);
 
         List<List<AugmentingCode>> specAugCodesList = new ArrayList<>();
         for (int i = 0; i < augCodeProcessingSpecs.size(); i++) {
@@ -236,6 +240,30 @@ public class PreCodeAugmentationGenericTask {
 
     public void setSkipCodeEndDirectives(List<String> skipCodeEndDirectives) {
         this.skipCodeEndDirectives = skipCodeEndDirectives;
+    }
+
+    public List<String> getInlineGenCodeDirectives() {
+        return inlineGenCodeDirectives;
+    }
+
+    public void setInlineGenCodeDirectives(List<String> inlineGenCodeDirectives) {
+        this.inlineGenCodeDirectives = inlineGenCodeDirectives;
+    }
+
+    public List<String> getNestedLevelStartMarkers() {
+        return nestedLevelStartMarkers;
+    }
+
+    public void setNestedLevelStartMarkers(List<String> nestedLevelStartMarkers) {
+        this.nestedLevelStartMarkers = nestedLevelStartMarkers;
+    }
+
+    public List<String> getNestedLevelEndMarkers() {
+        return nestedLevelEndMarkers;
+    }
+
+    public void setNestedLevelEndMarkers(List<String> nestedLevelEndMarkers) {
+        this.nestedLevelEndMarkers = nestedLevelEndMarkers;
     }
 
     public List<AugCodeProcessingSpec> getAugCodeProcessingSpecs() {

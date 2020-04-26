@@ -10,6 +10,7 @@ import java.util.Set;
 
 import com.aaronicsubstances.code.augmentor.core.tasks.AugCodeProcessingSpec;
 import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
+import com.aaronicsubstances.code.augmentor.core.tasks.PluginUtils;
 import com.aaronicsubstances.code.augmentor.core.tasks.PreCodeAugmentationGenericTask;
 
 import org.apache.tools.ant.BuildException;
@@ -29,6 +30,9 @@ public class PrepareTask extends Task {
     private final List<String> embeddedJsonDirectives = new ArrayList<>();
     private final List<String> skipCodeStartDirectives = new ArrayList<>();
     private final List<String> skipCodeEndDirectives = new ArrayList<>();
+    private final List<String> inlineGenCodeDirectives = new ArrayList<>();
+    private final List<String> nestedLevelStartMarkers = new ArrayList<>();
+    private final List<String> nestedLevelEndMarkers = new ArrayList<>();
     private final List<AugCodeDirectiveSpec> augCodeSpecs = new ArrayList<>();
 
     public void setEncoding(String encoding) {
@@ -95,6 +99,30 @@ public class PrepareTask extends Task {
         skipCodeEndDirectives.add(val);
     }
 
+    public void addConfiguredInlineGenCodeDirectives(Directive d) {
+        String val = null;
+        if (d.getValue() != null) {
+            val = d.getValue();
+        }
+        inlineGenCodeDirectives.add(val);
+    }
+
+    public void addConfiguredNestedLevelStartMarkers(Directive d) {
+        String val = null;
+        if (d.getValue() != null) {
+            val = d.getValue();
+        }
+        nestedLevelStartMarkers.add(val);
+    }
+
+    public void addConfiguredNestedLevelEndMarkers(Directive d) {
+        String val = null;
+        if (d.getValue() != null) {
+            val = d.getValue();
+        }
+        nestedLevelEndMarkers.add(val);
+    }
+
     public void addAugCodeSpec(AugCodeDirectiveSpec augCodeSpec) {
         augCodeSpecs.add(augCodeSpec);
     }
@@ -118,7 +146,9 @@ public class PrepareTask extends Task {
                 embeddedStringDirectives, embeddedJsonDirectives, 
                 skipCodeStartDirectives, skipCodeEndDirectives, 
                 resolvedAugCodeSpecDirectives, resolvedAugCodeFiles, 
-                prepFile);
+                prepFile,
+                inlineGenCodeDirectives,
+                nestedLevelStartMarkers, nestedLevelEndMarkers);
         }
         catch (BuildException ex) {
             throw ex;
@@ -141,7 +171,10 @@ public class PrepareTask extends Task {
             List<String> resolvedSkipCodeEndDirectives,
             List<List<String>> resolvedAugCodeSpecDirectives,
             List<File> resolvedAugCodeFiles,
-            File resolvedPrepFile) throws Exception {
+            File resolvedPrepFile,
+            List<String> resolvedInlineGenCodeDirectives,
+            List<String> resolvedNestedLevelStartMarkers, 
+            List<String> resolvedNestedLevelEndMarkers) throws Exception {
         // set up defaults
         if (resolvedEncoding == null) {
             resolvedEncoding = "UTF-8";
@@ -163,6 +196,15 @@ public class PrepareTask extends Task {
         }
         if (resolvedSkipCodeEndDirectives.isEmpty()) {
             resolvedSkipCodeEndDirectives.add("//:SKIP_CODE_END:");
+        }
+        if (resolvedInlineGenCodeDirectives.isEmpty()) {
+            resolvedInlineGenCodeDirectives.add("/*:GEN_CODE:*/");
+        }
+        if (resolvedNestedLevelStartMarkers.isEmpty()) {
+            resolvedNestedLevelStartMarkers.add("{");
+        }
+        if (resolvedNestedLevelEndMarkers.isEmpty()) {
+            resolvedNestedLevelEndMarkers.add("}");
         }
         if (resolvedAugCodeSpecDirectives.isEmpty()) {
             resolvedAugCodeSpecDirectives.add(Arrays.asList("//:AUG_CODE:"));
@@ -221,6 +263,8 @@ public class PrepareTask extends Task {
         totalDirectiveCount += resolvedSkipCodeStartDirectives.size();
         allDirectives.addAll(resolvedSkipCodeEndDirectives);
         totalDirectiveCount += resolvedSkipCodeEndDirectives.size();
+        allDirectives.addAll(resolvedInlineGenCodeDirectives);
+        totalDirectiveCount += resolvedInlineGenCodeDirectives.size();
         
         for (List<String> resolvedAugCodeDirectives : resolvedAugCodeSpecDirectives) {
             allDirectives.addAll(resolvedAugCodeDirectives);
@@ -228,6 +272,17 @@ public class PrepareTask extends Task {
         }
         if (totalDirectiveCount != allDirectives.stream().filter(x -> x != null && !x.trim().isEmpty()).count()) {
             throw new BuildException("duplicates and/or blanks detected across directives");
+        }
+        
+        // Ensure uniqueness across markers.
+        allDirectives.clear();
+        totalDirectiveCount = 0;
+        allDirectives.addAll(resolvedNestedLevelStartMarkers);
+        totalDirectiveCount += resolvedNestedLevelStartMarkers.size();
+        allDirectives.addAll(resolvedNestedLevelEndMarkers);
+        totalDirectiveCount += resolvedNestedLevelEndMarkers.size();
+        if (totalDirectiveCount != allDirectives.stream().filter(x -> x != null && !x.trim().isEmpty()).count()) {
+            throw new BuildException("duplicates and/or blanks detected across nested level markers");
         }
 
         // Validation successful, so begin execution by fetching files inside file sets.
@@ -265,6 +320,9 @@ public class PrepareTask extends Task {
         genericTask.setEmbeddedJsonDirectives(resolvedEmbeddedJsonDirectives);
         genericTask.setSkipCodeStartDirectives(resolvedSkipCodeStartDirectives);
         genericTask.setSkipCodeEndDirectives(resolvedSkipCodeEndDirectives);
+        genericTask.setInlineGenCodeDirectives(resolvedInlineGenCodeDirectives);
+        genericTask.setNestedLevelStartMarkers(resolvedNestedLevelStartMarkers);
+        genericTask.setNestedLevelEndMarkers(resolvedNestedLevelEndMarkers);
 
         List<AugCodeProcessingSpec> augCodeProcessingSpecs = new ArrayList<>();
         genericTask.setAugCodeProcessingSpecs(augCodeProcessingSpecs);
@@ -287,6 +345,9 @@ public class PrepareTask extends Task {
             task.log("\tembeddedJsonDirectives: " + genericTask.getEmbeddedJsonDirectives());
             task.log("\tskipCodeStartDirectives: " + genericTask.getSkipCodeStartDirectives());
             task.log("\tskipCodeEndDirectives: " + genericTask.getSkipCodeEndDirectives());
+            task.log("\tinlineGenCodeDirectives: " + genericTask.getInlineGenCodeDirectives());
+            task.log("\tnestedLevelStartMarkers: " + genericTask.getNestedLevelStartMarkers());
+            task.log("\tnestedLevelEndMarkers: " + genericTask.getNestedLevelEndMarkers());
             
             if (task instanceof PrepareTask) {
                 task.log("\tprepFile: " + genericTask.getPrepFile());
@@ -316,7 +377,7 @@ public class PrepareTask extends Task {
 
         // fail build if there were errors.
         if (!genericTask.getAllErrors().isEmpty()) {
-            String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(
+            String allExMsg = PluginUtils.stringifyPossibleScriptErrors(
                 genericTask.getAllErrors(), false, null, null);
             throw new BuildException(allExMsg);
         }

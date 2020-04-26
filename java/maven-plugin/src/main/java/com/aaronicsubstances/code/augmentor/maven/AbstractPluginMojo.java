@@ -42,6 +42,15 @@ public abstract class AbstractPluginMojo extends AbstractMojo {
     @Parameter( defaultValue = "//:SKIP_CODE_END:", required = false )
     private String[] skipCodeEndDirectives = new String[0];
 
+    @Parameter( defaultValue = "/*:GEN_CODE:*/", required = false )
+    private String[] inlineGenCodeDirectives = new String[0];
+
+    @Parameter( defaultValue = "{", required = false )
+    private String[] nestedLevelStartMarkers = new String[0];
+
+    @Parameter( defaultValue = "}", required = false )
+    private String[] nestedLevelEndMarkers = new String[0];
+
     @Parameter( required = false )
     private File prepFile;
 
@@ -58,6 +67,9 @@ public abstract class AbstractPluginMojo extends AbstractMojo {
     @Parameter( defaultValue = "${project.build.directory}/codeAugmentor/changeSet.txt", 
         required = false )
     private File changeSetInfoFile;
+
+    @Parameter( defaultValue = "true", required = false)
+    private boolean failOnChanges;
 
     @Parameter( required = false )
     private int augCodeSpecIndex = 0;
@@ -100,6 +112,18 @@ public abstract class AbstractPluginMojo extends AbstractMojo {
         return skipCodeEndDirectives;
     }
 
+    protected String[] getInlineGenCodeDirectives() {
+        return inlineGenCodeDirectives;
+    }
+
+    protected String[] getNestedLevelStartMarkers() {
+        return nestedLevelStartMarkers;
+    }
+
+    protected String[] getNestedLevelEndMarkers() {
+        return nestedLevelEndMarkers;
+    }
+
     protected File getPrepFile() {
         if (prepFile == null) {
             prepFile = defaultPrepFile;
@@ -130,6 +154,10 @@ public abstract class AbstractPluginMojo extends AbstractMojo {
 
     protected File getChangeSetInfoFile() {
         return changeSetInfoFile;
+    }
+
+    protected boolean getFailOnChanges() {
+        return failOnChanges;
     }
 
     protected int getAugCodeSpecIndex() {

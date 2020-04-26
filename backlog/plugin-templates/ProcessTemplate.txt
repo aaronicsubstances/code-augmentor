@@ -41,7 +41,7 @@
 
         // fail build if there were errors.
         if (!scriptErrors.isEmpty()) {
-            String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(
+            String allExMsg = PluginUtils.stringifyPossibleScriptErrors(
                 scriptErrors, true, null, null);
             throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE(allExMsg);
         }

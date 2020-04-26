@@ -19,7 +19,28 @@ public class CodeGenerationRequest {
 
     public static class Header {
         Boolean contentStreamingEnabled;
+        String genCodeStartDirective;
+        String genCodeEndDirective;
+        String embeddedStringDirective;
+        String embeddedJsonDirective;
+        String skipCodeStartDirective;
+        String skipCodeEndDirective;
+        String augCodeDirective;
+        String inlineGenCodeDirective;
+        String nestedLevelStartMarker;
+        String nestedLevelEndMarker;
     }
+
+    private String genCodeStartDirective;
+    private String genCodeEndDirective;
+    private String embeddedStringDirective;
+    private String embeddedJsonDirective;
+    private String skipCodeStartDirective;
+    private String skipCodeEndDirective;
+    private String augCodeDirective;
+    private String inlineGenCodeDirective;
+    private String nestedLevelStartMarker;
+    private String nestedLevelEndMarker;
 
     private List<SourceFileAugmentingCode> sourceFileAugmentingCodes;
 
@@ -28,6 +49,86 @@ public class CodeGenerationRequest {
 
     public CodeGenerationRequest(List<SourceFileAugmentingCode> sourceFileAugmentingCodes) {
         this.sourceFileAugmentingCodes = sourceFileAugmentingCodes;
+    }
+
+    public String getGenCodeStartDirective() {
+        return genCodeStartDirective;
+    }
+
+    public void setGenCodeStartDirective(String genCodeStartDirective) {
+        this.genCodeStartDirective = genCodeStartDirective;
+    }
+
+    public String getGenCodeEndDirective() {
+        return genCodeEndDirective;
+    }
+
+    public void setGenCodeEndDirective(String genCodeEndDirective) {
+        this.genCodeEndDirective = genCodeEndDirective;
+    }
+
+    public String getEmbeddedStringDirective() {
+        return embeddedStringDirective;
+    }
+
+    public void setEmbeddedStringDirective(String embeddedStringDirective) {
+        this.embeddedStringDirective = embeddedStringDirective;
+    }
+
+    public String getEmbeddedJsonDirective() {
+        return embeddedJsonDirective;
+    }
+
+    public void setEmbeddedJsonDirective(String embeddedJsonDirective) {
+        this.embeddedJsonDirective = embeddedJsonDirective;
+    }
+
+    public String getSkipCodeStartDirective() {
+        return skipCodeStartDirective;
+    }
+
+    public void setSkipCodeStartDirective(String skipCodeStartDirective) {
+        this.skipCodeStartDirective = skipCodeStartDirective;
+    }
+
+    public String getSkipCodeEndDirective() {
+        return skipCodeEndDirective;
+    }
+
+    public void setSkipCodeEndDirective(String skipCodeEndDirective) {
+        this.skipCodeEndDirective = skipCodeEndDirective;
+    }
+
+    public String getAugCodeDirective() {
+        return augCodeDirective;
+    }
+
+    public void setAugCodeDirective(String augCodeDirective) {
+        this.augCodeDirective = augCodeDirective;
+    }
+
+    public String getInlineGenCodeDirective() {
+        return inlineGenCodeDirective;
+    }
+
+    public void setInlineGenCodeDirective(String inlineGenCodeDirective) {
+        this.inlineGenCodeDirective = inlineGenCodeDirective;
+    }
+
+    public String getNestedLevelStartMarker() {
+        return nestedLevelStartMarker;
+    }
+
+    public void setNestedLevelStartMarker(String nestedLevelStartMarker) {
+        this.nestedLevelStartMarker = nestedLevelStartMarker;
+    }
+
+    public String getNestedLevelEndMarker() {
+        return nestedLevelEndMarker;
+    }
+
+    public void setNestedLevelEndMarker(String nestedLevelEndMarker) {
+        this.nestedLevelEndMarker = nestedLevelEndMarker;
     }
 
     public List<SourceFileAugmentingCode> getSourceFileAugmentingCodes() {
@@ -58,6 +159,16 @@ public class CodeGenerationRequest {
             throws Exception {        
         Header header = new Header();
         header.contentStreamingEnabled = contentStreamEnabled;
+        header.genCodeStartDirective = genCodeStartDirective;
+        header.genCodeEndDirective = genCodeEndDirective;
+        header.skipCodeStartDirective = skipCodeStartDirective;
+        header.skipCodeEndDirective = skipCodeEndDirective;
+        header.embeddedStringDirective = embeddedStringDirective;
+        header.embeddedJsonDirective = embeddedJsonDirective;
+        header.augCodeDirective = augCodeDirective;
+        header.inlineGenCodeDirective = inlineGenCodeDirective;
+        header.nestedLevelStartMarker = nestedLevelStartMarker;
+        header.nestedLevelEndMarker = nestedLevelEndMarker;
         String headerString = PersistenceUtil.serializeCompactlyToJson(header);
         persistenceUtil.println(headerString);
     }
@@ -126,6 +237,16 @@ public class CodeGenerationRequest {
         if (header.contentStreamingEnabled != null) {
             contentStreamingEnabled = header.contentStreamingEnabled;
         }
+        genCodeStartDirective = header.genCodeStartDirective;
+        genCodeEndDirective = header.genCodeEndDirective;
+        skipCodeStartDirective = header.skipCodeStartDirective;
+        skipCodeEndDirective = header.skipCodeEndDirective;
+        embeddedStringDirective = header.embeddedStringDirective;
+        embeddedJsonDirective = header.embeddedJsonDirective;
+        augCodeDirective = header.augCodeDirective;
+        inlineGenCodeDirective = header.inlineGenCodeDirective;
+        nestedLevelStartMarker = header.nestedLevelStartMarker;
+        nestedLevelEndMarker = header.nestedLevelEndMarker;
         return contentStreamingEnabled;
     }
 
@@ -160,6 +281,16 @@ public class CodeGenerationRequest {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
+        result = prime * result + ((augCodeDirective == null) ? 0 : augCodeDirective.hashCode());
+        result = prime * result + ((embeddedJsonDirective == null) ? 0 : embeddedJsonDirective.hashCode());
+        result = prime * result + ((embeddedStringDirective == null) ? 0 : embeddedStringDirective.hashCode());
+        result = prime * result + ((genCodeEndDirective == null) ? 0 : genCodeEndDirective.hashCode());
+        result = prime * result + ((genCodeStartDirective == null) ? 0 : genCodeStartDirective.hashCode());
+        result = prime * result + ((inlineGenCodeDirective == null) ? 0 : inlineGenCodeDirective.hashCode());
+        result = prime * result + ((nestedLevelEndMarker == null) ? 0 : nestedLevelEndMarker.hashCode());
+        result = prime * result + ((nestedLevelStartMarker == null) ? 0 : nestedLevelStartMarker.hashCode());
+        result = prime * result + ((skipCodeEndDirective == null) ? 0 : skipCodeEndDirective.hashCode());
+        result = prime * result + ((skipCodeStartDirective == null) ? 0 : skipCodeStartDirective.hashCode());
         result = prime * result + ((sourceFileAugmentingCodes == null) ? 0 : sourceFileAugmentingCodes.hashCode());
         return result;
     }
@@ -173,6 +304,56 @@ public class CodeGenerationRequest {
         if (getClass() != obj.getClass())
             return false;
         CodeGenerationRequest other = (CodeGenerationRequest) obj;
+        if (augCodeDirective == null) {
+            if (other.augCodeDirective != null)
+                return false;
+        } else if (!augCodeDirective.equals(other.augCodeDirective))
+            return false;
+        if (embeddedJsonDirective == null) {
+            if (other.embeddedJsonDirective != null)
+                return false;
+        } else if (!embeddedJsonDirective.equals(other.embeddedJsonDirective))
+            return false;
+        if (embeddedStringDirective == null) {
+            if (other.embeddedStringDirective != null)
+                return false;
+        } else if (!embeddedStringDirective.equals(other.embeddedStringDirective))
+            return false;
+        if (genCodeEndDirective == null) {
+            if (other.genCodeEndDirective != null)
+                return false;
+        } else if (!genCodeEndDirective.equals(other.genCodeEndDirective))
+            return false;
+        if (genCodeStartDirective == null) {
+            if (other.genCodeStartDirective != null)
+                return false;
+        } else if (!genCodeStartDirective.equals(other.genCodeStartDirective))
+            return false;
+        if (inlineGenCodeDirective == null) {
+            if (other.inlineGenCodeDirective != null)
+                return false;
+        } else if (!inlineGenCodeDirective.equals(other.inlineGenCodeDirective))
+            return false;
+        if (nestedLevelEndMarker == null) {
+            if (other.nestedLevelEndMarker != null)
+                return false;
+        } else if (!nestedLevelEndMarker.equals(other.nestedLevelEndMarker))
+            return false;
+        if (nestedLevelStartMarker == null) {
+            if (other.nestedLevelStartMarker != null)
+                return false;
+        } else if (!nestedLevelStartMarker.equals(other.nestedLevelStartMarker))
+            return false;
+        if (skipCodeEndDirective == null) {
+            if (other.skipCodeEndDirective != null)
+                return false;
+        } else if (!skipCodeEndDirective.equals(other.skipCodeEndDirective))
+            return false;
+        if (skipCodeStartDirective == null) {
+            if (other.skipCodeStartDirective != null)
+                return false;
+        } else if (!skipCodeStartDirective.equals(other.skipCodeStartDirective))
+            return false;
         if (sourceFileAugmentingCodes == null) {
             if (other.sourceFileAugmentingCodes != null)
                 return false;
@@ -183,6 +364,12 @@ public class CodeGenerationRequest {
 
     @Override
     public String toString() {
-        return "CodeGenerationRequest{sourceFileAugmentingCodes=" + sourceFileAugmentingCodes + "}";
+        return "CodeGenerationRequest{augCodeDirective=" + augCodeDirective + ", embeddedJsonDirective="
+                + embeddedJsonDirective + ", embeddedStringDirective=" + embeddedStringDirective
+                + ", genCodeEndDirective=" + genCodeEndDirective + ", genCodeStartDirective=" + genCodeStartDirective
+                + ", inlineGenCodeDirective=" + inlineGenCodeDirective + ", nestedLevelEndMarker="
+                + nestedLevelEndMarker + ", nestedLevelStartMarker=" + nestedLevelStartMarker
+                + ", skipCodeEndDirective=" + skipCodeEndDirective + ", skipCodeStartDirective="
+                + skipCodeStartDirective + ", sourceFileAugmentingCodes=" + sourceFileAugmentingCodes + "}";
     }
 }

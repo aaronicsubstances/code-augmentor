@@ -90,6 +90,9 @@ LOG_PREPARE_TASK_PROPERTIES = """logger.info("Configuration properties:");
             logger.info("\\tembeddedJsonDirectives: " + genericTask.getEmbeddedJsonDirectives());
             logger.info("\\tskipCodeStartDirectives: " + genericTask.getSkipCodeStartDirectives());
             logger.info("\\tskipCodeEndDirectives: " + genericTask.getSkipCodeEndDirectives());
+            logger.info("\\tinlineGenCodeDirectives: " + genericTask.getInlineGenCodeDirectives());
+            logger.info("\\tnestedLevelStartMarkers: " + genericTask.getNestedLevelStartMarkers());
+            logger.info("\\tnestedLevelEndMarkers: " + genericTask.getNestedLevelEndMarkers());
             
             if (task instanceof $PLUGIN_PREPARE_TASK_TYPE) {
                 logger.info("\\tprepFile: " + genericTask.getPrepFile());
@@ -131,4 +134,5 @@ LOG_COMPLETE_TASK_PROPERTIES = """logger.info("Configuration properties:");
                 }
             }
             logger.info("\\tchangeSetInfoFile: " + resolvedChangeSetInfoFile);
+            logger.info("\\tfailOnChanges: " + resolvedFailOnChanges);
             logger.info("\\tgenericTask.logAppender: " + genericTask.getLogAppender());"""

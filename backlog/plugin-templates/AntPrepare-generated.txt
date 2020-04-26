@@ -10,7 +10,10 @@
             List<String> resolvedSkipCodeEndDirectives,
             List<List<String>> resolvedAugCodeSpecDirectives,
             List<File> resolvedAugCodeFiles,
-            File resolvedPrepFile) throws Exception {
+            File resolvedPrepFile,
+            List<String> resolvedInlineGenCodeDirectives,
+            List<String> resolvedNestedLevelStartMarkers, 
+            List<String> resolvedNestedLevelEndMarkers) throws Exception {
         // set up defaults
         if (resolvedEncoding == null) {
             resolvedEncoding = "UTF-8";
@@ -32,6 +35,15 @@
         }
         if (resolvedSkipCodeEndDirectives.isEmpty()) {
             resolvedSkipCodeEndDirectives.add("//:SKIP_CODE_END:");
+        }
+        if (resolvedInlineGenCodeDirectives.isEmpty()) {
+            resolvedInlineGenCodeDirectives.add("/*:GEN_CODE:*/");
+        }
+        if (resolvedNestedLevelStartMarkers.isEmpty()) {
+            resolvedNestedLevelStartMarkers.add("{");
+        }
+        if (resolvedNestedLevelEndMarkers.isEmpty()) {
+            resolvedNestedLevelEndMarkers.add("}");
         }
         if (resolvedAugCodeSpecDirectives.isEmpty()) {
             resolvedAugCodeSpecDirectives.add(Arrays.asList("//:AUG_CODE:"));
@@ -90,6 +102,8 @@
         totalDirectiveCount += resolvedSkipCodeStartDirectives.size();
         allDirectives.addAll(resolvedSkipCodeEndDirectives);
         totalDirectiveCount += resolvedSkipCodeEndDirectives.size();
+        allDirectives.addAll(resolvedInlineGenCodeDirectives);
+        totalDirectiveCount += resolvedInlineGenCodeDirectives.size();
         
         for (List<String> resolvedAugCodeDirectives : resolvedAugCodeSpecDirectives) {
             allDirectives.addAll(resolvedAugCodeDirectives);
@@ -97,6 +111,17 @@
         }
         if (totalDirectiveCount != allDirectives.stream().filter(x -> x != null && !x.trim().isEmpty()).count()) {
             throw new BuildException("duplicates and/or blanks detected across directives");
+        }
+        
+        // Ensure uniqueness across markers.
+        allDirectives.clear();
+        totalDirectiveCount = 0;
+        allDirectives.addAll(resolvedNestedLevelStartMarkers);
+        totalDirectiveCount += resolvedNestedLevelStartMarkers.size();
+        allDirectives.addAll(resolvedNestedLevelEndMarkers);
+        totalDirectiveCount += resolvedNestedLevelEndMarkers.size();
+        if (totalDirectiveCount != allDirectives.stream().filter(x -> x != null && !x.trim().isEmpty()).count()) {
+            throw new BuildException("duplicates and/or blanks detected across nested level markers");
         }
 
         // Validation successful, so begin execution by fetching files inside file sets.
@@ -134,6 +159,9 @@
         genericTask.setEmbeddedJsonDirectives(resolvedEmbeddedJsonDirectives);
         genericTask.setSkipCodeStartDirectives(resolvedSkipCodeStartDirectives);
         genericTask.setSkipCodeEndDirectives(resolvedSkipCodeEndDirectives);
+        genericTask.setInlineGenCodeDirectives(resolvedInlineGenCodeDirectives);
+        genericTask.setNestedLevelStartMarkers(resolvedNestedLevelStartMarkers);
+        genericTask.setNestedLevelEndMarkers(resolvedNestedLevelEndMarkers);
 
         List<AugCodeProcessingSpec> augCodeProcessingSpecs = new ArrayList<>();
         genericTask.setAugCodeProcessingSpecs(augCodeProcessingSpecs);
@@ -156,6 +184,9 @@
             task.log("\tembeddedJsonDirectives: " + genericTask.getEmbeddedJsonDirectives());
             task.log("\tskipCodeStartDirectives: " + genericTask.getSkipCodeStartDirectives());
             task.log("\tskipCodeEndDirectives: " + genericTask.getSkipCodeEndDirectives());
+            task.log("\tinlineGenCodeDirectives: " + genericTask.getInlineGenCodeDirectives());
+            task.log("\tnestedLevelStartMarkers: " + genericTask.getNestedLevelStartMarkers());
+            task.log("\tnestedLevelEndMarkers: " + genericTask.getNestedLevelEndMarkers());
             
             if (task instanceof PrepareTask) {
                 task.log("\tprepFile: " + genericTask.getPrepFile());
@@ -185,7 +216,7 @@
 
         // fail build if there were errors.
         if (!genericTask.getAllErrors().isEmpty()) {
-            String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(
+            String allExMsg = PluginUtils.stringifyPossibleScriptErrors(
                 genericTask.getAllErrors(), false, null, null);
             throw new BuildException(allExMsg);
         }

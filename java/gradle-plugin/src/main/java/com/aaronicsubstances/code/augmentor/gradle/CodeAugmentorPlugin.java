@@ -47,6 +47,10 @@ public class CodeAugmentorPlugin implements Plugin<Project> {
         defaultAugCodeSpec.getDirectives().convention(defaultAugCodeDirectives);
         extension.getAugCodeSpecs().convention(Arrays.asList(defaultAugCodeSpec));
 
+        extension.getInlineGenCodeDirectives().convention(Arrays.asList("/*:GEN_CODE:*/"));
+        extension.getNestedLevelStartMarkers().convention(Arrays.asList("{"));
+        extension.getNestedLevelEndMarkers().convention(Arrays.asList("}"));
+
         // set defaults for process task.
         extension.getGroovyEntryScriptName().convention("main.groovy");
         extension.getAugCodeSpecIndex().convention(0);
@@ -56,6 +60,7 @@ public class CodeAugmentorPlugin implements Plugin<Project> {
         extension.getChangeSetInfoFile().convention(buildDir.file(workingDirPrefix + "changeSet.txt"));
         extension.getDestDir().convention(buildDir.dir(workingDirPrefix + "generated"));
         extension.getGeneratedCodeFiles().convention(Arrays.asList(defaultGenCodeFile));
+        extension.getFailOnChanges().convention(true);
 
         // add tasks.
         project.getTasks().register("codeAugmentorPrepare", PreparationTask.class, new Action<PreparationTask>() {
@@ -75,6 +80,9 @@ public class CodeAugmentorPlugin implements Plugin<Project> {
                 prepareTask.getEmbeddedJsonDirectives().set(extension.getEmbeddedJsonDirectives());
                 prepareTask.getSkipCodeStartDirectives().set(extension.getSkipCodeStartDirectives());
                 prepareTask.getSkipCodeEndDirectives().set(extension.getSkipCodeEndDirectives());
+                prepareTask.getInlineGenCodeDirectives().set(extension.getInlineGenCodeDirectives());
+                prepareTask.getNestedLevelStartMarkers().set(extension.getNestedLevelStartMarkers());
+                prepareTask.getNestedLevelEndMarkers().set(extension.getNestedLevelEndMarkers());
             }
         });
         project.getTasks().register("codeAugmentorProcess", ProcessingTask.class, new Action<ProcessingTask>() {
@@ -104,6 +112,7 @@ public class CodeAugmentorPlugin implements Plugin<Project> {
                 generateTask.getGeneratedCodeFiles().set(extension.getGeneratedCodeFiles());
                 generateTask.getDestDir().set(extension.getDestDir());
                 generateTask.getChangeSetInfoFile().set(extension.getChangeSetInfoFile());
+                generateTask.getFailOnChanges().set(extension.getFailOnChanges());
             }
         });
         project.getTasks().register("codeAugmentorRun", CodeAugmentorTask.class, new Action<CodeAugmentorTask>() {
@@ -122,10 +131,14 @@ public class CodeAugmentorPlugin implements Plugin<Project> {
                 runTask.getEmbeddedJsonDirectives().set(extension.getEmbeddedJsonDirectives());
                 runTask.getSkipCodeStartDirectives().set(extension.getSkipCodeStartDirectives());
                 runTask.getSkipCodeEndDirectives().set(extension.getSkipCodeEndDirectives());
+                runTask.getInlineGenCodeDirectives().set(extension.getInlineGenCodeDirectives());
+                runTask.getNestedLevelStartMarkers().set(extension.getNestedLevelStartMarkers());
+                runTask.getNestedLevelEndMarkers().set(extension.getNestedLevelEndMarkers());
                 runTask.getGroovyScriptDir().set(extension.getGroovyScriptDir());
                 runTask.getGroovyEntryScriptName().set(extension.getGroovyEntryScriptName());
                 runTask.getDestDir().set(extension.getDestDir());
                 runTask.getChangeSetInfoFile().set(extension.getChangeSetInfoFile());
+                runTask.getFailOnChanges().set(extension.getFailOnChanges());
 
                 // Set these properties as readonly.                
                 ((Property<Object>) runTask.getPrepFile()).set(defaultPrepFile);

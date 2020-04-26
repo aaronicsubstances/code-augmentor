@@ -17,6 +17,10 @@ class ProcessCodeContext:
         return ContentPart(content, False)
 
     # Intended for use by scripts
+    def newLeadingIndent(self, content):
+        return ContentPart(content, True)
+
+    # Intended for use by scripts
     def newContent(self, content, exactMatch):
         return ContentPart(content, exactMatch)
 

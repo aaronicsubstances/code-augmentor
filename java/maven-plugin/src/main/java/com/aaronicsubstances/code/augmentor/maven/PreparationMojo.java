@@ -10,6 +10,7 @@ import java.util.Set;
 
 import com.aaronicsubstances.code.augmentor.core.tasks.AugCodeProcessingSpec;
 import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
+import com.aaronicsubstances.code.augmentor.core.tasks.PluginUtils;
 import com.aaronicsubstances.code.augmentor.core.tasks.PreCodeAugmentationGenericTask;
 
 import org.apache.maven.plugin.AbstractMojo;
@@ -43,6 +44,9 @@ public class PreparationMojo extends AbstractPluginMojo {
             List<String> resolvedEmbeddedJsonDirectives = Arrays.asList(getEmbeddedJsonDirectives());
             List<String> resolvedSkipCodeStartDirectives = Arrays.asList(getSkipCodeStartDirectives());
             List<String> resolvedSkipCodeEndDirectives = Arrays.asList(getSkipCodeEndDirectives());
+            List<String> resolvedInlineGenCodeDirectives = Arrays.asList(getInlineGenCodeDirectives());
+            List<String> resolvedNestedLevelStartMarkers = Arrays.asList(getNestedLevelStartMarkers());
+            List<String> resolvedNestedLevelLEndMarkers = Arrays.asList(getNestedLevelEndMarkers());
 
             List<List<String>> resolvedAugCodeSpecDirectives = new ArrayList<>();
             List<File> resolvedAugCodeFiles = new ArrayList<>();
@@ -65,7 +69,9 @@ public class PreparationMojo extends AbstractPluginMojo {
                 resolvedEmbeddedStringDirectives, resolvedEmbeddedJsonDirectives, 
                 resolvedSkipCodeStartDirectives, resolvedSkipCodeEndDirectives, 
                 resolvedAugCodeSpecDirectives, resolvedAugCodeFiles, 
-                resolvedPrepFile);
+                resolvedPrepFile,
+                resolvedInlineGenCodeDirectives,
+                resolvedNestedLevelStartMarkers, resolvedNestedLevelLEndMarkers);
         }
         catch (MojoExecutionException ex) {
             throw ex;
@@ -91,7 +97,10 @@ public class PreparationMojo extends AbstractPluginMojo {
             List<String> resolvedSkipCodeEndDirectives,
             List<List<String>> resolvedAugCodeSpecDirectives,
             List<File> resolvedAugCodeFiles,
-            File resolvedPrepFile) throws Exception {
+            File resolvedPrepFile,
+            List<String> resolvedInlineGenCodeDirectives,
+            List<String> resolvedNestedLevelStartMarkers, 
+            List<String> resolvedNestedLevelEndMarkers) throws Exception {
         
         if (resolvedGenCodeStartDirectives.isEmpty()) {
             throw new MojoExecutionException("at least 1 element is required in genCodeStartDirectives");
@@ -155,6 +164,8 @@ public class PreparationMojo extends AbstractPluginMojo {
         totalDirectiveCount += resolvedSkipCodeStartDirectives.size();
         allDirectives.addAll(resolvedSkipCodeEndDirectives);
         totalDirectiveCount += resolvedSkipCodeEndDirectives.size();
+        allDirectives.addAll(resolvedInlineGenCodeDirectives);
+        totalDirectiveCount += resolvedInlineGenCodeDirectives.size();
         
         for (List<String> resolvedAugCodeDirectives : resolvedAugCodeSpecDirectives) {
             allDirectives.addAll(resolvedAugCodeDirectives);
@@ -162,6 +173,17 @@ public class PreparationMojo extends AbstractPluginMojo {
         }
         if (totalDirectiveCount != allDirectives.stream().filter(x -> x != null && !x.trim().isEmpty()).count()) {
             throw new MojoExecutionException("duplicates and/or blanks detected across directives");
+        }
+        
+        // Ensure uniqueness across markers.
+        allDirectives.clear();
+        totalDirectiveCount = 0;
+        allDirectives.addAll(resolvedNestedLevelStartMarkers);
+        totalDirectiveCount += resolvedNestedLevelStartMarkers.size();
+        allDirectives.addAll(resolvedNestedLevelEndMarkers);
+        totalDirectiveCount += resolvedNestedLevelEndMarkers.size();
+        if (totalDirectiveCount != allDirectives.stream().filter(x -> x != null && !x.trim().isEmpty()).count()) {
+            throw new MojoExecutionException("duplicates and/or blanks detected across nested level markers");
         }
 
         // Validation successful, so begin execution by fetching files inside file sets.
@@ -200,6 +222,9 @@ public class PreparationMojo extends AbstractPluginMojo {
         genericTask.setEmbeddedJsonDirectives(resolvedEmbeddedJsonDirectives);
         genericTask.setSkipCodeStartDirectives(resolvedSkipCodeStartDirectives);
         genericTask.setSkipCodeEndDirectives(resolvedSkipCodeEndDirectives);
+        genericTask.setInlineGenCodeDirectives(resolvedInlineGenCodeDirectives);
+        genericTask.setNestedLevelStartMarkers(resolvedNestedLevelStartMarkers);
+        genericTask.setNestedLevelEndMarkers(resolvedNestedLevelEndMarkers);
 
         List<AugCodeProcessingSpec> augCodeProcessingSpecs = new ArrayList<>();
         genericTask.setAugCodeProcessingSpecs(augCodeProcessingSpecs);
@@ -222,6 +247,9 @@ public class PreparationMojo extends AbstractPluginMojo {
             logger.info("\tembeddedJsonDirectives: " + genericTask.getEmbeddedJsonDirectives());
             logger.info("\tskipCodeStartDirectives: " + genericTask.getSkipCodeStartDirectives());
             logger.info("\tskipCodeEndDirectives: " + genericTask.getSkipCodeEndDirectives());
+            logger.info("\tinlineGenCodeDirectives: " + genericTask.getInlineGenCodeDirectives());
+            logger.info("\tnestedLevelStartMarkers: " + genericTask.getNestedLevelStartMarkers());
+            logger.info("\tnestedLevelEndMarkers: " + genericTask.getNestedLevelEndMarkers());
             
             if (task instanceof PreparationMojo) {
                 logger.info("\tprepFile: " + genericTask.getPrepFile());
@@ -251,7 +279,7 @@ public class PreparationMojo extends AbstractPluginMojo {
 
         // fail build if there were errors.
         if (!genericTask.getAllErrors().isEmpty()) {
-            String allExMsg = GenericTaskException.toExceptionMessageWithScriptConsideration(
+            String allExMsg = PluginUtils.stringifyPossibleScriptErrors(
                 genericTask.getAllErrors(), false, null, null);
             throw new MojoExecutionException(allExMsg);
         }
