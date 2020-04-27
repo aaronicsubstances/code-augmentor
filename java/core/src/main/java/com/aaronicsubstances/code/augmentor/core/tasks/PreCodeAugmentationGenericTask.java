@@ -56,6 +56,7 @@ public class PreCodeAugmentationGenericTask {
         List<CodeGenerationRequest> codeGenRequests = new ArrayList<>();
         for (AugCodeProcessingSpec augCodeSpec : augCodeProcessingSpecs) {
             CodeGenerationRequest codeGenRequest = new CodeGenerationRequest();
+            //TODO: set directives and markers on codeGenRequest
             codeGenRequests.add(codeGenRequest);
             // ensure dir exists for destFile
             augCodeSpec.getDestFile().getParentFile().mkdirs();

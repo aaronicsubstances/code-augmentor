@@ -114,12 +114,20 @@ public class CodeSnippetDescriptor {
         private int startDirectiveEndPos = 0;
         private int endDirectiveStartPos = 0;
         private int endDirectiveEndPos = 0;
+        private boolean inline;
 
         public GeneratedCodeDescriptor() {
         }
 
         public GeneratedCodeDescriptor(int startDirectiveStartPos, int startDirectiveEndPos,
                 int endDirectiveStartPos, int endDirectiveEndPos) {
+            this(startDirectiveStartPos, startDirectiveEndPos, 
+                endDirectiveStartPos, endDirectiveEndPos, false);
+        }
+
+        public GeneratedCodeDescriptor(int startDirectiveStartPos, int startDirectiveEndPos,
+                int endDirectiveStartPos, int endDirectiveEndPos,
+                boolean inline) {
             this.startDirectiveStartPos = startDirectiveStartPos;
             this.startDirectiveEndPos = startDirectiveEndPos;
             this.endDirectiveStartPos = endDirectiveStartPos;
@@ -158,12 +166,21 @@ public class CodeSnippetDescriptor {
             this.endDirectiveEndPos = endDirectiveEndPos;
         }
 
+        public boolean isInline() {
+            return inline;
+        }
+
+        public void setInline(boolean inline) {
+            this.inline = inline;
+        }
+
         @Override
         public int hashCode() {
             final int prime = 31;
             int result = 1;
             result = prime * result + endDirectiveEndPos;
             result = prime * result + endDirectiveStartPos;
+            result = prime * result + (inline ? 1231 : 1237);
             result = prime * result + startDirectiveEndPos;
             result = prime * result + startDirectiveStartPos;
             return result;
@@ -182,6 +199,8 @@ public class CodeSnippetDescriptor {
                 return false;
             if (endDirectiveStartPos != other.endDirectiveStartPos)
                 return false;
+            if (inline != other.inline)
+                return false;
             if (startDirectiveEndPos != other.startDirectiveEndPos)
                 return false;
             if (startDirectiveStartPos != other.startDirectiveStartPos)
@@ -192,7 +211,7 @@ public class CodeSnippetDescriptor {
         @Override
         public String toString() {
             return "GeneratedCodeDescriptor{endDirectiveEndPos=" + endDirectiveEndPos + ", endDirectiveStartPos="
-                    + endDirectiveStartPos + ", startDirectiveEndPos=" + startDirectiveEndPos
+                    + endDirectiveStartPos + ", inline=" + inline + ", startDirectiveEndPos=" + startDirectiveEndPos
                     + ", startDirectiveStartPos=" + startDirectiveStartPos + "}";
         }
     }

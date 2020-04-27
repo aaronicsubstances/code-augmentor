@@ -66,7 +66,7 @@ public class CodeGenerationResponseProcessor {
             }
         }
         String indent = genCode.getIndent();
-        if (indent == null) {
+        if (TaskUtils.isEmpty(indent)) {
             indent = augCodeDescriptor.getIndent();
         }
         return indent;

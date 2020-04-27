@@ -188,6 +188,9 @@ public class PersistenceTest {
                             codeSnippet.setDirectiveMarker(generateRandomString(randGen, false));
                             codeSnippet.setIndent(randomIndent(randGen));
                             codeSnippet.setLineNumber(randGen.nextInt());
+                            codeSnippet.setNestedLevelNumber(randGen.nextInt());
+                            codeSnippet.setHasNestedLevelStartMarker(randGen.nextBoolean());
+                            codeSnippet.setHasNestedLevelEndMarker(randGen.nextBoolean());
                             
                             int blockCount = randGen.nextInt(5);
                             for (int k = 0; k < blockCount; k++) {
@@ -272,6 +275,7 @@ public class PersistenceTest {
 
                             generatedCode.setId(j);
                             generatedCode.setIndent(randomIndent(randGen));
+                            generatedCode.setDisableAutoIndent(randGen.nextBoolean());
                             generatedCode.setSkipped(randGen.nextBoolean());
                             generatedCode.setReplaceAugCodeDirectives(randGen.nextBoolean());
                             generatedCode.setReplaceGenCodeDirectives(randGen.nextBoolean());
@@ -301,6 +305,7 @@ public class PersistenceTest {
             g.setStartDirectiveEndPos(randGen.nextInt(1000));
             g.setEndDirectiveStartPos(randGen.nextInt(1000));
             g.setEndDirectiveEndPos(randGen.nextInt(1000));
+            g.setInline(randGen.nextBoolean());
             c.setGeneratedCodeDescriptor(g);
         }
         AugmentingCodeDescriptor d = new AugmentingCodeDescriptor();

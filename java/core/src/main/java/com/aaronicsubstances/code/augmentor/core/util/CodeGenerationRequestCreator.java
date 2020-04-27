@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -75,6 +76,9 @@ public class CodeGenerationRequestCreator {
             augmentingCode.setDirectiveMarker(firstToken.directiveMarker);
             augmentingCode.setLineNumber(augCodeDescriptor.getLineNumber());
             augmentingCode.setLineSeparator(augCodeDescriptor.getLineSeparator());
+            augmentingCode.setNestedLevelNumber(firstToken.nestedLevelNumber);
+            augmentingCode.setHasNestedLevelStartMarker(firstToken.nestedLevelStartMarker != null);
+            augmentingCode.setHasNestedLevelEndMarker(firstToken.nestedLevelEndMarker != null);
             
             // d. validate json directive contents.
             for (int j = 0; j < blocks.size(); j++) {
@@ -97,16 +101,16 @@ public class CodeGenerationRequestCreator {
     static List<List<Token>> identifyAugCodeSections(List<Token> tokens,
             File srcFile, List<Exception> errors) { 
         List<List<Token>> groups = new ArrayList<>();
-        boolean inSkipMode = false;
         Token skipCodeStartToken = null;
-        // group tokens which strictly follow each other consecutively in line numbers.
         int expectedLineNumber = 0;
+        Stack<Token> nestedLevelStartTokens = new Stack<>();
+        // group tokens which strictly follow each other consecutively in line numbers.
         List<Token> currentGroup = new ArrayList<>();
         for (Token t : tokens) {
             // As long as we are inside a skip code section, ignore all
             // directives until we hit a directive indicating end of skip code
             // section.
-            if (inSkipMode) {
+            if (skipCodeStartToken != null) {
                 if (t.type == Token.DIRECTIVE_TYPE_SKIP_CODE_START) {
                     GenericTaskException error = createException(
                         "Expecting end of previous " +
@@ -114,7 +118,12 @@ public class CodeGenerationRequestCreator {
                         " code section before encountering another start directive", 
                         t, srcFile);
                     saveOrThrowError(error, errors);
-                    skipCodeStartToken = t;
+                    if (t.isInlineGeneratedCodeMarker) {
+                        skipCodeStartToken = null;
+                    }
+                    else {
+                        skipCodeStartToken = t;
+                    }
                 }
                 if (t.type == Token.DIRECTIVE_TYPE_SKIP_CODE_END) {
                     if (t.isGeneratedCodeMarker != skipCodeStartToken.isGeneratedCodeMarker) {
@@ -125,31 +134,12 @@ public class CodeGenerationRequestCreator {
                             t, srcFile);
                         saveOrThrowError(error, errors);
                     }
-                    inSkipMode = false;
                     skipCodeStartToken = null;
-                    // ensure newline ending.
-                    if (t.newline == null) {
-                        GenericTaskException error = createException(
-                            (t.isGeneratedCodeMarker ? "Generated" : "Skip") + 
-                            " code directive must end with a newline",
-                            t, srcFile);
-                        saveOrThrowError(error, errors);
-                    }
                 }
                 continue;
             }
             
-            if (t.type == Token.DIRECTIVE_TYPE_AUG_CODE || 
-                    t.type == Token.DIRECTIVE_TYPE_EMB_STRING ||
-                    t.type == Token.DIRECTIVE_TYPE_EMB_JSON) {
-                // ensure newline ending.
-                if (t.newline == null) {
-                    GenericTaskException error = createException(
-                        "Augmenting code section must end with a newline", 
-                        t, srcFile);
-                    saveOrThrowError(error, errors);
-                }
-            }
+            // handle group assignment.
             switch (t.type) {
                 case Token.DIRECTIVE_TYPE_AUG_CODE:
                 case Token.DIRECTIVE_TYPE_EMB_STRING:
@@ -176,26 +166,52 @@ public class CodeGenerationRequestCreator {
                         // set to 0 so a new aug/emb token is definitely added. 
                         expectedLineNumber = 0;
                     }
-                    if (t.type == Token.DIRECTIVE_TYPE_SKIP_CODE_END) {
+                    break;
+            }
+
+            // handle start of skip/generated code sections.
+            if (t.type == Token.DIRECTIVE_TYPE_SKIP_CODE_END) {
+                GenericTaskException error = createException(
+                    "Encountered end directive for " +
+                    (t.isGeneratedCodeMarker ? "generated" : "skipped") +
+                    " code section without a previous start directive.",
+                    t, srcFile);
+                saveOrThrowError(error, errors);
+            }
+            else if (t.type == Token.DIRECTIVE_TYPE_SKIP_CODE_START &&
+                    !t.isInlineGeneratedCodeMarker) {
+                skipCodeStartToken = t;
+            }
+
+            // handle nesting of aug code sections.
+            else if (t.type == Token.DIRECTIVE_TYPE_AUG_CODE) {
+                if (t.nestedLevelStartMarker != null) {
+                    t.nestedLevelNumber = nestedLevelStartTokens.size();
+                    nestedLevelStartTokens.push(t);
+                }
+                else if (t.nestedLevelEndMarker != null) {
+                    if (nestedLevelStartTokens.isEmpty()) {
                         GenericTaskException error = createException(
-                            "Encountered end directive for " +
-                            (t.isGeneratedCodeMarker ? "generated" : "skipped") +
-                            " code section without a previous start directive.",
+                            "Encountered nested level end marker for aug " +
+                            "code section without a previous matching start marker.",
                             t, srcFile);
                         saveOrThrowError(error, errors);
                     }
-                    if (t.type == Token.DIRECTIVE_TYPE_SKIP_CODE_START) {
-                        inSkipMode = true;
-                        skipCodeStartToken = t;
+                    else {
+                        nestedLevelStartTokens.pop();
                     }
-                    break;
+                    t.nestedLevelNumber = nestedLevelStartTokens.size();
+                }
+            }
+            else {
+                t.nestedLevelNumber = nestedLevelStartTokens.size();
             }
         }
         if (!currentGroup.isEmpty()) {
             // Create final group.
             groups.add(currentGroup);
         }
-        if (inSkipMode) {
+        if (skipCodeStartToken != null) {
             GenericTaskException error = createException(
                 "Could not find end of " +
                 (skipCodeStartToken.isGeneratedCodeMarker ? "generated" : "skipped") +
@@ -203,7 +219,62 @@ public class CodeGenerationRequestCreator {
                 skipCodeStartToken, srcFile);
             saveOrThrowError(error, errors);
         }
+        while (!nestedLevelStartTokens.isEmpty()) {
+            Token t = nestedLevelStartTokens.pop();
+            GenericTaskException error = createException(
+                "Could not find nested level end marker for aug" +
+                " code section start marker",
+                t, srcFile);
+            saveOrThrowError(error, errors);
+        }
+        if (!tokens.isEmpty()) {
+            ensureDirectiveNewlineEnding(tokens.get(tokens.size() - 1),srcFile, errors);
+        }
         return groups;
+    }
+
+    static void ensureDirectiveNewlineEnding(Token t, File srcFile, List<Exception> errors) {
+        if (t.type == Token.TYPE_BLANK && t.type == Token.TYPE_OTHER && t.newline == null) {
+            String desc;
+            switch (t.type) {
+                case Token.DIRECTIVE_TYPE_AUG_CODE:
+                    desc = "Augmenting code";
+                    break;
+                case Token.DIRECTIVE_TYPE_EMB_STRING:
+                    desc = "Embedded string";
+                    break;
+                case Token.DIRECTIVE_TYPE_EMB_JSON:
+                    desc = "Embedded JSON";
+                    break;
+                case Token.DIRECTIVE_TYPE_SKIP_CODE_START:
+                    if (t.isGeneratedCodeMarker) {
+                        if (t.isInlineGeneratedCodeMarker) {
+                            desc = "Inline generated code";
+                        }
+                        else {
+                            desc = "Generated code start";
+                        }
+                    }
+                    else {
+                        desc = "Skip code start";
+                    }
+                    break;
+                case Token.DIRECTIVE_TYPE_SKIP_CODE_END:
+                    if (t.isGeneratedCodeMarker) {
+                        desc = "Generated code end";
+                    }
+                    else {
+                        desc = "Skip code end";
+                    }
+                    break;
+                default:
+                    throw new RuntimeException("Unexpected token type: " + t.type);
+            }
+            GenericTaskException error = createException(
+                desc + " directive must end with a newline",
+                t, srcFile);
+            saveOrThrowError(error, errors);
+        }
     }
 
     static GenericTaskException validateAugCodeSection(List<Token> tokenGroup, File srcFile) {
@@ -221,6 +292,14 @@ public class CodeGenerationRequestCreator {
                         if (expectedAugCodeSpecIndex != token.augCodeSpecIndex) {
                             return createException("Different augmenting code directives in " +
                                 "same section not allowed", token, srcFile);
+                        }
+                        if (token.nestedLevelStartMarker != null) {
+                            return createException("Only start of augmenting code section " +
+                                "can be marked to start a nested level.", token, srcFile);
+                        }
+                        if (token.nestedLevelEndMarker != null) {
+                            return createException("Only start of augmenting code section " +
+                                "can be marked to end a nested level.", token, srcFile);
                         }
                         break;
                 }
@@ -268,29 +347,50 @@ public class CodeGenerationRequestCreator {
 
         Token st = sourceTokens.get(startIndex);
 
-        // search for gen code end.
-        for (int i = startIndex + 1; i < sourceTokens.size(); i++) {
-            Token t = sourceTokens.get(i);
-            // skip all other tokens, except for gen/skip code starts, and
-            // skip code end. These three are interpreted as section breakers, and
-            // hence current search must end.
-            if (t.type == Token.DIRECTIVE_TYPE_SKIP_CODE_END) {
-                if (!t.isGeneratedCodeMarker) {
+        // depending on whether gen code directive is inline or section start,
+        // proceed differently.
+        if (st.isInlineGeneratedCodeMarker) {
+            GeneratedCodeDescriptor generatedCodeDescriptor = new GeneratedCodeDescriptor();
+            generatedCodeDescriptor.setStartDirectiveStartPos(st.startPos);
+            generatedCodeDescriptor.setEndDirectiveEndPos(st.endPos);
+            generatedCodeDescriptor.setInline(true);
+            // look for tokens of the same type as inline gen code,
+            // and consecutive in line numbers.
+            int expectedLineNumber = st.lineNumber + 1;
+            for (int i = startIndex + 1; i < sourceTokens.size(); i++) {
+                Token t = sourceTokens.get(i);
+                if (t.isInlineGeneratedCodeMarker && t.lineNumber != expectedLineNumber) {
+                    generatedCodeDescriptor.setEndDirectiveEndPos(t.endPos);
+                    expectedLineNumber++;
+                }
+                else {
                     break;
                 }
-                GeneratedCodeDescriptor generatedCodeDescriptor = new GeneratedCodeDescriptor();
-                generatedCodeDescriptor.setStartDirectiveStartPos(st.startPos);
-                generatedCodeDescriptor.setStartDirectiveEndPos(st.endPos);
-                generatedCodeDescriptor.setEndDirectiveStartPos(t.startPos);
-                generatedCodeDescriptor.setEndDirectiveEndPos(t.endPos);
-                return generatedCodeDescriptor;
             }
-            else if (t.type == Token.DIRECTIVE_TYPE_SKIP_CODE_START) {
-                break;
-            }
+            return generatedCodeDescriptor;
         }
+        else {
+            // search for gen code end.
+            for (int i = startIndex + 1; i < sourceTokens.size(); i++) {
+                Token t = sourceTokens.get(i);
+                // skip all other tokens, except for gen/skip code starts, and
+                // skip code end. These three are interpreted as section breakers, and
+                // hence current search must end.
+                if (t.type == Token.DIRECTIVE_TYPE_SKIP_CODE_END) {
+                    if (!t.isGeneratedCodeMarker) {
+                        break;
+                    }
+                    GeneratedCodeDescriptor generatedCodeDescriptor = new GeneratedCodeDescriptor(
+                        st.startPos, st.endPos, t.startPos, t.endPos);
+                    return generatedCodeDescriptor;
+                }
+                else if (t.type == Token.DIRECTIVE_TYPE_SKIP_CODE_START) {
+                    break;
+                }
+            }
 
-        throw new RuntimeException("Could not find ending of a generated code section");
+            throw new RuntimeException("Could not find ending of a generated code section");
+        }
     }
 
     static List<Block> createAugmentingCodeBlocks(List<Token> augCodeSection,

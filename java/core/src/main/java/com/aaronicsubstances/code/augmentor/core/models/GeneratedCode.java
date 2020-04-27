@@ -73,6 +73,7 @@ public class GeneratedCode {
     private boolean skipped;
     private boolean replaceAugCodeDirectives;
     private boolean replaceGenCodeDirectives;
+    private boolean disableAutoIndent;
 
     public GeneratedCode() {
 
@@ -96,6 +97,14 @@ public class GeneratedCode {
 
     public void setIndent(String indent) {
         this.indent = indent;
+    }
+
+    public boolean isDisableAutoIndent() {
+        return disableAutoIndent;
+    }
+
+    public void setDisableAutoIndent(boolean disableAutoIndent) {
+        this.disableAutoIndent = disableAutoIndent;
     }
 
     public boolean isSkipped() {
@@ -143,8 +152,9 @@ public class GeneratedCode {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((contentParts == null) ? 0 : contentParts.hashCode());
-        result = prime * result + ((indent == null) ? 0 : indent.hashCode());
+        result = prime * result + (disableAutoIndent ? 1231 : 1237);
         result = prime * result + id;
+        result = prime * result + ((indent == null) ? 0 : indent.hashCode());
         result = prime * result + (replaceAugCodeDirectives ? 1231 : 1237);
         result = prime * result + (replaceGenCodeDirectives ? 1231 : 1237);
         result = prime * result + (skipped ? 1231 : 1237);
@@ -165,12 +175,14 @@ public class GeneratedCode {
                 return false;
         } else if (!contentParts.equals(other.contentParts))
             return false;
+        if (disableAutoIndent != other.disableAutoIndent)
+            return false;
+        if (id != other.id)
+            return false;
         if (indent == null) {
             if (other.indent != null)
                 return false;
         } else if (!indent.equals(other.indent))
-            return false;
-        if (id != other.id)
             return false;
         if (replaceAugCodeDirectives != other.replaceAugCodeDirectives)
             return false;
@@ -183,8 +195,8 @@ public class GeneratedCode {
 
     @Override
     public String toString() {
-        return "GeneratedCode{contentParts=" + contentParts + ", indent=" + indent + ", id=" + id
-                + ", replaceAugCodeDirectives=" + replaceAugCodeDirectives + ", replaceGenCodeDirectives="
-                + replaceGenCodeDirectives + ", skipped=" + skipped + "}";
+        return "GeneratedCode{contentParts=" + contentParts + ", disableAutoIndent=" + disableAutoIndent + ", id=" + id
+                + ", indent=" + indent + ", replaceAugCodeDirectives=" + replaceAugCodeDirectives
+                + ", replaceGenCodeDirectives=" + replaceGenCodeDirectives + ", skipped=" + skipped + "}";
     }
 }

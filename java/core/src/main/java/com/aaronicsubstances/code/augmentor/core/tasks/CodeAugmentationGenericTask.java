@@ -130,14 +130,16 @@ public class CodeAugmentationGenericTask {
                 String formattedGenCode = genCode.getWholeContent();
                 String indent = CodeGenerationResponseProcessor.getEffectiveIndent(
                     augCodeDescriptor, genCode);
-                if (!indent.isEmpty()) {            
+                if (!indent.isEmpty() && !genCode.isDisableAutoIndent()) {            
                     formattedGenCode = CodeGenerationResponseProcessor.indentCode(formattedGenCode, 
                         indent);
                 }
                 if (replacementRange == null) {
                     // employ default behaviour of ensuring generated code
                     // occurs within directive markers. 
-                    if (snippetDescriptor.getGeneratedCodeDescriptor() == null) {
+                    // disregard inline gen code descriptors.
+                    if (snippetDescriptor.getGeneratedCodeDescriptor() == null ||
+                            snippetDescriptor.getGeneratedCodeDescriptor().isInline()) {
                         formattedGenCode = CodeGenerationResponseProcessor.wrapInGeneratedCodeDirectives(
                             formattedGenCode, 
                             result.getGenCodeStartDirective(), result.getGenCodeEndDirective(),
@@ -169,22 +171,28 @@ public class CodeAugmentationGenericTask {
                 // use replacement range if specified.
                 if (replacementRange != null) {
                     transformer.addTransform(replacementText, replacementRange[0], replacementRange[1]);
-                    textToBeReplaced = sourceCode.substring(replacementRange[0],
-                        replacementRange[1]);
+                    textToBeReplaced = sourceCode.substring(replacementRange[0], replacementRange[1]);
                 }
                 else {
                     // resort to default behaviour
                     CodeSnippetDescriptor snippetDescriptor = sourceFileDescriptor.getCodeSnippets().get(i);
                     GeneratedCodeDescriptor genCodeDescriptor = snippetDescriptor.getGeneratedCodeDescriptor();
-                    if (genCodeDescriptor != null) {                    
-                        // by default range of generated code excludes directive markers.
-                        // it starts from just after the start directive marker,
-                        // and ends just before the end directive marker.
-                        int genCodeStartPos = genCodeDescriptor.getStartDirectiveEndPos();
-                        int genCodeEndPos = genCodeDescriptor.getEndDirectiveStartPos(); 
+                    if (genCodeDescriptor != null) {
+                        // treat default and inline descriptors differently.
+                        int genCodeStartPos, genCodeEndPos;
+                        if (genCodeDescriptor.isInline()) {
+                            genCodeStartPos = genCodeDescriptor.getStartDirectiveStartPos();
+                            genCodeEndPos = genCodeDescriptor.getEndDirectiveEndPos();
+                        } 
+                        else {
+                            // by default range of generated code excludes directive markers.
+                            // it starts from just after the start directive marker,
+                            // and ends just before the end directive marker.
+                            genCodeStartPos = genCodeDescriptor.getStartDirectiveEndPos();
+                            genCodeEndPos = genCodeDescriptor.getEndDirectiveStartPos();
+                        }
                         transformer.addTransform(replacementText, genCodeStartPos, genCodeEndPos);
-                        textToBeReplaced = sourceCode.substring(genCodeStartPos,
-                            genCodeEndPos);
+                        textToBeReplaced = sourceCode.substring(genCodeStartPos, genCodeEndPos);
                     }
                     else {
                         AugmentingCodeDescriptor augCodeDescriptor = snippetDescriptor.getAugmentingCodeDescriptor();
