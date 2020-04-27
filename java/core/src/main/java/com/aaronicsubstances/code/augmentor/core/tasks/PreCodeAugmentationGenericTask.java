@@ -56,8 +56,30 @@ public class PreCodeAugmentationGenericTask {
         List<CodeGenerationRequest> codeGenRequests = new ArrayList<>();
         for (AugCodeProcessingSpec augCodeSpec : augCodeProcessingSpecs) {
             CodeGenerationRequest codeGenRequest = new CodeGenerationRequest();
-            //TODO: set directives and markers on codeGenRequest
             codeGenRequests.add(codeGenRequest);
+
+            // initialize header.
+            codeGenRequest.getHeader().setGenCodeStartDirective(prepResult.getGenCodeStartDirective());
+            codeGenRequest.getHeader().setGenCodeEndDirective(prepResult.getGenCodeEndDirective());
+            codeGenRequest.getHeader().setAugCodeDirective(augCodeSpec.getDirectives().get(0));
+            codeGenRequest.getHeader().setEmbeddedStringDirective(embeddedStringDirectives.get(0));
+            codeGenRequest.getHeader().setEmbeddedJsonDirective(embeddedJsonDirectives.get(0));
+            if (skipCodeStartDirectives != null && !skipCodeStartDirectives.isEmpty()) {
+                codeGenRequest.getHeader().setSkipCodeStartDirective(skipCodeStartDirectives.get(0));
+            }
+            if (skipCodeEndDirectives != null && !skipCodeEndDirectives.isEmpty()) {
+                codeGenRequest.getHeader().setSkipCodeEndDirective(skipCodeEndDirectives.get(0));
+            }
+            if (inlineGenCodeDirectives != null && !inlineGenCodeDirectives.isEmpty()) {
+                codeGenRequest.getHeader().setInlineGenCodeDirective(inlineGenCodeDirectives.get(0));
+            }
+            if (nestedLevelStartMarkers != null && !nestedLevelStartMarkers.isEmpty()) {
+                codeGenRequest.getHeader().setNestedLevelStartMarker(nestedLevelStartMarkers.get(0));
+            }
+            if (nestedLevelEndMarkers != null && !nestedLevelEndMarkers.isEmpty()) {
+                codeGenRequest.getHeader().setNestedLevelEndMarker(nestedLevelEndMarkers.get(0));
+            }
+
             // ensure dir exists for destFile
             augCodeSpec.getDestFile().getParentFile().mkdirs();
             Object requestWriter = codeGenRequest.beginSerialize(augCodeSpec.getDestFile());

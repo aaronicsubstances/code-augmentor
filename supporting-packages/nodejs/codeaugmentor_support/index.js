@@ -62,6 +62,7 @@ exports.execute = function(config, evalFunction, cb=null) {
     });
 
     const context = {
+        globalScope: {},
         newGenCode: function() {
             return {
                 id: 0,
@@ -84,7 +85,7 @@ exports.execute = function(config, evalFunction, cb=null) {
     lineReader.eachLine(config.inputFile, function(line, last) {
         // begin deserialize by reading header from input
         if (!headerSeen) {
-            context.globalScope = JSON.parse(line);
+            context.header = JSON.parse(line);
             headerSeen = true;
             return;
         }

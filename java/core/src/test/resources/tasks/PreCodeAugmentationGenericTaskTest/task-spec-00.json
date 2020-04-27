@@ -3,7 +3,7 @@
 	"genCodeStartDirectives" : [ "//GS" ],
 	"genCodeEndDirectives" : [ "//GE" ],
 	"embeddedStringDirectives" : [ "//ES" ],
-	"embeddedJsonDirectives" : [],
+	"embeddedJsonDirectives" : ["//JSON"],
 	"prepFile" : "task-spec-00-actual-prep.json",
 	"augCodeDirectives" : [{
 		"file": "task-spec-00-actual-request-0.json",

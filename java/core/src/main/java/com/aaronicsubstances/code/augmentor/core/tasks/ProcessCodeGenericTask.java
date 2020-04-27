@@ -19,6 +19,7 @@ import com.aaronicsubstances.code.augmentor.core.models.SourceFileAugmentingCode
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileGeneratedCode;
 import com.aaronicsubstances.code.augmentor.core.models.AugmentingCode.Block;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode.ContentPart;
+import com.aaronicsubstances.code.augmentor.core.util.PersistenceUtil;
 import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 
 public class ProcessCodeGenericTask {
@@ -36,7 +37,7 @@ public class ProcessCodeGenericTask {
     private File inputFile;
     private File outputFile;
     private JsonParseFunction jsonParseFunction;
-    
+
     // output properties
     private final List<Throwable> allErrors = new ArrayList<>();
 
@@ -56,32 +57,15 @@ public class ProcessCodeGenericTask {
         try {
             requestReader = codeGenRequest.beginDeserialize(inputFile);
             // populate global scope with file header line
-            context.getGlobalScope().put("genCodeStartDirective", 
-                codeGenRequest.getGenCodeStartDirective());
-            context.getGlobalScope().put("genCodeEndDirective", 
-                codeGenRequest.getGenCodeEndDirective());
-            context.getGlobalScope().put("skipCodeStartDirective", 
-                codeGenRequest.getSkipCodeStartDirective());
-            context.getGlobalScope().put("skipCodeEndDirective", 
-                codeGenRequest.getSkipCodeEndDirective());
-            context.getGlobalScope().put("embeddedStringDirective", 
-                codeGenRequest.getEmbeddedStringDirective());
-            context.getGlobalScope().put("embeddedJsonDirective", 
-                codeGenRequest.getEmbeddedJsonDirective());
-            context.getGlobalScope().put("augCodeDirective", 
-                codeGenRequest.getAugCodeDirective());
-            context.getGlobalScope().put("inlineGenCodeDirective", 
-                codeGenRequest.getInlineGenCodeDirective());
-            context.getGlobalScope().put("nestedLevelStartMarker", 
-                codeGenRequest.getNestedLevelStartMarker());
-            context.getGlobalScope().put("nestedLevelEndMarker", 
-                codeGenRequest.getNestedLevelEndMarker());
+            String headerLine = PersistenceUtil.serializeCompactlyToJson(codeGenRequest.getHeader());
+            Object parsedHeaderLine = jsonParseFunction.parse(headerLine);
+            context.setHeader(parsedHeaderLine);
+
             responseWriter = codeGenResponse.beginSerialize(outputFile);
             SourceFileAugmentingCode fileAugCodes;
             while ((fileAugCodes = SourceFileAugmentingCode.deserialize(requestReader)) != null) {
                 // set up context.
-                context.setSrcFile(new File(fileAugCodes.getDir(), 
-                    fileAugCodes.getRelativePath()));
+                context.setSrcFile(new File(fileAugCodes.getDir(), fileAugCodes.getRelativePath()));
                 context.setFileAugCodes(fileAugCodes);
                 context.getFileScope().clear();
 
@@ -96,8 +80,7 @@ public class ProcessCodeGenericTask {
                         if (block.isJsonify()) {
                             Object parsedArg = jsonParseFunction.parse(block.getContent());
                             augCode.getArgs().add(parsedArg);
-                        }
-                        else if (block.isStringify()) {
+                        } else if (block.isStringify()) {
                             augCode.getArgs().add(block.getContent());
                         }
                     }
@@ -115,8 +98,8 @@ public class ProcessCodeGenericTask {
                     }
                     String functionName = augCode.getBlocks().get(0).getContent().trim();
                     context.setAugCodeIndex(i);
-                    List<GeneratedCode> genCodes = processAugCode(evalFunction, functionName, 
-                        augCode, context, allErrors);
+                    List<GeneratedCode> genCodes = processAugCode(evalFunction, functionName, augCode, context,
+                            allErrors);
                     fileGenCodes.getGeneratedCodes().addAll(genCodes);
                 }
 
@@ -124,8 +107,8 @@ public class ProcessCodeGenericTask {
 
                 // now write out generated code for file if no errors are found.
                 if (allErrors.size() > beginErrorCount) {
-                    TaskUtils.logWarn(logAppender, "%s error(s) encountered in %s", 
-                        allErrors.size() - beginErrorCount, context.getSrcFile());
+                    TaskUtils.logWarn(logAppender, "%s error(s) encountered in %s", allErrors.size() - beginErrorCount,
+                            context.getSrcFile());
                 }
 
                 // don't waste time serializing if there are errors from previous
@@ -136,11 +119,9 @@ public class ProcessCodeGenericTask {
 
                 Instant endInstant = Instant.now();
                 long timeElapsed = Duration.between(startInstant, endInstant).toMillis();
-                TaskUtils.logInfo(logAppender, "Done processing %s in %d ms", 
-                    context.getSrcFile(), timeElapsed);
+                TaskUtils.logInfo(logAppender, "Done processing %s in %d ms", context.getSrcFile(), timeElapsed);
             }
-        }
-        finally {
+        } finally {
             if (requestReader != null) {
                 codeGenRequest.endDeserialize(requestReader);
             }
@@ -149,7 +130,7 @@ public class ProcessCodeGenericTask {
             }
         }
     }
-    
+
     @SuppressWarnings("unchecked")
     static List<GeneratedCode> processAugCode(EvalFunction evalFunction, 
             String functionName, AugmentingCode augCode, ProcessCodeContext context, 

@@ -28,11 +28,7 @@ public class CodeGenerationRequestCreator {
         
         // 2. validate aug code sections.
         for (List<Token> augCodeSection : augCodeSections) {
-            GenericTaskException error = validateAugCodeSection(augCodeSection,
-                srcFile);
-            if (error != null) {
-                saveOrThrowError(error, errors);
-            }
+            validateAugCodeSection(augCodeSection, srcFile, errors);
         }
 
         // 3a. If there are no validation errors,
@@ -277,46 +273,48 @@ public class CodeGenerationRequestCreator {
         }
     }
 
-    static GenericTaskException validateAugCodeSection(List<Token> tokenGroup, File srcFile) {
+    static void validateAugCodeSection(List<Token> tokenGroup, File srcFile, 
+            List<Exception> errors) {
         Token token = tokenGroup.get(0);
+        int expectedAugCodeSpecIndex = -1;
         if (token.type == Token.DIRECTIVE_TYPE_AUG_CODE) {
-            int expectedAugCodeSpecIndex = token.augCodeSpecIndex;
-            for (int i = 1; i < tokenGroup.size(); i++) {
-                token = tokenGroup.get(i);
-                switch (token.type) {
-                    case Token.DIRECTIVE_TYPE_EMB_STRING:
-                    case Token.DIRECTIVE_TYPE_EMB_JSON:
-                        break;
-                    default:
-                        assert token.type == Token.DIRECTIVE_TYPE_AUG_CODE;
-                        if (expectedAugCodeSpecIndex != token.augCodeSpecIndex) {
-                            return createException("Different augmenting code directives in " +
-                                "same section not allowed", token, srcFile);
-                        }
-                        if (token.nestedLevelStartMarker != null) {
-                            return createException("Only start of augmenting code section " +
-                                "can be marked to start a nested level.", token, srcFile);
-                        }
-                        if (token.nestedLevelEndMarker != null) {
-                            return createException("Only start of augmenting code section " +
-                                "can be marked to end a nested level.", token, srcFile);
-                        }
-                        break;
-                }
-            }
+            expectedAugCodeSpecIndex = token.augCodeSpecIndex;
         }
         else {
             if (token.type == Token.DIRECTIVE_TYPE_EMB_JSON) {
-                return createException("Embedded JSON directive cannot start an " +
-                    "augmenting code section", token, srcFile);
+                saveOrThrowError(createException("Embedded JSON directive cannot start an " +
+                    "augmenting code section", token, srcFile), errors);
             }
             else {
                 assert token.type == Token.DIRECTIVE_TYPE_EMB_STRING;
-                return createException("Embedded string directive cannot start an " +
-                    "augmenting code section", token, srcFile);
+                saveOrThrowError(createException("Embedded string directive cannot start an " +
+                    "augmenting code section", token, srcFile), errors);
             }
         }
-        return null;
+        for (int i = 1; i < tokenGroup.size(); i++) {
+            token = tokenGroup.get(i);
+            switch (token.type) {
+                case Token.DIRECTIVE_TYPE_EMB_STRING:
+                case Token.DIRECTIVE_TYPE_EMB_JSON:
+                    break;
+                default:
+                    assert token.type == Token.DIRECTIVE_TYPE_AUG_CODE;
+                    if (expectedAugCodeSpecIndex != -1 &&
+                            expectedAugCodeSpecIndex != token.augCodeSpecIndex) {
+                        saveOrThrowError(createException("Different augmenting code directives in " +
+                            "same section not allowed", token, srcFile), errors);
+                    }
+                    if (token.nestedLevelStartMarker != null) {
+                        saveOrThrowError(createException("Only start of augmenting code section " +
+                            "can be marked to start a nested level.", token, srcFile), errors);
+                    }
+                    if (token.nestedLevelEndMarker != null) {
+                        saveOrThrowError(createException("Only start of augmenting code section " +
+                            "can be marked to end a nested level.", token, srcFile), errors);
+                    }
+                    break;
+            }
+        }
     }
 
     static GeneratedCodeDescriptor createGeneratedCodeDescriptor(List<Token> sourceTokens,
@@ -359,7 +357,7 @@ public class CodeGenerationRequestCreator {
             int expectedLineNumber = st.lineNumber + 1;
             for (int i = startIndex + 1; i < sourceTokens.size(); i++) {
                 Token t = sourceTokens.get(i);
-                if (t.isInlineGeneratedCodeMarker && t.lineNumber != expectedLineNumber) {
+                if (t.isInlineGeneratedCodeMarker && t.lineNumber == expectedLineNumber) {
                     generatedCodeDescriptor.setEndDirectiveEndPos(t.endPos);
                     expectedLineNumber++;
                 }

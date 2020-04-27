@@ -5,8 +5,6 @@
 	"genCodeEndDirectives" : [ "//GE" ],
 	"embeddedStringDirectives" : [ "//ES:" ],
 	"embeddedJsonDirectives" : [ "//EJS:" ],
-	"embeddedStringDirectives" : [ "//ES:" ],
-	"embeddedJsonDirectives" : [ "//EJS:" ],
 	"skipCodeStartDirectives" : [ "//DISABLE" ],
 	"skipCodeEndDirectives" : [ "//ENABLE" ],
 	"prepFile" : "task-spec-02-actual-prep.json",

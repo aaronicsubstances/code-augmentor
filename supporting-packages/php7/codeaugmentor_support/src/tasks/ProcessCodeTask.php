@@ -40,7 +40,7 @@ class ProcessCodeTask {
            while (($line = fgets($codeGenRequest)) !== FALSE) {
                 // begin deserialize by reading header from input
                 if (!$headerSeen) {
-                    $context->globalScope = self::jsonParse($line);
+                    $context->header = self::jsonParse($line);
                     $headerSeen = TRUE;
                     continue;
                 }

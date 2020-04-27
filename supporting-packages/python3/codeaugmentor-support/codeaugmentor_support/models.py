@@ -2,6 +2,7 @@
 
 class ProcessCodeContext:
     def __init__(self):
+        self._header = None
         self._globalScope = {}
         self._fileScope = {}
         self._fileAugCodes = None
@@ -17,12 +18,16 @@ class ProcessCodeContext:
         return ContentPart(content, False)
 
     # Intended for use by scripts
-    def newLeadingIndent(self, content):
-        return ContentPart(content, True)
-
-    # Intended for use by scripts
     def newContent(self, content, exactMatch):
         return ContentPart(content, exactMatch)
+        
+    @property
+    def header(self):
+        return self._header
+        
+    @header.setter
+    def header(self, value):
+        self._header = value
 
     #readonly
     @property

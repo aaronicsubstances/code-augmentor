@@ -1,4 +1,4 @@
-{ "contentStreamingEnabled": false }
+{ "contentStreamingEnabled": false, "genCodeStartDirective": "//GS", "genCodeEndDirective": "//GE", "embeddedStringDirective": "//ES", "embeddedJsonDirective": "//JSON", "augCodeDirective": "//JS", "skipCodeStartDirective": null, "skipCodeEndDirective": null,       "inlineGenCodeDirective": null, "nestedLevelStartMarker": null, "nestedLevelEndMarker": null }
 [
 	
 ]

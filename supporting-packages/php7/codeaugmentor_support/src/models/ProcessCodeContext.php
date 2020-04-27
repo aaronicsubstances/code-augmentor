@@ -2,7 +2,7 @@
 namespace aaronicsubstances\codeaugmentor_support\models;
 
 class ProcessCodeContext {
-
+   public $header;
    public $globalScope = [];
    public $fileScope = [];
    public $fileAugCodes;

@@ -10,6 +10,7 @@ import com.aaronicsubstances.code.augmentor.core.models.SourceFileAugmentingCode
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode.ContentPart;
 
 public class ProcessCodeContext {
+    private Object header;
     private final Map<String, Object> globalScope = new HashMap<>();
     private final Map<String, Object> fileScope = new HashMap<>();
     private SourceFileAugmentingCode fileAugCodes;
@@ -30,6 +31,14 @@ public class ProcessCodeContext {
     public ContentPart newContent(String content, boolean exactMatch) {
         return new ContentPart(content, exactMatch);
     }
+
+	public Object getHeader() {
+        return header;
+	}
+
+	public void setHeader(Object header) {
+        this.header = header;
+	}
 
     public Map<String, Object> getGlobalScope() {
         return globalScope;

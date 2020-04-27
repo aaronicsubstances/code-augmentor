@@ -34,7 +34,7 @@ class ProcessCodeTask:
             for line in codeGenRequest:
                 # begin deserialize by reading header from input
                 if not headerSeen:
-                    context.globalScope.update(json.loads(line))
+                    context.header = json.loads(line)
                     headerSeen = True
                     continue
                     

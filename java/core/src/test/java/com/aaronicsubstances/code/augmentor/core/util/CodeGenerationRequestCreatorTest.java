@@ -221,16 +221,21 @@ public class CodeGenerationRequestCreatorTest {
     @Test(dataProvider = "createTestValidateAugCodeSectionData")
     public void testValidateAugCodeSection(int index, 
             TestArgWrapper tokenGroup, Integer expected) {
-        GenericTaskException actual = CodeGenerationRequestCreator
-            .validateAugCodeSection(tokenGroup.tokens, null);
-        if (expected == null) {
-            assertNull(actual);
+        try {
+            CodeGenerationRequestCreator.validateAugCodeSection(tokenGroup.tokens, null, null);
+            if (expected != null) {
+                fail("Expected exception at line number " + expected);
+            }
         }
-        else {
-            assertNotNull(actual);
-            assertEquals(actual.getLineNumber(), (int)expected, "Line numbers differ");
-            System.out.println("testValidateAugCodeSection[" + index +
-                "].exceptionMessage = " + actual.getMessage());
+        catch (GenericTaskException ex) {
+            if (expected == null) {
+                fail("Didn't expect exception but got one", ex);
+            }
+            else {
+                assertEquals(ex.getLineNumber(), (int)expected, "Line numbers differ");
+                System.out.println("testValidateAugCodeSection[" + index +
+                    "].exceptionMessage = " + ex.getMessage());
+            }
         }
     }
 

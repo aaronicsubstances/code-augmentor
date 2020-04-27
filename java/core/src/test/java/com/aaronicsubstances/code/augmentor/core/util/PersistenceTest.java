@@ -158,16 +158,17 @@ public class PersistenceTest {
             public Object[] next() {
                 List<SourceFileAugmentingCode> files = new ArrayList<>();
                 CodeGenerationRequest instance = new CodeGenerationRequest(files);
-                instance.setGenCodeStartDirective(generateRandomString(randGen, false));
-                instance.setGenCodeEndDirective(generateRandomString(randGen, false));
-                instance.setSkipCodeStartDirective(generateRandomString(randGen, false));
-                instance.setSkipCodeEndDirective(generateRandomString(randGen, false));
-                instance.setEmbeddedStringDirective(generateRandomString(randGen, false));
-                instance.setEmbeddedJsonDirective(generateRandomString(randGen, false));
-                instance.setAugCodeDirective(generateRandomString(randGen, false));
-                instance.setInlineGenCodeDirective(generateRandomString(randGen, false));
-                instance.setNestedLevelStartMarker(generateRandomString(randGen, false));
-                instance.setNestedLevelEndMarker(generateRandomString(randGen, false));
+                CodeGenerationRequest.Header header = instance.getHeader();
+                header.setGenCodeStartDirective(generateRandomString(randGen, false));
+                header.setGenCodeEndDirective(generateRandomString(randGen, false));
+                header.setSkipCodeStartDirective(generateRandomString(randGen, false));
+                header.setSkipCodeEndDirective(generateRandomString(randGen, false));
+                header.setEmbeddedStringDirective(generateRandomString(randGen, false));
+                header.setEmbeddedJsonDirective(generateRandomString(randGen, false));
+                header.setAugCodeDirective(generateRandomString(randGen, false));
+                header.setInlineGenCodeDirective(generateRandomString(randGen, false));
+                header.setNestedLevelStartMarker(generateRandomString(randGen, false));
+                header.setNestedLevelEndMarker(generateRandomString(randGen, false));
                 if (count > 0) {
                     int fileListSize = randGen.nextInt(6);
                     for (int i = 0; i < fileListSize; i++) {
