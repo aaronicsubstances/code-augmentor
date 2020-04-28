@@ -1,0 +1,35 @@
+plugins {
+	id 'java'
+    id 'application'
+}
+
+group = "com.aaronicsubstances"
+version = "1.0-SNAPSHOT"
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
+
+application {
+    mainClassName = "com.aaronicsubstances.code.augmentor.app.Main"
+    applicationDefaultJvmArgs = [ '-Dapp.name=' + applicationName ]
+}
+
+dependencies {
+	implementation project(':code-augmentor-core')
+	implementation project(':code-augmentor-ant')
+    
+	implementation 'commons-cli:commons-cli:1.3.1'
+    
+    // use version required by - org.codehaus.groovy:groovy-ant:3.0.3
+	implementation 'org.apache.ant:ant:1.10.7'
+	
+	testImplementation 'org.testng:testng:7.1.0'
+}
+
+test {
+	useTestNG()
+}
