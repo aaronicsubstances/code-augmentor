@@ -5,7 +5,9 @@ import java.nio.charset.Charset;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -100,10 +102,17 @@ public class PreCodeAugmentationGenericTask {
             specAugCodesList.add(new ArrayList<>());
         }
 
+        Set<String> processedSrcPaths = new HashSet<>();
         for (int i = 0; i < relativePaths.size(); i++) {
             String relativePath = relativePaths.get(i);
             File baseDir = baseDirs.get(i);
             File srcFile = new File(baseDir, relativePath);
+            String normalizedSrcPath = srcFile.getCanonicalPath();
+            if (processedSrcPaths.contains(normalizedSrcPath)) {
+                TaskUtils.logVerbose(logAppender, "Processed %s already", srcFile);
+                continue;
+            }
+            processedSrcPaths.add(normalizedSrcPath);
             TaskUtils.logVerbose(logAppender, "Preparing %s", srcFile);
             Instant startInstant = Instant.now();
             String input = TaskUtils.readFile(srcFile, charset);
