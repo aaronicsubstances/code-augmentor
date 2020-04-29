@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -28,7 +29,7 @@ public class ProcessCodeGenericTask {
     }
 
     public interface EvalFunction {
-        Object apply(String function, AugmentingCode augCode, ProcessCodeContext context);
+        Object apply(String function, AugmentingCode augCode, ProcessCodeContext context) throws Exception;
     }
 
     // input properties
@@ -146,6 +147,16 @@ public class ProcessCodeGenericTask {
                 for (Object listItem : (Collection<Object>)result) {
                     GeneratedCode genCode = convertGenCodeItem(listItem);
                     listResult.add(genCode);
+                    // try and mark corresponding aug code as processed.
+                    if (genCode.getId() > 0) {
+                        Optional<AugmentingCode> correspondingAugCode = 
+                            context.getFileAugCodes().getAugmentingCodes().stream()
+                                .filter(x -> x.getId() == genCode.getId())
+                                .findFirst();
+                        if (correspondingAugCode.isPresent()) {
+                            correspondingAugCode.get().setProcessed(true);
+                        }
+                    }
                 }
                 return listResult;
             }
@@ -186,14 +197,16 @@ public class ProcessCodeGenericTask {
             ProcessCodeContext context, List<Throwable> errors) {
         List<Integer> ids = genCodes.stream().map(x -> x.getId())
             .collect(Collectors.toList());
-        if (!ids.stream().allMatch(x -> x > 0)) {
+        // Interpret use of -1 or negatives as intentional and skip
+        // validating negative ids.
+        if (ids.stream().anyMatch(x -> x == 0)) {
             errors.add(createException(context,
                 "At least one generated code id was not set. Found: " +
                     ids, null));
         }
-        else if (ids.stream().distinct().count() < ids.size()) {
+        else if (ids.stream().filter(x -> x > 0).distinct().count() < ids.size()) {
             errors.add(createException(context,
-                "Generated code ids must be unique, but found duplicates: " + ids, null));
+                "Valid generated code ids must be unique, but found duplicates: " + ids, null));
         }
     }
 

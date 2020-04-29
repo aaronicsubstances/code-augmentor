@@ -99,17 +99,16 @@ public class CodeAugmentationGenericTask {
                     augCodeDescriptor.getId(), augCodeDescriptor, srcFile));
                 }
                 else {
+                    // Don't process skipped aug codes.
+                    if (genCode.isSkipped()) {
+                        continue;
+                    }
                     validateContentParts(genCode, augCodeDescriptor, srcFile, allErrors);
                 }
 
                 // as long as there are errors from either previous iterations or
                 // this current one, don't proceed further.
                 if (!allErrors.isEmpty()) {
-                    continue;
-                }
-
-                // Don't process skipped aug codes.
-                if (genCode.isSkipped()) {
                     continue;
                 }
                 
