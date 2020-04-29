@@ -13,7 +13,6 @@ import java.util.function.Supplier;
 
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.AugmentingCodeDescriptor;
-import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.GeneratedCodeDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode.ContentPart;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode;
 import com.aaronicsubstances.code.augmentor.core.models.PreCodeAugmentationResult;
@@ -87,7 +86,6 @@ public class CodeAugmentationGenericTask {
 
             // fetch applicable generated code per aug code descriptor.
             List<GeneratedCode> generatedCodes = new ArrayList<>();
-            List<String> replacementTexts = new ArrayList<>();
             List<int[]> replacementRanges = new ArrayList<>();
             for (CodeSnippetDescriptor snippetDescriptor : sourceFileDescriptor.getCodeSnippets()) {
                 AugmentingCodeDescriptor augCodeDescriptor = 
@@ -96,7 +94,7 @@ public class CodeAugmentationGenericTask {
                     sourceFileDescriptor.getFileId(), augCodeDescriptor.getId());
                 if (genCode == null) {
                     allErrors.add(createException("Could not find generated code with id " + 
-                    augCodeDescriptor.getId(), augCodeDescriptor, srcFile));
+                        augCodeDescriptor.getId(), augCodeDescriptor, srcFile));
                 }
                 else {
                     // Don't process skipped aug codes.
@@ -118,34 +116,33 @@ public class CodeAugmentationGenericTask {
                     genCode);
                 replacementRanges.add(replacementRange);
 
-                // modify content parts to end with newline if necessary.
+                // modify content parts to end with newline if necessary and 
+                // correct split CR-LFs
                 String newline = augCodeDescriptor.getLineSeparator();
                 ContentPart lastContentPart = genCode.getContentParts().get(
                     genCode.getContentParts().size() - 1);
                 lastContentPart.setContent(CodeGenerationResponseProcessor.ensureEndingNewline(
                     lastContentPart.getContent(), newline));
+                CodeGenerationResponseProcessor.repairSplitCrLfs(genCode.getContentParts());
 
                 // format content parts to consititute replacement text if possible.
                 String indent = CodeGenerationResponseProcessor.getEffectiveIndent(
                     augCodeDescriptor, genCode);
-                if (!indent.isEmpty() && !genCode.isDisableAutoIndent()) {            
+                if (!indent.isEmpty()) {
                     CodeGenerationResponseProcessor.indentCode(genCode.getContentParts(), 
                         indent);
                 }
-                String formattedGenCode = genCode.getWholeContent();
-                if (replacementRange == null) {
+                if (CodeGenerationResponseProcessor.shouldWrapInGenCodeDirectives(genCode,
+                        snippetDescriptor.getGeneratedCodeDescriptor())) {
                     // employ default behaviour of ensuring generated code
-                    // occurs within directive markers. 
-                    // disregard inline gen code descriptors.
-                    if (snippetDescriptor.getGeneratedCodeDescriptor() == null ||
-                            snippetDescriptor.getGeneratedCodeDescriptor().isInline()) {
-                        formattedGenCode = CodeGenerationResponseProcessor.wrapInGeneratedCodeDirectives(
-                            formattedGenCode, 
-                            result.getGenCodeStartDirective(), result.getGenCodeEndDirective(),
-                            indent, newline);
-                    }
+                    // occurs within directive markers.
+                    List<ContentPart> updatedContentParts = new ArrayList<>(genCode.getContentParts());
+                    updatedContentParts.add(0, new ContentPart(
+                        indent + result.getGenCodeStartDirective() + newline, false));
+                    updatedContentParts.add(new ContentPart(
+                        indent + result.getGenCodeEndDirective() + newline, false));
+                    genCode.setContentParts(updatedContentParts);
                 }
-                replacementTexts.add(formattedGenCode);
             }
                 
             // don't waste time merging changes if there are errors from previous
@@ -162,43 +159,12 @@ public class CodeAugmentationGenericTask {
             // and try and detect changes.
             boolean changesDetected = false;
             SourceCodeTransformer transformer = new SourceCodeTransformer(sourceCode);
-            for (int i = 0; i < replacementTexts.size(); i++) {
-                String replacementText = replacementTexts.get(i);
+            for (int i = 0; i < generatedCodes.size(); i++) {
+                GeneratedCode genCode = generatedCodes.get(i);
+                String replacementText = genCode.getWholeContent();
                 int[] replacementRange = replacementRanges.get(i);
-                String textToBeReplaced;
-
-                // use replacement range if specified.
-                if (replacementRange != null) {
-                    transformer.addTransform(replacementText, replacementRange[0], replacementRange[1]);
-                    textToBeReplaced = sourceCode.substring(replacementRange[0], replacementRange[1]);
-                }
-                else {
-                    // resort to default behaviour
-                    CodeSnippetDescriptor snippetDescriptor = sourceFileDescriptor.getCodeSnippets().get(i);
-                    GeneratedCodeDescriptor genCodeDescriptor = snippetDescriptor.getGeneratedCodeDescriptor();
-                    if (genCodeDescriptor != null) {
-                        // treat default and inline descriptors differently.
-                        int genCodeStartPos, genCodeEndPos;
-                        if (genCodeDescriptor.isInline()) {
-                            genCodeStartPos = genCodeDescriptor.getStartDirectiveStartPos();
-                            genCodeEndPos = genCodeDescriptor.getEndDirectiveEndPos();
-                        } 
-                        else {
-                            // by default range of generated code excludes directive markers.
-                            // it starts from just after the start directive marker,
-                            // and ends just before the end directive marker.
-                            genCodeStartPos = genCodeDescriptor.getStartDirectiveEndPos();
-                            genCodeEndPos = genCodeDescriptor.getEndDirectiveStartPos();
-                        }
-                        transformer.addTransform(replacementText, genCodeStartPos, genCodeEndPos);
-                        textToBeReplaced = sourceCode.substring(genCodeStartPos, genCodeEndPos);
-                    }
-                    else {
-                        AugmentingCodeDescriptor augCodeDescriptor = snippetDescriptor.getAugmentingCodeDescriptor();
-                        transformer.addTransform(replacementText, augCodeDescriptor.getEndPos());
-                        textToBeReplaced = "";
-                    }
-                }
+                transformer.addTransform(replacementText, replacementRange[0], replacementRange[1]);
+                String textToBeReplaced = sourceCode.substring(replacementRange[0], replacementRange[1]);
                 // check for changes only if we still haven't detected them.
                 if (changesDetected) {
                     // skip this check.
@@ -208,9 +174,8 @@ public class CodeAugmentationGenericTask {
                 }
                 else {
                     // determine whether changes are superficial or significant.
-                    GeneratedCode genCode = generatedCodes.get(i);
                     boolean similar = CodeGenerationResponseProcessor.areTextsSimilar(
-                        textToBeReplaced, replacementText, genCode.getContentParts());
+                        textToBeReplaced, genCode.getContentParts());
                     if (!similar) {
                         changesDetected = true;
                     }

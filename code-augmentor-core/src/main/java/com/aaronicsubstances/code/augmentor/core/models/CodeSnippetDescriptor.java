@@ -10,6 +10,20 @@ public class CodeSnippetDescriptor {
         private int lineNumber;
         private String lineSeparator;
 
+        public AugmentingCodeDescriptor() {
+
+        }
+
+        public AugmentingCodeDescriptor(int id, int startPos, int endPos, 
+                String indent, int lineNumber, String lineSeparator) {
+            this.id = id;
+            this.startPos = startPos;
+            this.endPos = endPos;
+            this.indent = indent;
+            this.lineNumber = lineNumber;
+            this.lineSeparator = lineSeparator;
+        }
+
         public int getId() {
             return id;
         }
@@ -132,6 +146,7 @@ public class CodeSnippetDescriptor {
             this.startDirectiveEndPos = startDirectiveEndPos;
             this.endDirectiveStartPos = endDirectiveStartPos;
             this.endDirectiveEndPos = endDirectiveEndPos;
+            this.inline = inline;
         }
 
         public int getStartDirectiveStartPos() {

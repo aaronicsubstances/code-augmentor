@@ -7,6 +7,7 @@ import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
@@ -240,6 +241,21 @@ public class TaskUtilsTest {
             { Arrays.asList("so", "hi", "hi-1"), "hi", "hi-2" },
             { Arrays.asList(""), "", "-1" },
             { Arrays.asList("sand", "sand-1", "sand-2"), "sand-1", "sand-1-1" }
+        };
+    }
+
+    @Test(dataProvider = "createTestCalcHashData")
+    public void testCalcHash(String str, String expected) throws Exception {
+        String actual = TaskUtils.calcHash(str, StandardCharsets.UTF_8);
+        assertEquals(actual, expected);
+    }
+
+    @DataProvider
+    public Object[][] createTestCalcHashData() {
+        return new Object[][]{
+            { "", "d41d8cd98f00b204e9800998ecf8427e" },
+            { "The quick brown fox jumps over the lazy dog", "9e107d9d372bb6826bd81d3542a419d6" },
+            { "The quick brown fox jumps over the lazy dog.", "e4d909c290d0fb1ca068ffaddf22cbd0" }
         };
     }
 }

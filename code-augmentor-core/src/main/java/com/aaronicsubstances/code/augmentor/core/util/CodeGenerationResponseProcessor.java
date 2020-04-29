@@ -11,7 +11,9 @@ import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.Ge
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode.ContentPart;
 
 public class CodeGenerationResponseProcessor {
-    private static final Pattern NON_NEWLINE_WS_MULTIPLE_REGEX = Pattern.compile("[ \t\f]+");
+    static final String NON_NEWLINE_WS_SINGLE_RGX = "[ \f\t]";
+    private static final Pattern NON_NEWLINE_WS_MULTIPLE_REGEX = Pattern.compile(
+        NON_NEWLINE_WS_SINGLE_RGX + "+");
 
     public static int[] determineReplacementRange(CodeSnippetDescriptor snippetDescriptor, 
             GeneratedCode genCode) {
@@ -24,21 +26,39 @@ public class CodeGenerationResponseProcessor {
             if (genCode.isReplaceGenCodeDirectives() && genCodeDescriptor != null) {
                 replacementRange[1] = genCodeDescriptor.getEndDirectiveEndPos();
             }
-        }                   
+        }
         else if (genCode.isReplaceGenCodeDirectives()) {
             if (genCodeDescriptor != null) {
                 replacementRange = new int[]{ augCodeDescriptor.getEndPos(),
                     genCodeDescriptor.getEndDirectiveEndPos() };
             }
-            else {             
+            else {
                 // resort to empty range positioned at the end of the aug code.   
                 replacementRange = new int[]{ augCodeDescriptor.getEndPos(),
                     augCodeDescriptor.getEndPos() };
             }
         }
         else {
-            // default
-            replacementRange = null;
+            // resort to default behaviour
+            if (genCodeDescriptor != null) {
+                // treat default and inline descriptors differently.
+                if (genCodeDescriptor.isInline()) {
+                    replacementRange = new int[]{ genCodeDescriptor.getStartDirectiveStartPos(),
+                        genCodeDescriptor.getEndDirectiveEndPos() };
+                } 
+                else {
+                    // by default range of generated code excludes directive markers.
+                    // it starts from just after the start directive marker,
+                    // and ends just before the end directive marker.
+                    replacementRange = new int[]{ genCodeDescriptor.getStartDirectiveEndPos(),
+                        genCodeDescriptor.getEndDirectiveStartPos() };
+                }
+            }
+            else {
+                // resort to empty range positioned at the end of the aug code.   
+                replacementRange = new int[]{ augCodeDescriptor.getEndPos(),
+                    augCodeDescriptor.getEndPos() };
+            }
         }
         return replacementRange;
     }
@@ -57,37 +77,50 @@ public class CodeGenerationResponseProcessor {
         return code;
     }
 
+    public static void repairSplitCrLfs(List<ContentPart> contentParts) {
+        for (int i = 0; i < contentParts.size() - 1; i++) {
+            ContentPart curr = contentParts.get(i);
+            if (curr.getContent().endsWith("\r")) {
+                ContentPart next = contentParts.get(i + 1);
+                if (next.getContent().startsWith("\n")) {
+                    // move the \n from next to curr
+                    curr.setContent(curr.getContent() + "\n");
+                    next.setContent(next.getContent().substring(1));
+                }
+            }
+        }
+    }
+
     public static String getEffectiveIndent(AugmentingCodeDescriptor augCodeDescriptor, 
             GeneratedCode genCode) {
-        String indent = genCode.getIndent();
-        if (indent == null) {
-            indent = augCodeDescriptor.getIndent();
+        if (genCode.isDisableAutoIndent()) {
+            return "";
         }
-        return indent;
+        if (!TaskUtils.isEmpty(genCode.getIndent())) {
+            return genCode.getIndent();
+        }
+        return augCodeDescriptor.getIndent();
     }
 
     public static void indentCode(List<ContentPart> contentParts, String indent) {
         for (int i = 0; i < contentParts.size(); i++) {
             ContentPart code = contentParts.get(i);
-            boolean startsNewline = true;
-            if (i > 0) {
-                String prevContent = contentParts.get(i - 1).getContent();
-                if (prevContent.isEmpty()) {
-                    startsNewline = false;
-                }
-                else {
-                    char prevContentLastChar = prevContent.charAt(prevContent.length() - 1);
-                    if (!TaskUtils.isNewLine(prevContentLastChar)) {
-                        startsNewline = false;
-                    }
-                }
+            if (code.getContent().isEmpty()) {
+                continue;
             }
+            boolean startsOnNewline = doesPartBeginOnNewline(contentParts, i);
             List<String> splitCode = TaskUtils.splitIntoLines(code.getContent());
             StringBuilder codeBuffer = new StringBuilder();
             for (int j = 0; j < splitCode.size(); j+=2) {
                 String line = splitCode.get(j);
-                if (j > 0 || startsNewline) {
-                    if (!TaskUtils.isBlank(line)) {
+                if (j > 0 || startsOnNewline) {
+                    // as a policy don't indent empty lines, similar
+                    // to what IDEs do.
+                    // NB: this policy also enables CRLF split across content parts to 
+                    // work automatically without repairing them.
+                    // any change in policy of not indenting empty lines
+                    // must cater for CRLF splits as well.
+                    if (!line.isEmpty()) {
                         codeBuffer.append(indent);
                     }
                 }
@@ -100,66 +133,79 @@ public class CodeGenerationResponseProcessor {
             code.setContent(codeBuffer.toString());
         }
     }
-    
-    public static String wrapInGeneratedCodeDirectives(String code, String genCodeStartDirective,
-            String genCodeEndDirective,
-            String indent, String newline) {
-        return indent + genCodeStartDirective + newline +
-            code +
-            indent + genCodeEndDirective + newline;
-    }
 
-	public static boolean areTextsSimilar(String textToBeReplaced, String replacementText,
-			List<ContentPart> contentParts) {
-        long exactMatchCount = contentParts.stream().filter(x -> x.isExactMatch()).count();
-        if (exactMatchCount == contentParts.size()) {
-            return replacementText.equals(textToBeReplaced);
+	public static boolean shouldWrapInGenCodeDirectives(GeneratedCode genCode,
+			GeneratedCodeDescriptor generatedCodeDescriptor) {
+        if (genCode.isReplaceAugCodeDirectives() || genCode.isReplaceGenCodeDirectives()) {
+            return false;
         }
-        // build regex out of replacement text and match it against all of textToBeReplaced
-        StringBuilder regexBuilder = new StringBuilder();
-        if (exactMatchCount == 0) {
-            appendReplacementTextRegex(regexBuilder, replacementText, true, true);
+        if (generatedCodeDescriptor == null || generatedCodeDescriptor.isInline()) {
+            return true;
         }
-        else {
-            // Else exact matches exist. 
-            // In that case annotate each part with 3 pieces of information: includedInExactMatch,
-            // hasNewlineStart, hasNewlineEnd.
-            for (int i = 0; i < contentParts.size(); i++) {
-                ContentPart part = contentParts.get(i);
-                String content = part.getContent();
-                if (content.isEmpty()) {
-                    continue;
-                }
-                if (!part.isExactMatch()) {
-                    boolean startsNewline = true;
-                    if (i > 0) {
-                        String prevContent = contentParts.get(i - 1).getContent();
-                        char prevContentLastChar = prevContent.charAt(prevContent.length() - 1);
-                        if (!TaskUtils.isNewLine(prevContentLastChar)) {
-                            startsNewline = false;
-                        }
-                    }
-
-                    boolean endsWithNewline = true;
-                    if (i < contentParts.size() - 1) {
-                        char lastContentChar = content.charAt(content.length() - 1);
-                        endsWithNewline = TaskUtils.isNewLine(lastContentChar);
-                    }
-
-                    appendReplacementTextRegex(regexBuilder, content, startsNewline, 
-                        endsWithNewline);
-                }
-                else {
-                    regexBuilder.append(Pattern.quote(content));
-                }
-            }
-        }
-        Pattern regex = Pattern.compile(regexBuilder.toString());
-        boolean similar = regex.matcher(textToBeReplaced).matches();
-        return similar;
+		return false;
 	}
 
-    private static void appendReplacementTextRegex(StringBuilder regexBuilder, String section,
+	public static boolean areTextsSimilar(String textToBeReplaced,
+			List<ContentPart> contentParts) {
+        String similarityRegexStr = buildSimilarityRegex(contentParts);
+        Pattern regex = Pattern.compile(similarityRegexStr);
+        boolean similar = regex.matcher(textToBeReplaced).matches();
+        return similar;
+    }
+    
+    static String buildSimilarityRegex(List<ContentPart> contentParts) {
+        StringBuilder regexBuilder = new StringBuilder();
+        for (int i = 0; i < contentParts.size(); i++) {
+            ContentPart part = contentParts.get(i);
+            String content = part.getContent();
+            if (content.isEmpty()) {
+                continue;
+            }
+            if (part.isExactMatch()) {
+                regexBuilder.append(Pattern.quote(content));
+            }
+            else {
+                boolean startsOnNewline = doesPartBeginOnNewline(contentParts, i);
+                boolean endsWithNewline = doesPartEndWithNewline(contentParts, i);
+
+                appendReplacementTextRegex(regexBuilder, content, startsOnNewline, 
+                    endsWithNewline);
+            }
+        }
+        if (regexBuilder.length() == 0) {
+            regexBuilder.append(NON_NEWLINE_WS_SINGLE_RGX).append("*");
+        }
+        return regexBuilder.toString();
+    }
+
+    static boolean doesPartBeginOnNewline(List<ContentPart> contentParts, int partIndex) {
+        for (int i = partIndex - 1; i >= 0; i--) {
+            String prevContent = contentParts.get(i).getContent();
+            if (prevContent.isEmpty()) {
+                continue;
+            }
+            char prevContentLastChar = prevContent.charAt(prevContent.length() - 1);
+            return TaskUtils.isNewLine(prevContentLastChar);
+        }
+        // getting here means contentParts[partIndex] is the first non-empty content.
+        return true;
+    }
+
+    static boolean doesPartEndWithNewline(List<ContentPart> contentParts, int partIndex) {
+        if (partIndex < contentParts.size() - 1) {
+            String content = contentParts.get(partIndex).getContent();
+            char lastContentChar = content.charAt(content.length() - 1);
+            return TaskUtils.isNewLine(lastContentChar);
+        }
+        // getting here means contentParts[partIndex] is the last content.
+        // treat as end of entire input as equivalent to end of line
+        // whether it actually has a newline ending or not.
+        return true;
+    }
+
+    private static void appendReplacementTextRegex(
+            StringBuilder regexBuilder,
+            String section,
             boolean firstSplitStartsOnNewline, 
             boolean lastSplitEndsWithNewline) {
         // if there are no exact matches concerns, then we can
@@ -175,7 +221,7 @@ public class CodeGenerationResponseProcessor {
             // first line and it does not start with a newline in
             // original larger text.
             if (i > 0 || firstSplitStartsOnNewline) {
-                regexBuilder.append("[ \f\t]*");
+                regexBuilder.append(NON_NEWLINE_WS_SINGLE_RGX).append("*");
             }
             Matcher nnWsMatcher = NON_NEWLINE_WS_MULTIPLE_REGEX.matcher(line);
             int start = 0;
@@ -184,7 +230,7 @@ public class CodeGenerationResponseProcessor {
                 // add substring before ws
                 regexBuilder.append(Pattern.quote(line.substring(start, 
                     nnWsMatcher.start())));
-                regexBuilder.append("[ \f\t]+");
+                regexBuilder.append(NON_NEWLINE_WS_SINGLE_RGX).append("+");
                 start = nnWsMatcher.end();
                 midNnwsTestAdded = true;
             }
@@ -196,11 +242,11 @@ public class CodeGenerationResponseProcessor {
                 // last line and it does not end with a newline in
                 // original larger text. 
                 if (i + 2 < splitText.size() || lastSplitEndsWithNewline) {
-                    regexBuilder.append("[ \f\t]*");
+                    regexBuilder.append(NON_NEWLINE_WS_SINGLE_RGX).append("*");
                 }
             }
             else {
-                // if remainder is empty, then it means the last NNWS test has to
+                // if remainder is empty, then it means the last NNWS test may have to
                 // be modified from 'at least one' to 'zero or more' to serve as a
                 // trailing indent test.
                 if (midNnwsTestAdded) {

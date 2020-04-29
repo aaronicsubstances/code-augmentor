@@ -11,11 +11,11 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.Writer;
+import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -219,8 +219,9 @@ public class TaskUtils {
         MessageDigest md = MessageDigest.getInstance("MD5");
         md.update(binaryContent);
         binaryContent = md.digest();
-        String hash = Base64.getEncoder().encodeToString(binaryContent);
-        return hash;
+        BigInteger bigInteger = new BigInteger(1, binaryContent);
+        int outputLen = binaryContent.length * 2;
+        return String.format("%0" + outputLen + "x", bigInteger);
     }
 
     private static void copyStream(InputStream inStream, OutputStream outStream) throws IOException {

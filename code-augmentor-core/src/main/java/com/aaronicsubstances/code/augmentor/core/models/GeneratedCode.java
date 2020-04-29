@@ -83,6 +83,18 @@ public class GeneratedCode {
         this.contentParts = contentParts;        
     }
 
+    public GeneratedCode(int id, boolean disableAutoIndent, String indent, boolean skipped,
+            boolean replaceAugCodeDirectives, boolean replaceGenCodeDirectives,            
+            List<ContentPart> contentParts) {
+        this.id = id;
+        this.contentParts = contentParts;
+        this.indent = indent;
+        this.skipped = skipped;
+        this.replaceAugCodeDirectives = replaceAugCodeDirectives;
+        this.replaceGenCodeDirectives = replaceGenCodeDirectives;
+        this.disableAutoIndent = disableAutoIndent;
+    }
+
     public int getId() {
         return id;
     }
