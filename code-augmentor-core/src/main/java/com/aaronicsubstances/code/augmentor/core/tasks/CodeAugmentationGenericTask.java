@@ -173,11 +173,16 @@ public class CodeAugmentationGenericTask {
                     // definitely there are no changes then.
                 }
                 else {
-                    // determine whether changes are superficial or significant.
-                    boolean similar = CodeGenerationResponseProcessor.areTextsSimilar(
-                        textToBeReplaced, genCode.getContentParts());
-                    if (!similar) {
+                    if (genCode.getContentParts().stream().allMatch(x -> x.isExactMatch())) {
                         changesDetected = true;
+                    }
+                    else {
+                        // determine whether changes are superficial or significant.
+                        boolean similar = CodeGenerationResponseProcessor.areTextsSimilar(
+                            textToBeReplaced, genCode.getContentParts(), false);
+                        if (!similar) {
+                            changesDetected = true;
+                        }
                     }
                 }
             }

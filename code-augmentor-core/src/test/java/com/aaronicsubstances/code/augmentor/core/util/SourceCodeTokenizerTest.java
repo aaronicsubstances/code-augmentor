@@ -58,9 +58,9 @@ public class SourceCodeTokenizerTest {
 	@DataProvider
 	public Object[][] createTestTokenizeSourceData() {
 		return new Object[][]{
-			{ "sample-code.php", "\r\n", "sample-code.php.json" },
-			{ "sample-code.java", "\r\n", "sample-code.java.json" },
-			{ "sample-code-on-unix.php", "\n", "sample-code-on-unix.php.json" }
+			{ "sample-code.php.txt", "\r\n", "sample-code.php.json" },
+			{ "sample-code.java.txt", "\r\n", "sample-code.java.json" },
+			{ "sample-code-on-unix.php.txt", "\n", "sample-code-on-unix.php.json" }
 		};
 	}
 }

@@ -1,0 +1,46 @@
+[
+    {
+      "content": "ab\f\t\nc\f\fd\r\t\r\n\n\f\n\n\re\r f\r gh \ti\r\nj\r\t\f\r\rkL",
+      "exactMatch": false
+    },
+    {
+      "content": "x\r\fx\n \r x\n",
+      "exactMatch": true
+    },
+    {
+      "content": " ",
+      "exactMatch": false
+    },
+    {
+      "content": "",
+      "exactMatch": false
+    },
+    {
+      "content": "",
+      "exactMatch": true
+    },
+    {
+      "content": "",
+      "exactMatch": true
+    },
+    {
+      "content": "",
+      "exactMatch": true
+    },
+    {
+      "content": "",
+      "exactMatch": false
+    },
+    {
+      "content": "",
+      "exactMatch": true
+    },
+    {
+      "content": "",
+      "exactMatch": false
+    },
+    {
+      "content": "",
+      "exactMatch": true
+    }
+  ]

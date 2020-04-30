@@ -4,9 +4,11 @@ import static org.testng.Assert.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 import com.aaronicsubstances.code.augmentor.core.TestResourceLoader;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor;
@@ -297,25 +299,16 @@ public class CodeGenerationResponseProcessorTest {
 
     @Test(dataProvider = "createTestIndentCodeData")
     @SuppressWarnings("unchecked")
-    public void testIndentCode(int inputPtr, TestArg c, String indent, 
-            TestArg e) {
+    public void testIndentCode(int inputPtr, TestArg c, String indent, TestArg expectedWrapper) {
         List<ContentPart> inputContentParts = (List<ContentPart>) c.value;
-        String expected = (String) e.value;
+        String expected = (String) expectedWrapper.value;
 
         CodeGenerationResponseProcessor.indentCode(inputContentParts, indent);
 
         String actual = new GeneratedCode(inputContentParts).getWholeContent();
         
-        StringBuilder errorMessage = new StringBuilder();
-        errorMessage.append("After split yielded:\n");
-        errorMessage.append(PersistenceUtil.serializeFormattedToJson(inputContentParts));
-        errorMessage.append("\n\nExpectation:\n");
-        errorMessage.append(PersistenceUtil.serializeCompactlyToJson(expected));
-        errorMessage.append("\n\nActual:\n");
-        errorMessage.append(PersistenceUtil.serializeCompactlyToJson(actual));
-        errorMessage.append("\n\n");
-
-        assertEquals(actual, expected, errorMessage.toString());
+        assertEquals(actual, expected, craftErrorMessageInvolvingRandomContentParts(
+            inputContentParts, expected, actual));
     }
 
     @DataProvider
@@ -362,10 +355,9 @@ public class CodeGenerationResponseProcessorTest {
         // case 6.
         indents.add("\t");
         StringBuilder randInput = new StringBuilder();
-        Random randGen = new Random();
         List<String> randChars = new ArrayList<>(Arrays.asList("\r", "\n"));
         for (int i = 0; i < 50; i++) {
-            int j = randGen.nextInt(randChars.size());
+            int j = TestResourceLoader.RAND_GEN.nextInt(randChars.size());
             randInput.append(randChars.get(j));
         }
         inputs.add(randInput.toString());
@@ -376,37 +368,214 @@ public class CodeGenerationResponseProcessorTest {
         randInput = new StringBuilder();
         randChars.addAll(Arrays.asList("\t", " ", "\f", "x"));
         for (int i = 0; i < 50; i++) {
-            int j = randGen.nextInt(randChars.size());
+            int j = TestResourceLoader.RAND_GEN.nextInt(randChars.size());
             randInput.append(randChars.get(j));
         }
         inputs.add(randInput.toString());
         outputs.add(inputs.get(inputs.size() - 1));
 
-        return new IndentCodeDataProvider(10, inputs, indents, outputs);
+        return new IndentCodeTestDataProvider(10, inputs, indents, outputs);
     }
 
-    @Test
-    public void testIndentCodeWithSplitCrLf() {
-        String indent = "\t";
-        List<ContentPart> inputContentParts = Arrays.asList(
-            new ContentPart("amos\r", false), new ContentPart("\nis real.", true)
-        );
-        String expected = "\tamos\r\n\tis real.";
-        
-        CodeGenerationResponseProcessor.indentCode(inputContentParts, indent);
+    @Test(dataProvider = "createTestRepairSplitCrLfsData")
+    public void testRepairSplitCrLfs(List<ContentPart> inputContentParts,
+            List<ContentPart> expected) {
+        CodeGenerationResponseProcessor.repairSplitCrLfs(inputContentParts);
+        assertEquals(inputContentParts, expected);
+    }
 
-        String actual = new GeneratedCode(inputContentParts).getWholeContent();
+    @DataProvider
+    public Object[][] createTestRepairSplitCrLfsData() {
+        return new Object[][]{
+            { Arrays.asList(), Arrays.asList() },
+            { Arrays.asList(new ContentPart("", false)), Arrays.asList(new ContentPart("", false)) },
+            { Arrays.asList(new ContentPart("aab\r", true)), 
+              Arrays.asList(new ContentPart("aab\r", true)) },
+            { Arrays.asList(new ContentPart("aab\r", true), new ContentPart("\ncd", false)), 
+              Arrays.asList(new ContentPart("aab\r\n", true), new ContentPart("cd", false)) },
+            { Arrays.asList(new ContentPart("aab\r", true), new ContentPart("\ncd\r", false),
+                new ContentPart("\nefgh", true), new ContentPart("end", false)), 
+              Arrays.asList(new ContentPart("aab\r\n", true), new ContentPart("cd\r\n", false),
+                new ContentPart("efgh", true), new ContentPart("end", false)) },
+            { Arrays.asList(new ContentPart("aab\r", true), new ContentPart("cd\n", false),
+                new ContentPart("\nefgh\r\n", true), new ContentPart("\rend", false)), 
+              Arrays.asList(new ContentPart("aab\r", true), new ContentPart("cd\n", false),
+                new ContentPart("\nefgh\r\n", true), new ContentPart("\rend", false)) }
+        };
+    }
+
+    @Test(dataProvider = "createTestDoesPartBeginOnNewlineData")
+    public void testDoesPartBeginOnNewline(List<ContentPart> contentParts, int i, boolean expected) {
+        boolean actual = CodeGenerationResponseProcessor.doesPartBeginOnNewline(contentParts, i);
+        assertEquals(actual, expected);
+    }
+
+    @DataProvider
+    public Object[][] createTestDoesPartBeginOnNewlineData() {
+        return new Object[][]{
+            { Arrays.asList(new ContentPart("", false)), 0, false },
+            { Arrays.asList(new ContentPart("abcd", true)), 0, true },
+            { Arrays.asList(new ContentPart("", false),
+                new ContentPart("", true)), 1, false },
+            { Arrays.asList(new ContentPart("abcd", true),
+                new ContentPart("abcd", false)), 1, false },
+            { Arrays.asList(new ContentPart("abcd", true), 
+                new ContentPart("defd", false)), 1, false },
+            { Arrays.asList(new ContentPart("abcd\n", true), 
+                new ContentPart("defd", false)), 0, true },
+            { Arrays.asList(new ContentPart("abcd\r", true), 
+                new ContentPart("defd", false)), 0, true },
+            { Arrays.asList(new ContentPart("", true), new ContentPart("abcd", true), 
+                new ContentPart("defd", false)), 1, true },
+            { Arrays.asList(new ContentPart("abcd\r", true), 
+                new ContentPart("defd", false)), 1, true },
+            { Arrays.asList(new ContentPart("abcd\n", true), 
+                new ContentPart("defd", false)), 1, true },
+            { Arrays.asList(new ContentPart("abcd\r\n", true), new ContentPart("", false),
+                new ContentPart("defd", false)), 1, false },
+            { Arrays.asList(new ContentPart("abcd\r\n", true), new ContentPart("", false),
+                new ContentPart("defd", false)), 2, true },
+            { Arrays.asList(new ContentPart("abcd", true), 
+                new ContentPart("defd\r\n", false)), 1, false },
+            { Arrays.asList(new ContentPart("abcd", true), new ContentPart("", true),
+                new ContentPart("defd\r\n", false)), 2, false }
+        };
+    }
+
+    @Test(dataProvider = "createTestBuildSimilarityRegex")
+    public void testBuildSimilarityRegex(String path, TestArg expectedWrapper) {
+        List<ContentPart> inputContentParts = TestResourceLoader.loadContentParts(path,
+            getClass());
+        String expected = (String) expectedWrapper.value;
+        TestResourceLoader.printTestHeader("testBuildSimilarityRegex", path, expectedWrapper);
+        String actual = CodeGenerationResponseProcessor.buildSimilarityRegex(
+            inputContentParts, false);
+        assertEquals(actual, expected, 
+            craftErrorMessageInvolvingRandomContentParts(inputContentParts, expected, actual));
+    }
+
+    @DataProvider
+    public Object[][] createTestBuildSimilarityRegex() {
+        String anySpace = CodeGenerationResponseProcessor.NON_NEWLINE_WS_SINGLE_RGX + '*';
+        String reqdSpace = CodeGenerationResponseProcessor.NON_NEWLINE_WS_SINGLE_RGX + '+';
+        String expected0 = 
+            anySpace + rgxQ("ab") + anySpace + "\n" +
+            anySpace + rgxQ("c") + reqdSpace + rgxQ("d") + anySpace + "\r" +
+            anySpace + "\r\n" +
+            anySpace + "\n" +
+            anySpace + "\n" +
+            anySpace + "\n" +
+            anySpace + "\r" +
+            anySpace + rgxQ("e") + anySpace + "\r" +
+            anySpace + rgxQ("f") + anySpace + "\r" +
+            anySpace + rgxQ("gh") + reqdSpace + rgxQ("i") + anySpace + "\r\n" +
+            anySpace + rgxQ("j") + anySpace + "\r" +
+            anySpace + "\r" +
+            anySpace + "\r" +
+            anySpace + rgxQ("kL") + rgxQ("x\r\fx\n \r x\n") +
+            anySpace
+            ;
+        String expected1 = 
+            anySpace + "\r" +
+            anySpace + "\n" +
+            anySpace + "\r" +
+            anySpace + "\r\n" +
+            anySpace + "\n" +
+            anySpace + rgxQ("ab") + anySpace + "\r\n" +
+            anySpace + "\r" +
+            anySpace + rgxQ("c") + anySpace + "\n" +
+            anySpace + "\n" +
+            anySpace + "\n" +
+            anySpace + rgxQ("d") + reqdSpace +
+            rgxQ("\r\f\tx\r\t \r\n\r \r\f\r\r\t\n \r  \f\t\nx")
+            ;
+
+        return new Object[][]{
+            { "similarity-test-data-00.json", new TestArg(expected0) },
+            { "similarity-test-data-01.json", new TestArg(expected1) }
+        };
+    }
+
+    @Test(dataProvider = "createTestAreExactTextsSimilarData")
+    @SuppressWarnings("unchecked")
+    public void testAreExactTextsSimilar(int inputPtr, TestArg inputWrapper, TestArg c) {
+        String input = (String) inputWrapper.value;
+        List<ContentPart> inputContentParts = (List<ContentPart>) c.value;
+
+        TestResourceLoader.printTestHeader("testAreExactTextsSimilar", inputPtr, inputWrapper, c);
         
+        boolean actual = CodeGenerationResponseProcessor.areTextsSimilar(input,
+            inputContentParts, false);
+        Map<String, Object> actualDescription = new HashMap<>();
+        actualDescription.put("errorInput", input);
+        assertTrue(actual, craftErrorMessageInvolvingRandomContentParts(
+            inputContentParts, true, actualDescription));
+    }
+
+    @DataProvider
+    public Iterator<Object[]> createTestAreExactTextsSimilarData() {
+        List<String> inputs = new ArrayList<>();
+
+        // case 1-2
+        String input = TestResourceLoader.loadResourceNewlinesNormalized("input-unix.txt", 
+            getClass(), "\n");
+        String output = TestResourceLoader.loadResourceNewlinesNormalized("output-unix.txt", 
+            getClass(), "\n");
+        inputs.add(input);
+        inputs.add(output);
+
+        // case 2-4
+        input = TestResourceLoader.loadResourceNewlinesNormalized("input-win.txt", 
+            getClass(), "\r\n");
+        output = TestResourceLoader.loadResourceNewlinesNormalized("output-win.txt", 
+            getClass(), "\r\n");
+        inputs.add(input);
+        inputs.add(output);
+
+        // add other cases "inline"
+
+        // case 5
+        inputs.add("");
+
+        // case 6
+        inputs.add("\n56");
+
+        // case 7
+        StringBuilder randInput = new StringBuilder();
+        List<String> randChars = new ArrayList<>(Arrays.asList("\r", "\n"));
+        for (int i = 0; i < 50; i++) {
+            int j = TestResourceLoader.RAND_GEN.nextInt(randChars.size());
+            randInput.append(randChars.get(j));
+        }
+        inputs.add(randInput.toString());
+
+        // case 8.
+        randInput = new StringBuilder();
+        randChars.addAll(Arrays.asList("\t", " ", "\f", "x"));
+        for (int i = 0; i < 50; i++) {
+            int j = TestResourceLoader.RAND_GEN.nextInt(randChars.size());
+            randInput.append(randChars.get(j));
+        }
+        inputs.add(randInput.toString());
+
+        return new CodeSimilarityTestDataProvider(10, inputs);
+    }
+
+    private static String craftErrorMessageInvolvingRandomContentParts(List<ContentPart> inputContentParts,
+            Object expected, Object actual) {        
         StringBuilder errorMessage = new StringBuilder();
         errorMessage.append("After split yielded:\n");
-        errorMessage.append(PersistenceUtil.serializeFormattedToJson(inputContentParts));
+        errorMessage.append(TestResourceLoader.GSON_INST.toJson(inputContentParts));
         errorMessage.append("\n\nExpectation:\n");
-        errorMessage.append(PersistenceUtil.serializeCompactlyToJson(expected));
+        errorMessage.append(TestResourceLoader.GSON_INST.toJson(expected));
         errorMessage.append("\n\nActual:\n");
-        errorMessage.append(PersistenceUtil.serializeCompactlyToJson(actual));
+        errorMessage.append(TestResourceLoader.GSON_INST.toJson(actual));
         errorMessage.append("\n\n");
+        return errorMessage.toString();
+    }
 
-        assertEquals(actual, expected, errorMessage.toString());
+    private static String rgxQ(String s) {
+        return Pattern.quote(s);
     }
 
     private static List<ContentPart> buildContentParts(String input, List<int[]> ranges) {
@@ -425,8 +594,16 @@ public class CodeGenerationResponseProcessorTest {
 
     public static class TestArg {
         final Object value;
+
         public TestArg(Object value) {
             this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            // generate a shorter name than Object.toString()
+            return String.format("%s@%x",
+                getClass().getSimpleName(), hashCode());
         }
     }
 }

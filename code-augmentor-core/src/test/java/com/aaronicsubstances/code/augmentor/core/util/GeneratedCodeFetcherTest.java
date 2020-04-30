@@ -11,8 +11,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
+import com.aaronicsubstances.code.augmentor.core.TestResourceLoader;
 import com.aaronicsubstances.code.augmentor.core.models.CodeGenerationResponse;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode;
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileGeneratedCode;
@@ -82,8 +82,6 @@ public class GeneratedCodeFetcherTest {
         List<List<Integer>> allFileAugCodeIds = new ArrayList<>();
         Map<String, GeneratedCode> expectedResults = new HashMap<>();            
         GeneratedCodeFetcher instance = null;
-
-        Random randGen = new Random();
         
         static final int MAX_PER_FILE_AUG_CODE_COUNT = 3;
         static final int MAX_SRC_FILE_DESCRIPTOR_COUNT = 3;
@@ -100,7 +98,7 @@ public class GeneratedCodeFetcherTest {
 
             int srcFileDescriptorCount = 0;
             if (genFileCount > 0) {
-                srcFileDescriptorCount = randGen.nextInt(MAX_SRC_FILE_DESCRIPTOR_COUNT);
+                srcFileDescriptorCount = TestResourceLoader.RAND_GEN.nextInt(MAX_SRC_FILE_DESCRIPTOR_COUNT);
             }
 
             // use this counter to check that implementation doesn't assume
@@ -110,17 +108,17 @@ public class GeneratedCodeFetcherTest {
 
             // randomly dump generated codes into buckets.
             for (int i = 0; i < srcFileDescriptorCount; i++) {
-                int fileId = ++runningCounter + (randGen.nextInt(2));
+                int fileId = ++runningCounter + (TestResourceLoader.RAND_GEN.nextInt(2));
                 fileIds.add(fileId);
 
                 List<Integer> fileAugCodeIds = new ArrayList<>();
                 allFileAugCodeIds.add(fileAugCodeIds);
 
                 // ensure at least 1 aug code section.
-                int augCodeCount = 1 + randGen.nextInt(MAX_PER_FILE_AUG_CODE_COUNT);
+                int augCodeCount = 1 + TestResourceLoader.RAND_GEN.nextInt(MAX_PER_FILE_AUG_CODE_COUNT);
                 for (int j = 0; j < augCodeCount; j++) {
-                    int augCodeId = ++runningCounter + (randGen.nextInt(2));
-                    if (randGen.nextBoolean()) {
+                    int augCodeId = ++runningCounter + (TestResourceLoader.RAND_GEN.nextInt(2));
+                    if (TestResourceLoader.RAND_GEN.nextBoolean()) {
                         augCodeId = -augCodeId;
                     }
                     fileAugCodeIds.add(augCodeId);
@@ -133,7 +131,7 @@ public class GeneratedCodeFetcherTest {
 
                     // get a random CodeGenerationResponse bucket
                     // to dump gen code corresponding to aug code id.
-                    int bucketIndex = randGen.nextInt(genFileCount);
+                    int bucketIndex = TestResourceLoader.RAND_GEN.nextInt(genFileCount);
                     CodeGenerationResponse codeGenRes = buckets.get(bucketIndex);
                     SourceFileGeneratedCode lastGenCodeWrapper = null;
                     if (!codeGenRes.getSourceFileGeneratedCodes().isEmpty()) {
@@ -207,7 +205,7 @@ public class GeneratedCodeFetcherTest {
                 fileAugCodeIds = allFileAugCodeIds.get(indexIntoFileIds);
             }
             else {
-                fileId = randGen.nextInt();
+                fileId = TestResourceLoader.RAND_GEN.nextInt();
             }
 
             // calculate how many times we may have generated miss result,
@@ -222,7 +220,7 @@ public class GeneratedCodeFetcherTest {
                 // ensure augCodeId is invalid by adding
                 // arbitrary positive amount to maximum of
                 // valid aug code ids.
-                augCodeId = randGen.nextInt(30);
+                augCodeId = TestResourceLoader.RAND_GEN.nextInt(30);
                 // max() will fail if collection is empty, hence the check.
                 if (fileAugCodeIds != null && !fileAugCodeIds.isEmpty()) {
                     augCodeId += 1 + fileAugCodeIds.stream()
@@ -233,7 +231,7 @@ public class GeneratedCodeFetcherTest {
             }
             else {
                 // ... if not then we are in find mode.
-                int randIndex = randGen.nextInt(fileAugCodeIds.size());
+                int randIndex = TestResourceLoader.RAND_GEN.nextInt(fileAugCodeIds.size());
                 augCodeId = fileAugCodeIds.get(randIndex);
                 String key = fileId + "|" + augCodeId;
                 expected = expectedResults.get(key);

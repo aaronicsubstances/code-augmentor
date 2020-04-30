@@ -7,8 +7,8 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
 
+import com.aaronicsubstances.code.augmentor.core.TestResourceLoader;
 import com.aaronicsubstances.code.augmentor.core.models.AugmentingCode;
 import com.aaronicsubstances.code.augmentor.core.models.AugmentingCode.Block;
 import com.aaronicsubstances.code.augmentor.core.models.CodeGenerationRequest;
@@ -70,7 +70,6 @@ public class PersistenceTest {
     public Iterator<Object[]> createTestPreCodeAugmentationResultPersistenceData() {
         return new Iterator<Object[]>() {
             int count = 0;
-            Random randGen = new Random();
 
             @Override
             public boolean hasNext() {
@@ -80,27 +79,27 @@ public class PersistenceTest {
             @Override
             public Object[] next() {
                 PreCodeAugmentationResult instance = new PreCodeAugmentationResult(new ArrayList<>());
-                instance.setGenCodeStartDirective(generateRandomString(randGen, false));
-                instance.setGenCodeEndDirective(generateRandomString(randGen, false));
+                instance.setGenCodeStartDirective(generateRandomString(false));
+                instance.setGenCodeEndDirective(generateRandomString(false));
                 if (count > 0) {
-                    int fileDescriptorListSize = randGen.nextInt(5);
+                    int fileDescriptorListSize = TestResourceLoader.RAND_GEN.nextInt(5);
                     for (int i = 0; i < fileDescriptorListSize; i++) {
                         SourceFileDescriptor s = new SourceFileDescriptor(new ArrayList<>());
                         instance.getFileDescriptors().add(s);
 
                         s.setFileId(i);
-                        s.setRelativePath(generateRandomString(randGen, false));
-                        s.setDir(generateRandomString(randGen, false));
-                        s.setContentHash(generateRandomString(randGen, false));
+                        s.setRelativePath(generateRandomString(false));
+                        s.setDir(generateRandomString(false));
+                        s.setContentHash(generateRandomString(false));
 
-                        int snippetListSize = randGen.nextInt(5);
+                        int snippetListSize = TestResourceLoader.RAND_GEN.nextInt(5);
                         for (int j = 0; j < snippetListSize; j++) {
-                            CodeSnippetDescriptor c = generateRandomCodeSnippetDescriptor(randGen);
+                            CodeSnippetDescriptor c = generateRandomCodeSnippetDescriptor();
                             s.getCodeSnippets().add(c);
                         }
                     }
                 }
-                return new Object[]{ count++, instance, randGen.nextBoolean() };
+                return new Object[]{ count++, instance, TestResourceLoader.RAND_GEN.nextBoolean() };
             }
         };
     }
@@ -147,7 +146,6 @@ public class PersistenceTest {
     public Iterator<Object[]> createTestCodeGenerationRequestPersistenceData() {
         return new Iterator<Object[]>() {
             int count = 0;
-            Random randGen = new Random();
 
             @Override
             public boolean hasNext() {
@@ -158,52 +156,53 @@ public class PersistenceTest {
             public Object[] next() {
                 List<SourceFileAugmentingCode> files = new ArrayList<>();
                 CodeGenerationRequest instance = new CodeGenerationRequest(files);
-                instance.setGenCodeStartDirective(generateRandomString(randGen, false));
-                instance.setGenCodeEndDirective(generateRandomString(randGen, false));
-                instance.setSkipCodeStartDirective(generateRandomString(randGen, false));
-                instance.setSkipCodeEndDirective(generateRandomString(randGen, false));
-                instance.setEmbeddedStringDirective(generateRandomString(randGen, false));
-                instance.setEmbeddedJsonDirective(generateRandomString(randGen, false));
-                instance.setAugCodeDirective(generateRandomString(randGen, false));
-                instance.setInlineGenCodeDirective(generateRandomString(randGen, false));
-                instance.setNestedLevelStartMarker(generateRandomString(randGen, false));
-                instance.setNestedLevelEndMarker(generateRandomString(randGen, false));
+                instance.setGenCodeStartDirective(generateRandomString(false));
+                instance.setGenCodeEndDirective(generateRandomString(false));
+                instance.setSkipCodeStartDirective(generateRandomString(false));
+                instance.setSkipCodeEndDirective(generateRandomString(false));
+                instance.setEmbeddedStringDirective(generateRandomString(false));
+                instance.setEmbeddedJsonDirective(generateRandomString(false));
+                instance.setAugCodeDirective(generateRandomString(false));
+                instance.setInlineGenCodeDirective(generateRandomString(false));
+                instance.setNestedLevelStartMarker(generateRandomString(false));
+                instance.setNestedLevelEndMarker(generateRandomString(false));
                 if (count > 0) {
-                    int fileListSize = randGen.nextInt(6);
+                    int fileListSize = TestResourceLoader.RAND_GEN.nextInt(6);
                     for (int i = 0; i < fileListSize; i++) {
                         List<AugmentingCode> codeSnippets = new ArrayList<>();
                         SourceFileAugmentingCode fileAugCode = new SourceFileAugmentingCode(
                             codeSnippets);
                         files.add(fileAugCode);
                         fileAugCode.setFileId(i);
-                        fileAugCode.setDir(generateRandomString(randGen, false));
-                        fileAugCode.setRelativePath(generateRandomString(randGen, false));
+                        fileAugCode.setDir(generateRandomString(false));
+                        fileAugCode.setRelativePath(generateRandomString(false));
 
-                        int codeSnippetListSize = randGen.nextInt(5);
+                        int codeSnippetListSize = TestResourceLoader.RAND_GEN.nextInt(5);
                         for (int j = 0; j < codeSnippetListSize; j++) {
                             AugmentingCode codeSnippet = new AugmentingCode(new ArrayList<>());
                             codeSnippets.add(codeSnippet);
                             
                             codeSnippet.setId(i);
-                            codeSnippet.setDirectiveMarker(generateRandomString(randGen, false));
-                            codeSnippet.setIndent(randomIndent(randGen));
-                            codeSnippet.setLineNumber(randGen.nextInt());
-                            codeSnippet.setNestedLevelNumber(randGen.nextInt());
-                            codeSnippet.setHasNestedLevelStartMarker(randGen.nextBoolean());
-                            codeSnippet.setHasNestedLevelEndMarker(randGen.nextBoolean());
+                            codeSnippet.setDirectiveMarker(generateRandomString(false));
+                            codeSnippet.setIndent(randomIndent());
+                            codeSnippet.setLineNumber(TestResourceLoader.RAND_GEN.nextInt());
+                            codeSnippet.setNestedLevelNumber(TestResourceLoader.RAND_GEN.nextInt());
+                            codeSnippet.setHasNestedLevelStartMarker(TestResourceLoader.RAND_GEN.nextBoolean());
+                            codeSnippet.setHasNestedLevelEndMarker(TestResourceLoader.RAND_GEN.nextBoolean());
                             
-                            int blockCount = randGen.nextInt(5);
+                            int blockCount = TestResourceLoader.RAND_GEN.nextInt(5);
                             for (int k = 0; k < blockCount; k++) {
                                 Block block = new Block();
                                 codeSnippet.getBlocks().add(block);
-                                block.setStringify(randGen.nextBoolean());
-                                block.setJsonify(randGen.nextBoolean());
-                                block.setContent(generateRandomString(randGen, true));
+                                block.setStringify(TestResourceLoader.RAND_GEN.nextBoolean());
+                                block.setJsonify(TestResourceLoader.RAND_GEN.nextBoolean());
+                                block.setContent(generateRandomString(true));
                             }
                         }
                     }
                 }
-                return new Object[]{ count++, instance, randGen.nextBoolean(), randGen.nextBoolean() };
+                return new Object[]{ count++, instance, TestResourceLoader.RAND_GEN.nextBoolean(), 
+                    TestResourceLoader.RAND_GEN.nextBoolean() };
             }
         };
     }
@@ -250,7 +249,6 @@ public class PersistenceTest {
     public Iterator<Object[]> createTestCodeGenerationResponsePersistenceData() {
         return new Iterator<Object[]>() {
             int count = 0;
-            Random randGen = new Random();
 
             @Override
             public boolean hasNext() {
@@ -262,66 +260,68 @@ public class PersistenceTest {
                 List<SourceFileGeneratedCode> files = new ArrayList<>();
                 CodeGenerationResponse instance = new CodeGenerationResponse(files);
                 if (count > 0) {
-                    int fileListSize = randGen.nextInt(5);
+                    int fileListSize = TestResourceLoader.RAND_GEN.nextInt(5);
                     for (int i = 0; i < fileListSize; i++) {
                         List<GeneratedCode> generatedCodeList = new ArrayList<>();
                         SourceFileGeneratedCode file = new SourceFileGeneratedCode(generatedCodeList);
                         files.add(file);
                         file.setFileId(i);
-                        int generatedCodeListSize = randGen.nextInt(5);
+                        int generatedCodeListSize = TestResourceLoader.RAND_GEN.nextInt(5);
                         for (int j = 0; j < generatedCodeListSize; j++) {
                             GeneratedCode generatedCode = new GeneratedCode();
                             generatedCodeList.add(generatedCode);
 
                             generatedCode.setId(j);
-                            generatedCode.setIndent(randomIndent(randGen));
-                            generatedCode.setDisableAutoIndent(randGen.nextBoolean());
-                            generatedCode.setSkipped(randGen.nextBoolean());
-                            generatedCode.setReplaceAugCodeDirectives(randGen.nextBoolean());
-                            generatedCode.setReplaceGenCodeDirectives(randGen.nextBoolean());
+                            generatedCode.setIndent(randomIndent());
+                            generatedCode.setDisableAutoIndent(TestResourceLoader.RAND_GEN.nextBoolean());
+                            generatedCode.setSkipped(TestResourceLoader.RAND_GEN.nextBoolean());
+                            generatedCode.setReplaceAugCodeDirectives(TestResourceLoader.RAND_GEN.nextBoolean());
+                            generatedCode.setReplaceGenCodeDirectives(TestResourceLoader.RAND_GEN.nextBoolean());
 
-                            if (randGen.nextBoolean()) {
+                            if (TestResourceLoader.RAND_GEN.nextBoolean()) {
                                 generatedCode.setContentParts(new ArrayList<>());
-                                int exactMatchRangeSize = randGen.nextInt(6);
+                                int exactMatchRangeSize = TestResourceLoader.RAND_GEN.nextInt(6);
                                 for (int k = 0; k < exactMatchRangeSize; k++) {
-                                    String content = generateRandomString(randGen, true);
-                                    ContentPart part = new ContentPart(content, randGen.nextBoolean());
+                                    String content = generateRandomString(true);
+                                    ContentPart part = new ContentPart(content, 
+                                        TestResourceLoader.RAND_GEN.nextBoolean());
                                     generatedCode.getContentParts().add(part);
                                 }
                             }
                         }
                     }
                 }
-                return new Object[]{ count++, instance, randGen.nextBoolean(), randGen.nextBoolean() };
+                return new Object[]{ count++, instance, TestResourceLoader.RAND_GEN.nextBoolean(), 
+                    TestResourceLoader.RAND_GEN.nextBoolean() };
             }
         };
     }
 
-    static CodeSnippetDescriptor generateRandomCodeSnippetDescriptor(Random randGen) {
+    static CodeSnippetDescriptor generateRandomCodeSnippetDescriptor() {
         CodeSnippetDescriptor c = new CodeSnippetDescriptor();
-        if (randGen.nextBoolean()) {
+        if (TestResourceLoader.RAND_GEN.nextBoolean()) {
             GeneratedCodeDescriptor g = new GeneratedCodeDescriptor();
-            g.setStartDirectiveStartPos(randGen.nextInt(1000));
-            g.setStartDirectiveEndPos(randGen.nextInt(1000));
-            g.setEndDirectiveStartPos(randGen.nextInt(1000));
-            g.setEndDirectiveEndPos(randGen.nextInt(1000));
-            g.setInline(randGen.nextBoolean());
+            g.setStartDirectiveStartPos(TestResourceLoader.RAND_GEN.nextInt(1000));
+            g.setStartDirectiveEndPos(TestResourceLoader.RAND_GEN.nextInt(1000));
+            g.setEndDirectiveStartPos(TestResourceLoader.RAND_GEN.nextInt(1000));
+            g.setEndDirectiveEndPos(TestResourceLoader.RAND_GEN.nextInt(1000));
+            g.setInline(TestResourceLoader.RAND_GEN.nextBoolean());
             c.setGeneratedCodeDescriptor(g);
         }
         AugmentingCodeDescriptor d = new AugmentingCodeDescriptor();
         c.setAugmentingCodeDescriptor(d);
-        d.setStartPos(randGen.nextInt(1000));
-        d.setEndPos(randGen.nextInt(1000));
-        d.setId(randGen.nextInt(200));
-        d.setIndent(randomIndent(randGen));
-        d.setLineNumber(randGen.nextInt());
+        d.setStartPos(TestResourceLoader.RAND_GEN.nextInt(1000));
+        d.setEndPos(TestResourceLoader.RAND_GEN.nextInt(1000));
+        d.setId(TestResourceLoader.RAND_GEN.nextInt(200));
+        d.setIndent(randomIndent());
+        d.setLineNumber(TestResourceLoader.RAND_GEN.nextInt());
         return c;
     }
     
-    static String randomIndent(Random randGen) {
-        if (randGen.nextBoolean()) {
-            if (randGen.nextBoolean()) {
-                int tabCount = randGen.nextInt(4);
+    static String randomIndent() {
+        if (TestResourceLoader.RAND_GEN.nextBoolean()) {
+            if (TestResourceLoader.RAND_GEN.nextBoolean()) {
+                int tabCount = TestResourceLoader.RAND_GEN.nextInt(4);
                 StringBuilder s = new StringBuilder();
                 for (int i = 0; i < tabCount; i++) {
                     s.append("\t");
@@ -329,18 +329,18 @@ public class PersistenceTest {
                 return s.toString();
             }
             else {
-                return generateRandomString(randGen, false);
+                return generateRandomString(false);
             }
         }
         return null;
     }
 
-    static String generateRandomString(Random randGen, boolean includeNewLine) {
-        int length = randGen.nextInt(50);
+    static String generateRandomString(boolean includeNewLine) {
+        int length = TestResourceLoader.RAND_GEN.nextInt(50);
         StringBuilder s = new StringBuilder();
         String chars = "x x x x x x  xxxxxxxxxxxxxxxxxx" + (includeNewLine ? "\n\n\n" : "");
         for (int i = 0; i < length; i++) {
-            int randIndex = randGen.nextInt(chars.length());
+            int randIndex = TestResourceLoader.RAND_GEN.nextInt(chars.length());
             s.append(chars.charAt(randIndex));
         }
         return s.toString();
