@@ -1,9 +1,10 @@
 package com.aaronicsubstances.code.augmentor.core.util;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
-import java.util.regex.Pattern;
 
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode;
@@ -12,8 +13,9 @@ import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.Ge
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode.ContentPart;
 
 public class CodeGenerationResponseProcessor {
-    static final String NON_NEWLINE_WS_CHARS = " \t\f";
-    static final String NON_NEWLINE_WS_SINGLE_RGX = "["+ NON_NEWLINE_WS_CHARS +"]";
+    static final int MATCH_TYPE_ANY_SPACES = 10;
+    static final int MATCH_TYPE_REQUIRE_SPACE = 11;
+    private static final String NON_NEWLINE_WS_CHARS = " \t\f";
 
     public static int[] determineReplacementRange(CodeSnippetDescriptor snippetDescriptor, 
             GeneratedCode genCode) {
@@ -199,20 +201,75 @@ public class CodeGenerationResponseProcessor {
      * Precondition: {@link #repairSplitCrLfs(List)} should have been
      * called on content parts.
      * 
-     * @param textToBeReplaced
-     * @param contentParts
-     * @return true if differences between textToBeReplaced and contentParts are
-     * superficial/insignificant; false if differences are significant.
+     * @param textToBeReplaced text on which similarity test is to be run.
+     * @param contentParts used to construct similarity test to be run.
+     * @param enableLogging used to turn on logging to standard output during testing 
+     * and debugging.
+     * @return a detailed error message if similarity test fails. Else if similarity test
+     * passes, null is the value.
      */
-	public static boolean areTextsSimilar(String textToBeReplaced,
+	public static Map<String, Object> runSimilarityTest(String textToBeReplaced,
 			List<ContentPart> contentParts, boolean enableLogging) {
-        String similarityRegexStr = buildSimilarityRegex(contentParts, enableLogging);
-        Pattern regex = Pattern.compile(similarityRegexStr);
-        boolean similar = regex.matcher(textToBeReplaced).matches();
-        return similar;
+        List<Object> similarityRegex = buildSimilarityRegex(contentParts, enableLogging);
+        int textPtr = 0;
+        for (Object match : similarityRegex) {
+            if (match instanceof String) {
+                String exactMatch = (String) match;
+                String prefix = textToBeReplaced.substring(textPtr,
+                    Math.min(textPtr + exactMatch.length(), textToBeReplaced.length()));
+                if (!exactMatch.equals(prefix)) {
+                    // return error: could not match exact string.
+                    return createSimilarityError(textPtr, false, match, prefix);
+                }
+                textPtr += exactMatch.length();
+            }
+            else {
+                int minPrefixSpaceMatchType = (int) match;
+                int minSpaceReqd = 0;
+                if (minPrefixSpaceMatchType == MATCH_TYPE_REQUIRE_SPACE) {
+                    minSpaceReqd = 1;
+                }
+                else {
+                    assert minPrefixSpaceMatchType == MATCH_TYPE_ANY_SPACES;
+                }
+                int spaceCount = 0;
+                while (textPtr < textToBeReplaced.length()) {
+                    if (!NON_NEWLINE_WS_CHARS.contains("" + textToBeReplaced.charAt(textPtr))) {
+                        break;
+                    }
+                    spaceCount++;
+                    textPtr++;
+                }
+                if (spaceCount < minSpaceReqd) {
+                    // return mismatch error: required space matcher didn't find any space.
+                    String actual = "";
+                    if (textPtr < textToBeReplaced.length()) {
+                        actual = "" + textToBeReplaced.charAt(textPtr);
+                    }
+                    return createSimilarityError(textPtr, false, match, actual);
+                }
+            }
+        }
+        if (textPtr < textToBeReplaced.length()) {
+            // return error: could not match all of some sort.
+            return createSimilarityError(textPtr, true, "", 
+                textToBeReplaced.substring(textPtr));
+        }
+        return null;
     }
 
-    static String buildSimilarityRegex(List<ContentPart> contentParts, boolean enableLogging) {
+    private static Map<String, Object> createSimilarityError(
+            int textPtr, boolean expectedEOF,
+            Object expected, String actual) {            
+        Map<String, Object> error = new HashMap<>();
+        error.put("pos", textPtr);
+        error.put("expectedEOF", expectedEOF);
+        error.put("expected", expected);
+        error.put("actual", actual);
+        return error;
+    }
+
+    static List<Object> buildSimilarityRegex(List<ContentPart> contentParts, boolean enableLogging) {
         /*
          * 3 passes yielding object to be used in completion phase.
          * object props: 
@@ -230,14 +287,11 @@ public class CodeGenerationResponseProcessor {
                 this.type = type;
                 this.value = value;
                 if (type == Tk.TYPE_EXACT_MATCH) {
-                    char firstChar = value.charAt(0);
-                    startsWithNewline = TaskUtils.isNewLine(firstChar);
                     char lastChar = value.charAt(value.length() - 1);
                     endsWithNewline = TaskUtils.isNewLine(lastChar);
                 }
                 else {
-                    startsWithNewline = type == TYPE_NEW_LINE;
-                    endsWithNewline = startsWithNewline;
+                    endsWithNewline = type == TYPE_NEW_LINE;
                 }
             }
 
@@ -248,8 +302,8 @@ public class CodeGenerationResponseProcessor {
 
             final int type;
             final String value;
-            final boolean startsWithNewline;
             final boolean endsWithNewline;
+            boolean applyTrailingIndentBefore = false;
             boolean applyLeadingIndentAfter = false;
 
             @Override
@@ -273,16 +327,16 @@ public class CodeGenerationResponseProcessor {
                 }
                 String formattedValue = PersistenceUtil.serializeCompactlyToJson(value);
                 return "{type=" + typeName + ", value=" + formattedValue +
-                    ", applyLeadingIndentAfter=" + applyLeadingIndentAfter +  
-                    ", startsWithNewline=" + startsWithNewline +
+                    ", applyTrailingIndentBefore=" + applyTrailingIndentBefore + 
+                    ", applyLeadingIndentAfter=" + applyLeadingIndentAfter + 
                     ", endsWithNewline=" + endsWithNewline + "}";
             }
         }
         class AlgContext {
             List<Tk> tokens = new ArrayList<>();
             boolean exactMatchSeen;
-            String applyLeadingIndentAtBOI;
-            String applyTrailingIndentAtEOI;
+            int applyLeadingIndentAtBOI = 0;
+            int applyTrailingIndentAtEOI = 0;
 
             @Override
             public String toString() {
@@ -408,7 +462,7 @@ public class CodeGenerationResponseProcessor {
         while (!algContext.tokens.isEmpty()) {
             if (algContext.tokens.get(0).type == Tk.TYPE_SPACE) {
                 algContext.tokens.remove(0);
-                algContext.applyLeadingIndentAtBOI = "*";
+                algContext.applyLeadingIndentAtBOI = MATCH_TYPE_ANY_SPACES;
             }
             else {
                 break;
@@ -417,7 +471,7 @@ public class CodeGenerationResponseProcessor {
         while (!algContext.tokens.isEmpty()) {
             if (algContext.tokens.get(algContext.tokens.size() - 1).type == Tk.TYPE_SPACE) {
                 algContext.tokens.remove(algContext.tokens.size() - 1);
-                algContext.applyTrailingIndentAtEOI = "*";
+                algContext.applyTrailingIndentAtEOI = MATCH_TYPE_ANY_SPACES;
             }
             else {
                 break;
@@ -456,65 +510,71 @@ public class CodeGenerationResponseProcessor {
 
         /*
          *  phase 3: determine condition for applying indents
-         *     always apply trailing indent before a newline token
          *     if token list is not empty and even has only 1 element:
-         *         if first token is other, 
+         *         if first token is other or newline, 
          *             set applyLeadingIndentAtBOI to optional space
-         *         else if first token is newline
-         *             unset applyLeadingIndentAtBOI since newline trailing indent will
-         *             do same anyway.
          *         else if first token is exact AND applyLeadingIndentAtBOI is
          *              already set due to leading whitespace
-         *              chanage applyLeadingIndentAtBOI to required space.
+         *              change applyLeadingIndentAtBOI to required space.
          *     if token list is not empty and even has only 1 element:
          *          if last token is other or newline
          *              set applyTrailingIndentAtEOI to optional space.
          *         else if last token is exact AND applyTrailingIndentAtEOI is
          *              already set due to trailing whitespace
-         *              chanage applyLeadingIndentAtBOI to required space.
-         *     
+         *              change applyLeadingIndentAtBOI to required space.
+         * 
+         *     if first token is a newline, then don't apply trailing indent before
+         *     (applyLeadingIndentAtBOI caters for that)
+         *     through all tokens except first one
+         *         if token is newline and previous token is other or newline or exact but
+         *         ends with newline, then apply trailing indent before
+         *         NB: including newline type in previous tokens to look out for ensures
+         *             when there's ambiguity in which of trailing or leading to apply,
+         *             trailing gets the precedence. E.g. consective newlines in input.
+         * 
          *     if last token is a newline, then don't apply leading indent afterwards
          *     (applyTrailingIndentATEOI caters for that)
          *     through all tokens except last one
-         *         if newline token is followed by another newline
-         *         then don't apply leading indent afterwards, else apply it
-         *         if exact token has newline ending and is followed by other token,
-         *         also apply leading indent afterwards
+         *         if token is newline or exact but ends with newline, and is
+         *         followed by other token, then apply leading indent afterwards
+         *         NB: followed by newline token could also have made as apply leading indent after
+         *             but that's a duplication of the latter newline's trailing indent before.
          * 
          */
 
         if (!algContext.tokens.isEmpty()) {
             Tk firstToken = algContext.tokens.get(0);
-            if (firstToken.type == Tk.TYPE_OTHER) {
-                algContext.applyLeadingIndentAtBOI = "*";
-            }
-            else if (firstToken.type == Tk.TYPE_NEW_LINE) {
-                algContext.applyLeadingIndentAtBOI = null;
+            if (firstToken.type == Tk.TYPE_OTHER || firstToken.type == Tk.TYPE_NEW_LINE) {
+                algContext.applyLeadingIndentAtBOI = MATCH_TYPE_ANY_SPACES;
             }
             else if (firstToken.type == Tk.TYPE_EXACT_MATCH) {
-                if (algContext.applyLeadingIndentAtBOI != null) {
-                    algContext.applyLeadingIndentAtBOI = "+";
+                if (algContext.applyLeadingIndentAtBOI != 0) {
+                    algContext.applyLeadingIndentAtBOI = MATCH_TYPE_REQUIRE_SPACE;
                 }
             }
         }
         if (!algContext.tokens.isEmpty()) {
             Tk lastToken = algContext.tokens.get(algContext.tokens.size() - 1);
             if (lastToken.type == Tk.TYPE_OTHER || lastToken.type == Tk.TYPE_NEW_LINE) {
-                algContext.applyTrailingIndentAtEOI = "*";
+                algContext.applyTrailingIndentAtEOI = MATCH_TYPE_ANY_SPACES;
             }
             else if (lastToken.type == Tk.TYPE_EXACT_MATCH) {
-                if (algContext.applyTrailingIndentAtEOI != null) {
-                    algContext.applyTrailingIndentAtEOI = "+";
+                if (algContext.applyTrailingIndentAtEOI != 0) {
+                    algContext.applyTrailingIndentAtEOI = MATCH_TYPE_REQUIRE_SPACE;
                 }
+            }
+        }
+        for (tkIndex = 1; tkIndex < algContext.tokens.size(); tkIndex++) {
+            Tk token = algContext.tokens.get(tkIndex);
+            if (token.type == Tk.TYPE_NEW_LINE) {
+                Tk prevToken = algContext.tokens.get(tkIndex - 1);
+                token.applyTrailingIndentBefore = prevToken.type == Tk.TYPE_OTHER ||
+                    prevToken.endsWithNewline;
             }
         }
         for (tkIndex = 0; tkIndex < algContext.tokens.size() - 1; tkIndex++) {
             Tk token = algContext.tokens.get(tkIndex);
-            if (token.type == Tk.TYPE_NEW_LINE) {
-                Tk nextToken = algContext.tokens.get(tkIndex + 1);
-                token.applyLeadingIndentAfter = nextToken.type != Tk.TYPE_NEW_LINE;
-            }
-            else if (token.type == Tk.TYPE_EXACT_MATCH && token.endsWithNewline) {
+            if (token.endsWithNewline) {
                 Tk nextToken = algContext.tokens.get(tkIndex + 1);
                 token.applyLeadingIndentAfter = nextToken.type == Tk.TYPE_OTHER;
             }
@@ -539,37 +599,35 @@ public class CodeGenerationResponseProcessor {
          *        if exactMatchSeen, then leave it empty
          *        else add zero or more non newline whitespace regex to it.
          */
-        StringBuilder regexBuilder = new StringBuilder();
-        if (algContext.applyLeadingIndentAtBOI != null) {
-            regexBuilder.append(NON_NEWLINE_WS_SINGLE_RGX);
-            regexBuilder.append(algContext.applyLeadingIndentAtBOI);
+        List<Object> regexBuilder = new ArrayList<>();
+        if (algContext.applyLeadingIndentAtBOI != 0) {
+            regexBuilder.add(algContext.applyLeadingIndentAtBOI);
         }
-        String anySpaceRgx = NON_NEWLINE_WS_SINGLE_RGX + '*';
         for (Tk token : algContext.tokens) {
             if (token.type == Tk.TYPE_EXACT_MATCH || 
                     token.type == Tk.TYPE_OTHER) {
-                regexBuilder.append(Pattern.quote(token.value));
+                regexBuilder.add(token.value);
             }
             else if (token.type == Tk.TYPE_SPACE) {
-                regexBuilder.append(NON_NEWLINE_WS_SINGLE_RGX).append('+');
+                regexBuilder.add(MATCH_TYPE_REQUIRE_SPACE);
             }
             else {
                 assert token.type == Tk.TYPE_NEW_LINE;
-                regexBuilder.append(anySpaceRgx);
-                // no need quote. already valid regex. and helps with test results.
-                regexBuilder.append(token.value);
+                if (token.applyTrailingIndentBefore) {
+                    regexBuilder.add(MATCH_TYPE_ANY_SPACES);
+                }
+                regexBuilder.add(token.value);
             }
             if (token.applyLeadingIndentAfter) {
-                regexBuilder.append(anySpaceRgx);
+                regexBuilder.add(MATCH_TYPE_ANY_SPACES);
             }
         }
-        if (algContext.applyTrailingIndentAtEOI != null) {
-            regexBuilder.append(NON_NEWLINE_WS_SINGLE_RGX);
-            regexBuilder.append(algContext.applyTrailingIndentAtEOI);
+        if (algContext.applyTrailingIndentAtEOI != 0) {
+            regexBuilder.add(algContext.applyTrailingIndentAtEOI);
         }
-        if (regexBuilder.length() == 0) {
+        if (regexBuilder.isEmpty()) {
             if (!algContext.exactMatchSeen) {
-                regexBuilder.append(anySpaceRgx);
+                regexBuilder.add(MATCH_TYPE_ANY_SPACES);
             }
         }
 
@@ -578,7 +636,7 @@ public class CodeGenerationResponseProcessor {
                 PersistenceUtil.serializeCompactlyToJson(regexBuilder));
         }
 
-        return regexBuilder.toString();
+        return regexBuilder;
     }
 
     private static String fetchContiguousTkVal(List<ContentPart> contentParts, 

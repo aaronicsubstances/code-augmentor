@@ -1,0 +1,66 @@
+[
+    {
+      "content": "\r\t ",
+      "exactMatch": false
+    },
+    {
+      "content": " x\r\r\f\f\t\t\nxx\r\r\r\r\r\t \fx\n\t\r\f \fx\t\fx\f   \t\r ",
+      "exactMatch": true
+    },
+    {
+      "content": "x",
+      "exactMatch": false
+    },
+    {
+      "content": "",
+      "exactMatch": true
+    },
+    {
+      "content": "\t",
+      "exactMatch": true
+    },
+    {
+      "content": "\r \f\t\f\r",
+      "exactMatch": false
+    },
+    {
+      "content": "",
+      "exactMatch": true
+    },
+    {
+      "content": "",
+      "exactMatch": true
+    },
+    {
+      "content": "",
+      "exactMatch": false
+    },
+    {
+      "content": "",
+      "exactMatch": false
+    },
+    {
+      "content": "",
+      "exactMatch": false
+    },
+    {
+      "content": "",
+      "exactMatch": true
+    },
+    {
+      "content": "",
+      "exactMatch": true
+    },
+    {
+      "content": "",
+      "exactMatch": true
+    },
+    {
+      "content": "",
+      "exactMatch": true
+    },
+    {
+      "content": "",
+      "exactMatch": true
+    }
+  ]

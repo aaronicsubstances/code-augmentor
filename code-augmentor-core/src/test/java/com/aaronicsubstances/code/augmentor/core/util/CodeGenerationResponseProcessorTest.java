@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import com.aaronicsubstances.code.augmentor.core.TestResourceLoader;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor;
@@ -443,56 +442,104 @@ public class CodeGenerationResponseProcessorTest {
     }
 
     @Test(dataProvider = "createTestBuildSimilarityRegex")
+    @SuppressWarnings("unchecked")
     public void testBuildSimilarityRegex(String path, TestArg expectedWrapper) {
         List<ContentPart> inputContentParts = TestResourceLoader.loadContentParts(path,
             getClass());
-        String expected = (String) expectedWrapper.value;
+        List<Object> expected = (List<Object>) expectedWrapper.value;
         TestResourceLoader.printTestHeader("testBuildSimilarityRegex", path, expectedWrapper);
-        String actual = CodeGenerationResponseProcessor.buildSimilarityRegex(
-            inputContentParts, false);
+        List<Object> actual = CodeGenerationResponseProcessor.buildSimilarityRegex(
+            inputContentParts, true);
         assertEquals(actual, expected, 
             craftErrorMessageInvolvingRandomContentParts(inputContentParts, expected, actual));
     }
 
     @DataProvider
     public Object[][] createTestBuildSimilarityRegex() {
-        String anySpace = CodeGenerationResponseProcessor.NON_NEWLINE_WS_SINGLE_RGX + '*';
-        String reqdSpace = CodeGenerationResponseProcessor.NON_NEWLINE_WS_SINGLE_RGX + '+';
-        String expected0 = 
-            anySpace + rgxQ("ab") + anySpace + "\n" +
-            anySpace + rgxQ("c") + reqdSpace + rgxQ("d") + anySpace + "\r" +
-            anySpace + "\r\n" +
-            anySpace + "\n" +
-            anySpace + "\n" +
-            anySpace + "\n" +
-            anySpace + "\r" +
-            anySpace + rgxQ("e") + anySpace + "\r" +
-            anySpace + rgxQ("f") + anySpace + "\r" +
-            anySpace + rgxQ("gh") + reqdSpace + rgxQ("i") + anySpace + "\r\n" +
-            anySpace + rgxQ("j") + anySpace + "\r" +
-            anySpace + "\r" +
-            anySpace + "\r" +
-            anySpace + rgxQ("kL") + rgxQ("x\r\fx\n \r x\n") +
+        int anySpace = CodeGenerationResponseProcessor.MATCH_TYPE_ANY_SPACES;
+        int reqdSpace = CodeGenerationResponseProcessor.MATCH_TYPE_REQUIRE_SPACE;
+        List<Object> expected0 = Arrays.asList(
+            anySpace, "ab", anySpace, "\n",
+            anySpace, "c", reqdSpace, "d", anySpace, "\r",
+            anySpace, "\r\n",
+            anySpace, "\n",
+            anySpace, "\n",
+            anySpace, "\n",
+            anySpace, "\r",
+            anySpace, "e", anySpace, "\r",
+            anySpace, "f", anySpace, "\r",
+            anySpace, "gh", reqdSpace, "i", anySpace, "\r\n",
+            anySpace, "j", anySpace, "\r",
+            anySpace, "\r",
+            anySpace, "\r",
+            anySpace, "kL", "x\r\fx\n \r x\n",
             reqdSpace
-            ;
-        String expected1 = 
-            anySpace + "\r" +
-            anySpace + "\n" +
-            anySpace + "\r" +
-            anySpace + "\r\n" +
-            anySpace + "\n" +
-            anySpace + rgxQ("ab") + anySpace + "\r\n" +
-            anySpace + "\r" +
-            anySpace + rgxQ("c") + anySpace + "\n" +
-            anySpace + "\n" +
-            anySpace + "\n" +
-            anySpace + rgxQ("d") + reqdSpace +
-            rgxQ("\r\f\tx\r\t \r\n\r \r\f\r\r\t\n \r  \f\t\nx")
-            ;
+        );
+        List<Object> expected1 = Arrays.asList(
+            anySpace, "\r",
+            anySpace, "\n",
+            anySpace, "\r",
+            anySpace, "\r\n",
+            anySpace, "\n",
+            anySpace, "ab", anySpace, "\r\n",
+            anySpace, "\r",
+            anySpace, "c", anySpace, "\n",
+            anySpace, "\n",
+            anySpace, "\n",
+            anySpace, "d", reqdSpace,
+            "\r\f\tx\r\t \r\n\r \r\f\r\r\t\n \r  \f\t\nx"
+        );
+        List<Object> expected2 = Arrays.asList(
+            anySpace, "\r",
+            anySpace, "\r",
+            anySpace, "x", anySpace, "\r",
+            anySpace, "y", anySpace, "\r",
+            anySpace, "\r",
+            anySpace, "\r",
+            anySpace, "z", reqdSpace,
+            "\f",
+            "  \r\rx\nx \n\n  \r\n\r\nx x\f\f\f \nxx x\rx\nx\t"
+        );
+        List<Object> expected3 = Arrays.asList(
+            anySpace, "\n",
+            anySpace, "\n",
+            anySpace, "x", reqdSpace, "x", anySpace, "\n",
+            anySpace, "\r",
+            anySpace, "\r",
+            anySpace, "\n",
+            anySpace, "\n",
+            anySpace, "\n",
+            anySpace, "\n",
+            anySpace, "q", anySpace, "\r\n",
+            " \t\r\t \f\f\r\r\t x\n\r",
+            "\r\r\n",
+            anySpace, "x", anySpace, "\n",
+            reqdSpace, "\r"
+        );
+        List<Object> expected4 = Arrays.asList(
+            anySpace, "\r",
+            reqdSpace, " x\r\r\f\f\t\t\nxx\r\r\r\r\r\t \fx\n\t\r\f \fx\t\fx\f   \t\r \r",
+            "x", "\t\r",
+            anySpace, "\r",
+            anySpace, "\r",
+            anySpace
+        );
+        List<Object> expected5 = Arrays.asList(
+            anySpace, "\r",
+            reqdSpace, " x\r\r\f\f\t\t\nxx\r\r\r\r\r\t \fx\n\t\r\f \fx\t\fx\f   \t\r ",
+            "x", "\t",
+            "\r",
+            anySpace, "\r",
+            anySpace
+        );
 
         return new Object[][]{
             { "similarity-test-data-00.json", new TestArg(expected0) },
-            { "similarity-test-data-01.json", new TestArg(expected1) }
+            { "similarity-test-data-01.json", new TestArg(expected1) },
+            { "similarity-test-data-02.json", new TestArg(expected2) },
+            { "similarity-test-data-03.json", new TestArg(expected3) },
+            { "similarity-test-data-04.json", new TestArg(expected4) },
+            { "similarity-test-data-05.json", new TestArg(expected5) }
         };
     }
 
@@ -502,14 +549,17 @@ public class CodeGenerationResponseProcessorTest {
         String input = (String) inputWrapper.value;
         List<ContentPart> inputContentParts = (List<ContentPart>) c.value;
 
-        TestResourceLoader.printTestHeader("testAreExactTextsSimilar", inputPtr, inputWrapper, c);
+        //TestResourceLoader.printTestHeader("testAreExactTextsSimilar", inputPtr, inputWrapper, c);
         
-        boolean actual = CodeGenerationResponseProcessor.areTextsSimilar(input,
+        Map<String, Object> actual = CodeGenerationResponseProcessor.runSimilarityTest(input,
             inputContentParts, false);
         Map<String, Object> actualDescription = new HashMap<>();
+        if (actual != null) {
+            actualDescription.putAll(actual);
+        }
         actualDescription.put("errorInput", input);
-        assertTrue(actual, craftErrorMessageInvolvingRandomContentParts(
-            inputContentParts, true, actualDescription));
+        assertNull(actual, craftErrorMessageInvolvingRandomContentParts(
+            inputContentParts, null, actualDescription));
     }
 
     @DataProvider
@@ -517,7 +567,7 @@ public class CodeGenerationResponseProcessorTest {
         List<String> inputs = new ArrayList<>();
 
         // case 1-2
-        String input = TestResourceLoader.loadResourceNewlinesNormalized("input-unix.txt", 
+        /*String input = TestResourceLoader.loadResourceNewlinesNormalized("input-unix.txt", 
             getClass(), "\n");
         String output = TestResourceLoader.loadResourceNewlinesNormalized("output-unix.txt", 
             getClass(), "\n");
@@ -530,7 +580,7 @@ public class CodeGenerationResponseProcessorTest {
         output = TestResourceLoader.loadResourceNewlinesNormalized("output-win.txt", 
             getClass(), "\r\n");
         inputs.add(input);
-        inputs.add(output);
+        inputs.add(output);*/
 
         // add other cases "inline"
 
@@ -558,7 +608,54 @@ public class CodeGenerationResponseProcessorTest {
         }
         inputs.add(randInput.toString());
 
-        return new CodeSimilarityTestDataProvider(10, inputs);
+        return new CodeSimilarityTestDataProvider(0, inputs);
+    }
+
+    @Test(dataProvider = "createTestAreTextsSimilarData")
+    @SuppressWarnings("unchecked")
+    public void testAreTextsSimilar(TestArg textArg, TestArg c, boolean expected) {
+        String text = (String) textArg.value;
+        List<ContentPart> contentParts = (List<ContentPart>) c.value;
+        Map<String, Object> actual = CodeGenerationResponseProcessor.runSimilarityTest(
+            text, contentParts, false);
+        if (expected == true) {
+            assertNull(actual, craftErrorMessageInvolvingRandomContentParts(
+                contentParts, null, actual));
+        }
+        else {
+            assertNotNull(actual);
+        }
+    }
+
+    @DataProvider
+    public Object[][] createTestAreTextsSimilarData() {
+        String inputWin = TestResourceLoader.loadResourceNewlinesNormalized(
+            "input-win.txt", getClass(), "\r\n");
+        TestArg testWinInput = new TestArg(inputWin);
+
+        // applies all rules except rule 1-4, 6
+        String text0 = TestResourceLoader.loadResourceNewlinesNormalized(
+            "similarity-test-input-00.txt", getClass(), "\r\n");
+        List<ContentPart> contentParts0 = buildContentParts(text0, Arrays.asList(
+            new int[]{ 0, 2204 },
+            new int[]{ 2204, 6060, 1 },
+            new int[]{ 6060, 6973 },
+            new int[]{ 6973, 7115, 1 },
+            new int[]{ 7115 }
+        ));
+
+        // applies rules 1a, 2a, 5
+        String text1 = TestResourceLoader.loadResourceNewlinesNormalized(
+            "similarity-test-input-01.txt", getClass(), "\r\n");
+        List<ContentPart> contentParts1 = buildContentParts(text1, Arrays.asList(
+            new int[]{ 0, 6973 },
+            new int[]{ 6973, 7115, 1 },
+            new int[]{ 7115 }
+        ));
+        return new Object[][]{
+            { testWinInput, new TestArg(contentParts0), true },
+            //{ testWinInput, new TestArg(contentParts1), true }
+        };
     }
 
     private static String craftErrorMessageInvolvingRandomContentParts(List<ContentPart> inputContentParts,
@@ -574,14 +671,17 @@ public class CodeGenerationResponseProcessorTest {
         return errorMessage.toString();
     }
 
-    private static String rgxQ(String s) {
-        return Pattern.quote(s);
-    }
-
     private static List<ContentPart> buildContentParts(String input, List<int[]> ranges) {
         List<ContentPart> contentParts = new ArrayList<>();
         for (int[] range : ranges) {
-            int startIdx = range[0], endIdx = range[1];
+            int startIdx = 0;
+            if (range.length > 0) {
+                startIdx = range[0];
+            }
+            int endIdx = input.length();
+            if (range.length > 1) {
+                endIdx = range[1];
+            }
             boolean exactMatch = false;
             if (range.length > 2) {
                 exactMatch = range[2] != 0;
@@ -589,6 +689,7 @@ public class CodeGenerationResponseProcessorTest {
             String s = input.substring(startIdx, endIdx);
             contentParts.add(new ContentPart(s, exactMatch));
         }
+        assertEquals(new GeneratedCode(contentParts).getWholeContent(), input);
         return contentParts;
     }
 

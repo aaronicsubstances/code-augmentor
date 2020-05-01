@@ -178,11 +178,8 @@ public class CodeAugmentationGenericTask {
                     }
                     else {
                         // determine whether changes are superficial or significant.
-                        boolean similar = CodeGenerationResponseProcessor.areTextsSimilar(
-                            textToBeReplaced, genCode.getContentParts(), false);
-                        if (!similar) {
-                            changesDetected = true;
-                        }
+                        changesDetected = CodeGenerationResponseProcessor.runSimilarityTest(
+                            textToBeReplaced, genCode.getContentParts(), false) != null;
                     }
                 }
             }
