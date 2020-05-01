@@ -473,7 +473,7 @@ public class CodeGenerationResponseProcessorTest {
             anySpace + "\r" +
             anySpace + "\r" +
             anySpace + rgxQ("kL") + rgxQ("x\r\fx\n \r x\n") +
-            anySpace
+            reqdSpace
             ;
         String expected1 = 
             anySpace + "\r" +

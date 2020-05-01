@@ -102,6 +102,17 @@ public class CodeGenerationResponseProcessor {
         return augCodeDescriptor.getIndent();
     }
 
+	public static boolean shouldWrapInGenCodeDirectives(GeneratedCode genCode,
+			GeneratedCodeDescriptor generatedCodeDescriptor) {
+        if (genCode.isReplaceAugCodeDirectives() || genCode.isReplaceGenCodeDirectives()) {
+            return false;
+        }
+        if (generatedCodeDescriptor == null || generatedCodeDescriptor.isInline()) {
+            return true;
+        }
+		return false;
+	}
+
     /**
      * Modified content parts in place to insert indents before each occurring line.
      * <p>
@@ -139,44 +150,6 @@ public class CodeGenerationResponseProcessor {
         }
     }
 
-	public static boolean shouldWrapInGenCodeDirectives(GeneratedCode genCode,
-			GeneratedCodeDescriptor generatedCodeDescriptor) {
-        if (genCode.isReplaceAugCodeDirectives() || genCode.isReplaceGenCodeDirectives()) {
-            return false;
-        }
-        if (generatedCodeDescriptor == null || generatedCodeDescriptor.isInline()) {
-            return true;
-        }
-		return false;
-	}
-
-    /**
-     * Compares a string against the string resulting from concatenating
-     * a list of content parts.
-     * <p>
-     * Outside of exact content parts, the rest are turned into regular 
-     * expressions in which 
-     *  <ul>
-     *    <li>Leading and trailing whitespace of lines can be completely removed.</li>
-     *    <li>Other whitespace inside lines are treated as collapsible to a 
-     *          single space character.</li>
-     *  </ul>
-     * Precondition: {@link #repairSplitCrLfs(List)} should have been
-     * called on content parts.
-     * 
-     * @param textToBeReplaced
-     * @param contentParts
-     * @return true if differences between textToBeReplaced and contentParts are
-     * superficial/insignificant; false if differences are significant.
-     */
-	public static boolean areTextsSimilar(String textToBeReplaced,
-			List<ContentPart> contentParts, boolean enableLogging) {
-        String similarityRegexStr = buildSimilarityRegex(contentParts, enableLogging);
-        Pattern regex = Pattern.compile(similarityRegexStr);
-        boolean similar = regex.matcher(textToBeReplaced).matches();
-        return similar;
-    }
-
     static boolean doesPartBeginOnNewline(List<ContentPart> contentParts, int partIndex) {
         if (contentParts.get(partIndex).getContent().isEmpty()) {
             return false;
@@ -193,18 +166,64 @@ public class CodeGenerationResponseProcessor {
         return true;
     }
 
+    /**
+     * Compares a string against the whole string of content parts
+     * for similarity, by treating certain non newline spaces inside 
+     * the content parts as insignificant.
+     * 
+     * <p>
+     * The rules involve either completely removing a contiguous space ("removed" for short),
+     * or reducing a contiguous space to a single space ("reduced" for short) inside
+     * non-exact content parts. Every contiguous space inside an exact content part cannot be
+     * removed or reduced at all.
+     * <p>
+     * By default,
+     *  <ul>
+     *    <li>Leading space of lines or a contiguous space which begins the entire
+     *        content part list are removed.</li>
+     *    <li>Trailing space of lines or a contiguous space which ends the entire
+     *        content part list are removed.</li>
+     *    <li>Any contiguous space inside lines (ie surrounded on both sides by 
+     *        non-newline characters) are reduced.</li>
+     *  </ul>
+     * When exact content parts are present, the following exceptions apply:
+     *  <ul>
+     *    <li>any contiguous space immediately followed by an exact content part
+     *        is not removed, but reduced.</li>
+     *    <li>any contiguous space which ends the entire content part list and
+     *        immediately follows an exact content part is not removed, but reduced.</li>
+     *    <li>if an exact content part does not end with a newline, then any
+     *        contiguous space immediately following it is not removed, but reduced.</li>
+     *  </ul>
+     * 
+     * Precondition: {@link #repairSplitCrLfs(List)} should have been
+     * called on content parts.
+     * 
+     * @param textToBeReplaced
+     * @param contentParts
+     * @return true if differences between textToBeReplaced and contentParts are
+     * superficial/insignificant; false if differences are significant.
+     */
+	public static boolean areTextsSimilar(String textToBeReplaced,
+			List<ContentPart> contentParts, boolean enableLogging) {
+        String similarityRegexStr = buildSimilarityRegex(contentParts, enableLogging);
+        Pattern regex = Pattern.compile(similarityRegexStr);
+        boolean similar = regex.matcher(textToBeReplaced).matches();
+        return similar;
+    }
+
     static String buildSimilarityRegex(List<ContentPart> contentParts, boolean enableLogging) {
         /*
          * 3 passes yielding object to be used in completion phase.
          * object props: 
          *  - list of tokens
          *  - exactMatchSeen: bool
-         *  - applyLeadingIndentAtBeginningOfInput: bool
-         *  - applyLeadingIndentAtEndOfInput: bool
+         *  - applyLeadingIndentAtBeginningOfInput: String
+         *  - applyLeadingIndentAtEndOfInput: String
          * token props:
          *  - type: exact match, ws, newline, other
          *  - value: string, not empty.
-         *  - applyLeadingIndent: bool
+         *  - applyLeadingIndentAfter: bool
          */
         class Tk {
             public Tk(int type, String value) {
@@ -231,7 +250,7 @@ public class CodeGenerationResponseProcessor {
             final String value;
             final boolean startsWithNewline;
             final boolean endsWithNewline;
-            boolean applyLeadingIndent = false;
+            boolean applyLeadingIndentAfter = false;
 
             @Override
             public String toString() {
@@ -254,7 +273,7 @@ public class CodeGenerationResponseProcessor {
                 }
                 String formattedValue = PersistenceUtil.serializeCompactlyToJson(value);
                 return "{type=" + typeName + ", value=" + formattedValue +
-                    ", applyLeadingIndent=" + applyLeadingIndent +  
+                    ", applyLeadingIndentAfter=" + applyLeadingIndentAfter +  
                     ", startsWithNewline=" + startsWithNewline +
                     ", endsWithNewline=" + endsWithNewline + "}";
             }
@@ -379,7 +398,7 @@ public class CodeGenerationResponseProcessor {
          *     if any trailing whitespace tokens are found
          *         set applyTrailingIndentAtEOI to optional space and remove them
          *     through all tokens except first and last.
-         *         keep or remove whitespace tokens as we go along according to the ff:
+         *         remove whitespace tokens as we go along according to the ff:
          *             if preceding or following token is exact, mark as insignificant
          *               only if following token is not exact and preceding token ends with
          *                   newline.
@@ -437,28 +456,30 @@ public class CodeGenerationResponseProcessor {
 
         /*
          *  phase 3: determine condition for applying indents
-         *     if first token is a newline, don't apply trailing indent 
-         *     (applyLeadingIndentAtBOI caters for that)
+         *     always apply trailing indent before a newline token
          *     if token list is not empty and even has only 1 element:
          *         if first token is other, 
          *             set applyLeadingIndentAtBOI to optional space
+         *         else if first token is newline
+         *             unset applyLeadingIndentAtBOI since newline trailing indent will
+         *             do same anyway.
          *         else if first token is exact AND applyLeadingIndentAtBOI is
          *              already set due to leading whitespace
          *              chanage applyLeadingIndentAtBOI to required space.
          *     if token list is not empty and even has only 1 element:
-         *          if last token is other or ends with newline (ie newilne or exact may be) 
+         *          if last token is other or newline
          *              set applyTrailingIndentAtEOI to optional space.
-         *         else if last token is exact w/o newline ending AND applyTrailingIndentAtEOI is
+         *         else if last token is exact AND applyTrailingIndentAtEOI is
          *              already set due to trailing whitespace
          *              chanage applyLeadingIndentAtBOI to required space.
          *     
-         *     if last token is a newline, then don't apply leading indent
+         *     if last token is a newline, then don't apply leading indent afterwards
          *     (applyTrailingIndentATEOI caters for that)
          *     through all tokens except last one
          *         if newline token is followed by another newline
-         *         then don't apply leading indent, else apply it
+         *         then don't apply leading indent afterwards, else apply it
          *         if exact token has newline ending and is followed by other token,
-         *         also apply leading indent
+         *         also apply leading indent afterwards
          * 
          */
 
@@ -467,9 +488,13 @@ public class CodeGenerationResponseProcessor {
             if (firstToken.type == Tk.TYPE_OTHER) {
                 algContext.applyLeadingIndentAtBOI = "*";
             }
-            else if (firstToken.type == Tk.TYPE_EXACT_MATCH &&
-                    algContext.applyLeadingIndentAtBOI != null) {
-                algContext.applyLeadingIndentAtBOI = "+";
+            else if (firstToken.type == Tk.TYPE_NEW_LINE) {
+                algContext.applyLeadingIndentAtBOI = null;
+            }
+            else if (firstToken.type == Tk.TYPE_EXACT_MATCH) {
+                if (algContext.applyLeadingIndentAtBOI != null) {
+                    algContext.applyLeadingIndentAtBOI = "+";
+                }
             }
         }
         if (!algContext.tokens.isEmpty()) {
@@ -478,10 +503,7 @@ public class CodeGenerationResponseProcessor {
                 algContext.applyTrailingIndentAtEOI = "*";
             }
             else if (lastToken.type == Tk.TYPE_EXACT_MATCH) {
-                if (lastToken.endsWithNewline) {
-                    algContext.applyTrailingIndentAtEOI = "*";
-                }
-                else if (algContext.applyTrailingIndentAtEOI != null) {
+                if (algContext.applyTrailingIndentAtEOI != null) {
                     algContext.applyTrailingIndentAtEOI = "+";
                 }
             }
@@ -490,11 +512,11 @@ public class CodeGenerationResponseProcessor {
             Tk token = algContext.tokens.get(tkIndex);
             if (token.type == Tk.TYPE_NEW_LINE) {
                 Tk nextToken = algContext.tokens.get(tkIndex + 1);
-                token.applyLeadingIndent = nextToken.type != Tk.TYPE_NEW_LINE;
+                token.applyLeadingIndentAfter = nextToken.type != Tk.TYPE_NEW_LINE;
             }
-            if (token.type == Tk.TYPE_EXACT_MATCH && token.endsWithNewline) {
+            else if (token.type == Tk.TYPE_EXACT_MATCH && token.endsWithNewline) {
                 Tk nextToken = algContext.tokens.get(tkIndex + 1);
-                token.applyLeadingIndent = nextToken.type == Tk.TYPE_OTHER;
+                token.applyLeadingIndentAfter = nextToken.type == Tk.TYPE_OTHER;
             }
         }
 
@@ -511,18 +533,18 @@ public class CodeGenerationResponseProcessor {
          *      if newline
          *           append zero or more non newline whitespace regex 
          *           quote and append newline to regex builder
-         *           if applyLeadingIndent, append zero or more non newline whitespace regex
+         *      if applyLeadingIndentAfter, append zero or more non newline whitespace regex
          * 3. if applyTrailingIndentAtEOI is set, use it to append non newline whitespace regex
          * 4. if regex builder is empty at this stage,
          *        if exactMatchSeen, then leave it empty
          *        else add zero or more non newline whitespace regex to it.
          */
         StringBuilder regexBuilder = new StringBuilder();
-        String anySpaceRgx = NON_NEWLINE_WS_SINGLE_RGX + '*';
         if (algContext.applyLeadingIndentAtBOI != null) {
             regexBuilder.append(NON_NEWLINE_WS_SINGLE_RGX);
             regexBuilder.append(algContext.applyLeadingIndentAtBOI);
         }
+        String anySpaceRgx = NON_NEWLINE_WS_SINGLE_RGX + '*';
         for (Tk token : algContext.tokens) {
             if (token.type == Tk.TYPE_EXACT_MATCH || 
                     token.type == Tk.TYPE_OTHER) {
@@ -537,7 +559,7 @@ public class CodeGenerationResponseProcessor {
                 // no need quote. already valid regex. and helps with test results.
                 regexBuilder.append(token.value);
             }
-            if (token.applyLeadingIndent) {
+            if (token.applyLeadingIndentAfter) {
                 regexBuilder.append(anySpaceRgx);
             }
         }
@@ -568,13 +590,13 @@ public class CodeGenerationResponseProcessor {
             String content = part.getContent();
             int j = 0;
             if (!contentIndexUsed) {
-                assert !part.isExactMatch();
                 contentIndexUsed = true;
                 j = nextIndices[1];
                 // assert
                 char validChar = content.charAt(j);
                 assert condition.test(validChar): "Received position invalid with supplied " +
                         " test conditon at part " + nextIndices[0] + ", content char " + j;
+                assert !part.isExactMatch();
                 tkVal.append(validChar);
                 j++;
                 nextIndices[1] = 0;
