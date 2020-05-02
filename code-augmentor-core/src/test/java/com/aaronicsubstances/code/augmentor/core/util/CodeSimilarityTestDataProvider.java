@@ -3,9 +3,9 @@ package com.aaronicsubstances.code.augmentor.core.util;
 import java.util.Iterator;
 import java.util.List;
 
+import com.aaronicsubstances.code.augmentor.core.TestArg;
 import com.aaronicsubstances.code.augmentor.core.TestResourceLoader;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode.ContentPart;
-import com.aaronicsubstances.code.augmentor.core.util.CodeGenerationResponseProcessorTest.TestArg;
 
 public class CodeSimilarityTestDataProvider implements Iterator<Object[]> {
     private final int maxCount;
@@ -29,7 +29,7 @@ public class CodeSimilarityTestDataProvider implements Iterator<Object[]> {
         String input = inputs.get(inputPtr);
         List<ContentPart> contentParts = TestResourceLoader.generateRandomContentPartList(input);
         // set test data before updating counters.
-        Object[] testData = { inputPtr, new TestArg(input), new TestArg(contentParts) };
+        Object[] testData = { inputPtr, new TestArg<>(input), new TestArg<>(contentParts) };
         count++;
         if (count >= maxCount) {
             inputPtr++;

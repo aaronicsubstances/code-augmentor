@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import com.aaronicsubstances.code.augmentor.core.TestArg;
 import com.aaronicsubstances.code.augmentor.core.TestResourceLoader;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode;
@@ -297,10 +298,10 @@ public class CodeGenerationResponseProcessorTest {
     }
 
     @Test(dataProvider = "createTestIndentCodeData")
-    @SuppressWarnings("unchecked")
-    public void testIndentCode(int inputPtr, TestArg c, String indent, TestArg expectedWrapper) {
-        List<ContentPart> inputContentParts = (List<ContentPart>) c.value;
-        String expected = (String) expectedWrapper.value;
+    public void testIndentCode(int inputPtr, TestArg<List<ContentPart>> c, 
+            String indent, TestArg<String> expectedWrapper) {
+        List<ContentPart> inputContentParts = c.value;
+        String expected = expectedWrapper.value;
 
         CodeGenerationResponseProcessor.indentCode(inputContentParts, indent);
 
@@ -442,11 +443,10 @@ public class CodeGenerationResponseProcessorTest {
     }
 
     @Test(dataProvider = "createTestBuildSimilarityRegex")
-    @SuppressWarnings("unchecked")
-    public void testBuildSimilarityRegex(String path, TestArg expectedWrapper) {
+    public void testBuildSimilarityRegex(String path, TestArg<List<Object>> expectedWrapper) {
         List<ContentPart> inputContentParts = TestResourceLoader.loadContentParts(path,
             getClass());
-        List<Object> expected = (List<Object>) expectedWrapper.value;
+        List<Object> expected = expectedWrapper.value;
         TestResourceLoader.printTestHeader("testBuildSimilarityRegex", path, expectedWrapper);
         List<Object> actual = CodeGenerationResponseProcessor.buildSimilarityRegex(
             inputContentParts, true);
@@ -534,20 +534,20 @@ public class CodeGenerationResponseProcessorTest {
         );
 
         return new Object[][]{
-            { "similarity-test-data-00.json", new TestArg(expected0) },
-            { "similarity-test-data-01.json", new TestArg(expected1) },
-            { "similarity-test-data-02.json", new TestArg(expected2) },
-            { "similarity-test-data-03.json", new TestArg(expected3) },
-            { "similarity-test-data-04.json", new TestArg(expected4) },
-            { "similarity-test-data-05.json", new TestArg(expected5) }
+            { "similarity-test-data-00.json", new TestArg<>(expected0) },
+            { "similarity-test-data-01.json", new TestArg<>(expected1) },
+            { "similarity-test-data-02.json", new TestArg<>(expected2) },
+            { "similarity-test-data-03.json", new TestArg<>(expected3) },
+            { "similarity-test-data-04.json", new TestArg<>(expected4) },
+            { "similarity-test-data-05.json", new TestArg<>(expected5) }
         };
     }
 
     @Test(dataProvider = "createTestAreExactTextsSimilarData")
-    @SuppressWarnings("unchecked")
-    public void testAreExactTextsSimilar(int inputPtr, TestArg inputWrapper, TestArg c) {
+    public void testAreExactTextsSimilar(int inputPtr, TestArg<String> inputWrapper, 
+            TestArg<List<ContentPart>> c) {
         String input = (String) inputWrapper.value;
-        List<ContentPart> inputContentParts = (List<ContentPart>) c.value;
+        List<ContentPart> inputContentParts = c.value;
 
         //TestResourceLoader.printTestHeader("testAreExactTextsSimilar", inputPtr, inputWrapper, c);
         
@@ -612,10 +612,10 @@ public class CodeGenerationResponseProcessorTest {
     }
 
     @Test(dataProvider = "createTestAreTextsSimilarData")
-    @SuppressWarnings("unchecked")
-    public void testAreTextsSimilar(TestArg textArg, TestArg c, boolean expected) {
-        String text = (String) textArg.value;
-        List<ContentPart> contentParts = (List<ContentPart>) c.value;
+    public void testAreTextsSimilar(TestArg<String> textArg, TestArg<List<ContentPart>> c, 
+            boolean expected) {
+        String text = textArg.value;
+        List<ContentPart> contentParts = c.value;
         Map<String, Object> actual = CodeGenerationResponseProcessor.runSimilarityTest(
             text, contentParts, false);
         if (expected == true) {
@@ -631,7 +631,7 @@ public class CodeGenerationResponseProcessorTest {
     public Object[][] createTestAreTextsSimilarData() {
         String inputWin = TestResourceLoader.loadResourceNewlinesNormalized(
             "input-win.txt", getClass(), "\r\n");
-        TestArg testWinInput = new TestArg(inputWin);
+        TestArg<String> testWinInput = new TestArg<>(inputWin);
 
         // applies all rules except rule 1-4, 6
         String text0 = TestResourceLoader.loadResourceNewlinesNormalized(
@@ -653,7 +653,7 @@ public class CodeGenerationResponseProcessorTest {
             new int[]{ 7115 }
         ));
         return new Object[][]{
-            { testWinInput, new TestArg(contentParts0), true },
+            { testWinInput, new TestArg<>(contentParts0), true },
             //{ testWinInput, new TestArg(contentParts1), true }
         };
     }
@@ -691,20 +691,5 @@ public class CodeGenerationResponseProcessorTest {
         }
         assertEquals(new GeneratedCode(contentParts).getWholeContent(), input);
         return contentParts;
-    }
-
-    public static class TestArg {
-        final Object value;
-
-        public TestArg(Object value) {
-            this.value = value;
-        }
-
-        @Override
-        public String toString() {
-            // generate a shorter name than Object.toString()
-            return String.format("%s@%x",
-                getClass().getSimpleName(), hashCode());
-        }
     }
 }

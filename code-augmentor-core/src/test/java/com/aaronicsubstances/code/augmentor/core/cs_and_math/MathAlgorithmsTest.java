@@ -1,7 +1,5 @@
 package com.aaronicsubstances.code.augmentor.core.cs_and_math;
 
-import static org.testng.Assert.*;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -10,6 +8,10 @@ import com.aaronicsubstances.code.augmentor.core.TestResourceLoader;
 
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
+import static org.hamcrest.MatcherAssert.*;
+import static org.hamcrest.Matchers.*;
+import static org.testng.Assert.*;
 
 public class MathAlgorithmsTest {
 
@@ -83,7 +85,7 @@ public class MathAlgorithmsTest {
             "235", "253", "325", "352", "523", "532", 
             "245", "254", "425", "452", "524", "542",
             "345", "354", "435", "453", "534", "543");
-        assertEquals(permutations, expected);
+        assertThat(permutations, is(expected));
     }
 
     private static String stringifyPermutation(int[] a) {

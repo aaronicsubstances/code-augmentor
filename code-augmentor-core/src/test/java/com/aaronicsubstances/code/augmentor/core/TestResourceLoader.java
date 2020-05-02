@@ -5,7 +5,9 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode;
@@ -118,5 +120,27 @@ public class TestResourceLoader {
         }
         System.out.println(")");
         System.out.println("---------------------");
+    }
+
+    public static <K, V> KeyValuePair<K, V> newMapEntry(K key, V value) {
+        return new KeyValuePair<>(key, value);
+    }
+
+    public static <K, V> Map<K, V> newMap(List<KeyValuePair<K, V>> entries) {
+        Map<K, V> map = new HashMap<>();
+        for (KeyValuePair<K, V> entry : entries) {
+            map.put(entry.key, entry.value);
+        }
+        return map;
+    }
+
+    public static class KeyValuePair<K, V> {
+        public K key;
+        public V value;
+
+        public KeyValuePair(K key, V value) {
+            this.key = key;
+            this.value = value;
+        }
     }
 }
