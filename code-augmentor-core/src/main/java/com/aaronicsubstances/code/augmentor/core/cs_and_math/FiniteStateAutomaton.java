@@ -98,7 +98,7 @@ public class FiniteStateAutomaton {
         // where F is number of final states excluding any initial state,
         // and N is the total number of states.
         // due to exponential running time, limit iterations
-        final int ITER_LIMIT = 1000;
+        final int ITER_LIMIT = 1_000_000;
         int iterCount = 1;
 
         int[] finalStPerm = MathAlgorithms.firstPermutation(finalStSz, 0);
@@ -127,8 +127,6 @@ public class FiniteStateAutomaton {
                     //    "State translation map: " + stateTranslationMap);
                     return true;
                 }
-                //System.out.println("Couldn't find match after " + iterCount + " attempt(s). " +
-                //    "State translation map: " + stateTranslationMap);
 
                 if (iterCount >= ITER_LIMIT || !MathAlgorithms.nextNPermutation(nonFinalStPerm)) {
                     break;
@@ -141,6 +139,8 @@ public class FiniteStateAutomaton {
             }
             iterCount++;
         }
+
+        //System.out.println("Couldn't find match after " + iterCount + " attempt(s).");
 
         return false;
     }
@@ -262,6 +262,8 @@ public class FiniteStateAutomaton {
         List<String[]> table = new ArrayList<>();
         if (nfaTransitionTable != null) {
             // notify of any invalid states and symbols
+            // after displaying alphabet above, add null symbol to make it count as valid.
+            alphabetList.add(NULL_SYMBOL);
             for (int state : nfaTransitionTable.keySet()) {
                 if (!states.contains(state)) {
                     invalidStates.add(state);
@@ -269,7 +271,7 @@ public class FiniteStateAutomaton {
                 if (nfaTransitionTable.containsKey(state)) {
                     Map<Integer, Set<Integer>> stateOutTransitions = nfaTransitionTable.get(state);
                     for (Map.Entry<Integer, Set<Integer>> entry : stateOutTransitions.entrySet()) {
-                        if (!alphabet.contains(entry.getKey())) {
+                        if (!alphabetList.contains(entry.getKey())) {
                             invalidSymbols.add(entry.getKey());
                         }
                         for (int nextState : entry.getValue()) {
@@ -311,7 +313,7 @@ public class FiniteStateAutomaton {
                 if (dfaTransitionTable.containsKey(state)) {
                     Map<Integer, Integer> stateOutTransitions = dfaTransitionTable.get(state);
                     for (Map.Entry<Integer, Integer> entry : stateOutTransitions.entrySet()) {
-                        if (!alphabet.contains(entry.getKey())) {
+                        if (!alphabetList.contains(entry.getKey())) {
                             invalidSymbols.add(entry.getKey());
                         }
                         if (!states.contains(entry.getValue())) {
@@ -368,7 +370,7 @@ public class FiniteStateAutomaton {
         // - state column
         // - vertical border
         // - alphabet column plus vertical border for each alphabet
-        int length = 1 + widestColumn + 1 + alphabet.size() * (widestColumn + 1);
+        int length = 1 + widestColumn + 1 + alphabetList.size() * (widestColumn + 1);
 
         char horLnChar = '-', vertLnChar = '|';
         String horizontalBorder = strMultiply("" + horLnChar, length) + "\n";
@@ -383,9 +385,9 @@ public class FiniteStateAutomaton {
 
         // "title" and "input" heading line
         fsaRepr.append(vertLnChar).append(strRightPad(" " + title, widestColumn)).append(vertLnChar);
-        if (!alphabet.isEmpty()) {
+        if (!alphabetList.isEmpty()) {
             fsaRepr.append(strRightPad(" Input", widestColumn));
-            fsaRepr.append(strRightPad("", (alphabet.size() - 1) * (widestColumn + 1)));
+            fsaRepr.append(strRightPad("", (alphabetList.size() - 1) * (widestColumn + 1)));
             fsaRepr.append(vertLnChar);
         }
         fsaRepr.append("\n");

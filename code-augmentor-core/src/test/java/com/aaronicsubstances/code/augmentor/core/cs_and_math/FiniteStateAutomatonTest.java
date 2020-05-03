@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.Set;
 
 import com.aaronicsubstances.code.augmentor.core.TestArg;
-import com.aaronicsubstances.code.augmentor.core.TestResourceLoader;
 
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -28,10 +27,10 @@ public class FiniteStateAutomatonTest {
         //assertThat(actual, is(expected.value));
         assertEquals(actual, expected.value);
         // print degenerate cases and confirm print out.
-        if (actual.getAlphabet().isEmpty() || actual.getStates().isEmpty()) {
+        /*if (actual.getAlphabet().isEmpty() || actual.getStates().isEmpty()) {
             TestResourceLoader.printTestHeader("testGenerateCopy", instance, stateMap, expected);
             System.out.println(actual);
-        }
+        }*/
     }
 
     @DataProvider
@@ -148,6 +147,36 @@ public class FiniteStateAutomatonTest {
         FiniteStateAutomaton fsa10 = new FiniteStateAutomaton(alphabet, Sets.newHashSet(), startState, 
             finalStates, null, dfaTransitionTable);
 
+        // end of degenerate cases.
+
+        // create 2 tests involving null symbol for an NFA using both identity
+        // and non-identity state translations.
+        final int nullSymbol = FiniteStateAutomaton.NULL_SYMBOL;
+        alphabet = Sets.newHashSet(41);
+        states = Sets.newHashSet(0, 1, 2, 3);
+        startState = 0;
+        finalStates = Sets.newHashSet(3);
+        nfaTransitionTable =
+            newMap(Arrays.asList(
+                newMapEntry(0, newMap(Arrays.asList(newMapEntry(nullSymbol, Sets.newHashSet(1, 3))))),
+                newMapEntry(1, newMap(Arrays.asList(newMapEntry(41, Sets.newHashSet(2))))),
+                newMapEntry(2, newMap(Arrays.asList(newMapEntry(nullSymbol, Sets.newHashSet(1, 3)))))
+            ));
+        FiniteStateAutomaton fsa11 = new FiniteStateAutomaton(alphabet, 
+            states, startState, finalStates, nfaTransitionTable, null);
+
+        states = Sets.newHashSet(20, 21, 22, 23);
+        startState = 20;
+        finalStates = Sets.newHashSet(23);
+        nfaTransitionTable =
+            newMap(Arrays.asList(
+                newMapEntry(20, newMap(Arrays.asList(newMapEntry(nullSymbol, Sets.newHashSet(21, 23))))),
+                newMapEntry(21, newMap(Arrays.asList(newMapEntry(41, Sets.newHashSet(22))))),
+                newMapEntry(22, newMap(Arrays.asList(newMapEntry(nullSymbol, Sets.newHashSet(21, 23)))))
+            ));
+        FiniteStateAutomaton fsa12 = new FiniteStateAutomaton(alphabet, 
+            states, startState, finalStates, nfaTransitionTable, null);
+
         Map<Integer, Integer> identityMap = newMap(Arrays.asList(
             newMapEntry(0, 0), newMapEntry(1, 1), newMapEntry(2, 2), newMapEntry(3, 3)
         ));
@@ -155,17 +184,28 @@ public class FiniteStateAutomatonTest {
         Map<Integer, Integer> fsa1to2Map = newMap(Arrays.asList(
             newMapEntry(0, 10), newMapEntry(1, 11), newMapEntry(2, 12), newMapEntry(3, 13)
         ));
+
+        Map<Integer, Integer> fsa11to12Map = newMap(Arrays.asList(
+            newMapEntry(0, 20), newMapEntry(1, 21), newMapEntry(2, 22), newMapEntry(3, 23)
+        ));
+
         return new Object[][] {
             { new TestArg<>(fsa1), identityMap, new TestArg<>(fsa1) },
             { new TestArg<>(fsa1), fsa1to2Map, new TestArg<>(fsa2) },
             { new TestArg<>(fsa3), identityMap, new TestArg<>(fsa3) },
             { new TestArg<>(fsa3), fsa1to2Map, new TestArg<>(fsa4) },
+
+            // degenerate cases.
             { new TestArg<>(fsa5), identityMap, new TestArg<>(fsa5) },
             { new TestArg<>(fsa6), identityMap, new TestArg<>(fsa6) },
             { new TestArg<>(fsa7), identityMap, new TestArg<>(fsa7) },
             { new TestArg<>(fsa8), identityMap, new TestArg<>(fsa8) },
             { new TestArg<>(fsa9), identityMap, new TestArg<>(fsa9) },
             { new TestArg<>(fsa10), identityMap, new TestArg<>(fsa10) },
+
+            // null symbol usage cases
+            { new TestArg<>(fsa11), identityMap, new TestArg<>(fsa11) },
+            { new TestArg<>(fsa11), fsa11to12Map, new TestArg<>(fsa12) },
         };
 
     }
