@@ -14,8 +14,8 @@ import org.testng.collections.Sets;
 import static com.aaronicsubstances.code.augmentor.core.TestResourceLoader.newMap;
 import static com.aaronicsubstances.code.augmentor.core.TestResourceLoader.newMapEntry;
 
-//import static org.hamcrest.MatcherAssert.*;
-//import static org.hamcrest.Matchers.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 import static org.testng.Assert.*;
 
 public class FiniteStateAutomatonTest {
@@ -166,6 +166,96 @@ public class FiniteStateAutomatonTest {
             { new TestArg<>(fsa8), identityMap, new TestArg<>(fsa8) },
             { new TestArg<>(fsa9), identityMap, new TestArg<>(fsa9) },
             { new TestArg<>(fsa10), identityMap, new TestArg<>(fsa10) },
+        };
+
+    }
+
+    @Test(dataProvider = "createAreEquivalentData")
+    public void testAreEquivalent(TestArg<FiniteStateAutomaton> expectedWrapper,
+            TestArg<FiniteStateAutomaton> actualWrapper, boolean expectedComparisonResult) {
+        if (expectedComparisonResult) {
+            assertThat(actualWrapper.value, is(new FsaEquivalenceMatcher(expectedWrapper.value)));
+        }
+        else {
+            assertThat(actualWrapper.value, not(new FsaEquivalenceMatcher(expectedWrapper.value)));
+        }
+    }
+
+    @DataProvider
+    public Object[][] createAreEquivalentData() {
+        Set<Integer> alphabet = Sets.newHashSet(0, 1);
+        Set<Integer> states = Sets.newHashSet(0, 1, 2, 3);
+        int startState = 0;
+        Set<Integer> finalStates = Sets.newHashSet(0, 3);
+        Map<Integer, Map<Integer, Integer>> dfaTransitionTable = newMap(Arrays.asList(
+            newMapEntry(0, newMap(Arrays.asList(
+                newMapEntry(0, 0), newMapEntry(1, 1)))),
+            newMapEntry(1, newMap(Arrays.asList(
+                newMapEntry(0, 0), newMapEntry(1, 2)))),
+            newMapEntry(2, newMap(Arrays.asList(
+                newMapEntry(0, 0), newMapEntry(1, 0)))),
+            newMapEntry(3, newMap(Arrays.asList(
+                newMapEntry(0, 2), newMapEntry(1, 1))))
+        ));
+        FiniteStateAutomaton fsa1_e = new FiniteStateAutomaton(alphabet, states, startState, 
+            finalStates, null, dfaTransitionTable);
+        
+        states = Sets.newHashSet(70, 61, 52, 43);
+        startState = 70;
+        finalStates = Sets.newHashSet(70, 43);
+        dfaTransitionTable = newMap(Arrays.asList(
+            newMapEntry(70, newMap(Arrays.asList(
+                newMapEntry(0, 70), newMapEntry(1, 61)))),
+            newMapEntry(61, newMap(Arrays.asList(
+                newMapEntry(0, 70), newMapEntry(1, 52)))),
+            newMapEntry(52, newMap(Arrays.asList(
+                newMapEntry(0, 70), newMapEntry(1, 70)))),
+            newMapEntry(43, newMap(Arrays.asList(
+                newMapEntry(0, 52), newMapEntry(1, 61))))
+        ));
+        FiniteStateAutomaton fsa1_a = new FiniteStateAutomaton(alphabet, states, startState, 
+            finalStates, null, dfaTransitionTable);
+    
+        states = Sets.newHashSet(0, 1);
+        startState = 0;
+        finalStates = Sets.newHashSet(0);
+        dfaTransitionTable = newMap(Arrays.asList(
+            newMapEntry(0, newMap(Arrays.asList(
+                newMapEntry(0, 1), newMapEntry(1, 0)))),
+            newMapEntry(1, newMap(Arrays.asList(
+                newMapEntry(0, 1), newMapEntry(1, 1))))
+        ));
+        FiniteStateAutomaton fsa2_e = new FiniteStateAutomaton(alphabet, states, startState, 
+            finalStates, null, dfaTransitionTable);
+    
+        states = Sets.newHashSet(0, 1);
+        startState = 0;
+        finalStates = Sets.newHashSet(1);
+        dfaTransitionTable = newMap(Arrays.asList(
+            newMapEntry(0, newMap(Arrays.asList(
+                newMapEntry(0, 1), newMapEntry(1, 0)))),
+            newMapEntry(1, newMap(Arrays.asList(
+                newMapEntry(0, 1), newMapEntry(1, 1))))
+        ));
+        FiniteStateAutomaton fsa2_a_nt = new FiniteStateAutomaton(alphabet, states, startState, 
+            finalStates, null, dfaTransitionTable);
+    
+        states = Sets.newHashSet(0, 11);
+        startState = 0;
+        finalStates = Sets.newHashSet(0);
+        dfaTransitionTable = newMap(Arrays.asList(
+            newMapEntry(0, newMap(Arrays.asList(
+                newMapEntry(0, 11), newMapEntry(1, 0)))),
+            newMapEntry(11, newMap(Arrays.asList(
+                newMapEntry(0, 11), newMapEntry(1, 11))))
+        ));
+        FiniteStateAutomaton fsa2_a = new FiniteStateAutomaton(alphabet, states, startState, 
+            finalStates, null, dfaTransitionTable);
+
+        return new Object[][]{
+            { new TestArg<>(fsa1_e), new TestArg<>(fsa1_a), true },
+            { new TestArg<>(fsa2_e), new TestArg<>(fsa2_a_nt), false },
+            { new TestArg<>(fsa2_e), new TestArg<>(fsa2_a), true }
         };
     }
 }

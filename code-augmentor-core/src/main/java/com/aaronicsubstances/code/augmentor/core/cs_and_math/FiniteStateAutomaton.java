@@ -55,8 +55,97 @@ public class FiniteStateAutomaton {
         return dfaTransitionTable;
     }
 
-    // dot -Tpng fsm.gv.txt -o c:\sample.dot.2.png
+    public static boolean areEquivalent(FiniteStateAutomaton actual, 
+            FiniteStateAutomaton expected) {
+        // for equivalence 
+        //  - alphabets must be equal
+        //  - size of states must be equal
+        //  - size of final states must be equal
+        //  - there must be a clone of actual with states mapped to expected,
+        //    which equals expected.
 
+        if (!actual.alphabet.equals(expected.alphabet)) {
+            return false;
+        }
+        
+        List<Integer> actualFinalStateList = setToList(actual.finalStates);
+        actualFinalStateList.remove((Object) actual.startState);
+        List<Integer> actualNonFinalStateList = setToList(actual.states);
+        actualNonFinalStateList.removeAll(actualFinalStateList);
+        actualNonFinalStateList.remove((Object) actual.startState);
+
+        List<Integer> expectedFinalStateList = setToList(expected.finalStates);
+        expectedFinalStateList.remove((Object) expected.startState);
+        List<Integer> expectedNonFinalStateList = setToList(expected.states);
+        expectedNonFinalStateList.removeAll(expectedFinalStateList);
+        expectedNonFinalStateList.remove((Object) expected.startState);
+
+        if (actualFinalStateList.size() != expectedFinalStateList.size()) {
+            return false;
+        }
+        if (actualNonFinalStateList.size() != expectedNonFinalStateList.size()) {
+            return false;
+        }
+
+        int finalStSz = actualFinalStateList.size();
+        int nonFinalSz = actualNonFinalStateList.size();
+        
+        // go through all pairs of permutations of final and non final states,
+        // at least once.
+
+        // now possible number of mappings of actual to expected is
+        // = (N-F-1)! times F!
+        // where F is number of final states excluding any initial state,
+        // and N is the total number of states.
+        // due to exponential running time, limit iterations
+        final int ITER_LIMIT = 1000;
+        int iterCount = 1;
+
+        int[] finalStPerm = MathAlgorithms.firstPermutation(finalStSz, 0);
+        while (true) {
+            int[] nonFinalStPerm = MathAlgorithms.firstPermutation(nonFinalSz, 0);
+            while (true) {
+                // create a mapping from actual to expected using permutations.
+                Map<Integer, Integer> stateTranslationMap = new HashMap<>();
+                stateTranslationMap.put(actual.startState, expected.startState);
+                for (int j = 0; j < finalStPerm.length; j++) {
+                    int actualSt = actualFinalStateList.get(j);
+                    int mappedExpectedSt = expectedFinalStateList.get(finalStPerm[j]);
+                    stateTranslationMap.put(actualSt, mappedExpectedSt);
+                }
+                for (int j = 0; j < nonFinalStPerm.length; j++) {
+                    int actualSt = actualNonFinalStateList.get(j);
+                    int mappedExpectedSt = expectedNonFinalStateList.get(nonFinalStPerm[j]);
+                    stateTranslationMap.put(actualSt, mappedExpectedSt);
+                }
+
+                // create a copy of actual to resemble expected, and if actually
+                // equal to expected, then actual is equivalent to expected.
+                FiniteStateAutomaton actualCopy = actual.generateCopy(stateTranslationMap);
+                if (actualCopy.equals(expected)) {
+                    //System.out.println("Found match after " + iterCount + " attempt(s). " +
+                    //    "State translation map: " + stateTranslationMap);
+                    return true;
+                }
+                //System.out.println("Couldn't find match after " + iterCount + " attempt(s). " +
+                //    "State translation map: " + stateTranslationMap);
+
+                if (iterCount >= ITER_LIMIT || !MathAlgorithms.nextNPermutation(nonFinalStPerm)) {
+                    break;
+                }
+
+                iterCount++;
+            }
+            if (iterCount >= ITER_LIMIT || !MathAlgorithms.nextNPermutation(finalStPerm)) {
+                break;
+            }
+            iterCount++;
+        }
+
+        return false;
+    }
+
+    // dot -Tpng fsm.gv.txt -o c:\sample.dot.2.png
 
     public FiniteStateAutomaton generateCopy(Map<Integer, Integer> stateTranslationMap) {
         Set<Integer> newStates = new HashSet<>();
