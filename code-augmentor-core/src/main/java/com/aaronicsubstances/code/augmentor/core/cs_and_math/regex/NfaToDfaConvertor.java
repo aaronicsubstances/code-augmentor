@@ -78,14 +78,14 @@ public class NfaToDfaConvertor {
                 discoveredNfaStateSubset = emptyStringClosure(discoveredNfaStateSubset);
                 int discoveredDState = nfaStateSubsets.indexOf(discoveredNfaStateSubset);
                 if (discoveredDState == -1) {
-                    nfaStateSubsets.add(discoveredNfaStateSubset);
                     discoveredDState = nfaStateSubsets.size();
+                    nfaStateSubsets.add(discoveredNfaStateSubset);
                 }
                 if (ignoreEmptyState && discoveredNfaStateSubset.isEmpty()) {
                     // skip transitions to empty state if requested.
                 }
                 else {
-                    dfaOutStateTransitions.put(nextDState, discoveredDState);
+                    dfaOutStateTransitions.put(c, discoveredDState);
                 }
             }
         }

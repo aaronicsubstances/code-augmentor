@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import com.aaronicsubstances.code.augmentor.core.TestArg;
 import com.aaronicsubstances.code.augmentor.core.TestResourceLoader;
@@ -31,11 +30,9 @@ public class GeneratedCodeSimilarityCheckerTest {
         GeneratedCodeSimilarityChecker instance = new GeneratedCodeSimilarityChecker(
             inputContentParts, false);
         List<Object> actual = instance.getSimilarityRegex();
-        // because gson will output underlying regex node too deeply, map to string.
         assertEquals(actual, expected,
             craftErrorMessageInvolvingRandomContentParts(inputContentParts,
-                expected.stream().map(x -> x.toString()).collect(Collectors.toList()),
-                actual.stream().map(x -> x.toString()).collect(Collectors.toList())));
+                expected, actual));
     }
 
     @DataProvider
@@ -201,7 +198,7 @@ public class GeneratedCodeSimilarityCheckerTest {
 
     @Test(dataProvider = "createTestMatchData")
     public void testMatch(TestArg<String> textArg, TestArg<List<ContentPart>> c, 
-            boolean expected) {
+            int expectedMismatchIndex) {
         String text = textArg.value;
         List<ContentPart> contentParts = c.value;
         //TestResourceLoader.printTestHeader("testMatch", textArg, c, expected);
@@ -210,8 +207,9 @@ public class GeneratedCodeSimilarityCheckerTest {
         boolean actual = instance.match(text);
         Object actualDescription = createMismatchDescription(text, instance);
         String assertionMsg = craftErrorMessageInvolvingRandomContentParts(
-            contentParts, expected, actualDescription);
-        assertEquals(actual, expected, assertionMsg);
+            contentParts, expectedMismatchIndex, actualDescription);
+        assertEquals(actual, expectedMismatchIndex == -1 ? true : false, assertionMsg);
+        assertEquals(instance.getErrorIndex(), expectedMismatchIndex, assertionMsg);
     }
 
     @DataProvider
@@ -236,12 +234,20 @@ public class GeneratedCodeSimilarityCheckerTest {
             "similarity-test-input-01.txt", getClass(), "\r\n");
         List<ContentPart> contentParts1 = buildContentParts(text1, Arrays.asList(
             new int[]{ 0, 6973 },
+            new int[]{ 6973, 7110, 1 },
+            new int[]{ 7110 }
+        ));
+
+        // tests required space of trailing space after exact content
+        List<ContentPart> contentParts2 = buildContentParts(text1, Arrays.asList(
+            new int[]{ 0, 6973 },
             new int[]{ 6973, 7115, 1 },
             new int[]{ 7115 }
         ));
         return new Object[][]{
-            { testWinInput, new TestArg<>(contentParts0), true },
-            { testWinInput, new TestArg<>(contentParts1), false }
+            { testWinInput, new TestArg<>(contentParts0), -1 },
+            { testWinInput, new TestArg<>(contentParts1), -1 },
+            { testWinInput, new TestArg<>(contentParts2), 7125 }
         };
     }
 

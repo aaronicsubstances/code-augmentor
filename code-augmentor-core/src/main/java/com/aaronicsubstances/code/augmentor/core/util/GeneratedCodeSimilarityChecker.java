@@ -54,9 +54,11 @@ import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode.ContentPar
  * called on content parts.
  */
 public class GeneratedCodeSimilarityChecker {
+    static final int MATCH_TYPE_ANY_SPACES = 0;
+    static final int MATCH_TYPE_REQUIRE_SPACE = 1;
     private static final String NON_NEWLINE_WS_CHARS;
-    static final Object MATCH_TYPE_ANY_SPACES;
-    static final Object MATCH_TYPE_REQUIRE_SPACE;
+    private static final RegexNode optionalMultipleSpaceRegex;
+    private static final RegexNode requiredMultipleSpaceRegex;
 
     static {
         NON_NEWLINE_WS_CHARS = " \t\f";
@@ -65,13 +67,11 @@ public class GeneratedCodeSimilarityChecker {
             spaceNodes.add(new LiteralStringRegexNode(c));
         });
         UnionRegexNode spaceRegex = new UnionRegexNode(spaceNodes);
-        KleeneClosureRegexNode optionalMultipleSpaceRegex =
+        optionalMultipleSpaceRegex =
             new KleeneClosureRegexNode(spaceRegex);
-        MATCH_TYPE_ANY_SPACES = optionalMultipleSpaceRegex;
 
-        ConcatRegexNode requiredMultipleSpaceRegex = new ConcatRegexNode(
+        requiredMultipleSpaceRegex = new ConcatRegexNode(
             spaceRegex.generateCopy(), optionalMultipleSpaceRegex.generateCopy());
-        MATCH_TYPE_REQUIRE_SPACE = requiredMultipleSpaceRegex;
     }
 
     private final List<ContentPart> contentParts;
@@ -137,8 +137,11 @@ public class GeneratedCodeSimilarityChecker {
         for (int i = 0; i < similarityRegex.size(); i++) {
             Object regexSpec = similarityRegex.get(i);
             RegexNode regexNode;
-            if (regexSpec instanceof RegexNode) {
-                regexNode = (RegexNode) regexSpec;
+            if (regexSpec.equals(MATCH_TYPE_ANY_SPACES)) {
+                regexNode = optionalMultipleSpaceRegex;
+            }
+            else if (regexSpec.equals(MATCH_TYPE_REQUIRE_SPACE)) {
+                regexNode = requiredMultipleSpaceRegex;
             }
             else {
                 regexNode = new LiteralStringRegexNode(RegexAlgorithms.getLiteralString(regexSpec));
@@ -178,12 +181,6 @@ public class GeneratedCodeSimilarityChecker {
             int regexSpecIndex = stateToRegexIndexMap.get(lastObservedStartState);
             
             expected = similarityRegex.get(regexSpecIndex);
-            if (expected == MATCH_TYPE_REQUIRE_SPACE) {
-                expected = 1;
-            }
-            else if (expected == MATCH_TYPE_ANY_SPACES) {
-                expected = 0;
-            }
         }
         else {
             expectedEOF = true;
@@ -524,16 +521,8 @@ public class GeneratedCodeSimilarityChecker {
         }
 
         if (loggingEnabled) {
-            System.out.print("After completion phase, regex = [");
-            // due to gson printing out fields of regex nodes, serialize one by one
-            for (int i = 0; i < regexBuilder.size(); i++) {
-                if (i > 0) {
-                    System.out.print(", ");
-                }
-                System.out.print(PersistenceUtil.serializeCompactlyToJson(
-                    regexBuilder.get(i).toString()));
-            }
-            System.out.println("]\n\n\n");
+            System.out.format("After completion phase, regex = %s\n\n\n",
+                PersistenceUtil.serializeCompactlyToJson(regexBuilder));
         }
 
         return regexBuilder;

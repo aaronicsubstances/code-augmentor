@@ -89,4 +89,112 @@ public class RegexAlgorithmsTest {
             { Arrays.asList(zeroOrMoreWs), "   d ", 3 }
         };
     }
+
+    @Test(dataProvider = "createTestSimulateDfaData")
+    public void testSimulateDfa(TestArg<FiniteStateAutomaton> dfa,
+            int[] stringInput, boolean expected) {
+        int actual = RegexAlgorithms.simulateDfa(dfa.value, stringInput);
+        assertEquals(actual, expected ? -1 : stringInput.length);
+    }
+
+    @DataProvider
+    public Object[][] createTestSimulateDfaData() {
+        // The following DFAs are from Kenneth Rosen's Discrete Mathematics, 7e,
+        // Section 13.3 Example 6
+
+        // First example: the set of bit strings that begin with two 0s.
+        Set<Integer> states = Sets.newHashSet(0, 1, 2, 3);
+        Set<Integer> finalStates = Sets.newHashSet(2);
+        Map<Integer, Map<Integer, Integer>> dfaTransitionTable = newMap(Arrays.asList(
+            newMapEntry(0, newMap(Arrays.asList(newMapEntry(0, 1), newMapEntry(1, 3)))),
+            newMapEntry(1, newMap(Arrays.asList(newMapEntry(0, 2), newMapEntry(1, 3)))),
+            newMapEntry(2, newMap(Arrays.asList(newMapEntry(0, 2), newMapEntry(1, 2)))),
+            newMapEntry(3, newMap(Arrays.asList(newMapEntry(0, 3), newMapEntry(1, 3))))
+        ));
+        FiniteStateAutomaton dfa1 = new FiniteStateAutomaton(Sets.newHashSet(0, 1), 
+            states, 0, finalStates, null, dfaTransitionTable);
+        TestArg<FiniteStateAutomaton> dfa1Wrapper = new TestArg<>(dfa1);
+        
+        // Second example: the set of bit strings that contain two consecutive 0s
+        states = Sets.newHashSet(0, 1, 2);
+        finalStates = Sets.newHashSet(2);
+        dfaTransitionTable = newMap(Arrays.asList(
+            newMapEntry(0, newMap(Arrays.asList(newMapEntry(0, 1), newMapEntry(1, 0)))),
+            newMapEntry(1, newMap(Arrays.asList(newMapEntry(0, 2), newMapEntry(1, 0)))),
+            newMapEntry(2, newMap(Arrays.asList(newMapEntry(0, 2), newMapEntry(1, 2))))
+        ));
+        FiniteStateAutomaton dfa2 = new FiniteStateAutomaton(Sets.newHashSet(0, 1), 
+            states, 0, finalStates, null, dfaTransitionTable);
+        TestArg<FiniteStateAutomaton> dfa2Wrapper = new TestArg<>(dfa2);
+        
+        // Third example: the set of bit strings that do not contain two consecutive 0s
+        states = Sets.newHashSet(0, 1, 2);
+        finalStates = Sets.newHashSet(0, 1);
+        dfaTransitionTable = newMap(Arrays.asList(
+            newMapEntry(0, newMap(Arrays.asList(newMapEntry(0, 1), newMapEntry(1, 0)))),
+            newMapEntry(1, newMap(Arrays.asList(newMapEntry(0, 2), newMapEntry(1, 0)))),
+            newMapEntry(2, newMap(Arrays.asList(newMapEntry(0, 2), newMapEntry(1, 2))))
+        ));
+        FiniteStateAutomaton dfa3 = new FiniteStateAutomaton(Sets.newHashSet(0, 1), 
+            states, 0, finalStates, null, dfaTransitionTable);
+        TestArg<FiniteStateAutomaton> dfa3Wrapper = new TestArg<>(dfa3);
+        
+        // Fourth example: the set of bit strings that end with two 0s
+        states = Sets.newHashSet(0, 1, 2);
+        finalStates = Sets.newHashSet(2);
+        dfaTransitionTable = newMap(Arrays.asList(
+            newMapEntry(0, newMap(Arrays.asList(newMapEntry(0, 1), newMapEntry(1, 0)))),
+            newMapEntry(1, newMap(Arrays.asList(newMapEntry(0, 2), newMapEntry(1, 0)))),
+            newMapEntry(2, newMap(Arrays.asList(newMapEntry(0, 2), newMapEntry(1, 0))))
+        ));
+        FiniteStateAutomaton dfa4 = new FiniteStateAutomaton(Sets.newHashSet(0, 1), 
+            states, 0, finalStates, null, dfaTransitionTable);
+        TestArg<FiniteStateAutomaton> dfa4Wrapper = new TestArg<>(dfa4);
+        
+        // Fifth example: the set of bit strings that contain at least two 0s
+        states = Sets.newHashSet(0, 1, 2);
+        finalStates = Sets.newHashSet(2);
+        dfaTransitionTable = newMap(Arrays.asList(
+            newMapEntry(0, newMap(Arrays.asList(newMapEntry(0, 1), newMapEntry(1, 0)))),
+            newMapEntry(1, newMap(Arrays.asList(newMapEntry(0, 2), newMapEntry(1, 1)))),
+            newMapEntry(2, newMap(Arrays.asList(newMapEntry(0, 2), newMapEntry(1, 2))))
+        ));
+        FiniteStateAutomaton dfa5 = new FiniteStateAutomaton(Sets.newHashSet(0, 1), 
+            states, 0, finalStates, null, dfaTransitionTable);
+        TestArg<FiniteStateAutomaton> dfa5Wrapper = new TestArg<>(dfa5);
+
+        return new Object[][] {
+            // First example
+            { dfa1Wrapper, new int[]{ 0, 0 }, true },
+            { dfa1Wrapper, new int[]{ 0, 1 }, false },
+            { dfa1Wrapper, new int[]{ 0, 0, 0, 1 }, true },
+            { dfa1Wrapper, new int[]{ 1, 0, 0, 1 }, false },
+
+            // Second example
+            { dfa2Wrapper, new int[]{ 0, 0 }, true },
+            { dfa2Wrapper, new int[]{ 0, 1 }, false },
+            { dfa2Wrapper, new int[]{ 0, 0, 0, 1 }, true },
+            { dfa2Wrapper, new int[]{ 1, 0, 0, 1 }, true },
+
+            // Third example
+            { dfa3Wrapper, new int[]{ 0, 0 }, false },
+            { dfa3Wrapper, new int[]{ 0, 1 }, true },
+            { dfa3Wrapper, new int[]{ 0, 0, 0, 1 }, false },
+            { dfa3Wrapper, new int[]{ 1, 0, 0, 1 }, false },
+
+            // Fourth example
+            { dfa4Wrapper, new int[]{ 0, 0 }, true },
+            { dfa4Wrapper, new int[]{ 0, 1 }, false },
+            { dfa4Wrapper, new int[]{ 0, 0, 0, 1 }, false },
+            { dfa4Wrapper, new int[]{ 1, 0, 1, 0, 0 }, true },
+
+            // Fifth example
+            { dfa5Wrapper, new int[]{ 0, 0 }, true },
+            { dfa5Wrapper, new int[]{ 0, 1 }, false },
+            { dfa5Wrapper, new int[]{ 0, 0, 0, 1 }, true },
+            { dfa5Wrapper, new int[]{ 1, 0, 1, 0, 0 }, true },
+            { dfa5Wrapper, new int[]{ 1, 0, 1, 1, 0 }, true },
+            { dfa5Wrapper, new int[]{ 1, 0, 1, 1, 1 }, false }
+        };
+    }
 }
