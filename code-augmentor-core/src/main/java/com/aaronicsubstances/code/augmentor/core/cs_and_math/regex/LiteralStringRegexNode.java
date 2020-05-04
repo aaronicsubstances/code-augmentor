@@ -53,4 +53,16 @@ public class LiteralStringRegexNode implements RegexNode {
         }
         return repr.toString();
     }
+
+	@Override
+	public RegexNode generateCopy() {
+        int[] literalStringCopy = null;
+        if (this.literalString != null) {
+            literalStringCopy = new int[this.literalString.length];
+            System.arraycopy(this.literalString, 0, literalStringCopy, 0, 
+                literalStringCopy.length);
+        }
+        LiteralStringRegexNode copy = new LiteralStringRegexNode(literalStringCopy);
+        return copy;
+	}
 }

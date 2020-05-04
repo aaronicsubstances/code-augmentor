@@ -19,6 +19,7 @@ import com.aaronicsubstances.code.augmentor.core.models.PreCodeAugmentationResul
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileDescriptor;
 import com.aaronicsubstances.code.augmentor.core.util.CodeGenerationResponseProcessor;
 import com.aaronicsubstances.code.augmentor.core.util.GeneratedCodeFetcher;
+import com.aaronicsubstances.code.augmentor.core.util.GeneratedCodeSimilarityChecker;
 import com.aaronicsubstances.code.augmentor.core.util.SourceCodeTransformer;
 import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 
@@ -178,8 +179,9 @@ public class CodeAugmentationGenericTask {
                     }
                     else {
                         // determine whether changes are superficial or significant.
-                        changesDetected = CodeGenerationResponseProcessor.runSimilarityTest(
-                            textToBeReplaced, genCode.getContentParts(), false) != null;
+                        GeneratedCodeSimilarityChecker similarityAlg = 
+                            new GeneratedCodeSimilarityChecker(genCode.getContentParts());
+                        changesDetected = similarityAlg.match(textToBeReplaced) == false;
                     }
                 }
             }

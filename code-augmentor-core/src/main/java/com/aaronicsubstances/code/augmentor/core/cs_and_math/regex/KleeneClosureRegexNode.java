@@ -35,4 +35,14 @@ public class KleeneClosureRegexNode implements RegexNode {
         repr.append("(").append(child).append(")").append(opToken);
         return repr.toString();
     }
+
+	@Override
+	public RegexNode generateCopy() {
+        RegexNode childCopy = null;
+        if (this.child != null) {
+            childCopy = this.child.generateCopy();
+        }
+        KleeneClosureRegexNode copy = new KleeneClosureRegexNode(childCopy);
+        return copy;
+	}
 }

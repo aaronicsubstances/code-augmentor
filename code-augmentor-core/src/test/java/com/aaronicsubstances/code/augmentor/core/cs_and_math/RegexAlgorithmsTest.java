@@ -82,6 +82,7 @@ public class RegexAlgorithmsTest {
             { Arrays.asList("shoe"), "shoe", -1 },
             { Arrays.asList("shoe"), "soe", 1 },
             { Arrays.asList(zeroOrMoreWs), "", -1 },
+            { Arrays.asList(zeroOrMoreWs, "socks"), "socks", -1 },
             { Arrays.asList(zeroOrMoreWs), " ", -1 },
             { Arrays.asList(zeroOrMoreWs), "\t", -1 },
             { Arrays.asList(zeroOrMoreWs), "\t \t\t \t\t\t  ", -1 },

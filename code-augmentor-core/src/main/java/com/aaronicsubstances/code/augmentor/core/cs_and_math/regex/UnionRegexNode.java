@@ -1,5 +1,6 @@
 package com.aaronicsubstances.code.augmentor.core.cs_and_math.regex;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -49,4 +50,22 @@ public class UnionRegexNode implements RegexNode {
         repr.append(")");
         return repr.toString();
     }
+
+	@Override
+	public RegexNode generateCopy() {
+        List<RegexNode> copyChildren = null;
+        if (this.children != null) {
+            copyChildren = new ArrayList<>();
+            for (RegexNode child : this.children) {
+                if (child == null) {
+                    copyChildren.add(null);
+                }
+                else {
+                    copyChildren.add(child.generateCopy());
+                }
+            }
+        }
+        UnionRegexNode copy = new UnionRegexNode(copyChildren);
+        return copy;
+	}
 }

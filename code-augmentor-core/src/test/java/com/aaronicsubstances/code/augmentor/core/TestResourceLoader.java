@@ -108,6 +108,19 @@ public class TestResourceLoader {
         return contentParts;
     }
 
+    public static String craftErrorMessageInvolvingRandomContentParts(List<ContentPart> inputContentParts,
+            Object expected, Object actual) {        
+        StringBuilder errorMessage = new StringBuilder();
+        errorMessage.append("After split yielded:\n");
+        errorMessage.append(TestResourceLoader.GSON_INST.toJson(inputContentParts));
+        errorMessage.append("\n\nExpectation:\n");
+        errorMessage.append(TestResourceLoader.GSON_INST.toJson(expected));
+        errorMessage.append("\n\nActual:\n");
+        errorMessage.append(TestResourceLoader.GSON_INST.toJson(actual));
+        errorMessage.append("\n\n");
+        return errorMessage.toString();
+    }
+
 	public static void printTestHeader(String testName, Object... testArgs) {
         System.out.print(testName + "(");
         for (int i = 0; i < testArgs.length; i++) {

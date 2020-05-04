@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -54,98 +55,6 @@ public class FiniteStateAutomaton {
     public Map<Integer, Map<Integer, Integer>> getDfaTransitionTable() {
         return dfaTransitionTable;
     }
-
-    public static boolean areEquivalent(FiniteStateAutomaton actual, 
-            FiniteStateAutomaton expected) {
-        // for equivalence 
-        //  - alphabets must be equal
-        //  - size of states must be equal
-        //  - size of final states must be equal
-        //  - there must be a clone of actual with states mapped to expected,
-        //    which equals expected.
-
-        if (!actual.alphabet.equals(expected.alphabet)) {
-            return false;
-        }
-        
-        List<Integer> actualFinalStateList = setToList(actual.finalStates);
-        actualFinalStateList.remove((Object) actual.startState);
-        List<Integer> actualNonFinalStateList = setToList(actual.states);
-        actualNonFinalStateList.removeAll(actualFinalStateList);
-        actualNonFinalStateList.remove((Object) actual.startState);
-
-        List<Integer> expectedFinalStateList = setToList(expected.finalStates);
-        expectedFinalStateList.remove((Object) expected.startState);
-        List<Integer> expectedNonFinalStateList = setToList(expected.states);
-        expectedNonFinalStateList.removeAll(expectedFinalStateList);
-        expectedNonFinalStateList.remove((Object) expected.startState);
-
-        if (actualFinalStateList.size() != expectedFinalStateList.size()) {
-            return false;
-        }
-        if (actualNonFinalStateList.size() != expectedNonFinalStateList.size()) {
-            return false;
-        }
-
-        int finalStSz = actualFinalStateList.size();
-        int nonFinalSz = actualNonFinalStateList.size();
-        
-        // go through all pairs of permutations of final and non final states,
-        // at least once.
-
-        // now possible number of mappings of actual to expected is
-        // = (N-F-1)! times F!
-        // where F is number of final states excluding any initial state,
-        // and N is the total number of states.
-        // due to exponential running time, limit iterations
-        final int ITER_LIMIT = 1_000_000;
-        int iterCount = 1;
-
-        int[] finalStPerm = MathAlgorithms.firstPermutation(finalStSz, 0);
-        while (true) {
-            int[] nonFinalStPerm = MathAlgorithms.firstPermutation(nonFinalSz, 0);
-            while (true) {
-                // create a mapping from actual to expected using permutations.
-                Map<Integer, Integer> stateTranslationMap = new HashMap<>();
-                stateTranslationMap.put(actual.startState, expected.startState);
-                for (int j = 0; j < finalStPerm.length; j++) {
-                    int actualSt = actualFinalStateList.get(j);
-                    int mappedExpectedSt = expectedFinalStateList.get(finalStPerm[j]);
-                    stateTranslationMap.put(actualSt, mappedExpectedSt);
-                }
-                for (int j = 0; j < nonFinalStPerm.length; j++) {
-                    int actualSt = actualNonFinalStateList.get(j);
-                    int mappedExpectedSt = expectedNonFinalStateList.get(nonFinalStPerm[j]);
-                    stateTranslationMap.put(actualSt, mappedExpectedSt);
-                }
-
-                // create a copy of actual to resemble expected, and if actually
-                // equal to expected, then actual is equivalent to expected.
-                FiniteStateAutomaton actualCopy = actual.generateCopy(stateTranslationMap);
-                if (actualCopy.equals(expected)) {
-                    //System.out.println("Found match after " + iterCount + " attempt(s). " +
-                    //    "State translation map: " + stateTranslationMap);
-                    return true;
-                }
-
-                if (iterCount >= ITER_LIMIT || !MathAlgorithms.nextNPermutation(nonFinalStPerm)) {
-                    break;
-                }
-
-                iterCount++;
-            }
-            if (iterCount >= ITER_LIMIT || !MathAlgorithms.nextNPermutation(finalStPerm)) {
-                break;
-            }
-            iterCount++;
-        }
-
-        //System.out.println("Couldn't find match after " + iterCount + " attempt(s).");
-
-        return false;
-    }
-
-    // dot -Tpng fsm.gv.txt -o c:\sample.dot.2.png
 
     public FiniteStateAutomaton generateCopy(Map<Integer, Integer> stateTranslationMap) {
         Set<Integer> newStates = new HashSet<>();
@@ -248,7 +157,25 @@ public class FiniteStateAutomaton {
 
     @Override
 	public String toString() {
-        List<Integer> alphabetList = setToList(alphabet);
+        List<Integer> alphabetList = new ArrayList<>();
+        if (alphabet != null) {
+            alphabetList = setToList(alphabet);
+        }
+        else {
+            // get all symbols which appear in transition tables.
+            Set<Integer> temp = new HashSet<>();
+            if (nfaTransitionTable != null) {
+                for (Map<Integer, Set<Integer>> stateOutTransitions : nfaTransitionTable.values()) {
+                    temp.addAll(stateOutTransitions.keySet());
+                }
+            }
+            if (dfaTransitionTable != null) {
+                for (Map<Integer, Integer> stateOutTransitions : dfaTransitionTable.values()) {
+                    temp.addAll(stateOutTransitions.keySet());
+                }
+            }
+            alphabetList = setToList(temp);
+        }
         List<Integer> stateList = setToList(states);
         List<Integer> finalStateList = setToList(finalStates);
         StringBuilder fsaRepr = new StringBuilder();
@@ -263,7 +190,9 @@ public class FiniteStateAutomaton {
         if (nfaTransitionTable != null) {
             // notify of any invalid states and symbols
             // after displaying alphabet above, add null symbol to make it count as valid.
-            alphabetList.add(NULL_SYMBOL);
+            if (!alphabetList.contains(NULL_SYMBOL)) {
+                alphabetList.add(NULL_SYMBOL);
+            }
             for (int state : nfaTransitionTable.keySet()) {
                 if (!states.contains(state)) {
                     invalidStates.add(state);
@@ -465,5 +394,95 @@ public class FiniteStateAutomaton {
         }
         repr.append("}");
         return repr.toString();
+    }
+
+    public static boolean areEquivalent(FiniteStateAutomaton actual, 
+            FiniteStateAutomaton expected) {
+        // for equivalence 
+        //  - alphabets must be equal
+        //  - size of states must be equal
+        //  - size of final states must be equal
+        //  - there must be a clone of actual with states mapped to expected,
+        //    which equals expected.
+
+        if (!Objects.equals(actual.alphabet, expected.alphabet)) {
+            return false;
+        }
+        
+        List<Integer> actualFinalStateList = setToList(actual.finalStates);
+        actualFinalStateList.remove((Object) actual.startState);
+        List<Integer> actualNonFinalStateList = setToList(actual.states);
+        actualNonFinalStateList.removeAll(actualFinalStateList);
+        actualNonFinalStateList.remove((Object) actual.startState);
+
+        List<Integer> expectedFinalStateList = setToList(expected.finalStates);
+        expectedFinalStateList.remove((Object) expected.startState);
+        List<Integer> expectedNonFinalStateList = setToList(expected.states);
+        expectedNonFinalStateList.removeAll(expectedFinalStateList);
+        expectedNonFinalStateList.remove((Object) expected.startState);
+
+        if (actualFinalStateList.size() != expectedFinalStateList.size()) {
+            return false;
+        }
+        if (actualNonFinalStateList.size() != expectedNonFinalStateList.size()) {
+            return false;
+        }
+
+        int finalStSz = actualFinalStateList.size();
+        int nonFinalSz = actualNonFinalStateList.size();
+        
+        // go through all pairs of permutations of final and non final states,
+        // at least once.
+
+        // now possible number of mappings of actual to expected is
+        // = (N-F-1)! times F!
+        // where F is number of final states excluding any initial state,
+        // and N is the total number of states.
+        // due to exponential running time, limit iterations
+        final int ITER_LIMIT = 1_000_000;
+        int iterCount = 1;
+
+        int[] finalStPerm = MathAlgorithms.firstPermutation(finalStSz, 0);
+        while (true) {
+            int[] nonFinalStPerm = MathAlgorithms.firstPermutation(nonFinalSz, 0);
+            while (true) {
+                // create a mapping from actual to expected using permutations.
+                Map<Integer, Integer> stateTranslationMap = new HashMap<>();
+                stateTranslationMap.put(actual.startState, expected.startState);
+                for (int j = 0; j < finalStPerm.length; j++) {
+                    int actualSt = actualFinalStateList.get(j);
+                    int mappedExpectedSt = expectedFinalStateList.get(finalStPerm[j]);
+                    stateTranslationMap.put(actualSt, mappedExpectedSt);
+                }
+                for (int j = 0; j < nonFinalStPerm.length; j++) {
+                    int actualSt = actualNonFinalStateList.get(j);
+                    int mappedExpectedSt = expectedNonFinalStateList.get(nonFinalStPerm[j]);
+                    stateTranslationMap.put(actualSt, mappedExpectedSt);
+                }
+
+                // create a copy of actual to resemble expected, and if actually
+                // equal to expected, then actual is equivalent to expected.
+                FiniteStateAutomaton actualCopy = actual.generateCopy(stateTranslationMap);
+                if (actualCopy.equals(expected)) {
+                    //System.out.println("Found match after " + iterCount + " attempt(s). " +
+                    //    "State translation map: " + stateTranslationMap);
+                    return true;
+                }
+
+                if (iterCount >= ITER_LIMIT || !MathAlgorithms.nextNPermutation(nonFinalStPerm)) {
+                    break;
+                }
+
+                iterCount++;
+            }
+            if (iterCount >= ITER_LIMIT || !MathAlgorithms.nextNPermutation(finalStPerm)) {
+                break;
+            }
+            iterCount++;
+        }
+
+        //System.out.println("Couldn't find match after " + iterCount + " attempt(s).");
+
+        return false;
     }
 }
