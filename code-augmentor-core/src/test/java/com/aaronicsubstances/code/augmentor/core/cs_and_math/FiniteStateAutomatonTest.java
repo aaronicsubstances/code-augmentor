@@ -12,6 +12,7 @@ import org.testng.collections.Sets;
 
 import static com.aaronicsubstances.code.augmentor.core.TestResourceLoader.newMap;
 import static com.aaronicsubstances.code.augmentor.core.TestResourceLoader.newMapEntry;
+//import static com.aaronicsubstances.code.augmentor.core.TestResourceLoader.printTestHeader;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -28,7 +29,7 @@ public class FiniteStateAutomatonTest {
         assertEquals(actual, expected.value);
         // print degenerate cases and confirm print out.
         /*if (actual.getAlphabet().isEmpty() || actual.getStates().isEmpty()) {
-            TestResourceLoader.printTestHeader("testGenerateCopy", instance, stateMap, expected);
+            printTestHeader("testGenerateCopy", instance, stateMap, expected);
             System.out.println(actual);
         }*/
     }

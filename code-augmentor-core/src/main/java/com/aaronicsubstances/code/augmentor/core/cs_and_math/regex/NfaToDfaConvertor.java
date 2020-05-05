@@ -29,14 +29,7 @@ public class NfaToDfaConvertor {
         this.nfa = nfa;
 
         // build adjacency list type of graph with empty string transitions 
-        emptyStringGraph = new HashMap<>();
-        for (Map.Entry<Integer, Map<Integer, Set<Integer>>> entry : 
-                nfa.getNfaTransitionTable().entrySet()) {
-            if (entry.getValue().containsKey(FiniteStateAutomaton.NULL_SYMBOL)) {
-                emptyStringGraph.put(entry.getKey(), entry.getValue().get(
-                    FiniteStateAutomaton.NULL_SYMBOL));
-            }
-        }
+        emptyStringGraph = buildEmptyStringGraph(nfa);
     }
 
     public List<Set<Integer>> getNfaStateSubsets() {
@@ -48,8 +41,8 @@ public class NfaToDfaConvertor {
         Set<Integer> dfaFinalStates = new HashSet<>();
         Map<Integer, Map<Integer, Integer>> dfaTransitionTable = new HashMap<>();
         nfaStateSubsets = new ArrayList<>();
-        Set<Integer> startNfaStateSubset = emptyStringClosure(new HashSet<>(
-            Arrays.asList(nfa.getStartState())));
+        Set<Integer> startNfaStateSubset = emptyStringClosure(emptyStringGraph,
+            new HashSet<>(Arrays.asList(nfa.getStartState())));
         nfaStateSubsets.add(startNfaStateSubset);
         int processedCount = 0;
         while (processedCount < nfaStateSubsets.size()) {
@@ -74,8 +67,9 @@ public class NfaToDfaConvertor {
             Map<Integer, Integer> dfaOutStateTransitions = new HashMap<>();
             dfaTransitionTable.put(nextDState, dfaOutStateTransitions);
             for (int c : nfa.getAlphabet()) {
-                Set<Integer> discoveredNfaStateSubset = move(nextNfaStateSubset, c);
-                discoveredNfaStateSubset = emptyStringClosure(discoveredNfaStateSubset);
+                Set<Integer> discoveredNfaStateSubset = move(nfa, nextNfaStateSubset, c);
+                discoveredNfaStateSubset = emptyStringClosure(emptyStringGraph,
+                    discoveredNfaStateSubset);
                 int discoveredDState = nfaStateSubsets.indexOf(discoveredNfaStateSubset);
                 if (discoveredDState == -1) {
                     discoveredDState = nfaStateSubsets.size();
@@ -94,7 +88,7 @@ public class NfaToDfaConvertor {
         return dfa;
     }
 
-    private Set<Integer> move(Set<Integer> states, int c) {
+    static Set<Integer> move(FiniteStateAutomaton nfa, Set<Integer> states, int c) {
         Set<Integer> nextStates = new HashSet<>();
         for (int s : states) {
             Map<Integer, Set<Integer>> stateOutTransitions = nfa.getNfaTransitionTable().get(s);
@@ -106,7 +100,21 @@ public class NfaToDfaConvertor {
         return nextStates;
     }
 
-    private Set<Integer> emptyStringClosure(Set<Integer> startStates) {
+    static Map<Integer, Set<Integer>> buildEmptyStringGraph(FiniteStateAutomaton nfa) {
+        Map<Integer, Set<Integer>> emptyStringGraph = new HashMap<>();
+        for (Map.Entry<Integer, Map<Integer, Set<Integer>>> entry : 
+                nfa.getNfaTransitionTable().entrySet()) {
+            if (entry.getValue().containsKey(FiniteStateAutomaton.NULL_SYMBOL)) {
+                emptyStringGraph.put(entry.getKey(), entry.getValue().get(
+                    FiniteStateAutomaton.NULL_SYMBOL));
+            }
+        }
+        return emptyStringGraph;
+    }
+
+    static Set<Integer> emptyStringClosure(
+            Map<Integer, Set<Integer>> emptyStringGraph,
+            Set<Integer> startStates) {
         // NB: resembles breadth first search graph algorithm.
         Set<Integer> closureResult = new HashSet<>(startStates);
         LinkedList<Integer> processedStates = new LinkedList<>(startStates);

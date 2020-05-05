@@ -190,7 +190,13 @@ public class GeneratedCodeSimilarityChecker {
             // error was about required space, then present
             // offending character.
             if (expectedEOF || expected instanceof Integer) {
-                actual = "" + text.charAt(errorIndex);
+                char errorChar = text.charAt(errorIndex);
+                actual = "" + errorChar;
+                // detect CRLFs and present them unified.
+                if (errorChar == '\r' && errorIndex + 1 < text.length() &&
+                        text.charAt(errorIndex + 1) == '\n') {
+                    actual += '\n';
+                }
             }
             else {
                 // else error was about exact string mismatch,

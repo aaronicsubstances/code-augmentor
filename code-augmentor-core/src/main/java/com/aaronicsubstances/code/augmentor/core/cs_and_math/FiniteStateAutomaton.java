@@ -2,6 +2,7 @@ package com.aaronicsubstances.code.augmentor.core.cs_and_math;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -21,7 +22,7 @@ public class FiniteStateAutomaton {
     private final Map<Integer, Map<Integer, Integer>> dfaTransitionTable;
 
     public FiniteStateAutomaton(Set<Integer> alphabet,
-            Set<Integer> states, int startState, Set<Integer> finalStates,            
+            Set<Integer> states, int startState, Set<Integer> finalStates,
             Map<Integer, Map<Integer, Set<Integer>>> nfaTransitionTable,            
             Map<Integer, Map<Integer, Integer>> dfaTransitionTable) {
         this.states = states;
@@ -54,6 +55,14 @@ public class FiniteStateAutomaton {
 
     public Map<Integer, Map<Integer, Integer>> getDfaTransitionTable() {
         return dfaTransitionTable;
+    }
+
+    public boolean isNfa() {
+        return nfaTransitionTable != null;
+    }
+
+    public boolean isDfa() {
+        return dfaTransitionTable != null;
     }
 
     public FiniteStateAutomaton generateCopy(Map<Integer, Integer> stateTranslationMap) {
@@ -157,25 +166,14 @@ public class FiniteStateAutomaton {
 
     @Override
 	public String toString() {
-        List<Integer> alphabetList = new ArrayList<>();
-        if (alphabet != null) {
-            alphabetList = setToList(alphabet);
-        }
-        else {
-            // get all symbols which appear in transition tables.
-            Set<Integer> temp = new HashSet<>();
-            if (nfaTransitionTable != null) {
-                for (Map<Integer, Set<Integer>> stateOutTransitions : nfaTransitionTable.values()) {
-                    temp.addAll(stateOutTransitions.keySet());
-                }
-            }
-            if (dfaTransitionTable != null) {
-                for (Map<Integer, Integer> stateOutTransitions : dfaTransitionTable.values()) {
-                    temp.addAll(stateOutTransitions.keySet());
-                }
-            }
-            alphabetList = setToList(temp);
-        }
+        char horLnChar = '-', vertLnChar = '|';
+        return toString(horLnChar, vertLnChar);
+    }
+
+    public String toString(char horLnChar, char vertLnChar) {
+        Set<Integer> invalidSymbols = new HashSet<>();
+        List<Integer> alphabetList = gatherSymbols(invalidSymbols);
+
         List<Integer> stateList = setToList(states);
         List<Integer> finalStateList = setToList(finalStates);
         StringBuilder fsaRepr = new StringBuilder();
@@ -185,14 +183,11 @@ public class FiniteStateAutomaton {
         fsaRepr.append("start state: ").append(startState).append("\n");
         fsaRepr.append("final states: ").append(setToString(finalStateList)).append("\n");
         Set<Integer> invalidStates = new HashSet<>();
-        Set<Integer> invalidSymbols = new HashSet<>();
         List<String[]> table = new ArrayList<>();
         if (nfaTransitionTable != null) {
-            // notify of any invalid states and symbols
-            // after displaying alphabet above, add null symbol to make it count as valid.
-            if (!alphabetList.contains(NULL_SYMBOL)) {
-                alphabetList.add(NULL_SYMBOL);
-            }
+            // include null symbol in valid symbols to generate table.
+            alphabetList.add(0, NULL_SYMBOL);
+            // notify of any invalid states
             for (int state : nfaTransitionTable.keySet()) {
                 if (!states.contains(state)) {
                     invalidStates.add(state);
@@ -200,9 +195,6 @@ public class FiniteStateAutomaton {
                 if (nfaTransitionTable.containsKey(state)) {
                     Map<Integer, Set<Integer>> stateOutTransitions = nfaTransitionTable.get(state);
                     for (Map.Entry<Integer, Set<Integer>> entry : stateOutTransitions.entrySet()) {
-                        if (!alphabetList.contains(entry.getKey())) {
-                            invalidSymbols.add(entry.getKey());
-                        }
                         for (int nextState : entry.getValue()) {
                             if (!states.contains(nextState)) {
                                 invalidStates.add(nextState);
@@ -234,7 +226,7 @@ public class FiniteStateAutomaton {
             }
         }
         if (dfaTransitionTable != null) {
-            // notify of any invalid states and symbols
+            // notify of any invalid states
             for (int state : dfaTransitionTable.keySet()) {
                 if (!states.contains(state)) {
                     invalidStates.add(state);
@@ -242,9 +234,6 @@ public class FiniteStateAutomaton {
                 if (dfaTransitionTable.containsKey(state)) {
                     Map<Integer, Integer> stateOutTransitions = dfaTransitionTable.get(state);
                     for (Map.Entry<Integer, Integer> entry : stateOutTransitions.entrySet()) {
-                        if (!alphabetList.contains(entry.getKey())) {
-                            invalidSymbols.add(entry.getKey());
-                        }
                         if (!states.contains(entry.getValue())) {
                             invalidStates.add(entry.getValue());
                         }
@@ -289,10 +278,24 @@ public class FiniteStateAutomaton {
                 .map(x -> x.length())
                 .max(Integer::compare)            
                 .get();
-        }        
+        }
 
-        // add 2 surrounding spaces to widest column and ensure minimum length of 8
-        widestColumn = Math.max(widestColumn + 2, 8);
+        // use titles in tables to expand widestColumn if necessary.
+        // since we are combining nfa and dfa states in case both are
+        // unexpectedly specified, combine titles for both types to make
+        // error explicit.
+        String fsaTypeTitle = "";
+        if (nfaTransitionTable != null) {
+            fsaTypeTitle += "NFA";
+        }
+        if (dfaTransitionTable != null) {
+            fsaTypeTitle += "DFA";
+        }
+        final String alphabetSectionTitle = "Input", stateColumnTitle = "State";
+        widestColumn = Collections.max(Arrays.asList(widestColumn, fsaTypeTitle.length(), 
+            alphabetSectionTitle.length(), stateColumnTitle.length()));
+        // add 2 surrounding spaces to widest column.
+        widestColumn += 2;
         
         // calculate table length 
         // - vertical border
@@ -301,21 +304,16 @@ public class FiniteStateAutomaton {
         // - alphabet column plus vertical border for each alphabet
         int length = 1 + widestColumn + 1 + alphabetList.size() * (widestColumn + 1);
 
-        char horLnChar = '-', vertLnChar = '|';
         String horizontalBorder = strMultiply("" + horLnChar, length) + "\n";
-
-        String title = "DFA";
-        if (nfaTransitionTable != null) {
-            title = "NFA";
-        }
 
         // begin printing table.
         fsaRepr.append(horizontalBorder);
 
         // "title" and "input" heading line
-        fsaRepr.append(vertLnChar).append(strRightPad(" " + title, widestColumn)).append(vertLnChar);
+        fsaRepr.append(vertLnChar).append(strRightPad(" " + fsaTypeTitle, widestColumn));
+        fsaRepr.append(vertLnChar);
         if (!alphabetList.isEmpty()) {
-            fsaRepr.append(strRightPad(" Input", widestColumn));
+            fsaRepr.append(strRightPad(" " + alphabetSectionTitle, widestColumn));
             fsaRepr.append(strRightPad("", (alphabetList.size() - 1) * (widestColumn + 1)));
             fsaRepr.append(vertLnChar);
         }
@@ -325,7 +323,7 @@ public class FiniteStateAutomaton {
 
         // "state" heading and heading for each alphabet
         fsaRepr.append(vertLnChar);
-        fsaRepr.append(strRightPad(" State", widestColumn));
+        fsaRepr.append(strRightPad(" " + stateColumnTitle, widestColumn));
         fsaRepr.append(vertLnChar);
         for (int symbol : alphabetList) {
             fsaRepr.append(strRightPad(" " + symbol, widestColumn)).append(vertLnChar);
@@ -350,6 +348,51 @@ public class FiniteStateAutomaton {
         return fsaRepr.toString();
     }
     
+    private List<Integer> gatherSymbols(Set<Integer> invalidSymbols) {
+        // gather symbols and identify invalid ones.
+        // consider null symbol valid for NFAs only.
+        // but consider null symbol invalid if explicitly specified.
+        Set<Integer> temp = new HashSet<>();
+        if (alphabet != null) {
+            temp.addAll(alphabet);
+        }
+        else {
+            // get all symbols which appear in transition tables.
+            if (nfaTransitionTable != null) {
+                for (Map<Integer, Set<Integer>> stateOutTransitions : nfaTransitionTable.values()) {
+                    temp.addAll(stateOutTransitions.keySet());
+                    if (temp.contains(NULL_SYMBOL)) {
+                        temp.remove(NULL_SYMBOL);
+                    }
+                }
+            }
+            if (dfaTransitionTable != null) {
+                // null symbol cannot appear in DFA tables.
+                for (Map<Integer, Integer> stateOutTransitions : dfaTransitionTable.values()) {
+                    temp.addAll(stateOutTransitions.keySet());
+                    if (temp.contains(NULL_SYMBOL)) {
+                        temp.remove(NULL_SYMBOL);
+                        invalidSymbols.add(NULL_SYMBOL);
+                    }
+                }
+            }
+        }
+
+        Set<Integer> validSymbols = new HashSet<>();
+
+        // Validate symbols. None must be negative,
+        // and not even null symbol can be included.
+        for (int c : temp) {
+            if (c < 0) {
+                invalidSymbols.add(c);
+            }
+            else {
+                validSymbols.add(c);
+            }
+        }
+        return setToList(validSymbols);
+    }
+
     private static String strRightPad(String s, int totalCount) {
         StringBuilder padded = new StringBuilder();
         padded.append(s);

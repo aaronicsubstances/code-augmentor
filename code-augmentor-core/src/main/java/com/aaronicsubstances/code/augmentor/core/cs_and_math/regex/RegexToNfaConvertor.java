@@ -48,6 +48,10 @@ public class RegexToNfaConvertor implements RegexNodeVisitor {
         return newStateNameMap;
     }
 
+    public void resetStateGenerator(int newStart) {
+        this.stateGenerator = newStart;
+    }
+
     private static Set<Integer> newSet(int... values) {
         Set<Integer> set = new HashSet<>();
         for (int v : values) {
