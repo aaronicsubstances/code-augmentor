@@ -1,9 +1,0 @@
-package com.aaronicsubstances.programmer.companion;
-
-/**
- * test
- */
-public class test {
-
-    
-}
