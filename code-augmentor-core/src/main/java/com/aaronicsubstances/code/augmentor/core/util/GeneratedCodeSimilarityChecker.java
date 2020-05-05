@@ -224,69 +224,10 @@ public class GeneratedCodeSimilarityChecker {
          *  - applyTrailingIndentBefore: bool
          *  - applyLeadingIndentAfter: bool
          */
-        class Tk {
-            public Tk(int type, String value) {
-                this.type = type;
-                this.value = value;
-                if (type == Tk.TYPE_EXACT_MATCH) {
-                    char lastChar = value.charAt(value.length() - 1);
-                    endsWithNewline = TaskUtils.isNewLine(lastChar);
-                }
-                else {
-                    endsWithNewline = type == TYPE_NEW_LINE;
-                }
-            }
-
-            static final int TYPE_EXACT_MATCH = 1;
-            static final int TYPE_SPACE = 2;
-            static final int TYPE_NEW_LINE = 3;
-            static final int TYPE_OTHER = 4;
-
-            final int type;
-            final String value;
-            final boolean endsWithNewline;
-            boolean applyTrailingIndentBefore;
-            boolean applyLeadingIndentAfter;
-
-            @Override
-            public String toString() {
-                String typeName;
-                switch (type) {
-                    case TYPE_EXACT_MATCH:
-                        typeName = "EXACT_MATCH";
-                        break;
-                    case TYPE_SPACE:
-                        typeName = "SPACE";
-                        break;
-                    case TYPE_NEW_LINE:
-                        typeName = "NEW_LINE";
-                        break;
-                    case TYPE_OTHER:
-                        typeName = "OTHER";
-                        break;
-                    default:
-                        throw new RuntimeException("Unexpected type: " + type);
-                }
-                String formattedValue = PersistenceUtil.serializeCompactlyToJson(value);
-                return "{type=" + typeName + ", value=" + formattedValue +
-                    ", applyTrailingIndentBefore=" + applyTrailingIndentBefore + 
-                    ", applyLeadingIndentAfter=" + applyLeadingIndentAfter + 
-                    ", endsWithNewline=" + endsWithNewline + "}";
-            }
-        }
-        class AlgContext {
-            List<Tk> tokens = new ArrayList<>();
-            boolean exactMatchSeen;
-
-            @Override
-            public String toString() {
-                return "AlgContext{exactMatchSeen=" + exactMatchSeen + ", tokens=" + tokens + "}";
-            }
-        }
 
          /*  
          * building of completion object phase:
-         *  phase 1: build tokens, set exactMatchSeen, ignore empty strings,
+         *  phase 1: build tokens, ignore empty strings,
          *     through all content parts
          *        if exact match - treat as such.
          *        if newline - treat as such.
@@ -294,9 +235,7 @@ public class GeneratedCodeSimilarityChecker {
          *        else look for contigious text other than whitespace.
          */
 
-        AlgContext algContext = new AlgContext();
-        algContext.exactMatchSeen = contentParts.stream().anyMatch(x -> x.isExactMatch());
-        algContext.tokens = new ArrayList<Tk>();
+        List<Tk> tokens = new ArrayList<>();
 
         Predicate<Character> spaceCondition = c -> {
             return NON_NEWLINE_WS_CHARS.contains(c.toString());
@@ -316,7 +255,7 @@ public class GeneratedCodeSimilarityChecker {
                 continue;
             }
             if (contentPart.isExactMatch()) {
-                algContext.tokens.add(new Tk(Tk.TYPE_EXACT_MATCH, content));
+                tokens.add(new Tk(Tk.TYPE_EXACT_MATCH, content));
                 partIndex++;
                 continue;
             }
@@ -332,11 +271,11 @@ public class GeneratedCodeSimilarityChecker {
                     if (curr == '\r' &&
                             i + 1 < content.length() &&
                             content.charAt(i + 1) == '\n') {
-                        algContext.tokens.add(new Tk(Tk.TYPE_NEW_LINE, "\r\n")); 
+                        tokens.add(new Tk(Tk.TYPE_NEW_LINE, "\r\n")); 
                         i++;
                     }
                     else {
-                        algContext.tokens.add(new Tk(Tk.TYPE_NEW_LINE, "" + curr));
+                        tokens.add(new Tk(Tk.TYPE_NEW_LINE, "" + curr));
                     }
                 }
                 else {
@@ -353,7 +292,7 @@ public class GeneratedCodeSimilarityChecker {
                     }
                     int[] nextIndices = { partIndex, i };
                     String value = fetchContiguousTkVal(nextIndices, condition);
-                    algContext.tokens.add(new Tk(type, value)); 
+                    tokens.add(new Tk(type, value)); 
                     partIndexToUseNext = nextIndices[0];
                     contentIndexToStartFrom = nextIndices[1];
                     if (partIndexToUseNext < partIndex) { 
@@ -381,7 +320,7 @@ public class GeneratedCodeSimilarityChecker {
         }
 
         if (loggingEnabled) {
-            System.out.format("After phase 1, context = %s\n\n", algContext);
+            System.out.format("After phase 1, tokens = %s\n\n", tokens);
         }
 
         /*
@@ -396,16 +335,16 @@ public class GeneratedCodeSimilarityChecker {
          */
         
         int tkIndex = 0;
-        while (tkIndex < algContext.tokens.size()) {
-            Tk token = algContext.tokens.get(tkIndex);
+        while (tkIndex < tokens.size()) {
+            Tk token = tokens.get(tkIndex);
             boolean significant = true;
             if (token.type == Tk.TYPE_SPACE) {
                 Tk prevToken = null, nextToken = null;
                 if (tkIndex - 1 >= 0) {
-                    prevToken = algContext.tokens.get(tkIndex - 1);
+                    prevToken = tokens.get(tkIndex - 1);
                 }
-                if (tkIndex + 1 < algContext.tokens.size()) {
-                    nextToken = algContext.tokens.get(tkIndex + 1);
+                if (tkIndex + 1 < tokens.size()) {
+                    nextToken = tokens.get(tkIndex + 1);
                 }
                 if (prevToken == null || nextToken == null) {
                     // space is first or last in combined content parts.
@@ -434,12 +373,12 @@ public class GeneratedCodeSimilarityChecker {
                 tkIndex++;
             }
             else {
-                algContext.tokens.remove(tkIndex);
+                tokens.remove(tkIndex);
             }
         }
 
         if (loggingEnabled) {
-            System.out.format("After phase 2, context = %s\n\n", algContext);
+            System.out.format("After phase 2, tokens = %s\n\n", tokens);
         }
 
         /*
@@ -457,14 +396,14 @@ public class GeneratedCodeSimilarityChecker {
          *
          */
 
-        for (tkIndex = 0; tkIndex < algContext.tokens.size(); tkIndex++) {
-            Tk token = algContext.tokens.get(tkIndex);
+        for (tkIndex = 0; tkIndex < tokens.size(); tkIndex++) {
+            Tk token = tokens.get(tkIndex);
             Tk prevToken = null, nextToken = null;
             if (tkIndex - 1 >= 0) {
-                prevToken = algContext.tokens.get(tkIndex - 1);
+                prevToken = tokens.get(tkIndex - 1);
             }
-            if (tkIndex + 1 < algContext.tokens.size()) {
-                nextToken = algContext.tokens.get(tkIndex + 1);
+            if (tkIndex + 1 < tokens.size()) {
+                nextToken = tokens.get(tkIndex + 1);
             }
             // determine trailing indent before application
             if (prevToken == null) {
@@ -491,7 +430,7 @@ public class GeneratedCodeSimilarityChecker {
         }
 
         if (loggingEnabled) {
-            System.out.format("After phase 3, context = %s\n\n", algContext);
+            System.out.format("After phase 3, tokens = %s\n\n", tokens);
         }
 
         /*
@@ -506,7 +445,7 @@ public class GeneratedCodeSimilarityChecker {
          *        else add zero or more non newline whitespace regex to it.
          */
         List<Object> regexBuilder = new ArrayList<>();
-        for (Tk token : algContext.tokens) {
+        for (Tk token : tokens) {
             if (token.applyTrailingIndentBefore) {
                 regexBuilder.add(MATCH_TYPE_ANY_SPACES);
             }
@@ -521,7 +460,8 @@ public class GeneratedCodeSimilarityChecker {
             }
         }
         if (regexBuilder.isEmpty()) {
-            if (!algContext.exactMatchSeen) {
+            boolean exactMatchSeen = contentParts.stream().anyMatch(x -> x.isExactMatch());
+            if (!exactMatchSeen) {
                 regexBuilder.add(MATCH_TYPE_ANY_SPACES);
             }
         }
@@ -573,5 +513,56 @@ public class GeneratedCodeSimilarityChecker {
         }
         assert contentIndexUsed: "Received invalid part index: " + nextIndices[0];
         return tkVal.toString();
+    }
+
+    private static class Tk {
+        public Tk(int type, String value) {
+            this.type = type;
+            this.value = value;
+            if (type == Tk.TYPE_EXACT_MATCH) {
+                char lastChar = value.charAt(value.length() - 1);
+                endsWithNewline = TaskUtils.isNewLine(lastChar);
+            }
+            else {
+                endsWithNewline = type == TYPE_NEW_LINE;
+            }
+        }
+
+        static final int TYPE_EXACT_MATCH = 1;
+        static final int TYPE_SPACE = 2;
+        static final int TYPE_NEW_LINE = 3;
+        static final int TYPE_OTHER = 4;
+
+        final int type;
+        final String value;
+        final boolean endsWithNewline;
+        boolean applyTrailingIndentBefore;
+        boolean applyLeadingIndentAfter;
+
+        @Override
+        public String toString() {
+            String typeName;
+            switch (type) {
+                case TYPE_EXACT_MATCH:
+                    typeName = "EXACT_MATCH";
+                    break;
+                case TYPE_SPACE:
+                    typeName = "SPACE";
+                    break;
+                case TYPE_NEW_LINE:
+                    typeName = "NEW_LINE";
+                    break;
+                case TYPE_OTHER:
+                    typeName = "OTHER";
+                    break;
+                default:
+                    throw new RuntimeException("Unexpected type: " + type);
+            }
+            String formattedValue = PersistenceUtil.serializeCompactlyToJson(value);
+            return "{type=" + typeName + ", value=" + formattedValue +
+                ", applyTrailingIndentBefore=" + applyTrailingIndentBefore + 
+                ", applyLeadingIndentAfter=" + applyLeadingIndentAfter + 
+                ", endsWithNewline=" + endsWithNewline + "}";
+        }
     }
 }
