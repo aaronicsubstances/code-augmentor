@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import com.aaronicsubstances.code.augmentor.core.TestResourceLoader;
 
@@ -226,7 +227,7 @@ public class MathAlgorithmsTest {
      */
     @Test(dataProvider = "createTestNextCartesianProductTupleData")
     public void testNextCartesianProductTupleAlt(int[] setSizes, int[] t, int[] expected) {
-        BiFunction<Integer, Integer, Integer> firstElemFunction = (idx, currEl) -> {
+        Function<Integer, Integer> firstElemFunction = idx-> {
             return setSizes[idx] > 0 ? 0 : null;
         };
         BiFunction<Integer, Integer, Integer> nextElemFunction = (idx, currEl) -> {

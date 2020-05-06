@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 public class MathAlgorithms {
 
@@ -216,11 +217,11 @@ public class MathAlgorithms {
      * @param tupleSize size of tuple. must be non negative.
      * @return array of zeros and of requested size.
      */
-	public static int[] firstCartesianProductTuple(int tupleSize) {
+    public static int[] firstCartesianProductTuple(int tupleSize) {
         int[] firstTuple = new int[tupleSize];
         // Java already initializes array to zeros.
         return firstTuple;
-	}
+    }
 
     /**
      * Generates the next cartesian product tuple in a specified order after given tuple.
@@ -245,7 +246,7 @@ public class MathAlgorithms {
      * @return true if t[] now has the next tuple; false if t[] is the last tuple
      */
     public static <T> boolean nextCartesianProductTuple(
-            BiFunction<Integer, T, T> firstElementFunction,
+            Function<Integer, T> firstElementFunction,
             BiFunction<Integer, T, T> nextElementFunction,
             List<T> t) {
         // if any set size is empty, then cartesian product is empty set.
@@ -280,7 +281,7 @@ public class MathAlgorithms {
         t.set(i, nextElemFound);
         i++;
         for ( ; i < t.size(); i++) {
-            T firstElem = firstElementFunction.apply(i, t.get(i));
+            T firstElem = firstElementFunction.apply(i);
             if (firstElem == null) {
                 return false;
             }

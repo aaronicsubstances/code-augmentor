@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -415,7 +416,7 @@ public class FiniteStateAutomaton {
      * @param symbolNameFunction optional function for generating labels for a symbol or
      * list of symbols. If null or returns null, default will output integer symbol as it is.
      * @param stateNameFunction optional function for generating labels for states. If null
-     * or returns null, default will prefix state with 'S-'. e.g S_0, S_1.
+     * or returns null, default will prefix state with 'S_'. e.g S_0, S_1.
      * @return equivalent state diagram in Graphviz dot graph notation.
      */
     public String toDotGraph(Function<int[], String> symbolNameFunction,
@@ -615,93 +616,245 @@ public class FiniteStateAutomaton {
         return repr.toString();
     }
 
+    /**
+     * Checks for equivalence of two finite state automatons, disregarding differences
+     * in state numbering. Intended for use during testing.
+     * @param actual the instance to check for equivalence with a standard.
+     * @param expected the standard to be compared to.
+     * @return true or false if actual is equivalent to expected or not respectively.
+     */
     public static boolean areEquivalent(FiniteStateAutomaton actual, 
             FiniteStateAutomaton expected) {
-        // for equivalence 
-        //  - alphabets must be equal
-        //  - size of states must be equal
-        //  - size of final states must be equal
-        //  - there must be a clone of actual with states mapped to expected,
-        //    which equals expected.
+        if (Objects.equals(actual, expected)) {
+            return true;
+        }
 
+        if (actual == null || expected == null) {
+            return false;
+        }
+        
+        // alphabets must be exactly equal or both null.
         if (!Objects.equals(actual.alphabet, expected.alphabet)) {
             return false;
         }
-        
-        List<Integer> actualFinalStateList = setToList(actual.finalStates);
-        actualFinalStateList.remove((Object) actual.startState);
-        List<Integer> actualNonFinalStateList = setToList(actual.states);
-        actualNonFinalStateList.removeAll(actualFinalStateList);
-        actualNonFinalStateList.remove((Object) actual.startState);
 
-        List<Integer> expectedFinalStateList = setToList(expected.finalStates);
-        expectedFinalStateList.remove((Object) expected.startState);
-        List<Integer> expectedNonFinalStateList = setToList(expected.states);
-        expectedNonFinalStateList.removeAll(expectedFinalStateList);
-        expectedNonFinalStateList.remove((Object) expected.startState);
-
-        if (actualFinalStateList.size() != expectedFinalStateList.size()) {
+        // states and final states must have corresponding equal sizes.
+        if (actual.states.size() != expected.states.size()) {
             return false;
         }
-        if (actualNonFinalStateList.size() != expectedNonFinalStateList.size()) {
+        if (actual.finalStates.size() != expected.finalStates.size()) {
             return false;
         }
 
-        int finalStSz = actualFinalStateList.size();
-        int nonFinalSz = actualNonFinalStateList.size();
-        
-        // go through all pairs of permutations of final and non final states,
-        // at least once.
-
-        // now possible number of mappings of actual to expected is
-        // = (N-F-1)! times F!
-        // where F is number of final states excluding any initial state,
-        // and N is the total number of states.
-        // due to exponential running time, limit iterations
-        final int ITER_LIMIT = 1_000_000;
-        int iterCount = 1;
-
-        int[] finalStPerm = MathAlgorithms.firstPermutation(finalStSz);
-        while (true) {
-            int[] nonFinalStPerm = MathAlgorithms.firstPermutation(nonFinalSz);
-            while (true) {
-                // create a mapping from actual to expected using permutations.
-                Map<Integer, Integer> stateTranslationMap = new HashMap<>();
-                stateTranslationMap.put(actual.startState, expected.startState);
-                for (int j = 0; j < finalStPerm.length; j++) {
-                    int actualSt = actualFinalStateList.get(j);
-                    int mappedExpectedSt = expectedFinalStateList.get(finalStPerm[j]);
-                    stateTranslationMap.put(actualSt, mappedExpectedSt);
-                }
-                for (int j = 0; j < nonFinalStPerm.length; j++) {
-                    int actualSt = actualNonFinalStateList.get(j);
-                    int mappedExpectedSt = expectedNonFinalStateList.get(nonFinalStPerm[j]);
-                    stateTranslationMap.put(actualSt, mappedExpectedSt);
-                }
-
-                // create a copy of actual to resemble expected, and if actually
-                // equal to expected, then actual is equivalent to expected.
-                FiniteStateAutomaton actualCopy = actual.generateCopy(stateTranslationMap);
-                if (actualCopy.equals(expected)) {
-                    //System.out.println("Found match after " + iterCount + " attempt(s). " +
-                    //    "State translation map: " + stateTranslationMap);
-                    return true;
-                }
-
-                if (iterCount >= ITER_LIMIT || !MathAlgorithms.nextNPermutation(nonFinalStPerm)) {
-                    break;
-                }
-
-                iterCount++;
+        // determine unique equivalence classes of expected instance.
+        List<EquivalenceCriteria> equivalenceClasses = new ArrayList<>();
+        List<List<Integer>> listOfExpectedClassMembers = new ArrayList<>();
+        Set<Integer> allStates = newSet();
+        allStates.addAll(expected.states);
+        allStates.addAll(expected.finalStates);
+        if (expected.isNfa()) {
+            allStates.addAll(expected.getNfaTransitionTable().keySet());
+        }
+        if (expected.isDfa()) {
+            allStates.addAll(expected.getDfaTransitionTable().keySet());
+        }
+        for (int state : allStates) {
+            EquivalenceCriteria criteria = buildEquivalenceClass(expected, state);
+            List<Integer> classMembers;
+            int idx = equivalenceClasses.indexOf(criteria);
+            if (idx != -1) {
+                classMembers = listOfExpectedClassMembers.get(idx);
             }
-            if (iterCount >= ITER_LIMIT || !MathAlgorithms.nextNPermutation(finalStPerm)) {
-                break;
+            else {
+                classMembers = new ArrayList<>();
+                listOfExpectedClassMembers.add(classMembers);
+                equivalenceClasses.add(criteria);
+            }
+            classMembers.add(state);
+        }
+
+        // now determine equivalence classes of actual, but ensure they
+        // are found in those of expected, or else mismatch has been detected.
+        allStates.clear();
+        allStates.addAll(actual.states);
+        allStates.addAll(actual.finalStates);
+        if (actual.isNfa()) {
+            allStates.addAll(actual.getNfaTransitionTable().keySet());
+        }
+        if (actual.isDfa()) {
+            allStates.addAll(actual.getDfaTransitionTable().keySet());
+        }
+        List<List<Integer>> listOfActualClassMembers = new ArrayList<>();
+        for (int i = 0; i < equivalenceClasses.size(); i++) {
+            listOfActualClassMembers.add(new ArrayList<>());
+        }
+        for (int state : allStates) {
+            EquivalenceCriteria criteria = buildEquivalenceClass(actual, state);
+            int idx = equivalenceClasses.indexOf(criteria);
+            if (idx == -1) {
+                // mismatch found
+                return false;
+            }
+            List<Integer> classMembers = listOfActualClassMembers.get(idx);
+            classMembers.add(state);
+        }
+
+        // at this stage, we are almost about to start some iterations
+        // but before that, ensure corresponding sizes are equal between
+        // class members of actual and expected.
+        for (int i = 0; i < equivalenceClasses.size(); i++) {
+            List<Integer> expectedClassMembers = listOfExpectedClassMembers.get(i);
+            List<Integer> actualClassMembers = listOfActualClassMembers.get(i);
+            if (actualClassMembers.size() != expectedClassMembers.size()) {
+                return false;
+            }
+        }
+
+        // all is set for search.
+        /*StringBuilder temp = new StringBuilder();
+        for (int i = 0; i < equivalenceClasses.size(); i++) {
+            List<Integer> expectedClassMembers = listOfExpectedClassMembers.get(i);
+            if (temp.length() > 0) {
+                temp.append(" by ");
+            }
+            temp.append(expectedClassMembers.size());
+        }
+        System.out.format("About to run cartesian product algorithm on " +
+            "sets of sizes %s\n", temp);*/
+
+        Function<Integer, int[]> firstElementFunction = idx -> {
+            List<Integer> expectedClassMembers = listOfExpectedClassMembers.get(idx);
+            return MathAlgorithms.firstPermutation(expectedClassMembers.size());
+        };
+        List<int[]> cartesianProductTuple = new ArrayList<>();
+        for (int i = 0; i < equivalenceClasses.size(); i++) {
+            cartesianProductTuple.add(firstElementFunction.apply(i));
+        }
+        BiFunction<Integer, int[], int[]> nextElementFunction = (idx, currEl) -> {
+            if (MathAlgorithms.nextNPermutation(currEl)) {
+                return currEl;
+            }
+            return null;
+        };
+
+        // go through loop at least once to check with very first tuple.
+        // limit iterations
+        final int MAX_ITER_COUNT = 1_000_000;
+        int iterCount = 0;
+        do {
+            if (iterCount >= MAX_ITER_COUNT) {
+                throw new RuntimeException("Couldn't find match after " + iterCount + " attempt(s).");
             }
             iterCount++;
+            
+            // create a mapping from actual to expected using permutations.
+            Map<Integer, Integer> stateTranslationMap = new HashMap<>();
+            for (int i = 0; i < equivalenceClasses.size(); i++) {
+                int[] perm = cartesianProductTuple.get(i);
+                List<Integer> actualStateList = listOfActualClassMembers.get(i);
+                List<Integer> expectedStateList = listOfExpectedClassMembers.get(i);
+                for (int j = 0; j < perm.length; j++) {
+                    int actualSt = actualStateList.get(j);
+                    int mappedExpectedSt = expectedStateList.get(perm[j]);
+                    stateTranslationMap.put(actualSt, mappedExpectedSt);
+                }
+            }
+
+            // create a copy of actual to resemble expected, and if actually
+            // equal to expected, then actual is equivalent to expected.
+            FiniteStateAutomaton actualCopy = actual.generateCopy(stateTranslationMap);
+            if (actualCopy.equals(expected)) {
+                // System.out.println("Found match after " + iterCount + " attempt(s). " +
+                //    "State translation map: " + stateTranslationMap);
+                return true;
+            }
+            
+            //System.out.println("Could not find match after " + iterCount + " attempt(s). " +
+            //    "State translation map: " + stateTranslationMap);
+
+        } while (MathAlgorithms.nextCartesianProductTuple(firstElementFunction, nextElementFunction,
+                cartesianProductTuple));
+        return false;
+    }
+
+    private static EquivalenceCriteria buildEquivalenceClass(
+            FiniteStateAutomaton fsa, int state) {
+        EquivalenceCriteria equivalenceCriteria = new EquivalenceCriteria();
+        equivalenceCriteria.isStartState = state == fsa.startState;
+        equivalenceCriteria.isFinalState = fsa.finalStates.contains(state);
+        Set<Integer> nextStates = newSet();
+        if (fsa.isNfa() && fsa.nfaTransitionTable.containsKey(state)) {
+            Map<Integer, Set<Integer>> map = fsa.nfaTransitionTable.get(state);
+            for (Map.Entry<Integer, Set<Integer>> entry : map.entrySet()) {
+                equivalenceCriteria.symbolSizes.put(entry.getKey(), entry.getValue().size());
+                nextStates.addAll(entry.getValue());
+                if (entry.getValue().contains(state)) {
+                    equivalenceCriteria.selfTransitionSymbolCount++;
+                }
+            }
+        }
+        if (fsa.isDfa() && fsa.dfaTransitionTable.containsKey(state)) {
+            Map<Integer, Integer> map = fsa.dfaTransitionTable.get(state);
+            for (Map.Entry<Integer, Integer> entry : map.entrySet()) {
+                Integer symbolCount = equivalenceCriteria.symbolSizes.get(entry.getKey());
+                if (symbolCount != null) {
+                    equivalenceCriteria.symbolSizes.put(entry.getKey(), symbolCount + 1);
+                }
+                else {
+                    equivalenceCriteria.symbolSizes.put(entry.getKey(), 1);
+                }
+                nextStates.add(entry.getValue());
+                if (entry.getValue() == state) {
+                    equivalenceCriteria.selfTransitionSymbolCount++;
+                }
+            }
+        }
+        equivalenceCriteria.nextStateCount = nextStates.size();
+        return equivalenceCriteria;
+    }
+
+    private static class EquivalenceCriteria {
+        public final Map<Integer, Integer> symbolSizes = new HashMap<>();
+        public int nextStateCount;
+        public int selfTransitionSymbolCount;
+        public boolean isStartState;
+        public boolean isFinalState;
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + (isFinalState ? 1231 : 1237);
+            result = prime * result + (isStartState ? 1231 : 1237);
+            result = prime * result + nextStateCount;
+            result = prime * result + selfTransitionSymbolCount;
+            result = prime * result + ((symbolSizes == null) ? 0 : symbolSizes.hashCode());
+            return result;
         }
 
-        //System.out.println("Couldn't find match after " + iterCount + " attempt(s).");
-
-        return false;
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            EquivalenceCriteria other = (EquivalenceCriteria) obj;
+            if (isFinalState != other.isFinalState)
+                return false;
+            if (isStartState != other.isStartState)
+                return false;
+            if (nextStateCount != other.nextStateCount)
+                return false;
+            if (selfTransitionSymbolCount != other.selfTransitionSymbolCount)
+                return false;
+            if (symbolSizes == null) {
+                if (other.symbolSizes != null)
+                    return false;
+            } else if (!symbolSizes.equals(other.symbolSizes))
+                return false;
+            return true;
+        }
     }
 }
