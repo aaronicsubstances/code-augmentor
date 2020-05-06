@@ -661,9 +661,9 @@ public class FiniteStateAutomaton {
         final int ITER_LIMIT = 1_000_000;
         int iterCount = 1;
 
-        int[] finalStPerm = MathAlgorithms.firstPermutation(finalStSz, 0);
+        int[] finalStPerm = MathAlgorithms.firstPermutation(finalStSz);
         while (true) {
-            int[] nonFinalStPerm = MathAlgorithms.firstPermutation(nonFinalSz, 0);
+            int[] nonFinalStPerm = MathAlgorithms.firstPermutation(nonFinalSz);
             while (true) {
                 // create a mapping from actual to expected using permutations.
                 Map<Integer, Integer> stateTranslationMap = new HashMap<>();
