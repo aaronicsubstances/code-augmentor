@@ -4,11 +4,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class FiniteStateAutomaton {
@@ -65,14 +66,22 @@ public class FiniteStateAutomaton {
         return dfaTransitionTable != null;
     }
 
+    public static Set<Integer> newSet(int... values) {
+        Set<Integer> set = new TreeSet<>();
+        for (int v : values) {
+            set.add(v);
+        }
+        return set;
+    }
+
     public FiniteStateAutomaton generateCopy(Map<Integer, Integer> stateTranslationMap) {
-        Set<Integer> newStates = new HashSet<>();
+        Set<Integer> newStates = newSet();
         for (int state : states) {
             int newState = stateTranslationMap.get(state);
             newStates.add(newState);
         }
         int newStartState = stateTranslationMap.get(startState);
-        Set<Integer> newFinalStates = new HashSet<>();
+        Set<Integer> newFinalStates = newSet();
         for (int state : finalStates) {
             int newFinalState = stateTranslationMap.get(state);
             newFinalStates.add(newFinalState);
@@ -85,7 +94,7 @@ public class FiniteStateAutomaton {
                 Map<Integer, Set<Integer>> newMap = new HashMap<>();
                 newNfaTransitionTable.put(newTransitionTableStateKey, newMap);
                 for (Map.Entry<Integer, Set<Integer>> e2 : e.getValue().entrySet()) {
-                    Set<Integer> multipleStateValues = new HashSet<>();
+                    Set<Integer> multipleStateValues = newSet();
                     for (int s : e2.getValue()) {
                         int translated = stateTranslationMap.get(s);
                         multipleStateValues.add(translated);
@@ -171,7 +180,7 @@ public class FiniteStateAutomaton {
     }
 
     public String toString(char horLnChar, char vertLnChar) {
-        Set<Integer> invalidSymbols = new HashSet<>();
+        Set<Integer> invalidSymbols = newSet();
         List<Integer> alphabetList = gatherSymbols(invalidSymbols);
 
         List<Integer> stateList = setToList(states);
@@ -182,7 +191,7 @@ public class FiniteStateAutomaton {
         fsaRepr.append("states: ").append(setToString(stateList)).append("\n"); 
         fsaRepr.append("start state: ").append(startState).append("\n");
         fsaRepr.append("final states: ").append(setToString(finalStateList)).append("\n");
-        Set<Integer> invalidStates = new HashSet<>();
+        Set<Integer> invalidStates = newSet();
         List<String[]> table = new ArrayList<>();
         if (nfaTransitionTable != null) {
             // include null symbol in valid symbols to generate table.
@@ -352,7 +361,7 @@ public class FiniteStateAutomaton {
         // gather symbols and identify invalid ones.
         // consider null symbol valid for NFAs only.
         // but consider null symbol invalid if explicitly specified.
-        Set<Integer> temp = new HashSet<>();
+        Set<Integer> temp = newSet();
         if (alphabet != null) {
             temp.addAll(alphabet);
         }
@@ -378,7 +387,7 @@ public class FiniteStateAutomaton {
             }
         }
 
-        Set<Integer> validSymbols = new HashSet<>();
+        Set<Integer> validSymbols = newSet();
 
         // Validate symbols. None must be negative,
         // and not even null symbol can be included.
@@ -391,6 +400,173 @@ public class FiniteStateAutomaton {
             }
         }
         return setToList(validSymbols);
+    }
+
+    public String toDotGraph() {
+        return toDotGraph(null, null);
+    }
+
+    /**
+     * Generates state diagram in Graphviz dot graph notation which can be passed
+     * to dot command line to generate a state diagram image.
+     * <p>
+     * e.g. dot -Tpng fsa.txt -o fsa.png 
+     * 
+     * @param symbolNameFunction optional function for generating labels for a symbol or
+     * list of symbols. If null or returns null, default will output integer symbol as it is.
+     * @param stateNameFunction optional function for generating labels for states. If null
+     * or returns null, default will prefix state with 'S-'. e.g S_0, S_1.
+     * @return equivalent state diagram in Graphviz dot graph notation.
+     */
+    public String toDotGraph(Function<int[], String> symbolNameFunction,
+            Function<Integer, String> stateNameFunction) {
+        Function<int[], String> effectiveSymbolNameFunction = literalString -> {
+            if (symbolNameFunction != null) {
+                String s = symbolNameFunction.apply(literalString);
+                if (s != null) {
+                    return s;
+                }
+            }
+            StringBuilder repr = new StringBuilder();
+            boolean firstSeen = false;
+            for (int c : literalString) {
+                if (firstSeen) {
+                    repr.append(", ");
+                }
+                firstSeen = true;
+                repr.append(c);
+            }
+            return repr.toString();
+        };
+        StringBuilder dotGraph = new StringBuilder();
+        final String indent = strMultiply(" ", 4);
+        
+        String fsaTypeTitle = "";
+        if (nfaTransitionTable != null) {
+            fsaTypeTitle += "NFA";
+        }
+        if (dfaTransitionTable != null) {
+            fsaTypeTitle += "DFA";
+        }
+
+        dotGraph.append("digraph ").append(fsaTypeTitle).append(" {\n");
+        dotGraph.append(indent).append("rankdir=LR\n");
+        dotGraph.append(indent).append("node [shape=circle]\n");
+
+        // generate labels for all states.
+        for (int s : states) {
+            boolean isFinalState = finalStates.contains(s);
+            String stateName = null;
+            if (stateNameFunction != null) {
+                stateName = stateNameFunction.apply(s);
+            }
+            if (!isFinalState && stateName == null) {
+                continue;
+            }
+            dotGraph.append(indent).append("S_").append(s);
+            dotGraph.append(" [");
+            if (isFinalState) {
+                dotGraph.append(" shape=doublecircle");
+            }
+            if (stateName != null) {
+                dotGraph.append(" label=");
+                dotGraph.append(escapeDotGraphLabel(stateName));
+                dotGraph.append("");
+            }
+            dotGraph.append(" ]\n");
+        }
+
+        // begin with transition to start state
+        dotGraph.append(indent).append("S [ shape=point width=0.2 ]\n");
+        dotGraph.append(indent).append("S -> S_").append(startState).append("\n");
+
+        // now generate transition edges for NFA
+        if (nfaTransitionTable != null) {
+            for (Map.Entry<Integer, Map<Integer, Set<Integer>>> stateEntry :
+                    nfaTransitionTable.entrySet()) {
+                // rebuild temporary map of states to next state, so all transitions on
+                // symbols to one state can be grouped together for output.
+                Map<Integer, Set<Integer>> nextStateMap = new HashMap<>();
+                for (Map.Entry<Integer, Set<Integer>> stateEntryValueEntry : stateEntry.getValue().entrySet()) {    
+                    for (int s : stateEntryValueEntry.getValue()) {
+                        Set<Integer> nextStateSymbols;
+                        if (nextStateMap.containsKey(s)) {
+                            nextStateSymbols = nextStateMap.get(s);
+                        }
+                        else {
+                            nextStateSymbols = newSet();
+                            nextStateMap.put(s, nextStateSymbols);
+                        }
+                        nextStateSymbols.add(stateEntryValueEntry.getKey());
+                    }
+                }
+                for (Map.Entry<Integer, Set<Integer>> nextStateMapEntry : nextStateMap.entrySet()) {
+                    dotGraph.append(indent).append("S_").append(stateEntry.getKey());
+                    dotGraph.append(" -> ");
+                    dotGraph.append("S_").append(nextStateMapEntry.getKey());
+                    int[] stringLiteral = new int[nextStateMapEntry.getValue().size()];
+                    int cIndex = 0;
+                    for (int symbol : nextStateMapEntry.getValue()) {
+                        stringLiteral[cIndex++] = symbol;
+                    }
+                    String symbolName = escapeDotGraphLabel(
+                        effectiveSymbolNameFunction.apply(stringLiteral));
+                    dotGraph.append(" [ label=").append(symbolName).append(" ]\n");
+                }
+            }
+        }
+
+        // finally generate transition edges for DFA
+        if (dfaTransitionTable != null) {            
+            for (Map.Entry<Integer, Map<Integer, Integer>> stateEntry :
+                    dfaTransitionTable.entrySet()) {       
+                // rebuild temporary map of states to next state, so all transitions on
+                // symbols to one state can be grouped together for output.
+                Map<Integer, Set<Integer>> nextStateMap = new HashMap<>();
+                for (Map.Entry<Integer, Integer> stateEntryValueEntry : stateEntry.getValue().entrySet()) {    
+                    int s = stateEntryValueEntry.getValue();
+                    Set<Integer> nextStateSymbols;
+                    if (nextStateMap.containsKey(s)) {
+                        nextStateSymbols = nextStateMap.get(s);
+                    }
+                    else {
+                        nextStateSymbols = newSet();
+                        nextStateMap.put(s, nextStateSymbols);
+                    }
+                    nextStateSymbols.add(stateEntryValueEntry.getKey());
+                }
+                for (Map.Entry<Integer, Set<Integer>> nextStateMapEntry : nextStateMap.entrySet()) {
+                    dotGraph.append(indent).append("S_").append(stateEntry.getKey());
+                    dotGraph.append(" -> ");
+                    dotGraph.append("S_").append(nextStateMapEntry.getKey());
+                    int[] stringLiteral = new int[nextStateMapEntry.getValue().size()];
+                    int cIndex = 0;
+                    for (int symbol : nextStateMapEntry.getValue()) {
+                        stringLiteral[cIndex++] = symbol;
+                    }
+                    String symbolName = escapeDotGraphLabel(
+                        effectiveSymbolNameFunction.apply(stringLiteral));
+                    dotGraph.append(" [ label=").append(symbolName).append(" ]\n");
+                }
+            }
+        }
+
+        dotGraph.append("}");
+        return dotGraph.toString();
+    }
+
+    private static String escapeDotGraphLabel(String label) {
+        // escape for use inside double quotes.
+        StringBuilder s = new StringBuilder();
+        s.append('"');
+        for (char c : label.toCharArray()) {            
+            if (c == '\\' || c == '"') {
+                s.append('\\');
+            }
+            s.append(c);
+        }
+        s.append('"');
+        return s.toString();
     }
 
     private static String strRightPad(String s, int totalCount) {

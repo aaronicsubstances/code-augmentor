@@ -1,9 +1,7 @@
 package com.aaronicsubstances.code.augmentor.core.cs_and_math.regex;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -37,12 +35,12 @@ public class NfaToDfaConvertor {
     }
     
     public FiniteStateAutomaton convert(boolean ignoreEmptyState) {
-        Set<Integer> dfaStates = new HashSet<>();
-        Set<Integer> dfaFinalStates = new HashSet<>();
+        Set<Integer> dfaStates = FiniteStateAutomaton.newSet();
+        Set<Integer> dfaFinalStates = FiniteStateAutomaton.newSet();
         Map<Integer, Map<Integer, Integer>> dfaTransitionTable = new HashMap<>();
         nfaStateSubsets = new ArrayList<>();
         Set<Integer> startNfaStateSubset = emptyStringClosure(emptyStringGraph,
-            new HashSet<>(Arrays.asList(nfa.getStartState())));
+            FiniteStateAutomaton.newSet(nfa.getStartState()));
         nfaStateSubsets.add(startNfaStateSubset);
         int processedCount = 0;
         while (processedCount < nfaStateSubsets.size()) {
@@ -89,7 +87,7 @@ public class NfaToDfaConvertor {
     }
 
     static Set<Integer> move(FiniteStateAutomaton nfa, Set<Integer> states, int c) {
-        Set<Integer> nextStates = new HashSet<>();
+        Set<Integer> nextStates = FiniteStateAutomaton.newSet();
         for (int s : states) {
             Map<Integer, Set<Integer>> stateOutTransitions = nfa.getNfaTransitionTable().get(s);
             if (stateOutTransitions != null &&
@@ -116,7 +114,8 @@ public class NfaToDfaConvertor {
             Map<Integer, Set<Integer>> emptyStringGraph,
             Set<Integer> startStates) {
         // NB: resembles breadth first search graph algorithm.
-        Set<Integer> closureResult = new HashSet<>(startStates);
+        Set<Integer> closureResult = FiniteStateAutomaton.newSet();
+        closureResult.addAll(startStates);
         LinkedList<Integer> processedStates = new LinkedList<>(startStates);
         while (!processedStates.isEmpty()) {
             int t = processedStates.removeFirst();

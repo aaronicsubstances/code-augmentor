@@ -31,6 +31,7 @@ public class FiniteStateAutomatonTest {
         /*if (actual.getAlphabet().isEmpty() || actual.getStates().isEmpty()) {
             printTestHeader("testGenerateCopy", instance, stateMap, expected);
             System.out.println(actual);
+            System.out.println(actual.toDotGraph());
         }*/
     }
 

@@ -1,8 +1,6 @@
 package com.aaronicsubstances.code.augmentor.core.cs_and_math.regex;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,7 +37,7 @@ public class NfaSimulator {
 
         int i = 0;
         Set<Integer> subsetOfStates = NfaToDfaConvertor.emptyStringClosure(emptyStringGraph,
-            new HashSet<>(Arrays.asList(nfa.getStartState())));
+            FiniteStateAutomaton.newSet(nfa.getStartState()));
         recordObservation(subsetOfStates, i);
         while (i < input.length) {
             int c = input[i];
@@ -66,7 +64,7 @@ public class NfaSimulator {
     private void recordObservation(Set<Integer> subsetOfStates, int endIndex) {
         if (statesUnderObservation == null) return;
         
-        Set<Integer> observedStates = new HashSet<>();
+        Set<Integer> observedStates = FiniteStateAutomaton.newSet();
         for (Integer state : subsetOfStates) {
             if (statesUnderObservation.contains(state)) {
                 observedStates.add(state);

@@ -2,7 +2,6 @@ package com.aaronicsubstances.code.augmentor.core.cs_and_math.regex;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -51,21 +50,13 @@ public class RegexToNfaConvertor implements RegexNodeVisitor {
     public void resetStateGenerator(int newStart) {
         this.stateGenerator = newStart;
     }
-
-    private static Set<Integer> newSet(int... values) {
-        Set<Integer> set = new HashSet<>();
-        for (int v : values) {
-            set.add(v);
-        }
-        return set;
-    }
     
     @Override
     public Object visit(LiteralStringRegexNode node) {
-        Set<Integer> states = new HashSet<>();
+        Set<Integer> states = FiniteStateAutomaton.newSet();
         int startState = stateGenerator++;
         states.add(startState);
-        Set<Integer> finalStates = new HashSet<>();
+        Set<Integer> finalStates = FiniteStateAutomaton.newSet();
         Map<Integer, Map<Integer, Set<Integer>>> nfaTransitionTable = new HashMap<>();
 
         // for each symbol of string literal create a non initial state
@@ -83,7 +74,7 @@ public class RegexToNfaConvertor implements RegexNodeVisitor {
         if (literalString.length > 0) {
             symbol = literalString[0];
         }
-        stateOutTransitions.put(symbol, newSet(nextState));
+        stateOutTransitions.put(symbol, FiniteStateAutomaton.newSet(nextState));
 
         // for non empty strings, use remaining symbols to make further
         // table entries.
@@ -95,7 +86,7 @@ public class RegexToNfaConvertor implements RegexNodeVisitor {
             states.add(newState);
 
             symbol = literalString[i];
-            stateOutTransitions.put(symbol, newSet(newState));
+            stateOutTransitions.put(symbol, FiniteStateAutomaton.newSet(newState));
 
             nextState = newState;
         }
@@ -146,7 +137,7 @@ public class RegexToNfaConvertor implements RegexNodeVisitor {
         states.add(startState);
         int finalState = stateGenerator++;
         states.add(finalState);
-        Set<Integer> finalStates = newSet(finalState);
+        Set<Integer> finalStates = FiniteStateAutomaton.newSet(finalState);
         Map<Integer, Map<Integer, Set<Integer>>> nfaTransitionTable = 
             childNfa.getNfaTransitionTable();
 
@@ -156,7 +147,7 @@ public class RegexToNfaConvertor implements RegexNodeVisitor {
         Map<Integer, Set<Integer>> stateOutTransitions = new HashMap<>();
         nfaTransitionTable.put(startState, stateOutTransitions);
         stateOutTransitions.put(FiniteStateAutomaton.NULL_SYMBOL, 
-            newSet(childNfa.getStartState(), finalState));
+            FiniteStateAutomaton.newSet(childNfa.getStartState(), finalState));
 
         // also make empty string transitions
         // - from child final state to new final state
@@ -167,7 +158,7 @@ public class RegexToNfaConvertor implements RegexNodeVisitor {
             stateOutTransitions = new HashMap<>();
             nfaTransitionTable.put(childFinalState, stateOutTransitions);
             stateOutTransitions.put(FiniteStateAutomaton.NULL_SYMBOL, 
-                newSet(childNfa.getStartState(), finalState));
+                FiniteStateAutomaton.newSet(childNfa.getStartState(), finalState));
         }
 
         FiniteStateAutomaton nfa = new FiniteStateAutomaton(alphabet, 
@@ -195,7 +186,7 @@ public class RegexToNfaConvertor implements RegexNodeVisitor {
         states.add(startState);
         int finalState = stateGenerator++;
         states.add(finalState);
-        Set<Integer> finalStates = newSet(finalState);
+        Set<Integer> finalStates = FiniteStateAutomaton.newSet(finalState);
         Map<Integer, Map<Integer, Set<Integer>>> nfaTransitionTable = 
             largestChildNfa.getNfaTransitionTable();
 
@@ -204,7 +195,7 @@ public class RegexToNfaConvertor implements RegexNodeVisitor {
         // Make null string transitions from new start state to each child nfa's start
         // state, and make null string transitions from each child nfa's final state
         // to the new final state.
-        Set<Integer> newStartNextStates = new HashSet<>();
+        Set<Integer> newStartNextStates = FiniteStateAutomaton.newSet();
         Map<Integer, Set<Integer>> stateOutTransitions = new HashMap<>();
         nfaTransitionTable.put(startState, stateOutTransitions);
         stateOutTransitions.put(FiniteStateAutomaton.NULL_SYMBOL, 
@@ -224,7 +215,7 @@ public class RegexToNfaConvertor implements RegexNodeVisitor {
                 stateOutTransitions = new HashMap<>();
                 nfaTransitionTable.put(childFinalState, stateOutTransitions);
                 stateOutTransitions.put(FiniteStateAutomaton.NULL_SYMBOL, 
-                    newSet(finalState));
+                    FiniteStateAutomaton.newSet(finalState));
             }
         }
 
