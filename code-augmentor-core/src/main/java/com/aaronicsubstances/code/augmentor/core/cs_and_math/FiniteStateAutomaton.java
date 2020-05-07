@@ -648,55 +648,15 @@ public class FiniteStateAutomaton {
 
         // determine unique equivalence classes of expected instance.
         List<EquivalenceCriteria> equivalenceClasses = new ArrayList<>();
-        List<List<Integer>> listOfExpectedClassMembers = new ArrayList<>();
-        Set<Integer> allStates = newSet();
-        allStates.addAll(expected.states);
-        allStates.addAll(expected.finalStates);
-        if (expected.isNfa()) {
-            allStates.addAll(expected.getNfaTransitionTable().keySet());
-        }
-        if (expected.isDfa()) {
-            allStates.addAll(expected.getDfaTransitionTable().keySet());
-        }
-        for (int state : allStates) {
-            EquivalenceCriteria criteria = buildEquivalenceClass(expected, state);
-            List<Integer> classMembers;
-            int idx = equivalenceClasses.indexOf(criteria);
-            if (idx != -1) {
-                classMembers = listOfExpectedClassMembers.get(idx);
-            }
-            else {
-                classMembers = new ArrayList<>();
-                listOfExpectedClassMembers.add(classMembers);
-                equivalenceClasses.add(criteria);
-            }
-            classMembers.add(state);
-        }
+        List<List<Integer>> listOfExpectedClassMembers = 
+            classifyIntoEquivalenceClasses(expected, equivalenceClasses, false);
 
         // now determine equivalence classes of actual, but ensure they
         // are found in those of expected, or else mismatch has been detected.
-        allStates.clear();
-        allStates.addAll(actual.states);
-        allStates.addAll(actual.finalStates);
-        if (actual.isNfa()) {
-            allStates.addAll(actual.getNfaTransitionTable().keySet());
-        }
-        if (actual.isDfa()) {
-            allStates.addAll(actual.getDfaTransitionTable().keySet());
-        }
-        List<List<Integer>> listOfActualClassMembers = new ArrayList<>();
-        for (int i = 0; i < equivalenceClasses.size(); i++) {
-            listOfActualClassMembers.add(new ArrayList<>());
-        }
-        for (int state : allStates) {
-            EquivalenceCriteria criteria = buildEquivalenceClass(actual, state);
-            int idx = equivalenceClasses.indexOf(criteria);
-            if (idx == -1) {
-                // mismatch found
-                return false;
-            }
-            List<Integer> classMembers = listOfActualClassMembers.get(idx);
-            classMembers.add(state);
+        List<List<Integer>> listOfActualClassMembers = 
+            classifyIntoEquivalenceClasses(actual, equivalenceClasses, true);
+        if (listOfActualClassMembers == null) {
+            return false;
         }
 
         // at this stage, we are almost about to start some iterations
@@ -710,17 +670,9 @@ public class FiniteStateAutomaton {
             }
         }
 
-        // all is set for search.
-        /*StringBuilder temp = new StringBuilder();
-        for (int i = 0; i < equivalenceClasses.size(); i++) {
-            List<Integer> expectedClassMembers = listOfExpectedClassMembers.get(i);
-            if (temp.length() > 0) {
-                temp.append(" by ");
-            }
-            temp.append(expectedClassMembers.size());
-        }
-        System.out.format("About to run cartesian product algorithm on " +
-            "sets of sizes %s\n", temp);*/
+        // all is set for search.        
+        //System.out.println("About to run cartesian product algorithm on " +
+        //    describeEquivalenceClassMembers(listOfExpectedClassMembers));
 
         Function<Integer, int[]> firstElementFunction = idx -> {
             List<Integer> expectedClassMembers = listOfExpectedClassMembers.get(idx);
@@ -739,7 +691,7 @@ public class FiniteStateAutomaton {
 
         // go through loop at least once to check with very first tuple.
         // limit iterations
-        final int MAX_ITER_COUNT = 1_000_000;
+        final int MAX_ITER_COUNT = 100_000;
         int iterCount = 0;
         do {
             if (iterCount >= MAX_ITER_COUNT) {
@@ -768,20 +720,124 @@ public class FiniteStateAutomaton {
                 //    "State translation map: " + stateTranslationMap);
                 return true;
             }
-            
-            //System.out.println("Could not find match after " + iterCount + " attempt(s). " +
-            //    "State translation map: " + stateTranslationMap);
 
         } while (MathAlgorithms.nextCartesianProductTuple(firstElementFunction, nextElementFunction,
                 cartesianProductTuple));
         return false;
     }
 
+    public static List<List<Integer>> classifyIntoEquivalenceClasses(
+            FiniteStateAutomaton fsa) {
+        return classifyIntoEquivalenceClasses(fsa, null, false);
+    }
+
+    private static List<List<Integer>> classifyIntoEquivalenceClasses(
+            FiniteStateAutomaton fsa, 
+            List<EquivalenceCriteria> equivalenceClasses,
+            boolean validate) {
+        List<List<Integer>> listOfClassMembers = new ArrayList<>();
+        if (validate) {
+            for (int i = 0; i < equivalenceClasses.size(); i++) {
+                listOfClassMembers.add(new ArrayList<>());
+            }
+        }
+        else if (equivalenceClasses == null) {
+            equivalenceClasses = new ArrayList<>();
+        }
+        Set<Integer> allStates = newSet();
+        allStates.addAll(fsa.states);
+        allStates.addAll(fsa.finalStates);
+        if (fsa.isNfa()) {
+            allStates.addAll(fsa.getNfaTransitionTable().keySet());
+        }
+        if (fsa.isDfa()) {
+            allStates.addAll(fsa.getDfaTransitionTable().keySet());
+        }
+        Map<Integer, Integer> shortestPathResults = calculateShortestPathsToStartState(
+            fsa, allStates);
+        for (int state : allStates) {
+            EquivalenceCriteria criteria = buildEquivalenceClass(fsa, state,
+                shortestPathResults.get(state));
+            List<Integer> classMembers;
+            int idx = equivalenceClasses.indexOf(criteria);
+            if (idx != -1) {
+                classMembers = listOfClassMembers.get(idx);
+            }
+            else {
+                if (validate) {
+                    // mismatch found
+                    return null;
+                }
+                classMembers = new ArrayList<>();
+                listOfClassMembers.add(classMembers);
+                equivalenceClasses.add(criteria);
+            }
+            classMembers.add(state);
+        }
+        return listOfClassMembers;
+    }
+
+    public static String describeEquivalenceClassMembers(List<List<Integer>> listOfExpectedClassMembers) {
+        StringBuilder temp = new StringBuilder();
+        for (int i = 0; i < listOfExpectedClassMembers.size(); i++) {
+            List<Integer> expectedClassMembers = listOfExpectedClassMembers.get(i);
+            if (temp.length() > 0) {
+                temp.append(" by ");
+            }
+            temp.append(expectedClassMembers.size());
+        }
+        return temp.toString();
+    }
+
+    private static Map<Integer, Integer> calculateShortestPathsToStartState(
+            FiniteStateAutomaton fsa, Set<Integer> allStates) {
+        Map<Integer, Integer> shortestPaths = new HashMap<>();
+        List<Map<Integer, Set<Integer>>> graph = new ArrayList<>();
+        if (fsa.isNfa()) {
+            Map<Integer, Set<Integer>> graphSection = new HashMap<>();
+            for (int state : fsa.nfaTransitionTable.keySet()) {
+                Set<Integer> nextStates = newSet();
+                for (Set<Integer> stateSet : fsa.nfaTransitionTable.get(state)
+                        .values()) {
+                    nextStates.addAll(stateSet);
+                }
+                graphSection.put(state, nextStates);
+            }
+            graph.add(graphSection);
+        }
+        if (fsa.isDfa()) {
+            Map<Integer, Set<Integer>> graphSection = new HashMap<>();
+            for (int state : fsa.dfaTransitionTable.keySet()) {
+                Set<Integer> nextStates = newSet();
+                nextStates.addAll(fsa.dfaTransitionTable.get(state)
+                    .values());
+                graphSection.put(state, nextStates);
+            }
+            graph.add(graphSection);
+        }
+        Map<Integer, Map<String, Object>> shortestPathResults = 
+            GraphAlgorithms.dijkstraShortestPathAlgorithm(graph, (u ,v) -> 1.0, 
+                fsa.startState, null);
+        for (Integer state : allStates) {
+            Double d = null;
+            if (shortestPathResults.containsKey(state)) {
+                d = (Double) shortestPathResults.get(state).get(
+                    GraphAlgorithms.VERTEX_ATTRIBUTE_DIST);
+            }
+            if (d == null) {
+                d = -1.0;
+            }
+            shortestPaths.put(state, d.intValue());
+        }
+        return shortestPaths;
+    }
+
     private static EquivalenceCriteria buildEquivalenceClass(
-            FiniteStateAutomaton fsa, int state) {
+            FiniteStateAutomaton fsa, int state, int shortestPathtoStartState) {
         EquivalenceCriteria equivalenceCriteria = new EquivalenceCriteria();
         equivalenceCriteria.isStartState = state == fsa.startState;
         equivalenceCriteria.isFinalState = fsa.finalStates.contains(state);
+        equivalenceCriteria.shortestPathToStartState = shortestPathtoStartState;
         Set<Integer> nextStates = newSet();
         if (fsa.isNfa() && fsa.nfaTransitionTable.containsKey(state)) {
             Map<Integer, Set<Integer>> map = fsa.nfaTransitionTable.get(state);
@@ -819,6 +875,7 @@ public class FiniteStateAutomaton {
         public int selfTransitionSymbolCount;
         public boolean isStartState;
         public boolean isFinalState;
+        public int shortestPathToStartState;
 
         @Override
         public int hashCode() {
@@ -829,6 +886,7 @@ public class FiniteStateAutomaton {
             result = prime * result + nextStateCount;
             result = prime * result + selfTransitionSymbolCount;
             result = prime * result + ((symbolSizes == null) ? 0 : symbolSizes.hashCode());
+            result = prime * result + shortestPathToStartState;
             return result;
         }
 
@@ -853,6 +911,8 @@ public class FiniteStateAutomaton {
                 if (other.symbolSizes != null)
                     return false;
             } else if (!symbolSizes.equals(other.symbolSizes))
+                return false;
+            if (shortestPathToStartState != other.shortestPathToStartState)
                 return false;
             return true;
         }
