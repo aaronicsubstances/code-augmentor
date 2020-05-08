@@ -1,14 +1,16 @@
 package com.aaronicsubstances.code.augmentor.core.util;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import com.aaronicsubstances.code.augmentor.core.cs_and_math.FiniteStateAutomaton;
+import com.aaronicsubstances.code.augmentor.core.cs_and_math.GraphAlgorithms;
 import com.aaronicsubstances.code.augmentor.core.cs_and_math.RegexAlgorithms;
 import com.aaronicsubstances.code.augmentor.core.cs_and_math.regex.ConcatRegexNode;
 import com.aaronicsubstances.code.augmentor.core.cs_and_math.regex.KleeneClosureRegexNode;
@@ -18,6 +20,8 @@ import com.aaronicsubstances.code.augmentor.core.cs_and_math.regex.RegexNode;
 import com.aaronicsubstances.code.augmentor.core.cs_and_math.regex.RegexToNfaConvertor;
 import com.aaronicsubstances.code.augmentor.core.cs_and_math.regex.UnionRegexNode;
 import com.aaronicsubstances.code.augmentor.core.cs_and_math.regex.NfaSimulator.Observation;
+import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetChangeDescriptor;
+import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetChangeDescriptor.ExactValue;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode.ContentPart;
 
 /**
@@ -56,9 +60,16 @@ import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode.ContentPar
 public class GeneratedCodeSimilarityChecker {
     static final int MATCH_TYPE_ANY_SPACES = 0;
     static final int MATCH_TYPE_REQUIRE_SPACE = 1;
+
+    static final String MISMATCH_TYPE_EXACT = "exact_value";
+    static final String MISMATCH_TYPE_REQUIRED_SPACE = "required_spaces";
+    static final String MISMATCH_TYPE_ANY_SPACE = "optional_spaces";
+
     private static final String NON_NEWLINE_WS_CHARS;
     private static final RegexNode optionalMultipleSpaceRegex;
     private static final RegexNode requiredMultipleSpaceRegex;
+
+    private static final int MAX_EXPECTED_SUBSTRING_LEN = 30;
 
     static {
         NON_NEWLINE_WS_CHARS = " \t\f";
@@ -77,12 +88,6 @@ public class GeneratedCodeSimilarityChecker {
     private final List<ContentPart> contentParts;
     private final List<Object> similarityRegex;
 
-    private int errorIndex;
-    private Object expected;
-    private boolean expectedEOF;
-    private String actual;
-    private boolean actualEOF;
-
     public GeneratedCodeSimilarityChecker(List<ContentPart> contentParts) {
         this(contentParts, false);
     }
@@ -97,39 +102,15 @@ public class GeneratedCodeSimilarityChecker {
         return similarityRegex;
     }
 
-    public int getErrorIndex() {
-        return errorIndex;
-    }
-
-    public Object getExpected() {
-        return expected;
-    }
-
-    public boolean isExpectedEOF() {
-        return expectedEOF;
-    }
-
-    public String getActual() {
-        return actual;
-    }
-
-    public boolean isActualEOF() {
-        return actualEOF;
-    }
-
     /**
      * Determines whether all of a string matches this instance's
      * content parts.
      * 
      * @param text string to match.
-     * @return true if there is similarity; false if there are significant differences.
+     * @return null if there is similarity; an object describing significant difference if
+     * otherwise.
      */
-	public boolean match(String text) {
-        expected = null;
-        expectedEOF = false;
-        actual = null;
-        actualEOF = false;
-
+	public CodeSnippetChangeDescriptor match(String text) {
         Map<Integer, Integer> stateToRegexIndexMap = new HashMap<>();
         List<FiniteStateAutomaton> childNfas = new ArrayList<>();
         // use same convertor for all regex to nfa conversions to preserve state numbers.
@@ -148,68 +129,143 @@ public class GeneratedCodeSimilarityChecker {
             }
             FiniteStateAutomaton childNfa = (FiniteStateAutomaton) regexNode.accept(nfaCreator);
             childNfas.add(childNfa);
-            stateToRegexIndexMap.put(childNfa.getStartState(), i);
+            // add single final state and also all states reachable from start state by exactly 1
+            // non null symbol, possibly transitioning on many null symbols along the way.
+            for (int s : childNfa.getFinalStates()) {
+                stateToRegexIndexMap.put(s, i);
+            }
+            Set<Integer> entryStates = getStatesReachableFromStartStateViaOneNonNullSymbol(
+                childNfa);
+            for (int s : entryStates) {
+                stateToRegexIndexMap.put(s, i);
+            }
         }
 
-        // turn on state name change tracking to be able to get
-        // back later to what is known in this method context.
-        nfaCreator.setTrackStateNameChanges(true);
         FiniteStateAutomaton nfa = nfaCreator.makeConcatNfa(childNfas);
 
-        Set<Integer> statesToObserve = stateToRegexIndexMap.keySet().stream()
-            .map(s -> {
-                return nfaCreator.getOldStateNameMap().containsKey(s) ?
-                    nfaCreator.getOldStateNameMap().get(s) : s;
-            }).collect(Collectors.toSet());
-
         NfaSimulator nfaSimulator = new NfaSimulator(nfa);
-        errorIndex = nfaSimulator.simulate(RegexAlgorithms.getLiteralString(text), 
-            statesToObserve);
-            
+        int errorIndex = nfaSimulator.simulate(RegexAlgorithms.getLiteralString(text), 
+            stateToRegexIndexMap.keySet());   
         if (errorIndex == -1) {
-            return true;
+            return null;
         }
+
+        String mismatchType = MISMATCH_TYPE_EXACT;
+        int charIndex = errorIndex;
+        ExactValue expected = new ExactValue();
+        expected.setUpdatedSection("");
+        String actualDiff = "";
+
+        int regexSpecIndex = 0;
+        int indexOfRegexEntry = -1;
         if (!nfaSimulator.getObservations().isEmpty()) {
             Observation lastObservation = nfaSimulator.getObservations().get(
                 nfaSimulator.getObservations().size() - 1);
-            int lastObservedStartState = lastObservation.getStates().stream().findFirst().get();
-            // get original state name if it was changed
-            Map<Integer, Integer> newStateNameMap = nfaCreator.getNewStateNameMap();
-            if (newStateNameMap.containsKey(lastObservedStartState)) {
-                lastObservedStartState = newStateNameMap.get(lastObservedStartState);
+            // get rightmost observed state.
+            int lastObservedState = lastObservation.getStates().stream()
+                .max(Integer::compare).get();
+            regexSpecIndex = stateToRegexIndexMap.get(lastObservedState);
+            boolean isStateFinal = childNfas.get(regexSpecIndex).getFinalStates().contains(
+                lastObservedState);
+            if (isStateFinal) {
+                regexSpecIndex++;
             }
-            int regexSpecIndex = stateToRegexIndexMap.get(lastObservedStartState);
-            
-            expected = similarityRegex.get(regexSpecIndex);
+            else if (lastObservation.getEndIndex() > 0) {
+                indexOfRegexEntry = lastObservation.getEndIndex() - 1;
+            }
         }
-        else {
-            expectedEOF = true;
-        }
-        if (errorIndex < text.length()) {
-            // if we were expecting end of input string or
-            // error was about required space, then present
-            // offending character.
-            if (expectedEOF || expected instanceof Integer) {
-                char errorChar = text.charAt(errorIndex);
-                actual = "" + errorChar;
-                // detect CRLFs and present them unified.
-                if (errorChar == '\r' && errorIndex + 1 < text.length() &&
-                        text.charAt(errorIndex + 1) == '\n') {
-                    actual += '\n';
-                }
+        // end of string was expected if all regex specs were covered
+        // (or regex specs was empty to start with), 
+        // and that's the default value.
+        if (regexSpecIndex < similarityRegex.size()) {
+            Object expectedRegexSpec = similarityRegex.get(regexSpecIndex);
+            if (expectedRegexSpec instanceof Integer) {
+                mismatchType = expectedRegexSpec.equals(MATCH_TYPE_ANY_SPACES) ?
+                    MISMATCH_TYPE_ANY_SPACE : MISMATCH_TYPE_REQUIRED_SPACE;
+                expected = null;
             }
             else {
-                // else error was about exact string mismatch,
-                // so fetch longest applicable prefix beginning from errorIndex.
-                int limit = Math.min(errorIndex + ((String) expected).length(),
-                    text.length());
-                actual = text.substring(errorIndex, limit);
+                String exactValue = (String) expectedRegexSpec;
+                expected.setLength(exactValue.length());
+                int indexInExactValue = 0;
+                if (indexOfRegexEntry != -1) {
+                    indexInExactValue = errorIndex - indexOfRegexEntry;
+                }
+                expected.setUpdatedSectionOffset(indexInExactValue);
+                expected.setUpdatedSection(fetchPrefix(exactValue, indexInExactValue, exactValue.length()));
+                if (expected.getUpdatedSection().length() < exactValue.length()) {
+                    expected.setPrefix(fetchPrefix(exactValue, 0, indexInExactValue));
+                    if (expected.getPrefix().length() + expected.getUpdatedSection().length() < 
+                            exactValue.length()) {
+                        expected.setSuffix(fetchSuffix(exactValue, indexInExactValue +
+                            expected.getUpdatedSection().length()));
+                    }
+                }
             }
         }
-        else {
-            actualEOF = true;
+        
+        if (errorIndex < text.length()) {
+            actualDiff = fetchPrefix(text, errorIndex, errorIndex + MAX_EXPECTED_SUBSTRING_LEN);
         }
-        return false;
+        
+        CodeSnippetChangeDescriptor codeChange = new CodeSnippetChangeDescriptor();
+        codeChange.setType(mismatchType);
+        codeChange.setCharIndex(charIndex);
+        codeChange.setExpectedExactValue(expected);
+        codeChange.setCurrentSection(actualDiff);
+        return codeChange;
+    }
+
+    static Set<Integer> getStatesReachableFromStartStateViaOneNonNullSymbol(FiniteStateAutomaton nfa) {
+        Map<Integer, Set<Integer>> nfaGraph = new HashMap<>();
+        for (int state : nfa.getNfaTransitionTable().keySet()) {
+            Set<Integer> nextStates = FiniteStateAutomaton.newSet();
+            for (Set<Integer> stateSet : nfa.getNfaTransitionTable().get(state)
+                    .values()) {
+                nextStates.addAll(stateSet);
+            }
+            nfaGraph.put(state, nextStates);
+        }
+        BiFunction<Integer, Integer, Double> weightFunction = (u, v) -> {
+            Map<Integer, Set<Integer>> outTransitions = nfa.getNfaTransitionTable().get(u);
+            if (outTransitions.containsKey(FiniteStateAutomaton.NULL_SYMBOL)) {
+                if (outTransitions.get(FiniteStateAutomaton.NULL_SYMBOL).contains(v)) {
+                    return 0.0;
+                }
+            }
+            return 1.0;
+        };
+        Map<Integer, Map<String, Object>> shortestPathData = 
+            GraphAlgorithms.dijkstraShortestPathAlgorithm(Arrays.asList(nfaGraph), 
+                weightFunction, nfa.getStartState(), null);
+        Set<Integer> entryStates = FiniteStateAutomaton.newSet();
+        for (int s : shortestPathData.keySet()) {
+            Double shortestPath = (Double) shortestPathData.get(s).get(
+                GraphAlgorithms.VERTEX_ATTRIBUTE_DIST);
+            if (shortestPath != null && shortestPath == 1.0) {
+                entryStates.add(s);
+            }
+        }
+        return entryStates;
+    }
+
+    static String fetchPrefix(String s, int start, int maxEnd) {
+        int len = Math.min(maxEnd - start, MAX_EXPECTED_SUBSTRING_LEN);
+        len = Math.min(len, s.length() - start);
+        String prefix = s.substring(start, start + len);
+        // preserve CRLFs
+        if (!prefix.isEmpty() && (start + len + 1) < s.length()) {
+            char next = s.charAt(start + len + 1);
+            if (next == '\n' && prefix.charAt(prefix.length() - 1) == '\r') {
+                prefix = prefix.substring(0, prefix.length() - 1);
+            }
+        }
+        return prefix;
+    }
+
+    static String fetchSuffix(String s, int minStart) {
+        int len = Math.min(s.length() - minStart, MAX_EXPECTED_SUBSTRING_LEN);
+        return s.substring(s.length() - len);
     }
 
     private List<Object> buildSimilarityRegex(boolean loggingEnabled) {

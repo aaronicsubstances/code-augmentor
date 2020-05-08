@@ -6,6 +6,8 @@ import java.io.PrintWriter;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 
 public class PersistenceUtil {
     private static final Gson JSON_CONVERT = new GsonBuilder().setPrettyPrinting().create();
@@ -28,6 +30,8 @@ public class PersistenceUtil {
 
     private final BufferedReader bufferedReader;
     private final PrintWriter printWriter;
+    private JsonReader jsonReader;
+    private JsonWriter jsonWriter;
     private final boolean closeWhenDone;
     
     private Object content;
@@ -36,12 +40,32 @@ public class PersistenceUtil {
     public PersistenceUtil(BufferedReader reader, boolean closeWhenDone) {
         this.bufferedReader = reader;
         this.printWriter = null;
+        this.jsonReader = null;
+        this.jsonWriter = null;
         this.closeWhenDone = closeWhenDone;
     }
 
     public PersistenceUtil(PrintWriter writer, boolean closeWhenDone) {
         this.bufferedReader = null;
         this.printWriter = writer;
+        this.jsonReader = null;
+        this.jsonWriter = null;
+        this.closeWhenDone = closeWhenDone;
+    }
+
+    public PersistenceUtil(JsonReader reader, boolean closeWhenDone) {
+        this.bufferedReader = null;
+        this.printWriter = null;
+        this.jsonReader = reader;
+        this.jsonWriter = null;
+        this.closeWhenDone = closeWhenDone;
+    }
+
+    public PersistenceUtil(JsonWriter writer, boolean closeWhenDone) {
+        this.bufferedReader = null;
+        this.printWriter = null;
+        this.jsonReader = null;
+        this.jsonWriter = writer;
         this.closeWhenDone = closeWhenDone;
     }
 
@@ -50,7 +74,12 @@ public class PersistenceUtil {
     }
 
     public void flush() throws Exception {
-        printWriter.flush();
+        if (printWriter != null) {
+            printWriter.flush();
+        }
+        if (jsonWriter != null) {
+            jsonWriter.flush();
+        }
     }
 
     public String readToEnd() throws IOException {
@@ -77,6 +106,12 @@ public class PersistenceUtil {
         if (printWriter != null) {
             printWriter.close();
         }
+        if (jsonReader != null) {
+            jsonReader.close();
+        }
+        if (jsonWriter != null) {
+            jsonWriter.close();
+        }
     }
 
     public boolean isCloseWhenDone() {
@@ -98,4 +133,12 @@ public class PersistenceUtil {
     public void setContentIndex(int contentIndex) {
         this.contentIndex = contentIndex;
     }
+
+	public JsonReader getJsonReader() {
+		return jsonReader;
+	}
+
+	public JsonWriter getJsonWriter() {
+		return jsonWriter;
+	}
 }

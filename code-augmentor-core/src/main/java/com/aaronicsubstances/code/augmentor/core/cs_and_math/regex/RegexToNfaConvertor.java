@@ -21,30 +21,8 @@ public class RegexToNfaConvertor implements RegexNodeVisitor {
     private final Set<Integer> alphabet;
     private int stateGenerator = 1;
 
-    private boolean trackStateNameChanges;
-    private final Map<Integer, Integer> oldStateNameMap;
-    private final Map<Integer, Integer> newStateNameMap;
-
     public RegexToNfaConvertor(Set<Integer> alphabet) {
         this.alphabet = alphabet;
-        this.oldStateNameMap = new HashMap<Integer, Integer>();
-        this.newStateNameMap = new HashMap<Integer, Integer>();
-    }
-
-    public boolean isTrackStateNameChanges() {
-        return trackStateNameChanges;
-    }
-
-    public void setTrackStateNameChanges(boolean trackStateNameChanges) {
-        this.trackStateNameChanges = trackStateNameChanges;
-    }
-
-    public Map<Integer, Integer> getOldStateNameMap() {
-        return oldStateNameMap;
-    }
-
-    public Map<Integer, Integer> getNewStateNameMap() {
-        return newStateNameMap;
     }
 
     public void resetStateGenerator(int newStart) {
@@ -267,10 +245,6 @@ public class RegexToNfaConvertor implements RegexNodeVisitor {
             FiniteStateAutomaton previousChildNfa = childNfas.get(i - 1);
             for (int childFinalState : previousChildNfa.getFinalStates()) {
                 nfaTransitionTable.put(childFinalState, newNextStates);
-                if (trackStateNameChanges) {
-                    newStateNameMap.put(childFinalState, childNfa.getStartState());
-                    oldStateNameMap.put(childNfa.getStartState(), childFinalState);
-                }
             }
         }
 

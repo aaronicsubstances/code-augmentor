@@ -670,7 +670,7 @@ public class FiniteStateAutomaton {
             }
         }
 
-        // all is set for search.        
+        // all is set for search.
         //System.out.println("About to run cartesian product algorithm on " +
         //    describeEquivalenceClassMembers(listOfExpectedClassMembers));
 

@@ -17,7 +17,7 @@ import com.aaronicsubstances.code.augmentor.core.util.PersistenceUtil;
 
 public class PreCodeAugmentationResult {
 
-    public static class Header {
+    static class Header {
         String genCodeStartDirective;
         String genCodeEndDirective;
         Boolean contentStreamingEnabled;
@@ -135,7 +135,7 @@ public class PreCodeAugmentationResult {
             closeStream);
         boolean contentStreamingEnabled = readHeader(persistenceUtil);
         fileDescriptors = new ArrayList<>();
-        if (!contentStreamingEnabled) {            
+        if (!contentStreamingEnabled) {
             String inputRemainder = persistenceUtil.readToEnd();
             SourceFileDescriptor[] entireList = PersistenceUtil.deserializeFromJson(inputRemainder, 
                 SourceFileDescriptor[].class);

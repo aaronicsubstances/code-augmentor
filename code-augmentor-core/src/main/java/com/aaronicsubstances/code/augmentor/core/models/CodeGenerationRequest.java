@@ -17,7 +17,7 @@ import com.aaronicsubstances.code.augmentor.core.util.PersistenceUtil;
 
 public class CodeGenerationRequest {
 
-    public static class Header {
+    static class Header {
         Boolean contentStreamingEnabled;
 
         String genCodeStartDirective;
