@@ -57,7 +57,6 @@ public class CodeAugmentorPlugin implements Plugin<Project> {
         extension.getGenCodeFileIndex().convention(0);
 
         // sets defaults for complete task.
-        extension.getChangeSetInfoFile().convention(buildDir.file(workingDirPrefix + "changeSet.txt"));
         extension.getDestDir().convention(buildDir.dir(workingDirPrefix + "generated"));
         extension.getGeneratedCodeFiles().convention(Arrays.asList(defaultGenCodeFile));
         extension.getFailOnChanges().convention(true);
@@ -111,7 +110,6 @@ public class CodeAugmentorPlugin implements Plugin<Project> {
                 generateTask.getPrepFile().set(extension.getPrepFile());
                 generateTask.getGeneratedCodeFiles().set(extension.getGeneratedCodeFiles());
                 generateTask.getDestDir().set(extension.getDestDir());
-                generateTask.getChangeSetInfoFile().set(extension.getChangeSetInfoFile());
                 generateTask.getFailOnChanges().set(extension.getFailOnChanges());
             }
         });
@@ -137,7 +135,6 @@ public class CodeAugmentorPlugin implements Plugin<Project> {
                 runTask.getGroovyScriptDir().set(extension.getGroovyScriptDir());
                 runTask.getGroovyEntryScriptName().set(extension.getGroovyEntryScriptName());
                 runTask.getDestDir().set(extension.getDestDir());
-                runTask.getChangeSetInfoFile().set(extension.getChangeSetInfoFile());
                 runTask.getFailOnChanges().set(extension.getFailOnChanges());
 
                 // Set these properties as readonly.                

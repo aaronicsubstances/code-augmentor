@@ -1,7 +1,6 @@
     static void completeExecute($PLUGIN_BASE_TASK_TYPE task, String resolvedEncoding,
             boolean resolvedVerbose, File resolvedPrepFile,
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
-            File resolvedChangeSetInfoFile,
             boolean resolvedFailOnChanges) throws Exception {
         $COMPLETION_FILES_VALIDATION_CODE
         // validate
@@ -30,6 +29,7 @@
         genericTask.setPrepFile(resolvedPrepFile);
         genericTask.setGeneratedCodeFiles(resolvedGenCodeFiles);
         genericTask.setDestDir(resolvedDestDir);
+        genericTask.setCodeChangeDetectionDisabled(!resolvedFailOnChanges);
         
         if (resolvedVerbose) {
             // Print plugin task properties and any extra useful values for user.
@@ -44,27 +44,6 @@
             throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE(ex.getMessage(), ex.getCause());
         }
 
-        // Write out change set info file always even if there are no changes.
-        // Because change set info is intended to be used by OS command line scripts,
-        // use OS newline separator, default charset, and absolute paths.
-        StringBuilder changeSetInfo = new StringBuilder();
-        for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {
-            changeSetInfo.append(genericTask.getSrcFiles().get(i).getAbsolutePath());
-            changeSetInfo.append(System.lineSeparator());
-            changeSetInfo.append(genericTask.getDestFiles().get(i).getAbsolutePath());
-            changeSetInfo.append(System.lineSeparator());
-        }
-        // ensure dir exists for changeSetInfoFile
-        resolvedChangeSetInfoFile.getParentFile().mkdirs();
-        try (Writer fWriter = new OutputStreamWriter(new 
-                FileOutputStream(resolvedChangeSetInfoFile), Charset.defaultCharset())) {
-            fWriter.write(changeSetInfo.toString());
-        }
-        catch (IOException ex) {
-            throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE("Failed to write change set information to " +
-                resolvedChangeSetInfoFile, ex);
-        }
-
         // fail build if there were errors.
         if (!genericTask.getAllErrors().isEmpty()) {
             String allExMsg = PluginUtils.stringifyPossibleScriptErrors(
@@ -73,7 +52,7 @@
         }
 
         // also fail build if there were changed files.
-        if (resolvedFailOnChanges && !genericTask.getSrcFiles().isEmpty()) {
+        if (!genericTask.isCodeChangeDetectionDisabled() && !genericTask.getSrcFiles().isEmpty()) {
             StringBuilder outOfSyncMsg = new StringBuilder();
             outOfSyncMsg.append("The following files are out of sync with generating code scripts:\\n");
             for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {

@@ -63,11 +63,9 @@ public class DefaultPluginMojo extends AbstractPluginMojo {
             // complete...
             List<File> resolvedGenCodeFiles = Arrays.asList(resolvedGenCodeFile);
             File resolvedDestDir = getDestDir();
-            File resolvedChangeSetInfoFile = getChangeSetInfoFile();
             boolean resolvedFailOnChanges = getFailOnChanges();
             CompletionMojo.completeExecute(this, resolvedEncoding, resolvedVerbose, resolvedPrepFile, 
-                resolvedGenCodeFiles, resolvedDestDir, resolvedChangeSetInfoFile,
-                resolvedFailOnChanges);
+                resolvedGenCodeFiles, resolvedDestDir, resolvedFailOnChanges);
 
         }
         catch (MojoExecutionException ex) {

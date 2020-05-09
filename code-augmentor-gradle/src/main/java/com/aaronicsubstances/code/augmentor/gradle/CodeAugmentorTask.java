@@ -33,7 +33,6 @@ public class CodeAugmentorTask extends DefaultTask {
     private final Property<String> groovyEntryScriptName;
 
     private final Property<Object> destDir;
-    private final Property<Object> changeSetInfoFile;
     private final Property<Boolean> failOnChanges;
 
     private final Property<Object> prepFile;
@@ -60,7 +59,6 @@ public class CodeAugmentorTask extends DefaultTask {
         groovyEntryScriptName = objectFactory.property(String.class);
         
         destDir = objectFactory.property(Object.class);
-        changeSetInfoFile = objectFactory.property(Object.class);
         failOnChanges = objectFactory.property(Boolean.class);
 
         prepFile = objectFactory.property(Object.class);
@@ -112,11 +110,10 @@ public class CodeAugmentorTask extends DefaultTask {
 
             // Finish off code augmentation with gen codes file.
             File resolvedDestDir = getProject().file(destDir);
-            File resolvedChangeSetInfoFile = getProject().file(changeSetInfoFile);
             boolean resolvedFailOnChanges = failOnChanges.get();
             CompletionTask.completeExecute(this, resolvedEncoding, resolvedVerbose,
                 resolvedPrepFile, Arrays.asList(resolvedGenCodeFile), resolvedDestDir,
-                resolvedChangeSetInfoFile, resolvedFailOnChanges);
+                resolvedFailOnChanges);
         }
         catch (GradleException ex) {
             throw ex;
@@ -204,11 +201,6 @@ public class CodeAugmentorTask extends DefaultTask {
     @Internal
     public Property<Object> getDestDir() {
         return destDir;
-    }
-
-    @Internal
-    public Property<Object> getChangeSetInfoFile() {
-        return changeSetInfoFile;
     }
 
     @Internal

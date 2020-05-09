@@ -68,9 +68,6 @@ COMPLETION_FILES_VALIDATION_CODE = '''// set up defaults
         if (resolvedGenCodeFiles.isEmpty()) {
             resolvedGenCodeFiles.add(TaskUtils.getDefaultGenCodeFile(task));
         }
-        if (resolvedChangeSetInfoFile == null) {
-            resolvedChangeSetInfoFile = TaskUtils.getDefaultChangeSetInfoFile(task);
-        }
         if (resolvedDestDir == null) {
             resolvedDestDir = TaskUtils.getDefaultDestDir(task);
         }'''
@@ -135,6 +132,5 @@ LOG_COMPLETE_TASK_PROPERTIES = """task.log("Configuration properties:");
                     task.log("\\tgenCodeSpecs[" + i + "].file: " + genericTask.getGeneratedCodeFiles().get(i));
                 }
             }
-            task.log("\\tchangeSetInfoFile: " + resolvedChangeSetInfoFile);
-            task.log("\\tfailOnChanges: " + resolvedFailOnChanges);
+            task.log("\\tfailOnChanges: " + !genericTask.isCodeChangeDetectionDisabled());
             task.log("\\tgenericTask.logAppender: " + genericTask.getLogAppender());"""

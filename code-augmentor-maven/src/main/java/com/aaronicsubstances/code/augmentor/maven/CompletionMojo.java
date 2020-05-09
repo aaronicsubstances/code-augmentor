@@ -1,10 +1,6 @@
 package com.aaronicsubstances.code.augmentor.maven;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
@@ -34,11 +30,9 @@ public class CompletionMojo extends AbstractPluginMojo {
             File resolvedPrepFile = getPrepFile();
             List<File> resolvedGenCodeFiles = Arrays.asList(getGeneratedCodeFiles());
             File resolvedDestDir = getDestDir();
-            File resolvedChangeSetInfoFile = getChangeSetInfoFile();
             boolean resolvedFailOnChanges = getFailOnChanges();
             completeExecute(this, resolvedEncoding, resolvedVerbose, resolvedPrepFile, 
-                resolvedGenCodeFiles, resolvedDestDir, resolvedChangeSetInfoFile,
-                resolvedFailOnChanges);
+                resolvedGenCodeFiles, resolvedDestDir, resolvedFailOnChanges);
         }
         catch (MojoExecutionException ex) {
             throw ex;
@@ -55,7 +49,6 @@ public class CompletionMojo extends AbstractPluginMojo {
     static void completeExecute(AbstractMojo task, String resolvedEncoding,
             boolean resolvedVerbose, File resolvedPrepFile,
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
-            File resolvedChangeSetInfoFile,
             boolean resolvedFailOnChanges) throws Exception {
         
         // validate
@@ -84,6 +77,7 @@ public class CompletionMojo extends AbstractPluginMojo {
         genericTask.setPrepFile(resolvedPrepFile);
         genericTask.setGeneratedCodeFiles(resolvedGenCodeFiles);
         genericTask.setDestDir(resolvedDestDir);
+        genericTask.setCodeChangeDetectionDisabled(!resolvedFailOnChanges);
         
         if (resolvedVerbose) {
             // Print plugin task properties and any extra useful values for user.
@@ -97,8 +91,7 @@ public class CompletionMojo extends AbstractPluginMojo {
                     logger.info("\tgeneratedCodeFiles[" + i + "]: " + genericTask.getGeneratedCodeFiles().get(i));
                 }
             }
-            logger.info("\tchangeSetInfoFile: " + resolvedChangeSetInfoFile);
-            logger.info("\tfailOnChanges: " + resolvedFailOnChanges);
+            logger.info("\tfailOnChanges: " + !genericTask.isCodeChangeDetectionDisabled());
             logger.info("\tgenericTask.logAppender: " + genericTask.getLogAppender());
         }
 
@@ -109,27 +102,6 @@ public class CompletionMojo extends AbstractPluginMojo {
             throw new MojoExecutionException(ex.getMessage(), ex.getCause());
         }
 
-        // Write out change set info file always even if there are no changes.
-        // Because change set info is intended to be used by OS command line scripts,
-        // use OS newline separator, default charset, and absolute paths.
-        StringBuilder changeSetInfo = new StringBuilder();
-        for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {
-            changeSetInfo.append(genericTask.getSrcFiles().get(i).getAbsolutePath());
-            changeSetInfo.append(System.lineSeparator());
-            changeSetInfo.append(genericTask.getDestFiles().get(i).getAbsolutePath());
-            changeSetInfo.append(System.lineSeparator());
-        }
-        // ensure dir exists for changeSetInfoFile
-        resolvedChangeSetInfoFile.getParentFile().mkdirs();
-        try (Writer fWriter = new OutputStreamWriter(new 
-                FileOutputStream(resolvedChangeSetInfoFile), Charset.defaultCharset())) {
-            fWriter.write(changeSetInfo.toString());
-        }
-        catch (IOException ex) {
-            throw new MojoExecutionException("Failed to write change set information to " +
-                resolvedChangeSetInfoFile, ex);
-        }
-
         // fail build if there were errors.
         if (!genericTask.getAllErrors().isEmpty()) {
             String allExMsg = PluginUtils.stringifyPossibleScriptErrors(
@@ -138,7 +110,7 @@ public class CompletionMojo extends AbstractPluginMojo {
         }
 
         // also fail build if there were changed files.
-        if (resolvedFailOnChanges && !genericTask.getSrcFiles().isEmpty()) {
+        if (!genericTask.isCodeChangeDetectionDisabled() && !genericTask.getSrcFiles().isEmpty()) {
             StringBuilder outOfSyncMsg = new StringBuilder();
             outOfSyncMsg.append("The following files are out of sync with generating code scripts:\n");
             for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {

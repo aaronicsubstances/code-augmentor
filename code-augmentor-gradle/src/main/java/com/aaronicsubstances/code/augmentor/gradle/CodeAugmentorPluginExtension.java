@@ -30,7 +30,6 @@ public class CodeAugmentorPluginExtension {
     // extra config for generate completion.
     private final ListProperty<Object> generatedCodeFiles;
     private final Property<Object> destDir;
-    private final Property<Object> changeSetInfoFile;
     private final Property<Boolean> failOnChanges;
 
     // config for process task.
@@ -64,7 +63,6 @@ public class CodeAugmentorPluginExtension {
 
         generatedCodeFiles = objectFactory.listProperty(Object.class);
         destDir = objectFactory.property(Object.class);
-        changeSetInfoFile = objectFactory.property(Object.class);
         failOnChanges = objectFactory.property(Boolean.class);
 
         groovyScriptDir = objectFactory.property(Object.class);
@@ -139,10 +137,6 @@ public class CodeAugmentorPluginExtension {
 
     public ListProperty<Object> getGeneratedCodeFiles() {
         return generatedCodeFiles;
-    }
-
-    public Property<Object> getChangeSetInfoFile() {
-        return changeSetInfoFile;
     }
 
     public Property<Object> getDestDir() {

@@ -20,7 +20,7 @@ public class ProcessingMojoTest extends AbstractPluginMojoTest {
         assertTrue( projectDir.exists() );
         File output = File.createTempFile("stdout+err-", ".txt");
         int actualExitCode = PluginUtils.execCommand(projectDir, output, output, "mvn", true, 
-            "codeaugmentor:process", "-e");
+            getPluginPrefix() + ":process", "-e");
         String outputText = readText(output);
         assertEquals(actualExitCode, 0, outputText);
         Reporter.log(outputText);

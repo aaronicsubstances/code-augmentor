@@ -50,10 +50,6 @@ public class TaskUtils {
         return new File(getDefaultBuildDir(task), "genCodes.json");
     }
 
-	public static File getDefaultChangeSetInfoFile(Task task) {
-		return new File(getDefaultBuildDir(task), "changeSet.txt");
-	}
-
 	public static File getDefaultDestDir(Task task) {
 		return new File(getDefaultBuildDir(task), "generated");
 	}

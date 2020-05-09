@@ -90,7 +90,6 @@ class CodeAugmentorTaskFunctionalTest extends Specification {
                 })
                 groovyScriptDir = "${scriptDir.name}"
                 destDir = /${undeletedDestDir}/
-                changeSetInfoFile = /${new File(undeletedWorkingDir, 'changeSetInfoFile.txt')}/
             }
         """
 

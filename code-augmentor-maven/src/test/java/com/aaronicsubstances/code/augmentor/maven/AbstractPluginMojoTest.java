@@ -28,4 +28,8 @@ public abstract class AbstractPluginMojoTest {
             return ex.toString();
         }
     }
+
+    public static String getPluginPrefix() {
+        return "code-augmentor";
+    }
 }

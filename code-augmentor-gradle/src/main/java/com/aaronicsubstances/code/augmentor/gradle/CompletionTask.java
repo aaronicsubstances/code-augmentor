@@ -1,10 +1,6 @@
 package com.aaronicsubstances.code.augmentor.gradle;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,7 +27,6 @@ public class CompletionTask extends DefaultTask {
     private final ListProperty<Object> generatedCodeFiles;
     private final Property<Object> prepFile;
     private final Property<Object> destDir;
-    private final Property<Object> changeSetInfoFile;
     private final Property<Boolean> failOnChanges;
     
     public CompletionTask() {
@@ -41,7 +36,6 @@ public class CompletionTask extends DefaultTask {
         prepFile = objectFactory.property(Object.class);
         generatedCodeFiles = objectFactory.listProperty(Object.class);
         destDir = objectFactory.property(Object.class);
-        changeSetInfoFile = objectFactory.property(Object.class);
         failOnChanges = objectFactory.property(Boolean.class);
     }
 
@@ -54,11 +48,10 @@ public class CompletionTask extends DefaultTask {
             List<File> resolvedGenCodeFiles = generatedCodeFiles.get().
                 stream().map(x -> getProject().file(x)).collect(Collectors.toList());
             File resolvedDestDir = getProject().file(destDir);
-            File resolvedChangeSetInfoFile = getProject().file(changeSetInfoFile);
             boolean resolvedFailOnChanges = failOnChanges.get();
             completeExecute(this, resolvedEncoding, resolvedVerbose,
                 resolvedPrepFile, resolvedGenCodeFiles, resolvedDestDir,
-                resolvedChangeSetInfoFile, resolvedFailOnChanges);
+                resolvedFailOnChanges);
         }
         catch (GradleException ex) {
             throw ex;
@@ -72,7 +65,6 @@ public class CompletionTask extends DefaultTask {
     static void completeExecute(DefaultTask task, String resolvedEncoding,
             boolean resolvedVerbose, File resolvedPrepFile,
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
-            File resolvedChangeSetInfoFile,
             boolean resolvedFailOnChanges) throws Exception {
         
         // validate
@@ -102,6 +94,7 @@ public class CompletionTask extends DefaultTask {
         genericTask.setPrepFile(resolvedPrepFile);
         genericTask.setGeneratedCodeFiles(resolvedGenCodeFiles);
         genericTask.setDestDir(resolvedDestDir);
+        genericTask.setCodeChangeDetectionDisabled(!resolvedFailOnChanges);
         
         if (resolvedVerbose) {
             // Print plugin task properties and any extra useful values for user.
@@ -115,8 +108,7 @@ public class CompletionTask extends DefaultTask {
                     logger.info("\tgeneratedCodeFiles[" + i + "]: " + genericTask.getGeneratedCodeFiles().get(i));
                 }
             }
-            logger.info("\tchangeSetInfoFile: " + resolvedChangeSetInfoFile);
-            logger.info("\tfailOnChanges: " + resolvedFailOnChanges);
+            logger.info("\tfailOnChanges: " + !genericTask.isCodeChangeDetectionDisabled());
             logger.info("\tgenericTask.logAppender: " + genericTask.getLogAppender());
         }
 
@@ -127,27 +119,6 @@ public class CompletionTask extends DefaultTask {
             throw new GradleException(ex.getMessage(), ex.getCause());
         }
 
-        // Write out change set info file always even if there are no changes.
-        // Because change set info is intended to be used by OS command line scripts,
-        // use OS newline separator, default charset, and absolute paths.
-        StringBuilder changeSetInfo = new StringBuilder();
-        for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {
-            changeSetInfo.append(genericTask.getSrcFiles().get(i).getAbsolutePath());
-            changeSetInfo.append(System.lineSeparator());
-            changeSetInfo.append(genericTask.getDestFiles().get(i).getAbsolutePath());
-            changeSetInfo.append(System.lineSeparator());
-        }
-        // ensure dir exists for changeSetInfoFile
-        resolvedChangeSetInfoFile.getParentFile().mkdirs();
-        try (Writer fWriter = new OutputStreamWriter(new 
-                FileOutputStream(resolvedChangeSetInfoFile), Charset.defaultCharset())) {
-            fWriter.write(changeSetInfo.toString());
-        }
-        catch (IOException ex) {
-            throw new GradleException("Failed to write change set information to " +
-                resolvedChangeSetInfoFile, ex);
-        }
-
         // fail build if there were errors.
         if (!genericTask.getAllErrors().isEmpty()) {
             String allExMsg = PluginUtils.stringifyPossibleScriptErrors(
@@ -156,7 +127,7 @@ public class CompletionTask extends DefaultTask {
         }
 
         // also fail build if there were changed files.
-        if (resolvedFailOnChanges && !genericTask.getSrcFiles().isEmpty()) {
+        if (!genericTask.isCodeChangeDetectionDisabled() && !genericTask.getSrcFiles().isEmpty()) {
             StringBuilder outOfSyncMsg = new StringBuilder();
             outOfSyncMsg.append("The following files are out of sync with generating code scripts:\n");
             for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {
@@ -199,11 +170,6 @@ public class CompletionTask extends DefaultTask {
     @Internal
     public Property<Object> getDestDir() {
         return destDir;
-    }
-
-    @Internal
-    public Property<Object> getChangeSetInfoFile() {
-        return changeSetInfoFile;
     }
 
     @Internal

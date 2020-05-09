@@ -64,10 +64,6 @@ public abstract class AbstractPluginMojo extends AbstractMojo {
         required = false )
     private File destDir;
 
-    @Parameter( defaultValue = "${project.build.directory}/codeAugmentor/changeSet.txt", 
-        required = false )
-    private File changeSetInfoFile;
-
     @Parameter( defaultValue = "true", required = false)
     private boolean failOnChanges;
 
@@ -150,10 +146,6 @@ public abstract class AbstractPluginMojo extends AbstractMojo {
 
     protected File getDestDir() {
         return destDir;
-    }
-
-    protected File getChangeSetInfoFile() {
-        return changeSetInfoFile;
     }
 
     protected boolean getFailOnChanges() {

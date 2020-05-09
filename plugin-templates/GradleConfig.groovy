@@ -136,6 +136,5 @@ LOG_COMPLETE_TASK_PROPERTIES = """logger.info("Configuration properties:");
                     logger.info("\\tgeneratedCodeFiles[" + i + "]: " + genericTask.getGeneratedCodeFiles().get(i));
                 }
             }
-            logger.info("\\tchangeSetInfoFile: " + resolvedChangeSetInfoFile);
-            logger.info("\\tfailOnChanges: " + resolvedFailOnChanges);
+            logger.info("\\tfailOnChanges: " + !genericTask.isCodeChangeDetectionDisabled());
             logger.info("\\tgenericTask.logAppender: " + genericTask.getLogAppender());"""

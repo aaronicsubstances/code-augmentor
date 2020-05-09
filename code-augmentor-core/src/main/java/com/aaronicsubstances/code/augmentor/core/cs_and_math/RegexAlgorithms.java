@@ -15,8 +15,8 @@ import com.aaronicsubstances.code.augmentor.core.cs_and_math.regex.RegexToNfaCon
 public class RegexAlgorithms {
 
     /**
-     * Matches a string against a regular expression using 
-     * {@link #simulateNfa(FiniteStateAutomaton, int[]))}.
+     * Matches a string against a regular expression using NFA simulation.
+     * {@link #simulateNfa(FiniteStateAutomaton, int[])}.
      * 
      * @param regexNodeSpecs list of literal strings or RegexNode instances which will be 
      * concatenated for matching.

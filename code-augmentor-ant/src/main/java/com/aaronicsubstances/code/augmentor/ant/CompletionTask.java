@@ -1,10 +1,6 @@
 package com.aaronicsubstances.code.augmentor.ant;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +17,6 @@ public class CompletionTask extends Task {
     private String encoding;
     private File prepFile;
     private File destDir;
-    private File changeSetInfoFile;
     private final List<GenCodeSpec> genCodeSpecs = new ArrayList<>();
     private boolean failOnChanges;
 
@@ -39,10 +34,6 @@ public class CompletionTask extends Task {
 
     public void setPrepFile(File prepFile) {
         this.prepFile = prepFile;
-    }
-
-    public void setChangeSetInfoFile(File changeSetInfoFile) {
-        this.changeSetInfoFile = changeSetInfoFile;
     }
 
     public void setFailOnChanges(boolean failOnChanges) {
@@ -64,7 +55,7 @@ public class CompletionTask extends Task {
                 resolvedGenCodeFiles.add(genCodeFile);
             }
             completeExecute(this, encoding, verbose, prepFile, 
-                resolvedGenCodeFiles, destDir, changeSetInfoFile, failOnChanges);
+                resolvedGenCodeFiles, destDir, failOnChanges);
         }
         catch (BuildException ex) {
             throw ex;
@@ -78,7 +69,6 @@ public class CompletionTask extends Task {
     static void completeExecute(Task task, String resolvedEncoding,
             boolean resolvedVerbose, File resolvedPrepFile,
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
-            File resolvedChangeSetInfoFile,
             boolean resolvedFailOnChanges) throws Exception {
         // set up defaults
         if (resolvedEncoding == null) {
@@ -89,9 +79,6 @@ public class CompletionTask extends Task {
         }
         if (resolvedGenCodeFiles.isEmpty()) {
             resolvedGenCodeFiles.add(TaskUtils.getDefaultGenCodeFile(task));
-        }
-        if (resolvedChangeSetInfoFile == null) {
-            resolvedChangeSetInfoFile = TaskUtils.getDefaultChangeSetInfoFile(task);
         }
         if (resolvedDestDir == null) {
             resolvedDestDir = TaskUtils.getDefaultDestDir(task);
@@ -122,6 +109,7 @@ public class CompletionTask extends Task {
         genericTask.setPrepFile(resolvedPrepFile);
         genericTask.setGeneratedCodeFiles(resolvedGenCodeFiles);
         genericTask.setDestDir(resolvedDestDir);
+        genericTask.setCodeChangeDetectionDisabled(!resolvedFailOnChanges);
         
         if (resolvedVerbose) {
             // Print plugin task properties and any extra useful values for user.
@@ -135,8 +123,7 @@ public class CompletionTask extends Task {
                     task.log("\tgenCodeSpecs[" + i + "].file: " + genericTask.getGeneratedCodeFiles().get(i));
                 }
             }
-            task.log("\tchangeSetInfoFile: " + resolvedChangeSetInfoFile);
-            task.log("\tfailOnChanges: " + resolvedFailOnChanges);
+            task.log("\tfailOnChanges: " + !genericTask.isCodeChangeDetectionDisabled());
             task.log("\tgenericTask.logAppender: " + genericTask.getLogAppender());
         }
 
@@ -147,27 +134,6 @@ public class CompletionTask extends Task {
             throw new BuildException(ex.getMessage(), ex.getCause());
         }
 
-        // Write out change set info file always even if there are no changes.
-        // Because change set info is intended to be used by OS command line scripts,
-        // use OS newline separator, default charset, and absolute paths.
-        StringBuilder changeSetInfo = new StringBuilder();
-        for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {
-            changeSetInfo.append(genericTask.getSrcFiles().get(i).getAbsolutePath());
-            changeSetInfo.append(System.lineSeparator());
-            changeSetInfo.append(genericTask.getDestFiles().get(i).getAbsolutePath());
-            changeSetInfo.append(System.lineSeparator());
-        }
-        // ensure dir exists for changeSetInfoFile
-        resolvedChangeSetInfoFile.getParentFile().mkdirs();
-        try (Writer fWriter = new OutputStreamWriter(new 
-                FileOutputStream(resolvedChangeSetInfoFile), Charset.defaultCharset())) {
-            fWriter.write(changeSetInfo.toString());
-        }
-        catch (IOException ex) {
-            throw new BuildException("Failed to write change set information to " +
-                resolvedChangeSetInfoFile, ex);
-        }
-
         // fail build if there were errors.
         if (!genericTask.getAllErrors().isEmpty()) {
             String allExMsg = PluginUtils.stringifyPossibleScriptErrors(
@@ -176,7 +142,7 @@ public class CompletionTask extends Task {
         }
 
         // also fail build if there were changed files.
-        if (resolvedFailOnChanges && !genericTask.getSrcFiles().isEmpty()) {
+        if (!genericTask.isCodeChangeDetectionDisabled() && !genericTask.getSrcFiles().isEmpty()) {
             StringBuilder outOfSyncMsg = new StringBuilder();
             outOfSyncMsg.append("The following files are out of sync with generating code scripts:\n");
             for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {
