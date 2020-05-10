@@ -184,7 +184,6 @@ public class CodeAugmentationGenericTask {
                 }
             }
             else {
-                int changeLen = 0;
                 for (int i = 0; i < generatedCodes.size(); i++) {
                     GeneratedCode genCode = generatedCodes.get(i);
                     String replacementText = genCode.getWholeContent();
@@ -205,15 +204,13 @@ public class CodeAugmentationGenericTask {
                         if (codeChange != null) {
                             codeChange.setId(genCode.getId());
                             setSrcLineAndColumnNumbers(codeChange, sourceCode, replacementRange[0]);
-                            setDestLineAndColumnNumbers(codeChange, transformer, replacementRange[0],
-                                changeLen);
+                            setDestLineAndColumnNumbers(codeChange, transformer, replacementRange[0]);
                         }
                     }
                     
                     if (codeChange != null) {
                         changes.add(codeChange);
                         transformer.addTransform(replacementText, replacementRange[0], replacementRange[1]);
-                        changeLen += replacementText.length() - textToBeReplaced.length();
                     }
                 }
             }
@@ -293,7 +290,7 @@ public class CodeAugmentationGenericTask {
 
     private static void setSrcLineAndColumnNumbers(CodeSnippetChangeDescriptor codeChange,
             String sourceCode, int replacementRangeStart) {
-        codeChange.setSrcCharIndex(codeChange.getCharIndex() + replacementRangeStart);
+        codeChange.setSrcCharIndex(codeChange.getSrcCharIndex() + replacementRangeStart);
         int[] result = LexerSupport.calculateLineAndColumnNumbers(sourceCode, 
             codeChange.getSrcCharIndex());
         codeChange.setSrcLineNumber(result[0]);
@@ -301,9 +298,9 @@ public class CodeAugmentationGenericTask {
     }
 
     private static void setDestLineAndColumnNumbers(CodeSnippetChangeDescriptor codeChange,
-            SourceCodeTransformer sourceCode, int replacementRangeStart, int changeLen) {
-        codeChange.setDestCharIndex(codeChange.getCharIndex() + replacementRangeStart +
-            changeLen);
+            SourceCodeTransformer sourceCode, int replacementRangeStart) {
+        codeChange.setDestCharIndex(codeChange.getDestCharIndex() + replacementRangeStart +
+            sourceCode.getPositionAdjustment());
         int[] result = LexerSupport.calculateLineAndColumnNumbers(sourceCode.getTransformedText(), 
             codeChange.getDestCharIndex());
         codeChange.setDestLineNumber(result[0]);

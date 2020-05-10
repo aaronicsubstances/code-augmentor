@@ -8,16 +8,22 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.aaronicsubstances.code.augmentor.core.TestArg;
 import com.aaronicsubstances.code.augmentor.core.TestResourceLoader;
+import com.aaronicsubstances.code.augmentor.core.cs_and_math.FiniteStateAutomaton;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetChangeDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode;
+import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetChangeDescriptor.ExactValue;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode.ContentPart;
+import com.google.common.collect.Sets;
 
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import static com.aaronicsubstances.code.augmentor.core.TestResourceLoader.newMap;
+import static com.aaronicsubstances.code.augmentor.core.TestResourceLoader.newMapEntry;
 import static com.aaronicsubstances.code.augmentor.core.TestResourceLoader.craftErrorMessageInvolvingRandomContentParts;
 
 public class GeneratedCodeSimilarityCheckerTest {
@@ -186,13 +192,165 @@ public class GeneratedCodeSimilarityCheckerTest {
             new int[]{ 7115 }
         ));
         CodeSnippetChangeDescriptor err2 = new CodeSnippetChangeDescriptor();
-        err2.setCharIndex(7125);
+        err2.setSrcCharIndex(7125);
+        err2.setDestCharIndex(7125);
         err2.setType(GeneratedCodeSimilarityChecker.MISMATCH_TYPE_REQUIRED_SPACE);
         err2.setCurrentSection("");
+        
+        String input3 = " a";
+        List<ContentPart> contentParts3 = Arrays.asList(new ContentPart("", false));
+        CodeSnippetChangeDescriptor err3 = new CodeSnippetChangeDescriptor();
+        err3.setSrcCharIndex(1);
+        err3.setDestCharIndex(1);
+        err3.setType(GeneratedCodeSimilarityChecker.MISMATCH_TYPE_END_OF_SECTION);
+        err3.setCurrentSection("a");
+        
+        String input4 = " ";
+        List<ContentPart> contentParts4 = Arrays.asList(new ContentPart("", true));
+        CodeSnippetChangeDescriptor err4 = new CodeSnippetChangeDescriptor();
+        err4.setSrcCharIndex(0);
+        err4.setType(GeneratedCodeSimilarityChecker.MISMATCH_TYPE_END_OF_SECTION);
+        err4.setCurrentSection(" ");
+        
+        String input5 = " ";
+        List<ContentPart> contentParts5 = Arrays.asList(new ContentPart("", false));
+        
+        String input6 = "c 'x '";
+        List<ContentPart> contentParts6 = Arrays.asList(new ContentPart("c ", false),
+            new ContentPart("' ", true));
+        CodeSnippetChangeDescriptor err6 = new CodeSnippetChangeDescriptor();
+        err6.setSrcCharIndex(3);
+        err6.setDestCharIndex(3);
+        err6.setType(GeneratedCodeSimilarityChecker.MISMATCH_TYPE_EXACT);
+        err6.setCurrentSection("x '");
+        ExactValue expectedExactValue6 = new ExactValue();
+        err6.setExpectedExactValue(expectedExactValue6);
+        expectedExactValue6.setLength(2);
+        expectedExactValue6.setUpdatedSectionOffset(1);
+        expectedExactValue6.setUpdatedSection(" ");
+        expectedExactValue6.setPrefix("'");
+        
+        String input7 = "c'x '";
+        List<ContentPart> contentParts7 = Arrays.asList(new ContentPart("c ", false),
+            new ContentPart("' ", false));
+        CodeSnippetChangeDescriptor err7 = new CodeSnippetChangeDescriptor();
+        err7.setSrcCharIndex(1);
+        err7.setDestCharIndex(1);
+        err7.setType(GeneratedCodeSimilarityChecker.MISMATCH_TYPE_REQUIRED_SPACE);
+        err7.setCurrentSection("'x '");
+        
+        String input8 = "\tc    \t'    '     ";
+        List<ContentPart> contentParts8 = Arrays.asList(new ContentPart("c ", false),
+            new ContentPart("' '", false));
+        
         return new Object[][]{
             { testWinInput, new TestArg<>(contentParts0), null },
             { testWinInput, new TestArg<>(contentParts1), null },
-            { testWinInput, new TestArg<>(contentParts2), err2 }
+            { testWinInput, new TestArg<>(contentParts2), err2 },
+            { new TestArg<>(input3), new TestArg<>(contentParts3), err3 },
+            { new TestArg<>(input4), new TestArg<>(contentParts4), err4 },
+            { new TestArg<>(input5), new TestArg<>(contentParts5), null },
+            { new TestArg<>(input6), new TestArg<>(contentParts6), err6 },
+            { new TestArg<>(input7), new TestArg<>(contentParts7), err7 },
+            { new TestArg<>(input8), new TestArg<>(contentParts8), null },
+        };
+    }
+
+    @Test(dataProvider = "createTestFetchPrefixData")
+    public void testFetchPrefix(String s, int start, int maxEnd, String expected) {
+        String actual = GeneratedCodeSimilarityChecker.fetchPrefix(s, start, maxEnd);
+        assertEquals(actual, expected);
+    }
+
+    @DataProvider
+    public Object[][] createTestFetchPrefixData() {
+        return new Object[][]{
+            { "", 0, 0, "" },
+            { "ab", 0, 5, "ab" },
+            { "ab", 2, 5, "" },
+            { "ab", 1, 0, "" },
+            { "abcdefghij", 3, 3, "" },
+            { "abcdefghij", 3, 6, "def" },
+            { "abcdefghijklm nopqrstuvwxyz 0123456789", 0, 10, "abcdefghij" },
+            { "abcdefghijklm nopqrstuvwxyz 0123456789", 0, 40, "abcdefghijklm nopqrstuvwxyz 01" },
+            { "abcdefghijklm nopqrstuvwxyz 0123456789", 10, 20, "klm nopqrs" },
+            { "abcdefghijklm nopqrstuvwxyz 0123456789", 10, 50, "klm nopqrstuvwxyz 0123456789" }
+        };
+    }
+
+    @Test(dataProvider = "createTestFetchSuffixData")
+    public void testFetchSuffix(String s, int minStart, String expected) {
+        String actual = GeneratedCodeSimilarityChecker.fetchSuffix(s, minStart);
+        assertEquals(actual, expected);
+    }
+
+    @DataProvider
+    public Object[][] createTestFetchSuffixData() {
+        return new Object[][]{
+            { "", 0, "" },
+            { "", 1, "" },
+            { "abcd", 0, "abcd" },
+            { "abcd", 1, "bcd" },
+            { "abcd", 2, "cd" },
+            { "abcd", 3, "d" },
+            { "abcd", 4, "" },
+            { "abcd", 5, "" },
+            { "abcdefghijklm nopqrstuvwxyz 0123456789", 0, "ijklm nopqrstuvwxyz 0123456789" },
+            { "abcdefghijklm nopqrstuvwxyz 0123456789", 10, "klm nopqrstuvwxyz 0123456789" }
+        };
+    }
+
+    @Test(dataProvider = "createTestGetStatesReachableFromStartStateViaOneNonNullSymbolData")
+    public void testGetStatesReachableFromStartStateViaOneNonNullSymbol(
+            TestArg<FiniteStateAutomaton> nfaWrapper, Set<Integer> expected) {
+        Set<Integer> actual = GeneratedCodeSimilarityChecker
+            .getStatesReachableFromStartStateViaOneNonNullSymbol(nfaWrapper.value);
+        assertEquals(actual, expected);
+    }
+
+    @DataProvider
+    public Object[][] createTestGetStatesReachableFromStartStateViaOneNonNullSymbolData() {
+        // nfa1
+        Set<Integer> states = Sets.newHashSet(1, 2);
+        Map<Integer, Map<Integer, Set<Integer>>> nfaTransitionTable = newMap(Arrays.asList(
+            newMapEntry(1, newMap(Arrays.asList(
+                newMapEntry(FiniteStateAutomaton.NULL_SYMBOL, Sets.newHashSet(2)))))
+        ));
+        FiniteStateAutomaton nfa1 = new FiniteStateAutomaton(null, states, 
+            1, Sets.newHashSet(2), nfaTransitionTable, null);
+        
+        // nfa2
+        states = Sets.newHashSet(0, 1, 2, 3);
+        nfaTransitionTable = newMap(Arrays.asList(
+            newMapEntry(0, newMap(Arrays.asList(
+                newMapEntry(0, Sets.newHashSet(0, 1)), newMapEntry(1, Sets.newHashSet(3))))),
+            newMapEntry(1, newMap(Arrays.asList(
+                newMapEntry(0, Sets.newHashSet(0)), newMapEntry(1, Sets.newHashSet(1, 3))))),
+            newMapEntry(2, newMap(Arrays.asList(
+                /*NULL,*/ newMapEntry(1, Sets.newHashSet(0, 2))))),
+            newMapEntry(3, newMap(Arrays.asList(
+                newMapEntry(0, Sets.newHashSet(0, 1, 2)), newMapEntry(1, Sets.newHashSet(1)))))
+        ));
+        FiniteStateAutomaton nfa2 = new FiniteStateAutomaton(null, states, 
+            0, Sets.newHashSet(3), nfaTransitionTable, null);
+
+        // nfa3
+        states = Sets.newHashSet(0, 1, 2, 3);
+        nfaTransitionTable = newMap(Arrays.asList(
+            newMapEntry(0, newMap(Arrays.asList(
+                newMapEntry(FiniteStateAutomaton.NULL_SYMBOL, Sets.newHashSet(1))))),
+            newMapEntry(1, newMap(Arrays.asList(
+                newMapEntry(0, Sets.newHashSet(2))))),
+            newMapEntry(2, newMap(Arrays.asList(
+                newMapEntry(FiniteStateAutomaton.NULL_SYMBOL, Sets.newHashSet(3)))))
+        ));
+        FiniteStateAutomaton nfa3 = new FiniteStateAutomaton(null, states, 
+            0, Sets.newHashSet(), nfaTransitionTable, null);
+
+        return new Object[][]{
+            { new TestArg<>(nfa1), Sets.newHashSet() },
+            { new TestArg<>(nfa2), Sets.newHashSet(1, 3) },
+            { new TestArg<>(nfa3), Sets.newHashSet(2, 3) }
         };
     }
 

@@ -61,6 +61,7 @@ public class GeneratedCodeSimilarityChecker {
     static final int MATCH_TYPE_ANY_SPACES = 0;
     static final int MATCH_TYPE_REQUIRE_SPACE = 1;
 
+    static final String MISMATCH_TYPE_END_OF_SECTION = "end_of_section";
     static final String MISMATCH_TYPE_EXACT = "exact_value";
     static final String MISMATCH_TYPE_REQUIRED_SPACE = "required_spaces";
     static final String MISMATCH_TYPE_ANY_SPACE = "optional_spaces";
@@ -150,12 +151,6 @@ public class GeneratedCodeSimilarityChecker {
             return null;
         }
 
-        String mismatchType = MISMATCH_TYPE_EXACT;
-        int charIndex = errorIndex;
-        ExactValue expected = new ExactValue();
-        expected.setUpdatedSection("");
-        String actualDiff = "";
-
         int regexSpecIndex = 0;
         int indexOfRegexEntry = -1;
         if (!nfaSimulator.getObservations().isEmpty()) {
@@ -174,17 +169,23 @@ public class GeneratedCodeSimilarityChecker {
                 indexOfRegexEntry = lastObservation.getEndIndex() - 1;
             }
         }
-        // end of string was expected if all regex specs were covered
-        // (or regex specs was empty to start with), 
-        // and that's the default value.
+
+        // end of section is the expectation if all regex specs were covered
+        // (or regex specs was empty to start with).
+        String mismatchType = MISMATCH_TYPE_END_OF_SECTION;
+        int charIndex = errorIndex;
+        ExactValue expected = null;
+        String actualDiff = fetchPrefix(text, errorIndex, errorIndex + MAX_EXPECTED_SUBSTRING_LEN);
+
         if (regexSpecIndex < similarityRegex.size()) {
             Object expectedRegexSpec = similarityRegex.get(regexSpecIndex);
             if (expectedRegexSpec instanceof Integer) {
                 mismatchType = expectedRegexSpec.equals(MATCH_TYPE_ANY_SPACES) ?
                     MISMATCH_TYPE_ANY_SPACE : MISMATCH_TYPE_REQUIRED_SPACE;
-                expected = null;
             }
             else {
+                mismatchType = MISMATCH_TYPE_EXACT;
+                expected = new ExactValue();
                 String exactValue = (String) expectedRegexSpec;
                 expected.setLength(exactValue.length());
                 int indexInExactValue = 0;
@@ -204,13 +205,10 @@ public class GeneratedCodeSimilarityChecker {
             }
         }
         
-        if (errorIndex < text.length()) {
-            actualDiff = fetchPrefix(text, errorIndex, errorIndex + MAX_EXPECTED_SUBSTRING_LEN);
-        }
-        
         CodeSnippetChangeDescriptor codeChange = new CodeSnippetChangeDescriptor();
         codeChange.setType(mismatchType);
-        codeChange.setCharIndex(charIndex);
+        codeChange.setSrcCharIndex(charIndex);
+        codeChange.setDestCharIndex(charIndex);
         codeChange.setExpectedExactValue(expected);
         codeChange.setCurrentSection(actualDiff);
         return codeChange;
@@ -252,6 +250,7 @@ public class GeneratedCodeSimilarityChecker {
     static String fetchPrefix(String s, int start, int maxEnd) {
         int len = Math.min(maxEnd - start, MAX_EXPECTED_SUBSTRING_LEN);
         len = Math.min(len, s.length() - start);
+        len = Math.max(len, 0);
         String prefix = s.substring(start, start + len);
         // preserve CRLFs
         if (!prefix.isEmpty() && (start + len + 1) < s.length()) {
@@ -265,6 +264,7 @@ public class GeneratedCodeSimilarityChecker {
 
     static String fetchSuffix(String s, int minStart) {
         int len = Math.min(s.length() - minStart, MAX_EXPECTED_SUBSTRING_LEN);
+        len = Math.max(len, 0);
         return s.substring(s.length() - len);
     }
 

@@ -25,4 +25,8 @@ public class SourceCodeTransformer {
     public String getTransformedText() {
         return transformedText.toString();
     }
+
+    public int getPositionAdjustment() {
+        return positionAdjustment;
+    }
 }

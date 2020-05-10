@@ -101,7 +101,6 @@ public class CodeSnippetChangeDescriptor {
 
     private int id;
     private String type;
-    private transient int charIndex;
     private int srcCharIndex;
     private int srcLineNumber;
     private int srcColumnNumber;
@@ -125,14 +124,6 @@ public class CodeSnippetChangeDescriptor {
 
     public void setType(String type) {
         this.type = type;
-    }
-
-    public int getCharIndex() {
-        return charIndex;
-    }
-
-    public void setCharIndex(int charIndex) {
-        this.charIndex = charIndex;
     }
 
     public int getSrcCharIndex() {
@@ -203,7 +194,6 @@ public class CodeSnippetChangeDescriptor {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + charIndex;
         result = prime * result + ((currentSection == null) ? 0 : currentSection.hashCode());
         result = prime * result + destCharIndex;
         result = prime * result + destColumnNumber;
@@ -226,8 +216,6 @@ public class CodeSnippetChangeDescriptor {
         if (getClass() != obj.getClass())
             return false;
         CodeSnippetChangeDescriptor other = (CodeSnippetChangeDescriptor) obj;
-        if (charIndex != other.charIndex)
-            return false;
         if (currentSection == null) {
             if (other.currentSection != null)
                 return false;
@@ -262,7 +250,7 @@ public class CodeSnippetChangeDescriptor {
 
     @Override
     public String toString() {
-        return "CodeSnippetChangeDescriptor{charIndex=" + charIndex + ", currentSection=" + currentSection
+        return "CodeSnippetChangeDescriptor{currentSection=" + currentSection
                 + ", destCharIndex=" + destCharIndex + ", destColumnNumber=" + destColumnNumber + ", destLineNumber="
                 + destLineNumber + ", expectedExactValue=" + expectedExactValue + ", id=" + id + ", srcCharIndex="
                 + srcCharIndex + ", srcColumnNumber=" + srcColumnNumber + ", srcLineNumber=" + srcLineNumber + ", type="

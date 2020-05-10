@@ -14,6 +14,7 @@ public class SourceCodeTransformerTest {
     public void testTransformer(String originalText, String expected,
             List<TransformRequest> transforms) {
         SourceCodeTransformer instance = new SourceCodeTransformer(originalText);
+        assertEquals(instance.getPositionAdjustment(), 0);
         for (TransformRequest transform : transforms) {
             String replacement = transform.replacement;
             int startPos = transform.startPos;
@@ -24,6 +25,7 @@ public class SourceCodeTransformerTest {
             else {
                 instance.addTransform(replacement, startPos);
             }
+            assertEquals(instance.getPositionAdjustment(), transform.totalDiff);
         }
         String actual = instance.getTransformedText();
         assertEquals(actual, expected);
@@ -34,14 +36,14 @@ public class SourceCodeTransformerTest {
         return new Object[][]{
             new Object[]{ "", "", Arrays.asList() },
             new Object[]{ "pie", "pie", Arrays.asList(
-                new TransformRequest("", 0)) },
+                new TransformRequest(0, "", 0)) },
             new Object[]{ "pie", "", Arrays.asList(
-                new TransformRequest("", 0, 3)) },
+                new TransformRequest(-3, "", 0, 3)) },
             new Object[]{ "", "pie", Arrays.asList(
-                new TransformRequest("pie", 0)) },
+                new TransformRequest(3, "pie", 0)) },
             new Object[]{ "I am going to school.", "She's going to school?!", Arrays.asList(
-                new TransformRequest("She", 0, 1), new TransformRequest("'s", 1, 4),
-                new TransformRequest("?", 20, 21), new TransformRequest("!", 21)
+                new TransformRequest(2, "She", 0, 1), new TransformRequest(1, "'s", 1, 4),
+                new TransformRequest(1, "?", 20, 21), new TransformRequest(2, "!", 21)
             ) }
         };
     }
@@ -50,15 +52,17 @@ public class SourceCodeTransformerTest {
         final String replacement;
         final int startPos;
         final int endPos;
+        final int totalDiff;
 
-        TransformRequest(String replacement, int startPos) {
-            this(replacement, startPos, -1);
+        TransformRequest(int totalDiff, String replacement, int startPos) {
+            this(totalDiff, replacement, startPos, -1);
         }
 
-        TransformRequest(String replacement, int startPos, int endPos) {
+        TransformRequest(int totalDiff, String replacement, int startPos, int endPos) {
             this.replacement = replacement;
             this.startPos = startPos;
             this.endPos = endPos;
+            this.totalDiff = totalDiff;
         }
     }
 }
