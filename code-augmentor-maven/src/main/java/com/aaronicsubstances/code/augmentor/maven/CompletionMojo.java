@@ -30,9 +30,11 @@ public class CompletionMojo extends AbstractPluginMojo {
             File resolvedPrepFile = getPrepFile();
             List<File> resolvedGenCodeFiles = Arrays.asList(getGeneratedCodeFiles());
             File resolvedDestDir = getDestDir();
+            boolean resolvedCodeChangeDetectionDisabled = getCodeChangeDetectionDisabled();
             boolean resolvedFailOnChanges = getFailOnChanges();
             completeExecute(this, resolvedEncoding, resolvedVerbose, resolvedPrepFile, 
-                resolvedGenCodeFiles, resolvedDestDir, resolvedFailOnChanges);
+                resolvedGenCodeFiles, resolvedDestDir, resolvedCodeChangeDetectionDisabled,
+                resolvedFailOnChanges);
         }
         catch (MojoExecutionException ex) {
             throw ex;
@@ -45,10 +47,11 @@ public class CompletionMojo extends AbstractPluginMojo {
         }
     }
 
-//:SKIP_CODE_START:
+    // :SKIP_CODE_START:
     static void completeExecute(AbstractMojo task, String resolvedEncoding,
             boolean resolvedVerbose, File resolvedPrepFile,
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
+            boolean resolvedCodeChangeDetectionDisabled,
             boolean resolvedFailOnChanges) throws Exception {
         
         // validate
@@ -77,7 +80,7 @@ public class CompletionMojo extends AbstractPluginMojo {
         genericTask.setPrepFile(resolvedPrepFile);
         genericTask.setGeneratedCodeFiles(resolvedGenCodeFiles);
         genericTask.setDestDir(resolvedDestDir);
-        genericTask.setCodeChangeDetectionDisabled(!resolvedFailOnChanges);
+        genericTask.setCodeChangeDetectionDisabled(resolvedCodeChangeDetectionDisabled);
         
         if (resolvedVerbose) {
             // Print plugin task properties and any extra useful values for user.
@@ -91,7 +94,8 @@ public class CompletionMojo extends AbstractPluginMojo {
                     logger.info("\tgeneratedCodeFiles[" + i + "]: " + genericTask.getGeneratedCodeFiles().get(i));
                 }
             }
-            logger.info("\tfailOnChanges: " + !genericTask.isCodeChangeDetectionDisabled());
+            logger.info("\tresolvedCodeChangeDetectionDisabled: " + genericTask.isCodeChangeDetectionDisabled());
+            logger.info("\tfailOnChanges: " + resolvedFailOnChanges);
             logger.info("\tgenericTask.logAppender: " + genericTask.getLogAppender());
         }
 
@@ -110,7 +114,8 @@ public class CompletionMojo extends AbstractPluginMojo {
         }
 
         // also fail build if there were changed files.
-        if (!genericTask.isCodeChangeDetectionDisabled() && !genericTask.getSrcFiles().isEmpty()) {
+        if (resolvedFailOnChanges && !genericTask.isCodeChangeDetectionDisabled() && 
+                !genericTask.getSrcFiles().isEmpty()) {
             StringBuilder outOfSyncMsg = new StringBuilder();
             outOfSyncMsg.append("The following files are out of sync with generating code scripts:\n");
             for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {

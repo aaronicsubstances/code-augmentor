@@ -64,6 +64,9 @@ public abstract class AbstractPluginMojo extends AbstractMojo {
         required = false )
     private File destDir;
 
+    @Parameter( defaultValue = "false", required = false)
+    private boolean codeChangeDetectionDisabled;
+
     @Parameter( defaultValue = "true", required = false)
     private boolean failOnChanges;
 
@@ -146,6 +149,10 @@ public abstract class AbstractPluginMojo extends AbstractMojo {
 
     protected File getDestDir() {
         return destDir;
+    }
+
+    public boolean getCodeChangeDetectionDisabled() {
+        return codeChangeDetectionDisabled;
     }
 
     protected boolean getFailOnChanges() {

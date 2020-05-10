@@ -33,7 +33,8 @@ public class CodeAugmentorTask extends Task {
     private String stackTraceFilterPrefixes;
 
     private File destDir;
-    private boolean failOnChanges;
+    private boolean codeChangeDetectionDisabled;
+    private boolean failOnChanges = true;
 
     private File prepFile;
     private File augCodeFile;
@@ -142,6 +143,10 @@ public class CodeAugmentorTask extends Task {
     public void setDestDir(File destDir) {
         this.destDir = destDir;
     }
+    
+    public void setCodeChangeDetectionDisabled(boolean codeChangeDetectionDisabled) {
+        this.codeChangeDetectionDisabled = codeChangeDetectionDisabled;
+    }
 
     public void setFailOnChanges(boolean failOnChanges) {
         this.failOnChanges = failOnChanges;
@@ -207,7 +212,7 @@ public class CodeAugmentorTask extends Task {
                 genCodeFiles.add(genCodeFile);
             }
             CompletionTask.completeExecute(this, encoding, verbose, prepFile,
-                genCodeFiles, destDir, failOnChanges);
+                genCodeFiles, destDir, codeChangeDetectionDisabled, failOnChanges);
         }
         catch (BuildException ex) {
             throw ex;

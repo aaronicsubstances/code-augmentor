@@ -132,5 +132,6 @@ LOG_COMPLETE_TASK_PROPERTIES = """task.log("Configuration properties:");
                     task.log("\\tgenCodeSpecs[" + i + "].file: " + genericTask.getGeneratedCodeFiles().get(i));
                 }
             }
-            task.log("\\tfailOnChanges: " + !genericTask.isCodeChangeDetectionDisabled());
+            task.log("\\tresolvedCodeChangeDetectionDisabled: " + genericTask.isCodeChangeDetectionDisabled());
+            task.log("\\tfailOnChanges: " + resolvedFailOnChanges);
             task.log("\\tgenericTask.logAppender: " + genericTask.getLogAppender());"""

@@ -1,6 +1,7 @@
     static void completeExecute($PLUGIN_BASE_TASK_TYPE task, String resolvedEncoding,
             boolean resolvedVerbose, File resolvedPrepFile,
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
+            boolean resolvedCodeChangeDetectionDisabled,
             boolean resolvedFailOnChanges) throws Exception {
         $COMPLETION_FILES_VALIDATION_CODE
         // validate
@@ -29,7 +30,7 @@
         genericTask.setPrepFile(resolvedPrepFile);
         genericTask.setGeneratedCodeFiles(resolvedGenCodeFiles);
         genericTask.setDestDir(resolvedDestDir);
-        genericTask.setCodeChangeDetectionDisabled(!resolvedFailOnChanges);
+        genericTask.setCodeChangeDetectionDisabled(resolvedCodeChangeDetectionDisabled);
         
         if (resolvedVerbose) {
             // Print plugin task properties and any extra useful values for user.
@@ -52,7 +53,8 @@
         }
 
         // also fail build if there were changed files.
-        if (!genericTask.isCodeChangeDetectionDisabled() && !genericTask.getSrcFiles().isEmpty()) {
+        if (resolvedFailOnChanges && !genericTask.isCodeChangeDetectionDisabled() && 
+                !genericTask.getSrcFiles().isEmpty()) {
             StringBuilder outOfSyncMsg = new StringBuilder();
             outOfSyncMsg.append("The following files are out of sync with generating code scripts:\\n");
             for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {

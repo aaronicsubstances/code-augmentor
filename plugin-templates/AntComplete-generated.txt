@@ -1,6 +1,7 @@
     static void completeExecute(Task task, String resolvedEncoding,
             boolean resolvedVerbose, File resolvedPrepFile,
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
+            boolean resolvedCodeChangeDetectionDisabled,
             boolean resolvedFailOnChanges) throws Exception {
         // set up defaults
         if (resolvedEncoding == null) {
@@ -41,7 +42,7 @@
         genericTask.setPrepFile(resolvedPrepFile);
         genericTask.setGeneratedCodeFiles(resolvedGenCodeFiles);
         genericTask.setDestDir(resolvedDestDir);
-        genericTask.setCodeChangeDetectionDisabled(!resolvedFailOnChanges);
+        genericTask.setCodeChangeDetectionDisabled(resolvedCodeChangeDetectionDisabled);
         
         if (resolvedVerbose) {
             // Print plugin task properties and any extra useful values for user.
@@ -55,7 +56,8 @@
                     task.log("\tgenCodeSpecs[" + i + "].file: " + genericTask.getGeneratedCodeFiles().get(i));
                 }
             }
-            task.log("\tfailOnChanges: " + !genericTask.isCodeChangeDetectionDisabled());
+            task.log("\tresolvedCodeChangeDetectionDisabled: " + genericTask.isCodeChangeDetectionDisabled());
+            task.log("\tfailOnChanges: " + resolvedFailOnChanges);
             task.log("\tgenericTask.logAppender: " + genericTask.getLogAppender());
         }
 
@@ -74,7 +76,8 @@
         }
 
         // also fail build if there were changed files.
-        if (!genericTask.isCodeChangeDetectionDisabled() && !genericTask.getSrcFiles().isEmpty()) {
+        if (resolvedFailOnChanges && !genericTask.isCodeChangeDetectionDisabled() && 
+                !genericTask.getSrcFiles().isEmpty()) {
             StringBuilder outOfSyncMsg = new StringBuilder();
             outOfSyncMsg.append("The following files are out of sync with generating code scripts:\n");
             for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {

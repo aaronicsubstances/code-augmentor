@@ -33,6 +33,7 @@ public class CodeAugmentorTask extends DefaultTask {
     private final Property<String> groovyEntryScriptName;
 
     private final Property<Object> destDir;
+    private final Property<Boolean> codeChangeDetectionDisabled;
     private final Property<Boolean> failOnChanges;
 
     private final Property<Object> prepFile;
@@ -59,6 +60,7 @@ public class CodeAugmentorTask extends DefaultTask {
         groovyEntryScriptName = objectFactory.property(String.class);
         
         destDir = objectFactory.property(Object.class);
+        codeChangeDetectionDisabled = objectFactory.property(Boolean.class);
         failOnChanges = objectFactory.property(Boolean.class);
 
         prepFile = objectFactory.property(Object.class);
@@ -109,11 +111,12 @@ public class CodeAugmentorTask extends DefaultTask {
                 resolvedGroovyScriptDir, resolvedGroovyEntryScriptName);
 
             // Finish off code augmentation with gen codes file.
-            File resolvedDestDir = getProject().file(destDir);
+            File resolvedDestDir = getProject().file(destDir);            
+            boolean resolvedCodeChangeDetectionDisabled = codeChangeDetectionDisabled.get();
             boolean resolvedFailOnChanges = failOnChanges.get();
             CompletionTask.completeExecute(this, resolvedEncoding, resolvedVerbose,
                 resolvedPrepFile, Arrays.asList(resolvedGenCodeFile), resolvedDestDir,
-                resolvedFailOnChanges);
+                resolvedCodeChangeDetectionDisabled, resolvedFailOnChanges);
         }
         catch (GradleException ex) {
             throw ex;
@@ -201,6 +204,11 @@ public class CodeAugmentorTask extends DefaultTask {
     @Internal
     public Property<Object> getDestDir() {
         return destDir;
+    }
+
+    @Internal
+    public Property<Boolean> getCodeChangeDetectionDisabled() {
+        return codeChangeDetectionDisabled;
     }
 
     @Internal

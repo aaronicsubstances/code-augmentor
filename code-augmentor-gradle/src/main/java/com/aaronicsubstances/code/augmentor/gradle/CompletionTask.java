@@ -27,6 +27,7 @@ public class CompletionTask extends DefaultTask {
     private final ListProperty<Object> generatedCodeFiles;
     private final Property<Object> prepFile;
     private final Property<Object> destDir;
+    private final Property<Boolean> codeChangeDetectionDisabled;
     private final Property<Boolean> failOnChanges;
     
     public CompletionTask() {
@@ -36,6 +37,7 @@ public class CompletionTask extends DefaultTask {
         prepFile = objectFactory.property(Object.class);
         generatedCodeFiles = objectFactory.listProperty(Object.class);
         destDir = objectFactory.property(Object.class);
+        codeChangeDetectionDisabled = objectFactory.property(Boolean.class);
         failOnChanges = objectFactory.property(Boolean.class);
     }
 
@@ -48,10 +50,11 @@ public class CompletionTask extends DefaultTask {
             List<File> resolvedGenCodeFiles = generatedCodeFiles.get().
                 stream().map(x -> getProject().file(x)).collect(Collectors.toList());
             File resolvedDestDir = getProject().file(destDir);
+            boolean resolvedCodeChangeDetectionDisabled = codeChangeDetectionDisabled.get();
             boolean resolvedFailOnChanges = failOnChanges.get();
             completeExecute(this, resolvedEncoding, resolvedVerbose,
                 resolvedPrepFile, resolvedGenCodeFiles, resolvedDestDir,
-                resolvedFailOnChanges);
+                resolvedCodeChangeDetectionDisabled, resolvedFailOnChanges);
         }
         catch (GradleException ex) {
             throw ex;
@@ -65,6 +68,7 @@ public class CompletionTask extends DefaultTask {
     static void completeExecute(DefaultTask task, String resolvedEncoding,
             boolean resolvedVerbose, File resolvedPrepFile,
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
+            boolean resolvedCodeChangeDetectionDisabled,
             boolean resolvedFailOnChanges) throws Exception {
         
         // validate
@@ -94,7 +98,7 @@ public class CompletionTask extends DefaultTask {
         genericTask.setPrepFile(resolvedPrepFile);
         genericTask.setGeneratedCodeFiles(resolvedGenCodeFiles);
         genericTask.setDestDir(resolvedDestDir);
-        genericTask.setCodeChangeDetectionDisabled(!resolvedFailOnChanges);
+        genericTask.setCodeChangeDetectionDisabled(resolvedCodeChangeDetectionDisabled);
         
         if (resolvedVerbose) {
             // Print plugin task properties and any extra useful values for user.
@@ -108,7 +112,8 @@ public class CompletionTask extends DefaultTask {
                     logger.info("\tgeneratedCodeFiles[" + i + "]: " + genericTask.getGeneratedCodeFiles().get(i));
                 }
             }
-            logger.info("\tfailOnChanges: " + !genericTask.isCodeChangeDetectionDisabled());
+            logger.info("\tresolvedCodeChangeDetectionDisabled: " + genericTask.isCodeChangeDetectionDisabled());
+            logger.info("\tfailOnChanges: " + resolvedFailOnChanges);
             logger.info("\tgenericTask.logAppender: " + genericTask.getLogAppender());
         }
 
@@ -127,7 +132,8 @@ public class CompletionTask extends DefaultTask {
         }
 
         // also fail build if there were changed files.
-        if (!genericTask.isCodeChangeDetectionDisabled() && !genericTask.getSrcFiles().isEmpty()) {
+        if (resolvedFailOnChanges && !genericTask.isCodeChangeDetectionDisabled() && 
+                !genericTask.getSrcFiles().isEmpty()) {
             StringBuilder outOfSyncMsg = new StringBuilder();
             outOfSyncMsg.append("The following files are out of sync with generating code scripts:\n");
             for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {
@@ -170,6 +176,11 @@ public class CompletionTask extends DefaultTask {
     @Internal
     public Property<Object> getDestDir() {
         return destDir;
+    }
+
+    @Internal
+    public Property<Boolean> getCodeChangeDetectionDisabled() {
+        return codeChangeDetectionDisabled;
     }
 
     @Internal

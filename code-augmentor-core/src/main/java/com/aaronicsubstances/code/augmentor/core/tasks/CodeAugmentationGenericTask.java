@@ -238,8 +238,12 @@ public class CodeAugmentationGenericTask {
                 if (!codeChangeDetectionDisabled) {
                     // write out change summary.
                     // normalize file paths for intended shell scripts.
-                    resultChangeSummaryWriter.println(srcFile.getCanonicalPath());
-                    resultChangeSummaryWriter.println(destFile.getCanonicalPath());
+                    resultChangeSummaryWriter.println(
+                        sourceFileDescriptor.getRelativePath());
+                    resultChangeSummaryWriter.println(
+                        new File(sourceFileDescriptor.getDir()).getCanonicalPath());
+                    resultChangeSummaryWriter.println(
+                        destSubDir.getCanonicalPath());
 
                     // write out change details
                     SourceFileChangeSet s = new SourceFileChangeSet(changes);

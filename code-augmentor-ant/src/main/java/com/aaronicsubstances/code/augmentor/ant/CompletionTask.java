@@ -18,7 +18,8 @@ public class CompletionTask extends Task {
     private File prepFile;
     private File destDir;
     private final List<GenCodeSpec> genCodeSpecs = new ArrayList<>();
-    private boolean failOnChanges;
+    private boolean codeChangeDetectionDisabled;
+    private boolean failOnChanges = true;
 
     public void setVerbose(boolean verbose) {
         this.verbose = verbose;
@@ -34,6 +35,10 @@ public class CompletionTask extends Task {
 
     public void setPrepFile(File prepFile) {
         this.prepFile = prepFile;
+    }
+
+    public void setCodeChangeDetectionDisabled(boolean codeChangeDetectionDisabled) {
+        this.codeChangeDetectionDisabled = codeChangeDetectionDisabled;
     }
 
     public void setFailOnChanges(boolean failOnChanges) {
@@ -55,7 +60,7 @@ public class CompletionTask extends Task {
                 resolvedGenCodeFiles.add(genCodeFile);
             }
             completeExecute(this, encoding, verbose, prepFile, 
-                resolvedGenCodeFiles, destDir, failOnChanges);
+                resolvedGenCodeFiles, destDir, codeChangeDetectionDisabled, failOnChanges);
         }
         catch (BuildException ex) {
             throw ex;
@@ -69,6 +74,7 @@ public class CompletionTask extends Task {
     static void completeExecute(Task task, String resolvedEncoding,
             boolean resolvedVerbose, File resolvedPrepFile,
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
+            boolean resolvedCodeChangeDetectionDisabled,
             boolean resolvedFailOnChanges) throws Exception {
         // set up defaults
         if (resolvedEncoding == null) {
@@ -109,7 +115,7 @@ public class CompletionTask extends Task {
         genericTask.setPrepFile(resolvedPrepFile);
         genericTask.setGeneratedCodeFiles(resolvedGenCodeFiles);
         genericTask.setDestDir(resolvedDestDir);
-        genericTask.setCodeChangeDetectionDisabled(!resolvedFailOnChanges);
+        genericTask.setCodeChangeDetectionDisabled(resolvedCodeChangeDetectionDisabled);
         
         if (resolvedVerbose) {
             // Print plugin task properties and any extra useful values for user.
@@ -123,7 +129,8 @@ public class CompletionTask extends Task {
                     task.log("\tgenCodeSpecs[" + i + "].file: " + genericTask.getGeneratedCodeFiles().get(i));
                 }
             }
-            task.log("\tfailOnChanges: " + !genericTask.isCodeChangeDetectionDisabled());
+            task.log("\tresolvedCodeChangeDetectionDisabled: " + genericTask.isCodeChangeDetectionDisabled());
+            task.log("\tfailOnChanges: " + resolvedFailOnChanges);
             task.log("\tgenericTask.logAppender: " + genericTask.getLogAppender());
         }
 
@@ -142,7 +149,8 @@ public class CompletionTask extends Task {
         }
 
         // also fail build if there were changed files.
-        if (!genericTask.isCodeChangeDetectionDisabled() && !genericTask.getSrcFiles().isEmpty()) {
+        if (resolvedFailOnChanges && !genericTask.isCodeChangeDetectionDisabled() && 
+                !genericTask.getSrcFiles().isEmpty()) {
             StringBuilder outOfSyncMsg = new StringBuilder();
             outOfSyncMsg.append("The following files are out of sync with generating code scripts:\n");
             for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {
