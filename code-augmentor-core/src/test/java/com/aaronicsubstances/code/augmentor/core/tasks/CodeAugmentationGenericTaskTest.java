@@ -10,8 +10,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.core.TestResourceLoader;
+import com.aaronicsubstances.code.augmentor.core.models.CodeChangeSummary;
 import com.aaronicsubstances.code.augmentor.core.models.PreCodeAugmentationResult;
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileDescriptor;
+import com.aaronicsubstances.code.augmentor.core.models.CodeChangeSummary.ChangedFile;
 import com.google.gson.Gson;
 
 import org.apache.commons.io.FileUtils;
@@ -28,21 +30,23 @@ public class CodeAugmentationGenericTaskTest {
         public boolean loggingEnabled;
     }
     
-    public static CodeAugmentationGenericTask deserialize(String path) throws IOException {
-        String text = TestResourceLoader.loadResource(path, CodeAugmentationGenericTaskTest.class);
+    public CodeAugmentationGenericTask deserialize(String path) throws IOException {
+        String text = TestResourceLoader.loadResource(path, getClass());
         Gson gson = new Gson();
         TaskLite taskSpec = gson.fromJson(text, TaskLite.class);
         
         CodeAugmentationGenericTask task = new CodeAugmentationGenericTask();
         task.setCharset(StandardCharsets.UTF_8);
 
-        File TEMP_GEN_DIR = new File(FileUtils.getTempDirectory(), "code-augmentor-generated");
+        File TEMP_GEN_DIR = new File(FileUtils.getTempDirectory(), getClass().getName());
         TEMP_GEN_DIR.mkdir();
-        task.setSrcDir(TEMP_GEN_DIR);
 
         // copy prep file to temp dir.
         String contents = TestResourceLoader.loadResource(taskSpec.prepFile, 
             CodeAugmentationGenericTaskTest.class);
+        // replace any %TEMP_DIR% variable with temp dir
+        contents = contents.replace("%TEMP_DIR%", (TEMP_GEN_DIR.getPath() + File.separator)
+            .replace("\\", "\\\\"));
         File f = new File(TEMP_GEN_DIR, taskSpec.prepFile);
         FileUtils.write(f, contents, task.getCharset());        
         task.setPrepFile(f);
@@ -51,14 +55,14 @@ public class CodeAugmentationGenericTaskTest {
         task.setGeneratedCodeFiles(new ArrayList<>());
         for (String genCodePath : taskSpec.generatedCodeFiles) {            
             contents = TestResourceLoader.loadResourceNewlinesNormalized(genCodePath, 
-                CodeAugmentationGenericTaskTest.class, "\r\n");
+                getClass(), "\r\n");
             f = new File(TEMP_GEN_DIR, genCodePath);
             FileUtils.write(f, contents, task.getCharset());
             task.getGeneratedCodeFiles().add(f);
         }
 
         if (taskSpec.destDir != null) {
-            task.setDestDir(new File(FileUtils.getTempDirectory(), taskSpec.destDir));
+            task.setDestDir(new File(TEMP_GEN_DIR, taskSpec.destDir));
             task.getDestDir().mkdir();
         }
 
@@ -80,10 +84,10 @@ public class CodeAugmentationGenericTaskTest {
         // temp directory.
         for (int i = 0; i < prepResult.getFileDescriptors().size(); i++) {
             SourceFileDescriptor f = prepResult.getFileDescriptors().get(i);
-            assertNull(f.getDir());
+            assertNotNull(f.getDir());
             String contents = TestResourceLoader.loadResourceNewlinesNormalized(
                 f.getRelativePath(), getClass(), "\r\n");
-            FileUtils.write(new File(task.getSrcDir(), f.getRelativePath()), contents, task.getCharset());
+            FileUtils.write(new File(f.getDir(), f.getRelativePath()), contents, task.getCharset());
 
             // fetch expected generated codes.
             if (expectedChangeSetIndices.contains(i)) {
@@ -95,11 +99,15 @@ public class CodeAugmentationGenericTaskTest {
             }
         }
         task.execute();
-        int actualChangeSetSize = task.getSrcFiles().size();
+        assertEquals(task.isCodeChangeDetected(), !expectedChangeSetIndices.isEmpty());
+        CodeChangeSummary changeSummary = CodeChangeSummary.deserialize(
+            task.getChangeSummaryFile());
+        int actualChangeSetSize = changeSummary.getChangedFiles().size();
         assertEquals(actualChangeSetSize, expectedChangeSetIndices.size());
         for (int i = 0; i < actualChangeSetSize; i++) {
             String expected = expectedGeneratedCodes.get(i);
-            File f = task.getDestFiles().get(i);
+            ChangedFile cf = changeSummary.getChangedFiles().get(i);
+            File f = new File(cf.getDestDir(), cf.getRelativePath());
             String actual = FileUtils.readFileToString(f, task.getCharset());            
             assertEquals(actual, expected, "Unexpected contents found in " + f);
         }

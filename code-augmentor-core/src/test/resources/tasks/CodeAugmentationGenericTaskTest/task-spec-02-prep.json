@@ -3,6 +3,7 @@
 	{
 		"fileId": 1,
 		"relativePath": "task-spec-02-0.java",
+		"dir": "%TEMP_DIR%",
 		"codeSnippets": [{
 			"augmentingCodeDescriptor": {
 				"id" : 1,

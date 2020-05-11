@@ -85,12 +85,9 @@ FILE_SET_EXTRACTION_CODE = '''
             }
         }'''
 
-DEST_DIR_DELETION_CODE = 'PluginUtils.deleteDir(resolvedDestDir);'
-
 LOG_REFERENCE = ''
 LOG_NO_FILES_FOUND = 'task.log("No files were found", Project.MSG_WARN);'
 LOG_ONE_OR_MORE_FILE_COUNT = 'task.log(String.format("Found %s file(s)", relativePaths.size()));'
-LOG_DELETE_DEST_DIR = 'task.log("Deleting contents of " + resolvedDestDir + "...");'
 
 // use equivalent of 3 tabs
 LOG_PREPARE_TASK_PROPERTIES = """task.log("Configuration properties:");

@@ -31,15 +31,15 @@ public class NfaSimulator {
         return observations;
     }
 
-    public int simulate(int[] input, Set<Integer> statesUnderObservation) {
+    public int simulate(int[] input, int startIndex, int endIndex, Set<Integer> statesUnderObservation) {
         this.statesUnderObservation = statesUnderObservation;
         observations = new ArrayList<>();
 
-        int i = 0;
+        int i = startIndex;
         Set<Integer> subsetOfStates = NfaToDfaConvertor.emptyStringClosure(emptyStringGraph,
             FiniteStateAutomaton.newSet(nfa.getStartState()));
         recordObservation(subsetOfStates, i);
-        while (i < input.length) {
+        while (i < endIndex) {
             int c = input[i];
             subsetOfStates = NfaToDfaConvertor.move(nfa, subsetOfStates, c);
             subsetOfStates = NfaToDfaConvertor.emptyStringClosure(emptyStringGraph, subsetOfStates);

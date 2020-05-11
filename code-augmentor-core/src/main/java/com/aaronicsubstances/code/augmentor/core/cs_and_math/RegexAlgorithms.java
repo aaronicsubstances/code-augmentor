@@ -85,7 +85,7 @@ public class RegexAlgorithms {
      */
     public static int simulateNfa(FiniteStateAutomaton nfa, int[] input) {
         NfaSimulator nfaSimulator = new NfaSimulator(nfa);
-        return nfaSimulator.simulate(input, null);
+        return nfaSimulator.simulate(input, 0, input.length, null);
     }
 
     /**
@@ -99,7 +99,7 @@ public class RegexAlgorithms {
      */
     public static int simulateDfa(FiniteStateAutomaton dfa, int[] input) {
         DfaSimulator dfaSimulator = new DfaSimulator(dfa);
-        return dfaSimulator.simulate(input, null);
+        return dfaSimulator.simulate(input, 0, input.length, null);
     }
 
     /**

@@ -103,11 +103,8 @@ public class CompletionTask extends Task {
             }
         }
 
-        // Validation complete. start execution by deleting contents
-        // of destDir so generated output files is not confused with previous ones.
+        // Validation complete, so start execution.
         
-        task.log("Deleting contents of " + resolvedDestDir + "...");
-        PluginUtils.deleteDir(resolvedDestDir);
 
         CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
         genericTask.setCharset(charset);
@@ -149,15 +146,11 @@ public class CompletionTask extends Task {
         }
 
         // also fail build if there were changed files.
-        if (resolvedFailOnChanges && !genericTask.isCodeChangeDetectionDisabled() && 
-                !genericTask.getSrcFiles().isEmpty()) {
+        if (resolvedFailOnChanges && genericTask.isCodeChangeDetected()) {
             StringBuilder outOfSyncMsg = new StringBuilder();
-            outOfSyncMsg.append("The following files are out of sync with generating code scripts:\n");
-            for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {
-                outOfSyncMsg.append(" ").append(i+1).append(". ");
-                outOfSyncMsg.append(genericTask.getSrcFiles().get(i).getPath());
-                outOfSyncMsg.append("\n");
-            }
+            outOfSyncMsg.append("Some source file are now out of sync with generating code scripts. ");
+            outOfSyncMsg.append("For details please look into top-level files of directory ");
+            outOfSyncMsg.append(resolvedDestDir).append("\n");
 
             throw new BuildException(outOfSyncMsg.toString());
         }

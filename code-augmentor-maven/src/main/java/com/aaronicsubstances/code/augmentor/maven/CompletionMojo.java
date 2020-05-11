@@ -14,7 +14,6 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.shared.utils.io.FileUtils;
 
 /**
  * Completes code generation.
@@ -47,7 +46,7 @@ public class CompletionMojo extends AbstractPluginMojo {
         }
     }
 
-    // :SKIP_CODE_START:
+// :SKIP_CODE_START:
     static void completeExecute(AbstractMojo task, String resolvedEncoding,
             boolean resolvedVerbose, File resolvedPrepFile,
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
@@ -68,11 +67,8 @@ public class CompletionMojo extends AbstractPluginMojo {
             }
         }
 
-        // Validation complete. start execution by deleting contents
-        // of destDir so generated output files is not confused with previous ones.
+        // Validation complete, so start execution.
         Log logger = task.getLog();
-        logger.info("Deleting " + resolvedDestDir + "...");
-        FileUtils.deleteDirectory(resolvedDestDir);
 
         CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
         genericTask.setCharset(charset);
@@ -114,15 +110,11 @@ public class CompletionMojo extends AbstractPluginMojo {
         }
 
         // also fail build if there were changed files.
-        if (resolvedFailOnChanges && !genericTask.isCodeChangeDetectionDisabled() && 
-                !genericTask.getSrcFiles().isEmpty()) {
+        if (resolvedFailOnChanges && genericTask.isCodeChangeDetected()) {
             StringBuilder outOfSyncMsg = new StringBuilder();
-            outOfSyncMsg.append("The following files are out of sync with generating code scripts:\n");
-            for (int i = 0; i < genericTask.getSrcFiles().size(); i++) {
-                outOfSyncMsg.append(" ").append(i+1).append(". ");
-                outOfSyncMsg.append(genericTask.getSrcFiles().get(i).getPath());
-                outOfSyncMsg.append("\n");
-            }
+            outOfSyncMsg.append("Some source file are now out of sync with generating code scripts. ");
+            outOfSyncMsg.append("For details please look into top-level files of directory ");
+            outOfSyncMsg.append(resolvedDestDir).append("\n");
 
             throw new MojoExecutionException(outOfSyncMsg.toString());
         }

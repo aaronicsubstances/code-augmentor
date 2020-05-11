@@ -1,7 +1,6 @@
 package com.aaronicsubstances.code.augmentor.core.tasks;
 
 import java.io.File;
-import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.time.Duration;
 import java.time.Instant;
@@ -13,6 +12,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import com.aaronicsubstances.code.augmentor.core.cs_and_math.parsing.LexerSupport;
+import com.aaronicsubstances.code.augmentor.core.models.CodeChangeSummary;
 import com.aaronicsubstances.code.augmentor.core.models.CodeGenerationResponseChangeSet;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetChangeDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor;
@@ -29,56 +29,46 @@ import com.aaronicsubstances.code.augmentor.core.util.SourceCodeTransformer;
 import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 
 public class CodeAugmentationGenericTask {
-    private static final String changeSummaryFileName = "CHANGE-SUMMARY.txt";
-    private static final String changeDetailsFileName = "CHANGE-DETAILS.json";
+    private static final String CHANGE_SUMMARY_FILE_NAME = "CHANGE-SUMMARY.txt";
+    private static final String CHANGE_DETAILS_FILE_NAME = "CHANGE-DETAILS.json";
 
     // input properties.
     private BiConsumer<GenericTaskLogLevel, Supplier<String>> logAppender;
     private Charset charset;
     private File prepFile;
     private List<File> generatedCodeFiles;
-    private File srcDir;
     private File destDir;
     private boolean codeChangeDetectionDisabled;
 
     // output properties
     private final List<Throwable> allErrors = new ArrayList<>();
-    private final List<File> srcFiles = new ArrayList<>();
-    private final List<File> destFiles = new ArrayList<>();
-    private final Map<String, String> destSubDirNameMap  = new HashMap<>();
+    private File changeSummaryFile;
+    private File changeDetailsFile;
+    private boolean codeChangeDetected;
     
     public void execute() throws Exception {
         allErrors.clear();
-        srcFiles.clear();
-        destFiles.clear();
-        destSubDirNameMap.clear();
+        codeChangeDetected = false;
+        TaskUtils.deleteDir(destDir);
         destDir.mkdirs();
+        
+        Map<String, String> destSubDirNameMap = new HashMap<>();
 
         PreCodeAugmentationResult result = new PreCodeAugmentationResult();
         Object resultReader = result.beginDeserialize(prepFile);
 
         GeneratedCodeFetcher generatedCodeFetcher = new GeneratedCodeFetcher(generatedCodeFiles);
         
-        CodeGenerationResponseChangeSet resultChangeSet = null;
-        Object resultChangeSetWriter = null;
-        PrintWriter resultChangeSummaryWriter = null;
-        if (!codeChangeDetectionDisabled) {
-            resultChangeSet = new CodeGenerationResponseChangeSet();
-            resultChangeSetWriter = resultChangeSet.beginSerialize(new File(
-                destDir, changeDetailsFileName));
-            
-            // use OS platform default charset encoding for change summary 
-            // since it is intended to be simple enough for shell scripts.
-            resultChangeSummaryWriter = new PrintWriter(new File(destDir,
-                changeSummaryFileName));
-        }
+        changeDetailsFile = new File(destDir, CHANGE_DETAILS_FILE_NAME);
+        CodeGenerationResponseChangeSet resultChangeSet = new CodeGenerationResponseChangeSet();
+        Object resultChangeSetWriter = resultChangeSet.beginSerialize(changeDetailsFile);
+        
+        changeSummaryFile = new File(destDir, CHANGE_SUMMARY_FILE_NAME);
+        CodeChangeSummary resultChangeSummary = new CodeChangeSummary();
+        Object resultChangeSummaryWriter = resultChangeSummary.beginSerialize(changeSummaryFile);
 
         SourceFileDescriptor sourceFileDescriptor;
         while ((sourceFileDescriptor = SourceFileDescriptor.deserialize(resultReader)) != null) {
-            // use this for testing only. under normal circumstances dir should be set.
-            if (sourceFileDescriptor.getDir() == null) {
-                sourceFileDescriptor.setDir(srcDir.getPath());
-            }
             File srcFile = new File(sourceFileDescriptor.getDir(), sourceFileDescriptor.getRelativePath());
             TaskUtils.logVerbose(logAppender, "Processing %s", srcFile);
 
@@ -201,15 +191,13 @@ public class CodeAugmentationGenericTask {
                         GeneratedCodeSimilarityChecker similarityAlg = new GeneratedCodeSimilarityChecker(
                                 genCode.getContentParts());
                         codeChange = similarityAlg.match(textToBeReplaced);
-                        if (codeChange != null) {
-                            codeChange.setId(genCode.getId());
-                            setSrcLineAndColumnNumbers(codeChange, sourceCode, replacementRange[0]);
-                            setDestLineAndColumnNumbers(codeChange, transformer, replacementRange[0]);
-                        }
                     }
                     
                     if (codeChange != null) {
                         changes.add(codeChange);
+                        codeChange.setId(genCode.getId());
+                        setSrcLineAndColumnNumbers(codeChange, sourceCode, replacementRange[0]);
+                        setDestLineAndColumnNumbers(codeChange, transformer, replacementRange[0]);
                         transformer.addTransform(replacementText, replacementRange[0], replacementRange[1]);
                     }
                 }
@@ -232,18 +220,13 @@ public class CodeAugmentationGenericTask {
 
                 String transformedCode = transformer.getTransformedText();
                 TaskUtils.writeFile(destFile, charset, transformedCode);
-                srcFiles.add(srcFile);
-                destFiles.add(destFile);
 
                 if (!codeChangeDetectionDisabled) {
                     // write out change summary.
                     // normalize file paths for intended shell scripts.
-                    resultChangeSummaryWriter.println(
-                        sourceFileDescriptor.getRelativePath());
-                    resultChangeSummaryWriter.println(
-                        new File(sourceFileDescriptor.getDir()).getCanonicalPath());
-                    resultChangeSummaryWriter.println(
-                        destSubDir.getCanonicalPath());
+                    new CodeChangeSummary.ChangedFile(sourceFileDescriptor.getRelativePath(),
+                        new File(sourceFileDescriptor.getDir()).getCanonicalPath(),
+                        destSubDir.getCanonicalPath()).serialize(resultChangeSummaryWriter);
 
                     // write out change details
                     SourceFileChangeSet s = new SourceFileChangeSet(changes);
@@ -252,6 +235,8 @@ public class CodeAugmentationGenericTask {
                     s.setSrcDir(sourceFileDescriptor.getDir());
                     s.setDestDir(destSubDir.getPath());
                     s.serialize(resultChangeSetWriter);
+
+                    codeChangeDetected = true;
                 }
 
                 TaskUtils.logInfo(logAppender, "Changes needed for %s successfully written to\n %s", srcFile, destFile);
@@ -267,10 +252,8 @@ public class CodeAugmentationGenericTask {
         generatedCodeFetcher.close();
 
         // close writers
-        if (!codeChangeDetectionDisabled) {
-            resultChangeSet.endSerialize(resultChangeSetWriter);
-            resultChangeSummaryWriter.close();
-        }
+        resultChangeSet.endSerialize(resultChangeSetWriter);
+        resultChangeSummary.endSerialize(resultChangeSummaryWriter);
     }
 
     private static void validateContentParts(
@@ -356,14 +339,6 @@ public class CodeAugmentationGenericTask {
         this.generatedCodeFiles = generatedCodeFiles;
     }
 
-    public File getSrcDir() {
-        return srcDir;
-    }
-
-    public void setSrcDir(File srcDir) {
-        this.srcDir = srcDir;
-    }
-
     public File getDestDir() {
         return destDir;
     }
@@ -383,16 +358,16 @@ public class CodeAugmentationGenericTask {
     public List<Throwable> getAllErrors() {
         return allErrors;
     }
-
-    public List<File> getSrcFiles() {
-        return srcFiles;
+    
+    public File getChangeSummaryFile() {
+        return changeSummaryFile;
     }
 
-    public List<File> getDestFiles() {
-        return destFiles;
+    public File getChangeDetailsFile() {
+        return changeDetailsFile;
     }
 
-    public Map<String, String> getDestSubDirNameMap() {
-        return destSubDirNameMap;
+    public boolean isCodeChangeDetected() {
+        return codeChangeDetected;
     }
 }

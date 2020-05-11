@@ -41,8 +41,8 @@ public class PreCodeAugmentationGenericTaskTest {
         }
     }
     
-    public static PreCodeAugmentationGenericTask deserialize(String path) throws IOException {
-        String text = TestResourceLoader.loadResource(path, PreCodeAugmentationGenericTaskTest.class);
+    public PreCodeAugmentationGenericTask deserialize(String path) throws IOException {
+        String text = TestResourceLoader.loadResource(path, getClass());
         Gson gson = new Gson();
         TaskLite taskSpec = gson.fromJson(text, TaskLite.class);
         
@@ -52,7 +52,8 @@ public class PreCodeAugmentationGenericTaskTest {
         task.setBaseDirs(new ArrayList<>());
 
         // copy files to temp dir.
-        File tempDir = FileUtils.getTempDirectory();
+        File tempDir = new File(FileUtils.getTempDirectory(), getClass().getName());
+        tempDir.mkdir();
         for (String relativePath : taskSpec.relativePaths) {
             String contents = TestResourceLoader.loadResourceNewlinesNormalized(relativePath, 
                 PreCodeAugmentationGenericTaskTest.class, "\r\n");

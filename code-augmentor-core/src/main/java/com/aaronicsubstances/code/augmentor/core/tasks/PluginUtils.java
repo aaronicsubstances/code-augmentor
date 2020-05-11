@@ -9,22 +9,6 @@ import java.util.concurrent.TimeUnit;
 
 public class PluginUtils {
 
-	public static void deleteDir(File dir) {
-        // ignore unsuccessful deletion and any errors.
-        File[] contents = dir.listFiles();
-        if (contents != null) {
-            for (File content : contents) {
-                if (content.isDirectory()) {
-                    deleteDir(content);
-                }
-                else {
-                    content.delete();
-                }
-            }
-        }
-        dir.delete();
-	}
-
     public static int execCommand(File workingDir, File stdout, File stderr, 
             String cmdPath, boolean isBatchCmdOnWindows, String... args) throws Exception {
         ProcessBuilder pb = new ProcessBuilder();

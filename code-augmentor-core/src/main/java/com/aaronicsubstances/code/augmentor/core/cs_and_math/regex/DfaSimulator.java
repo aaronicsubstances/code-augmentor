@@ -27,13 +27,13 @@ public class DfaSimulator {
         return observations;
     }
 
-    public int simulate(int[] input, Set<Integer> statesUnderObservation) {
+    public int simulate(int[] input, int startIndex, int endIndex, Set<Integer> statesUnderObservation) {
         this.statesUnderObservation = statesUnderObservation;
         observations = new ArrayList<>();
-        int i = 0;
+        int i = startIndex;
         int s = dfa.getStartState();
         recordObservation(s, i);
-        while (i < input.length) {
+        while (i < endIndex) {
             int c = input[i];
             Map<Integer, Integer> stateOutTransitions = dfa.getDfaTransitionTable().get(s);
             if (stateOutTransitions == null || !stateOutTransitions.containsKey(c)) {

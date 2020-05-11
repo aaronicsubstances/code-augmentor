@@ -10,7 +10,9 @@ import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.core.TestResourceLoader;
 import com.aaronicsubstances.code.augmentor.core.models.AugmentingCode;
+import com.aaronicsubstances.code.augmentor.core.models.CodeChangeSummary;
 import com.aaronicsubstances.code.augmentor.core.models.AugmentingCode.Block;
+import com.aaronicsubstances.code.augmentor.core.models.CodeChangeSummary.ChangedFile;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetChangeDescriptor.ExactValue;
 import com.aaronicsubstances.code.augmentor.core.models.CodeGenerationRequest;
 import com.aaronicsubstances.code.augmentor.core.models.CodeGenerationResponse;
@@ -381,6 +383,73 @@ public class PersistenceTest {
                                 codeChange.setExpectedExactValue(expected);
                             }
                         }
+                    }
+                }
+                return new Object[]{ count++, instance,
+                    TestResourceLoader.RAND_GEN.nextBoolean() };
+            }
+        };
+    }
+
+    @Test(dataProvider = "createTestCodeChangeSummaryData")
+    public void testCodeChangeSummary(int index, 
+            CodeChangeSummary expected,
+            boolean stream) throws Exception {
+        // first, serialize
+        StringWriter sw = new StringWriter();
+        if (stream) {
+            Object serializer = expected.beginSerialize(sw);
+            for (ChangedFile cf : expected.getChangedFiles()) {
+                cf.serialize(serializer);
+            }
+            expected.endSerialize(serializer);
+        }
+        else {
+            expected.serialize(sw);
+        }
+        String expectedOutput = sw.toString();
+        //System.out.println(expectedOutput);
+            
+        // next, deserialize
+        StringReader sr = new StringReader(expectedOutput);
+        CodeChangeSummary actual;
+        if (stream) {
+            actual = new CodeChangeSummary();
+            Object deserializer = actual.beginDeserialize(sr);
+            ChangedFile cf;
+            while ((cf = ChangedFile.deserialize(deserializer)) != null) {
+                actual.getChangedFiles().add(cf);
+            }
+            actual.endDeserialize(deserializer);
+        }
+        else {
+            actual = CodeChangeSummary.deserialize(sr);
+        }
+
+        // finally, compare deserialized result with original
+        assertEquals(actual, expected);
+    }
+
+    @DataProvider
+    public Iterator<Object[]> createTestCodeChangeSummaryData() {
+        return new Iterator<Object[]>() {
+            int count = 0;
+
+            @Override
+            public boolean hasNext() {
+                return count < 10;
+            }
+
+            @Override
+            public Object[] next() {
+                List<ChangedFile> files = new ArrayList<>();
+                CodeChangeSummary instance = new CodeChangeSummary(files);
+                if (count > 0) {
+                    int fileListSize = TestResourceLoader.RAND_GEN.nextInt(5);
+                    for (int i = 0; i < fileListSize; i++) {
+                        ChangedFile cf = new ChangedFile(generateRandomString(false),
+                            generateRandomString(false), generateRandomString(false));
+                        files.add(cf);
                     }
                 }
                 return new Object[]{ count++, instance,

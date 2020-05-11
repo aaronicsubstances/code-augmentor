@@ -145,8 +145,9 @@ public class GeneratedCodeSimilarityChecker {
         FiniteStateAutomaton nfa = nfaCreator.makeConcatNfa(childNfas);
 
         NfaSimulator nfaSimulator = new NfaSimulator(nfa);
-        int errorIndex = nfaSimulator.simulate(RegexAlgorithms.getLiteralString(text), 
-            stateToRegexIndexMap.keySet());   
+        int[] textAsCodePoints = RegexAlgorithms.getLiteralString(text);
+        int errorIndex = nfaSimulator.simulate(textAsCodePoints, 0, textAsCodePoints.length,
+            stateToRegexIndexMap.keySet());
         if (errorIndex == -1) {
             return null;
         }
