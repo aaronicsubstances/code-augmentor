@@ -224,12 +224,13 @@ public class TaskUtils {
         return String.format("%0" + outputLen + "x", bigInteger);
     }
 
-    private static void copyStream(InputStream inStream, OutputStream outStream) throws IOException {
+    public static void copyStream(InputStream inStream, OutputStream outStream) throws IOException {
         byte[] b  = new byte[8192];
         int len;
         while ((len = inStream.read(b)) > 0) {
             outStream.write(b, 0, len);
         }
+        outStream.flush();
     }
 
     public static void copyFile(File srcFile, File destFile) throws IOException {

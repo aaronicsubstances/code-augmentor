@@ -10,9 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import com.aaronicsubstances.code.augmentor.core.cs_and_math.parsing.LexerSupport;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode.ContentPart;
-import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 import com.aaronicsubstances.code.augmentor.core.util.Token;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -49,19 +49,7 @@ public class TestResourceLoader {
     public static String loadResourceNewlinesNormalized(String path,
             Class<?> cls, String newLine) {
         String text = loadResource(path, cls);
-        List<String> splitText = TaskUtils.splitIntoLines(text);
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < splitText.size(); i+=2) {
-            String line = splitText.get(i);
-            sb.append(line);
-            String terminator = splitText.get(i + 1);
-            if (terminator == null) {
-                break;
-            }
-            sb.append(newLine);
-        }
-        String newText = sb.toString();
-        return newText;
+        return LexerSupport.NEW_LINE_REGEX.matcher(text).replaceAll(newLine);
     }
 
 	public static List<Token> fetchTokens(String path, Class<?> cls) {

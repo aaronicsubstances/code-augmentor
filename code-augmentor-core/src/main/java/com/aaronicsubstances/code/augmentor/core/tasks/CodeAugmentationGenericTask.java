@@ -1,6 +1,8 @@
 package com.aaronicsubstances.code.augmentor.core.tasks;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.time.Duration;
 import java.time.Instant;
@@ -254,6 +256,26 @@ public class CodeAugmentationGenericTask {
         // close writers
         resultChangeSet.endSerialize(resultChangeSetWriter);
         resultChangeSummary.endSerialize(resultChangeSummaryWriter);
+
+        // generate shell scripts for effecting code changes.
+        if (codeChangeDetected) {
+            final String shellScriptPrefix = "EFFECT-CHANGES";
+            InputStream shellScriptRes = getClass().getResourceAsStream("windows-copy-batch-file.bat");
+            ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+            TaskUtils.copyStream(shellScriptRes, outStream);
+            String contents = new String(outStream.toByteArray(), Charset.defaultCharset());
+            contents = LexerSupport.NEW_LINE_REGEX.matcher(contents).replaceAll("\r\n");
+            TaskUtils.writeFile(new File(destDir, shellScriptPrefix + ".bat"), 
+                Charset.defaultCharset(), contents);
+            
+            shellScriptRes = getClass().getResourceAsStream("unix-copy-bash-file.sh");
+            outStream = new ByteArrayOutputStream();
+            TaskUtils.copyStream(shellScriptRes, outStream);
+            contents = new String(outStream.toByteArray(), Charset.defaultCharset());
+            contents = LexerSupport.NEW_LINE_REGEX.matcher(contents).replaceAll("\n");
+            TaskUtils.writeFile(new File(destDir, shellScriptPrefix), 
+                Charset.defaultCharset(), contents);
+        }
     }
 
     private static void validateContentParts(
