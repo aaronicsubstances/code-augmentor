@@ -1,6 +1,8 @@
 package com.aaronicsubstances.code.augmentor.core.util;
 
 import static org.testng.Assert.*;
+import static org.hamcrest.Matchers.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,9 +29,55 @@ import static com.aaronicsubstances.code.augmentor.core.TestResourceLoader.newMa
 import static com.aaronicsubstances.code.augmentor.core.TestResourceLoader.craftErrorMessageInvolvingRandomContentParts;
 
 public class GeneratedCodeSimilarityCheckerTest {
+    
+    @Test(dataProvider = "createTestBuildSimilarityRegexData")
+    public void testBuildSimilarityRegex(TestArg<List<ContentPart>> contentPartsWrapper, 
+            TestArg<List<Object>> expectedWrapper) {
+        List<ContentPart> contentParts = contentPartsWrapper.value;
+        List<Object> expected = expectedWrapper.value;
+        GeneratedCodeSimilarityChecker instance = new GeneratedCodeSimilarityChecker(
+            contentParts, false);
+        List<Object> actual = instance.getSimilarityRegex();
+        assertThat(actual, is(expected));
+    }
 
-    @Test(dataProvider = "createTestBuildSimilarityRegex")
-    public void testBuildSimilarityRegex(String path, TestArg<List<Object>> expectedWrapper) {
+    @DataProvider
+    public Object[][] createTestBuildSimilarityRegexData() {
+        Object anySpace = GeneratedCodeSimilarityChecker.MATCH_TYPE_ANY_SPACES;
+        Object reqdSpace = GeneratedCodeSimilarityChecker.MATCH_TYPE_REQUIRE_SPACE;
+        List<ContentPart> contentParts = Arrays.asList(
+            new ContentPart(" a bicycle", false),
+            new ContentPart("  \n,is it expensive?", false),
+            new ContentPart("\na. maybe", false),
+            new ContentPart("\nb. maybe  not ", false),
+            new ContentPart("\n", false)
+        );
+        List<Object> expected = Arrays.asList(anySpace, "a", reqdSpace, "bicycle", anySpace, "\n",
+            anySpace, ",is", reqdSpace, "it", reqdSpace, "expensive?", anySpace, "\n",
+            anySpace, "a.", reqdSpace, "maybe", anySpace, "\n",
+            anySpace, "b.", reqdSpace, "maybe", reqdSpace, "not", anySpace, "\n", anySpace);
+        TestArg<List<ContentPart>> contentParts1Wrapper = new TestArg<>(contentParts);
+        TestArg<List<Object>> expected1Wrapper = new TestArg<>(expected);
+
+        contentParts = Arrays.asList(new ContentPart("", false));
+        expected = Arrays.asList(anySpace);
+        TestArg<List<ContentPart>> contentParts2Wrapper = new TestArg<>(contentParts);
+        TestArg<List<Object>> expected2Wrapper = new TestArg<>(expected);
+
+        contentParts = Arrays.asList(new ContentPart("", true));
+        expected = Arrays.asList();
+        TestArg<List<ContentPart>> contentParts3Wrapper = new TestArg<>(contentParts);
+        TestArg<List<Object>> expected3Wrapper = new TestArg<>(expected);
+        
+        return new Object[][]{
+            { contentParts1Wrapper, expected1Wrapper },
+            { contentParts2Wrapper, expected2Wrapper },
+            { contentParts3Wrapper, expected3Wrapper }
+        };
+    }
+
+    @Test(dataProvider = "createTestBuildSimilarityRegex2")
+    public void testBuildSimilarityRegex2(String path, TestArg<List<Object>> expectedWrapper) {
         List<ContentPart> inputContentParts = TestResourceLoader.loadContentParts(path, getClass());
         List<Object> expected = expectedWrapper.value;
         // TestResourceLoader.printTestHeader("testBuildSimilarityRegex", path,
@@ -41,7 +89,7 @@ public class GeneratedCodeSimilarityCheckerTest {
     }
 
     @DataProvider
-    public Object[][] createTestBuildSimilarityRegex() {
+    public Object[][] createTestBuildSimilarityRegex2() {
         Object anySpace = GeneratedCodeSimilarityChecker.MATCH_TYPE_ANY_SPACES;
         Object reqdSpace = GeneratedCodeSimilarityChecker.MATCH_TYPE_REQUIRE_SPACE;
         List<Object> expected0 = Arrays.asList(anySpace, "ab", anySpace, "\n", anySpace, "c", reqdSpace, "d", anySpace,
@@ -223,12 +271,12 @@ public class GeneratedCodeSimilarityCheckerTest {
         err6.setDestCharIndex(3);
         err6.setType(GeneratedCodeSimilarityChecker.MISMATCH_TYPE_EXACT);
         err6.setCurrentSection("x '");
-        ExactValue expectedExactValue6 = new ExactValue();
-        err6.setExpectedExactValue(expectedExactValue6);
-        expectedExactValue6.setLength(2);
-        expectedExactValue6.setUpdatedSectionOffset(1);
-        expectedExactValue6.setUpdatedSection(" ");
-        expectedExactValue6.setPrefix("'");
+        ExactValue expectedExactValue = new ExactValue();
+        err6.setExpectedExactValue(expectedExactValue);
+        expectedExactValue.setLength(2);
+        expectedExactValue.setUpdatedSectionOffset(1);
+        expectedExactValue.setUpdatedSection(" ");
+        expectedExactValue.setPrefix("'");
         
         String input7 = "c'x '";
         List<ContentPart> contentParts7 = Arrays.asList(new ContentPart("c ", false),
@@ -243,6 +291,28 @@ public class GeneratedCodeSimilarityCheckerTest {
         List<ContentPart> contentParts8 = Arrays.asList(new ContentPart("c ", false),
             new ContentPart("' '", false));
         
+        String input9 = "abcdefghijklmnopqrstuvwxyz01234\n" + "y" +
+            "56789ABCDEFGHIJKLMNOPQRSTUVWXYZ98777777\n" +
+            "1234567890123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        List<ContentPart> contentParts9 = Arrays.asList(
+            new ContentPart("abcdefghijklmnopqrstuvwxyz01234\n" + "q" +
+            "56789ABCDEFGHIJKLMNOPQRSTUVWXYZ98777777\n" +
+            "1234567890123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", true));
+        CodeSnippetChangeDescriptor err9 = new CodeSnippetChangeDescriptor();
+        err9.setSrcCharIndex(32);
+        err9.setDestCharIndex(32);
+        err9.setType(GeneratedCodeSimilarityChecker.MISMATCH_TYPE_EXACT);
+        err9.setCurrentSection("y" +
+            "56789ABCDEFGHIJKLMNOPQRSTUVWX");
+        expectedExactValue = new ExactValue();
+        err9.setExpectedExactValue(expectedExactValue);
+        expectedExactValue.setLength(118);
+        expectedExactValue.setUpdatedSectionOffset(32);
+        expectedExactValue.setUpdatedSection("q" + 
+            "56789ABCDEFGHIJKLMNOPQRSTUVWX");
+        expectedExactValue.setPrefix("abcdefghijklmnopqrstuvwxyz0123");
+        expectedExactValue.setSuffix("6789ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        
         return new Object[][]{
             { testWinInput, new TestArg<>(contentParts0), null },
             { testWinInput, new TestArg<>(contentParts1), null },
@@ -253,6 +323,7 @@ public class GeneratedCodeSimilarityCheckerTest {
             { new TestArg<>(input6), new TestArg<>(contentParts6), err6 },
             { new TestArg<>(input7), new TestArg<>(contentParts7), err7 },
             { new TestArg<>(input8), new TestArg<>(contentParts8), null },
+            { new TestArg<>(input9), new TestArg<>(contentParts9), err9 },
         };
     }
 

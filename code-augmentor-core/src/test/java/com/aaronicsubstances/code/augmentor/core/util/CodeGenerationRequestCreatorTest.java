@@ -201,6 +201,109 @@ public class CodeGenerationRequestCreatorTest {
             Arrays.asList(
                 newTokenWithLnNum(15, "//03")));
 
+        // test nested levels.
+        List<Token> eleventhTokenList = new ArrayList<>();
+        Token nested = newTokenWithLnNum(8, "//00");
+        nested.nestedLevelStartMarker = "s";
+        eleventhTokenList.add(nested);
+        eleventhTokenList.add(newTokenWithLnNum(9, "//{>[]"));
+        nested = newTokenWithLnNum(10, "");
+        eleventhTokenList.add(nested);
+        nested = newTokenWithLnNum(12, "//00");
+        nested.nestedLevelEndMarker = "e";
+        eleventhTokenList.add(nested);
+        List<List<Token>> eleventhGroup = Arrays.asList(new ArrayList<>(), new ArrayList<>());
+        nested = newTokenWithLnNum(8, "//00");
+        nested.nestedLevelStartMarker = "s";
+        eleventhGroup.get(0).add(nested);
+        nested = newTokenWithLnNum(9, "//{>[]");
+        nested.nestedLevelNumber = 1;
+        eleventhGroup.get(0).add(nested);
+        nested = newTokenWithLnNum(12, "//00");
+        nested.nestedLevelEndMarker = "e";
+        eleventhGroup.get(1).add(nested);
+        
+        List<Token> tokenList12 = new ArrayList<>();
+        nested = newTokenWithLnNum(8, "//00");
+        nested.nestedLevelStartMarker = "s";
+        tokenList12.add(nested);
+        tokenList12.add(newTokenWithLnNum(9, "//{>[]"));
+        nested = newTokenWithLnNum(10, "");
+        tokenList12.add(nested);
+        nested = newTokenWithLnNum(12, "//00");
+        nested.nestedLevelEndMarker = "e";
+        tokenList12.add(nested);
+        nested = newTokenWithLnNum(18, "//01");
+        nested.nestedLevelStartMarker = "s";
+        tokenList12.add(nested);
+        tokenList12.add(newTokenWithLnNum(19, "//{>[]"));
+        nested = newTokenWithLnNum(20, "");
+        tokenList12.add(nested);
+        nested = newTokenWithLnNum(22, "//01");
+        nested.nestedLevelEndMarker = "e";
+        tokenList12.add(nested);
+        List<List<Token>> group12 = Arrays.asList(new ArrayList<>(), new ArrayList<>(),
+            new ArrayList<>(), new ArrayList<>());
+        nested = newTokenWithLnNum(8, "//00");
+        nested.nestedLevelStartMarker = "s";
+        group12.get(0).add(nested);
+        nested = newTokenWithLnNum(9, "//{>[]");
+        nested.nestedLevelNumber = 1;
+        group12.get(0).add(nested);
+        nested = newTokenWithLnNum(12, "//00");
+        nested.nestedLevelEndMarker = "e";
+        group12.get(1).add(nested);
+        nested = newTokenWithLnNum(18, "//01");
+        nested.nestedLevelStartMarker = "s";
+        group12.get(2).add(nested);
+        nested = newTokenWithLnNum(19, "//{>[]");
+        nested.nestedLevelNumber = 1;
+        group12.get(2).add(nested);
+        nested = newTokenWithLnNum(22, "//01");
+        nested.nestedLevelEndMarker = "e";
+        group12.get(3).add(nested);
+        
+        List<Token> tokenList13 = new ArrayList<>();
+        nested = newTokenWithLnNum(8, "//00");
+        nested.nestedLevelStartMarker = "s";
+        tokenList13.add(nested);
+        tokenList13.add(newTokenWithLnNum(9, "//{>[]"));
+        nested = newTokenWithLnNum(10, "");
+        tokenList13.add(nested);
+        nested = newTokenWithLnNum(12, "//01");
+        nested.nestedLevelStartMarker = "s";
+        tokenList13.add(nested);
+        nested = newTokenWithLnNum(18, "//03");
+        tokenList13.add(nested);
+        nested = newTokenWithLnNum(20, "//01");
+        nested.nestedLevelEndMarker = "e";
+        tokenList13.add(nested);
+        nested = newTokenWithLnNum(22, "//00");
+        nested.nestedLevelEndMarker = "e";
+        tokenList13.add(nested);
+        List<List<Token>> group13 = Arrays.asList(new ArrayList<>(), new ArrayList<>(),
+            new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        nested = newTokenWithLnNum(8, "//00");
+        nested.nestedLevelStartMarker = "s";
+        group13.get(0).add(nested);
+        nested = newTokenWithLnNum(9, "//{>[]");
+        nested.nestedLevelNumber = 1;
+        group13.get(0).add(nested);
+        nested = newTokenWithLnNum(12, "//01");
+        nested.nestedLevelNumber = 1;
+        nested.nestedLevelStartMarker = "s";
+        group13.get(1).add(nested);
+        nested = newTokenWithLnNum(18, "//03");
+        nested.nestedLevelNumber = 2;
+        group13.get(2).add(nested);
+        nested = newTokenWithLnNum(20, "//01");
+        nested.nestedLevelEndMarker = "e";
+        nested.nestedLevelNumber = 1;
+        group13.get(3).add(nested);
+        nested = newTokenWithLnNum(22, "//00");
+        nested.nestedLevelEndMarker = "e";
+        group13.get(4).add(nested);
+
         TestArgWrapper tArg = new TestArgWrapper();
         return new Object[][] {
             { tArg.wrapTokens(Arrays.asList()), tArg.wrapTokenGroups(Arrays.asList()) },
@@ -214,7 +317,98 @@ public class CodeGenerationRequestCreatorTest {
             { tArg.wrapTokens(seventhList), tArg.wrapTokenGroups(Arrays.asList()) },
             { tArg.wrapTokens(eighthList), tArg.wrapTokenGroups(eighthGroup) },
             { tArg.wrapTokens(ninthTokenList), tArg.wrapTokenGroups(ninthGroup) },
-            { tArg.wrapTokens(tenthTokenList), tArg.wrapTokenGroups(tenthGroup) }
+            { tArg.wrapTokens(tenthTokenList), tArg.wrapTokenGroups(tenthGroup) },
+            { tArg.wrapTokens(eleventhTokenList), tArg.wrapTokenGroups(eleventhGroup) },
+            { tArg.wrapTokens(tokenList12), tArg.wrapTokenGroups(group12) },
+            { tArg.wrapTokens(tokenList13), tArg.wrapTokenGroups(group13) }
+        };
+    }
+    
+    @Test(dataProvider = "createTestIdentifyAugCodeSectionsForErrorsData")
+    public void testIdentifyAugCodeSectionsForErrors(int index, 
+            TestArgWrapper tokenGroup, Integer expected) {
+        try {
+            CodeGenerationRequestCreator.identifyAugCodeSections(tokenGroup.tokens, null, null);
+            if (expected != null) {
+                fail("Expected exception at line number " + expected);
+            }
+        }
+        catch (GenericTaskException ex) {
+            if (expected == null) {
+                fail("Didn't expect exception but got one", ex);
+            }
+            else {
+                assertEquals(ex.getLineNumber(), (int)expected, "Line numbers differ");
+                System.out.println("testIdentifyAugCodeSectionsForErrors[" + index +
+                    "].exceptionMessage = " + ex.getMessage());
+            }
+        }
+    }
+
+    @DataProvider
+    public Object[][] createTestIdentifyAugCodeSectionsForErrorsData() {
+        List<Token> firstGroup = Arrays.asList(newTokenWithLnNum(2, "//++"));
+        List<Token> secondGroup = Arrays.asList(newTokenWithLnNum(2, "//--"));
+        List<Token> thirdGroup = Arrays.asList(newTokenWithLnNum(2, "//GS"),
+            newTokenWithLnNum(3, "//GS"));
+        List<Token> fourthGroup = Arrays.asList(newTokenWithLnNum(2, "//GS"),
+            newTokenWithLnNum(3, "//--"), newTokenWithLnNum(4, "//02"));
+        List<Token> fifthGroup = Arrays.asList(newTokenWithLnNum(14, "//GE"));
+        List<Token> sixthGroup = Arrays.asList(newTokenWithLnNum(13, "//GE"),
+            newTokenWithLnNum(13, "//ES"));
+        List<Token> seventhGroup = Arrays.asList(newTokenWithLnNum(2, "//01"),
+            newTokenWithLnNum(3, "//GS"), newTokenWithLnNum(4, "tow+03"));
+        List<Token> eighthGroup = Arrays.asList(newTokenWithLnNum(12, "//GS"),
+            newTokenWithLnNum(13, "//GG"));
+        List<Token> ninthGroup = Arrays.asList(newTokenWithLnNum(12, "//GS"),
+            newTokenWithLnNum(13, "//++"));
+        List<Token> tenthGroup = Arrays.asList(newTokenWithLnNum(12, "//++"),
+            newTokenWithLnNum(13, "//GE"));
+
+        // add tests for nested level errors.
+        Token nested = newTokenWithLnNum(18, "//00");
+        nested.nestedLevelStartMarker = "s";
+        List<Token> eleventhGroup = Arrays.asList(nested);
+
+        nested = newTokenWithLnNum(19, "//01");
+        nested.nestedLevelEndMarker = "e";
+        List<Token> twelfthGroup = Arrays.asList(nested);
+
+        List<Token> group13 = new ArrayList<>();
+        nested = newTokenWithLnNum(18, "//00");
+        nested.nestedLevelStartMarker = "s";
+        group13.add(nested);
+        nested = newTokenWithLnNum(20, "//01");
+        nested.nestedLevelEndMarker = "e";
+        group13.add(nested);
+        
+        int counter = 0;
+        TestArgWrapper tArg = new TestArgWrapper();
+        return new Object[][]{
+            { counter++, tArg.wrapTokens(firstGroup), 2 },
+            { counter++, tArg.wrapTokens(secondGroup), 2 },
+            { counter++, tArg.wrapTokens(thirdGroup), 2 },
+            { counter++, tArg.wrapTokens(fourthGroup), 3 },
+            { counter++, tArg.wrapTokens(fifthGroup), 14 },
+            { counter++, tArg.wrapTokens(sixthGroup), 13 },
+            { counter++, tArg.wrapTokens(seventhGroup), 3 },
+            { counter++, tArg.wrapTokens(eighthGroup), 12 },
+            { counter++, tArg.wrapTokens(ninthGroup), 12 },
+            { counter++, tArg.wrapTokens(tenthGroup), 13 },
+            { counter++, tArg.wrapTokens(eleventhGroup), 18 },
+            { counter++, tArg.wrapTokens(twelfthGroup), 19 },
+            { counter++, tArg.wrapTokens(group13), 20 },
+
+            // test required newline ending.
+            { counter++, tArg.wrapTokens(Arrays.asList(newTokenWithLnNum3(10, "//GG"))), 10 },
+            { counter++, tArg.wrapTokens(Arrays.asList(newTokenWithLnNum3(10, "//ES"))), 10 },
+            { counter++, tArg.wrapTokens(Arrays.asList(newTokenWithLnNum3(10, "//{>"))), 10 },
+            { counter++, tArg.wrapTokens(Arrays.asList(newTokenWithLnNum3(10, "//00"))), 10 },
+            { counter++, tArg.wrapTokens(Arrays.asList(newTokenWithLnNum3(10, "for"))), null },
+            { counter++, tArg.wrapTokens(Arrays.asList(newTokenWithLnNum(10, "//GS"),
+                newTokenWithLnNum3(11, "//GE"))), 11 },
+            { counter++, tArg.wrapTokens(Arrays.asList(newTokenWithLnNum(10, "//++"),
+                newTokenWithLnNum3(11, "//--"))), 11 },
         };
     }
     
@@ -261,19 +455,43 @@ public class CodeGenerationRequestCreatorTest {
 
         List<Token> ninthGroup = Arrays.asList(newTokenWithLnNum(12, "//01"),
             newTokenWithLnNum(13, "//ES"), newTokenWithLnNum(13, "//{>"),
-            newTokenWithLnNum(14, "//01"));
+            newTokenWithLnNum(14, "//01"));            
+
+        Token wrongNested = newTokenWithLnNum(15, "//01");
+        wrongNested.nestedLevelStartMarker = "ss"; 
+        List<Token> tenthGroup = Arrays.asList(newTokenWithLnNum(12, "//01"),
+            newTokenWithLnNum(13, "//ES"), newTokenWithLnNum(13, "//{>"),
+            newTokenWithLnNum(14, "//01"), wrongNested);
+
+        wrongNested = newTokenWithLnNum(14, "//01");
+        wrongNested.nestedLevelEndMarker = "ee";
+        List<Token> eleventhGroup = Arrays.asList(newTokenWithLnNum(12, "//01"),
+            newTokenWithLnNum(13, "//ES"),  wrongNested);
+
+        Token correctNested = newTokenWithLnNum(7, "//00");
+        correctNested.nestedLevelStartMarker = "cs";
+        List<Token> twelfthGroup = Arrays.asList(correctNested);
+            
+        correctNested = newTokenWithLnNum(7, "//00");
+        correctNested.nestedLevelEndMarker = "ce";
+        List<Token> group13 = Arrays.asList(correctNested);
 
         TestArgWrapper tArg = new TestArgWrapper();
+        int counter = 0;
         return new Object[][]{
-            { 0, tArg.wrapTokens(firstGroup), 2 },
-            { 1, tArg.wrapTokens(secondGroup), null },
-            { 2, tArg.wrapTokens(thirdGroup), null },
-            { 3, tArg.wrapTokens(fourthGroup), 4},
-            { 4, tArg.wrapTokens(fifthGroup), null },
-            { 5, tArg.wrapTokens(sixthGroup), 13 },
-            { 6, tArg.wrapTokens(seventhGroup), 4,},
-            { 7, tArg.wrapTokens(eighthGroup), null,},
-            { 8, tArg.wrapTokens(ninthGroup), null,}
+            { counter++, tArg.wrapTokens(firstGroup), 2 },
+            { counter++, tArg.wrapTokens(secondGroup), null },
+            { counter++, tArg.wrapTokens(thirdGroup), null },
+            { counter++, tArg.wrapTokens(fourthGroup), 4 },
+            { counter++, tArg.wrapTokens(fifthGroup), null },
+            { counter++, tArg.wrapTokens(sixthGroup), 13 },
+            { counter++, tArg.wrapTokens(seventhGroup), 4 },
+            { counter++, tArg.wrapTokens(eighthGroup), null },
+            { counter++, tArg.wrapTokens(ninthGroup), null },
+            { counter++, tArg.wrapTokens(tenthGroup), 15 },
+            { counter++, tArg.wrapTokens(eleventhGroup), 14 },
+            { counter++, tArg.wrapTokens(twelfthGroup), null },
+            { counter++, tArg.wrapTokens(group13), null }
         };
     }
     
@@ -509,6 +727,7 @@ public class CodeGenerationRequestCreatorTest {
             int type, augCodeSpecIndex = 0;
             String directiveContent;
             boolean isGeneratedCodeMarker = false;
+            boolean isInlineGeneratedCodeMarker = false;
             final int commonMarkerLen = 4;
             if (text.equals("")) {
                 type = Token.TYPE_BLANK;
@@ -523,6 +742,12 @@ public class CodeGenerationRequestCreatorTest {
                 type = Token.DIRECTIVE_TYPE_SKIP_CODE_START;
                 directiveContent = text.substring(commonMarkerLen);
                 isGeneratedCodeMarker = true;
+            }
+            else if (text.startsWith("//GG")) {
+                type = Token.DIRECTIVE_TYPE_SKIP_CODE_START;
+                directiveContent = text.substring(commonMarkerLen);
+                isGeneratedCodeMarker = true;
+                isInlineGeneratedCodeMarker = true;
             }
             else if (text.startsWith("//ES")) {
                 type = Token.DIRECTIVE_TYPE_EMB_STRING;
@@ -560,9 +785,10 @@ public class CodeGenerationRequestCreatorTest {
                 t.directiveContent = directiveContent;
                 t.directiveMarker = text.substring(0, commonMarkerLen);
                 t.isGeneratedCodeMarker = isGeneratedCodeMarker;
+                t.isInlineGeneratedCodeMarker = isInlineGeneratedCodeMarker;
             }
             t.augCodeSpecIndex = augCodeSpecIndex;
-            if (!noNewline) {
+            if (!noNewline && newline != null) {
                 t.newline = newline;
                 t.text += t.newline;
             }
@@ -598,6 +824,12 @@ public class CodeGenerationRequestCreatorTest {
         t.lineNumber = lineNumber;
         t.indent = indent;
         t.text = indent + t.text;
+        return t;
+    }
+
+    private static Token newTokenWithLnNum3(int lineNumber, String text) {
+        Token t = new TokenLite(text).toToken(null);
+        t.lineNumber = lineNumber;
         return t;
     }
 }

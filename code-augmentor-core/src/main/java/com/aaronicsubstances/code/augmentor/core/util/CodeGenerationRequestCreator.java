@@ -109,10 +109,11 @@ public class CodeGenerationRequestCreator {
             if (skipCodeStartToken != null) {
                 if (t.type == Token.DIRECTIVE_TYPE_SKIP_CODE_START) {
                     GenericTaskException error = createException(
-                        "Expecting end of previous " +
+                        "Expecting end of " +
                         (skipCodeStartToken.isGeneratedCodeMarker ? "generated" : "skipped") + 
-                        " code section before encountering another start directive", 
-                        t, srcFile);
+                        " code section before encountering another start directive at line " +
+                        t.lineNumber, 
+                        skipCodeStartToken, srcFile);
                     saveOrThrowError(error, errors);
                     if (t.isInlineGeneratedCodeMarker) {
                         skipCodeStartToken = null;
@@ -126,7 +127,7 @@ public class CodeGenerationRequestCreator {
                         GenericTaskException error = createException(
                             "Different end directive encountered for " +                            
                             (skipCodeStartToken.isGeneratedCodeMarker ? "generated" : "skipped") + 
-                            " code section",
+                            " code section from line " + skipCodeStartToken.lineNumber,
                             t, srcFile);
                         saveOrThrowError(error, errors);
                     }
@@ -174,33 +175,45 @@ public class CodeGenerationRequestCreator {
                     t, srcFile);
                 saveOrThrowError(error, errors);
             }
-            else if (t.type == Token.DIRECTIVE_TYPE_SKIP_CODE_START &&
-                    !t.isInlineGeneratedCodeMarker) {
-                skipCodeStartToken = t;
+            else if (t.type == Token.DIRECTIVE_TYPE_SKIP_CODE_START) {
+                if (!t.isInlineGeneratedCodeMarker) {
+                    skipCodeStartToken = t;
+                }
             }
 
-            // handle nesting of aug code sections.
-            else if (t.type == Token.DIRECTIVE_TYPE_AUG_CODE) {
-                if (t.nestedLevelStartMarker != null) {
-                    t.nestedLevelNumber = nestedLevelStartTokens.size();
-                    nestedLevelStartTokens.push(t);
-                }
-                else if (t.nestedLevelEndMarker != null) {
-                    if (nestedLevelStartTokens.isEmpty()) {
-                        GenericTaskException error = createException(
-                            "Encountered nested level end marker for aug " +
-                            "code section without a previous matching start marker.",
-                            t, srcFile);
-                        saveOrThrowError(error, errors);
-                    }
-                    else {
-                        nestedLevelStartTokens.pop();
-                    }
-                    t.nestedLevelNumber = nestedLevelStartTokens.size();
-                }
-            }
-            else {
+            else {                
+                // set nested level number for tokens not skipped by default, and 
+                // later set nested level end token differently.
                 t.nestedLevelNumber = nestedLevelStartTokens.size();
+
+                // handle nesting of aug code sections.
+                if (t.type == Token.DIRECTIVE_TYPE_AUG_CODE) {
+                    if (t.nestedLevelStartMarker != null) {
+                        nestedLevelStartTokens.push(t);
+                    }
+                    else if (t.nestedLevelEndMarker != null) {
+                        if (nestedLevelStartTokens.isEmpty()) {
+                            GenericTaskException error = createException(
+                                "Encountered nested level end marker for aug " +
+                                "code section without a previous matching start marker.",
+                                t, srcFile);
+                            saveOrThrowError(error, errors);
+                        }
+                        else {
+                            Token correspondingStartToken = nestedLevelStartTokens.pop();
+                            t.nestedLevelNumber--;
+                            if (correspondingStartToken.augCodeSpecIndex != t.augCodeSpecIndex) {
+                                GenericTaskException error = createException(
+                                    "Encountered nested level end marker for aug " +
+                                    "code section of a different kind than its " +
+                                    "matching start marker from line " +
+                                    correspondingStartToken.lineNumber,
+                                    t, srcFile);
+                                saveOrThrowError(error, errors);
+                            }
+                        }
+                    }
+                }
             }
         }
         if (!currentGroup.isEmpty()) {
@@ -224,13 +237,13 @@ public class CodeGenerationRequestCreator {
             saveOrThrowError(error, errors);
         }
         if (!tokens.isEmpty()) {
-            ensureDirectiveNewlineEnding(tokens.get(tokens.size() - 1),srcFile, errors);
+            ensureDirectiveNewlineEnding(tokens.get(tokens.size() - 1), srcFile, errors);
         }
         return groups;
     }
 
     static void ensureDirectiveNewlineEnding(Token t, File srcFile, List<Exception> errors) {
-        if (t.type == Token.TYPE_BLANK && t.type == Token.TYPE_OTHER && t.newline == null) {
+        if (t.type != Token.TYPE_BLANK && t.type != Token.TYPE_OTHER && t.newline == null) {
             String desc;
             switch (t.type) {
                 case Token.DIRECTIVE_TYPE_AUG_CODE:
@@ -301,7 +314,7 @@ public class CodeGenerationRequestCreator {
                     assert token.type == Token.DIRECTIVE_TYPE_AUG_CODE;
                     if (expectedAugCodeSpecIndex != -1 &&
                             expectedAugCodeSpecIndex != token.augCodeSpecIndex) {
-                        saveOrThrowError(createException("Different augmenting code directives in " +
+                        saveOrThrowError(createException("Different kinds of augmenting code directives in " +
                             "same section not allowed", token, srcFile), errors);
                     }
                     if (token.nestedLevelStartMarker != null) {

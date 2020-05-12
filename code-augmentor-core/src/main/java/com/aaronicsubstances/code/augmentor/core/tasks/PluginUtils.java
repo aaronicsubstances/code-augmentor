@@ -145,7 +145,7 @@ public class PluginUtils {
                 }
             }
             filtered.add(elem);
-            if (maxFilteredSize == -1) {
+            if (elem.getClassName() != null && maxFilteredSize == -1) {
                 elemSearch = stackTraceLimitPrefixes.stream()
                     .filter(x -> elem.getClassName().startsWith(x))
                     .findAny();
