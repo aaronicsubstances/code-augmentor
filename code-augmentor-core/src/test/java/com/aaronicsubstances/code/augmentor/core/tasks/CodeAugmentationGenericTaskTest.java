@@ -4,6 +4,7 @@ import static org.testng.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,7 +12,9 @@ import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.core.TestResourceLoader;
 import com.aaronicsubstances.code.augmentor.core.models.CodeChangeSummary;
+import com.aaronicsubstances.code.augmentor.core.models.CodeGenerationResponseChangeSet;
 import com.aaronicsubstances.code.augmentor.core.models.PreCodeAugmentationResult;
+import com.aaronicsubstances.code.augmentor.core.models.SourceFileChangeSet;
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.CodeChangeSummary.ChangedFile;
 import com.google.gson.Gson;
@@ -29,6 +32,13 @@ public class CodeAugmentationGenericTaskTest {
         public String destDir;
         public boolean loggingEnabled;
     }
+
+    private final File TEMP_GEN_DIR;
+    
+    public CodeAugmentationGenericTaskTest() {
+        TEMP_GEN_DIR = new File(FileUtils.getTempDirectory(), getClass().getName());
+        TEMP_GEN_DIR.mkdir();
+    }
     
     public CodeAugmentationGenericTask deserialize(String path) throws IOException {
         String text = TestResourceLoader.loadResource(path, getClass());
@@ -38,15 +48,11 @@ public class CodeAugmentationGenericTaskTest {
         CodeAugmentationGenericTask task = new CodeAugmentationGenericTask();
         task.setCharset(StandardCharsets.UTF_8);
 
-        File TEMP_GEN_DIR = new File(FileUtils.getTempDirectory(), getClass().getName());
-        TEMP_GEN_DIR.mkdir();
-
         // copy prep file to temp dir.
         String contents = TestResourceLoader.loadResource(taskSpec.prepFile, 
-            CodeAugmentationGenericTaskTest.class);
+            getClass());
         // replace any %TEMP_DIR% variable with temp dir
-        contents = contents.replace("%TEMP_DIR%", (TEMP_GEN_DIR.getPath() + File.separator)
-            .replace("\\", "\\\\"));
+        contents = transformWithVars(contents);
         File f = new File(TEMP_GEN_DIR, taskSpec.prepFile);
         FileUtils.write(f, contents, task.getCharset());        
         task.setPrepFile(f);
@@ -79,6 +85,7 @@ public class CodeAugmentationGenericTaskTest {
         CodeAugmentationGenericTask task = deserialize(jsonPath);
         PreCodeAugmentationResult prepResult = PreCodeAugmentationResult.deserialize(
             task.getPrepFile());
+        CodeGenerationResponseChangeSet expectedChanges = loadChanges(jsonPath);
         List<String> expectedGeneratedCodes = new ArrayList<>();
         // transfer class path resources for original source files to
         // temp directory.
@@ -99,6 +106,7 @@ public class CodeAugmentationGenericTaskTest {
             }
         }
         task.execute();
+        assertEquals(0, task.getAllErrors().size());
         assertEquals(task.isCodeChangeDetected(), !expectedChangeSetIndices.isEmpty());
         CodeChangeSummary changeSummary = CodeChangeSummary.deserialize(
             task.getChangeSummaryFile());
@@ -111,6 +119,17 @@ public class CodeAugmentationGenericTaskTest {
             String actual = FileUtils.readFileToString(f, task.getCharset());            
             assertEquals(actual, expected, "Unexpected contents found in " + f);
         }
+        CodeGenerationResponseChangeSet actualChanges = CodeGenerationResponseChangeSet.deserialize(
+            task.getChangeDetailsFile());
+        assertEquals(actualChanges, expectedChanges);
+        CodeChangeSummary expectedChangeSummary = new CodeChangeSummary(new ArrayList<>());
+        for (SourceFileChangeSet s : actualChanges.getSourceFileChangeSets()) {
+            ChangedFile cf = new ChangedFile(s.getRelativePath(), s.getSrcDir(), s.getDestDir());
+            expectedChangeSummary.getChangedFiles().add(cf);
+        }
+        CodeChangeSummary actualChangeSummary = CodeChangeSummary.deserialize(
+            task.getChangeSummaryFile());
+        assertEquals(actualChangeSummary, expectedChangeSummary);
     }
 
     @DataProvider
@@ -120,5 +139,23 @@ public class CodeAugmentationGenericTaskTest {
             new Object[] { "task-spec-01.json", Arrays.asList(0, 1) },
             new Object[] { "task-spec-02.json", Arrays.asList(0) }
         };
+    }
+
+    private CodeGenerationResponseChangeSet loadChanges(String jsonPath) throws Exception {
+        String changesPath = jsonPath.replace(".json", "-CHANGES-expected.json");
+        String contents = TestResourceLoader.loadResource(changesPath, getClass());
+        contents = transformWithVars(contents);
+        CodeGenerationResponseChangeSet c = CodeGenerationResponseChangeSet.deserialize(
+            new StringReader(contents));
+        return c;
+    }
+
+    private String transformWithVars(String contents) {
+        // replace any %TEMP_DIR% variable with temp dir
+        contents = contents.replace("%LINE_SEPARATOR%", File.separator
+            .replace("\\", "\\\\"));
+        contents = contents.replace("%TEMP_DIR%", TEMP_GEN_DIR.getPath()
+            .replace("\\", "\\\\"));
+        return contents;
     }
 }

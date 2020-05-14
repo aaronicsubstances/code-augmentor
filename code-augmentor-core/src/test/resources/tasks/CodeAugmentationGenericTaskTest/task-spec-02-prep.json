@@ -7,9 +7,9 @@
 		"codeSnippets": [{
 			"augmentingCodeDescriptor": {
 				"id" : 1,
-				"startPos" : 1026,
+				"startPos" : 1025,
 				"endPos" : 1065,
-				"indent" : "\t\t",
+				"indent" : "\t",
                 "lineNumber": 51,
                 "lineSeparator": "\r\n"
 			},

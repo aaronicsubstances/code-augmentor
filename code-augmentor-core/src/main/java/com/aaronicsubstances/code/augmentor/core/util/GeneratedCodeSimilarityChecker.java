@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import com.aaronicsubstances.code.augmentor.core.cs_and_math.FiniteStateAutomaton;
 import com.aaronicsubstances.code.augmentor.core.cs_and_math.GraphAlgorithms;
@@ -64,7 +65,6 @@ public class GeneratedCodeSimilarityChecker {
     static final String MISMATCH_TYPE_END_OF_SECTION = "end_of_section";
     static final String MISMATCH_TYPE_EXACT = "exact_value";
     static final String MISMATCH_TYPE_REQUIRED_SPACE = "required_spaces";
-    static final String MISMATCH_TYPE_ANY_SPACE = "optional_spaces";
 
     private static final String NON_NEWLINE_WS_CHARS;
     private static final RegexNode optionalMultipleSpaceRegex;
@@ -88,6 +88,7 @@ public class GeneratedCodeSimilarityChecker {
 
     private final List<ContentPart> contentParts;
     private final List<Object> similarityRegex;
+    private final List<Integer> regexPositions;
 
     public GeneratedCodeSimilarityChecker(List<ContentPart> contentParts) {
         this(contentParts, false);
@@ -96,11 +97,17 @@ public class GeneratedCodeSimilarityChecker {
     public GeneratedCodeSimilarityChecker(List<ContentPart> contentParts,
             boolean loggingEnabled) {
         this.contentParts = contentParts;
-        this.similarityRegex = buildSimilarityRegex(loggingEnabled);
+        this.similarityRegex = new ArrayList<>();
+        this.regexPositions = new ArrayList<>();
+        buildSimilarityRegex(loggingEnabled);
     }
 
     List<Object> getSimilarityRegex() {
         return similarityRegex;
+    }
+
+    List<Integer> getRegexPositions() {
+        return regexPositions;
     }
 
     /**
@@ -171,18 +178,19 @@ public class GeneratedCodeSimilarityChecker {
             }
         }
 
-        // end of section is the expectation if all regex specs were covered
+        // end of section is the expectation if all regex specs were traversed
         // (or regex specs was empty to start with).
         String mismatchType = MISMATCH_TYPE_END_OF_SECTION;
-        int charIndex = errorIndex;
+        int destCharIndex = contentParts.stream().collect(
+            Collectors.summingInt(c -> c.getContent().length()));
         ExactValue expected = null;
-        String actualDiff = fetchPrefix(text, errorIndex, errorIndex + MAX_EXPECTED_SUBSTRING_LEN);
 
         if (regexSpecIndex < similarityRegex.size()) {
+            destCharIndex = regexPositions.get(regexSpecIndex);
             Object expectedRegexSpec = similarityRegex.get(regexSpecIndex);
             if (expectedRegexSpec instanceof Integer) {
-                mismatchType = expectedRegexSpec.equals(MATCH_TYPE_ANY_SPACES) ?
-                    MISMATCH_TYPE_ANY_SPACE : MISMATCH_TYPE_REQUIRED_SPACE;
+                assert expectedRegexSpec.equals(MATCH_TYPE_REQUIRE_SPACE);
+                mismatchType = MISMATCH_TYPE_REQUIRED_SPACE;
             }
             else {
                 mismatchType = MISMATCH_TYPE_EXACT;
@@ -192,6 +200,7 @@ public class GeneratedCodeSimilarityChecker {
                 int indexInExactValue = 0;
                 if (indexOfRegexEntry != -1) {
                     indexInExactValue = errorIndex - indexOfRegexEntry;
+                    destCharIndex += indexInExactValue;
                 }
                 expected.setUpdatedSectionOffset(indexInExactValue);
                 expected.setUpdatedSection(fetchPrefix(exactValue, indexInExactValue, exactValue.length()));
@@ -208,10 +217,11 @@ public class GeneratedCodeSimilarityChecker {
         
         CodeSnippetChangeDescriptor codeChange = new CodeSnippetChangeDescriptor();
         codeChange.setType(mismatchType);
-        codeChange.setSrcCharIndex(charIndex);
-        codeChange.setDestCharIndex(charIndex);
+        codeChange.setSrcCharIndex(errorIndex);
+        codeChange.setCurrentSection(fetchPrefix(text, errorIndex, 
+            errorIndex + MAX_EXPECTED_SUBSTRING_LEN));
+        codeChange.setDestCharIndex(destCharIndex);
         codeChange.setExpectedExactValue(expected);
-        codeChange.setCurrentSection(actualDiff);
         return codeChange;
     }
 
@@ -269,7 +279,7 @@ public class GeneratedCodeSimilarityChecker {
         return s.substring(s.length() - len);
     }
 
-    private List<Object> buildSimilarityRegex(boolean loggingEnabled) {
+    private void buildSimilarityRegex(boolean loggingEnabled) {
         /*
          * 3 passes yielding object to be used in completion phase.
          * object props: 
@@ -302,7 +312,8 @@ public class GeneratedCodeSimilarityChecker {
         };
 
         int partIndex = 0;
-        int contentIndexToStartFrom = 0; 
+        int contentIndexToStartFrom = 0;
+        int absolutePos = 0;
         while (partIndex < contentParts.size()) {
             ContentPart contentPart = contentParts.get(partIndex);
             String content = contentPart.getContent();
@@ -312,8 +323,9 @@ public class GeneratedCodeSimilarityChecker {
                 continue;
             }
             if (contentPart.isExactMatch()) {
-                tokens.add(new Tk(Tk.TYPE_EXACT_MATCH, content));
+                tokens.add(new Tk(Tk.TYPE_EXACT_MATCH, content, absolutePos));
                 partIndex++;
+                absolutePos += content.length();
                 continue;
             }
             int i = 0;
@@ -322,17 +334,18 @@ public class GeneratedCodeSimilarityChecker {
                 contentIndexToStartFrom = 0;
             }
             int partIndexToUseNext = -1;
-            for (; i < content.length(); i++) {
+            for (; i < content.length(); i++, absolutePos++) {
                 char curr = content.charAt(i);
                 if (TaskUtils.isNewLine(curr)) {
                     if (curr == '\r' &&
                             i + 1 < content.length() &&
                             content.charAt(i + 1) == '\n') {
-                        tokens.add(new Tk(Tk.TYPE_NEW_LINE, "\r\n")); 
+                        tokens.add(new Tk(Tk.TYPE_NEW_LINE, "\r\n", absolutePos));
                         i++;
+                        absolutePos++;
                     }
                     else {
-                        tokens.add(new Tk(Tk.TYPE_NEW_LINE, "" + curr));
+                        tokens.add(new Tk(Tk.TYPE_NEW_LINE, "" + curr, absolutePos));
                     }
                 }
                 else {
@@ -347,11 +360,12 @@ public class GeneratedCodeSimilarityChecker {
                         condition = otherCondition;
                         type = Tk.TYPE_OTHER;
                     }
-                    int[] nextIndices = { partIndex, i };
+                    int[] nextIndices = { partIndex, i, absolutePos };
                     String value = fetchContiguousTkVal(nextIndices, condition);
-                    tokens.add(new Tk(type, value)); 
+                    tokens.add(new Tk(type, value, absolutePos));
                     partIndexToUseNext = nextIndices[0];
                     contentIndexToStartFrom = nextIndices[1];
+                    absolutePos = nextIndices[2];
                     if (partIndexToUseNext < partIndex) { 
                         throw new RuntimeException(
                             String.format("Expected no decrement in partIndex "+
@@ -375,6 +389,9 @@ public class GeneratedCodeSimilarityChecker {
                 partIndex++;
             }
         }
+
+        assert absolutePos == contentParts.stream().collect(
+            Collectors.summingInt(c -> c.getContent().length()));
 
         if (loggingEnabled) {
             System.out.format("After phase 1, tokens = %s\n\n", tokens);
@@ -501,34 +518,31 @@ public class GeneratedCodeSimilarityChecker {
          *        if exactMatchSeen, then leave it empty
          *        else add zero or more non newline whitespace regex to it.
          */
-        List<Object> regexBuilder = new ArrayList<>();
         for (Tk token : tokens) {
             if (token.applyTrailingIndentBefore) {
-                regexBuilder.add(MATCH_TYPE_ANY_SPACES);
+                similarityRegex.add(MATCH_TYPE_ANY_SPACES);
+                regexPositions.add(0);
             }
             if (token.type == Tk.TYPE_SPACE) {
-                regexBuilder.add(MATCH_TYPE_REQUIRE_SPACE);
+                similarityRegex.add(MATCH_TYPE_REQUIRE_SPACE);
+                regexPositions.add(token.startPos);
             }
             else {
-                regexBuilder.add(token.value);
+                similarityRegex.add(token.value);
+                regexPositions.add(token.startPos);
             }
             if (token.applyLeadingIndentAfter) {
-                regexBuilder.add(MATCH_TYPE_ANY_SPACES);
+                similarityRegex.add(MATCH_TYPE_ANY_SPACES);
+                regexPositions.add(0);
             }
         }
-        if (regexBuilder.isEmpty()) {
+        if (similarityRegex.isEmpty()) {
             boolean exactMatchSeen = contentParts.stream().anyMatch(x -> x.isExactMatch());
             if (!exactMatchSeen) {
-                regexBuilder.add(MATCH_TYPE_ANY_SPACES);
+                similarityRegex.add(MATCH_TYPE_ANY_SPACES);
+                regexPositions.add(0);
             }
         }
-
-        if (loggingEnabled) {
-            System.out.format("After completion phase, regex = %s\n\n\n",
-                PersistenceUtil.serializeCompactlyToJson(regexBuilder));
-        }
-
-        return regexBuilder;
     }
 
     private String fetchContiguousTkVal(int[] nextIndices, Predicate<Character> condition) {
@@ -541,14 +555,12 @@ public class GeneratedCodeSimilarityChecker {
             if (!contentIndexUsed) {
                 contentIndexUsed = true;
                 j = nextIndices[1];
+                nextIndices[1] = 0;
                 // assert
                 char validChar = content.charAt(j);
                 assert condition.test(validChar): "Received position invalid with supplied " +
                         " test conditon at part " + nextIndices[0] + ", content char " + j;
                 assert !part.isExactMatch();
-                tkVal.append(validChar);
-                j++;
-                nextIndices[1] = 0;
             }
             // ignore empty strings even if it is exact match.
             if (content.isEmpty()) {
@@ -557,7 +569,7 @@ public class GeneratedCodeSimilarityChecker {
             if (part.isExactMatch()) {
                 break;
             }
-            for (; j < content.length(); j++) {
+            for (; j < content.length(); j++, nextIndices[2]++) {
                 char curr = content.charAt(j);
                 if (condition.test(curr)) {
                     tkVal.append(curr);
@@ -573,9 +585,10 @@ public class GeneratedCodeSimilarityChecker {
     }
 
     private static class Tk {
-        public Tk(int type, String value) {
+        public Tk(int type, String value, int startPos) {
             this.type = type;
             this.value = value;
+            this.startPos = startPos;
             if (type == Tk.TYPE_EXACT_MATCH) {
                 char lastChar = value.charAt(value.length() - 1);
                 endsWithNewline = TaskUtils.isNewLine(lastChar);
@@ -592,6 +605,7 @@ public class GeneratedCodeSimilarityChecker {
 
         final int type;
         final String value;
+        final int startPos;
         final boolean endsWithNewline;
         boolean applyTrailingIndentBefore;
         boolean applyLeadingIndentAfter;
@@ -617,6 +631,7 @@ public class GeneratedCodeSimilarityChecker {
             }
             String formattedValue = PersistenceUtil.serializeCompactlyToJson(value);
             return "{type=" + typeName + ", value=" + formattedValue +
+                ", startPos=" + startPos +
                 ", applyTrailingIndentBefore=" + applyTrailingIndentBefore + 
                 ", applyLeadingIndentAfter=" + applyLeadingIndentAfter + 
                 ", endsWithNewline=" + endsWithNewline + "}";

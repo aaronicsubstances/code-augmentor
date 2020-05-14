@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.aaronicsubstances.code.augmentor.core.cs_and_math.parsing.LexerSupport;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode;
@@ -95,6 +97,20 @@ public class TestResourceLoader {
         assert new GeneratedCode(contentParts).getWholeContent().equals(input);
         return contentParts;
     }
+
+    public static String generateRandomEquivalentWholeContentParts(String input) {
+        if (input.isEmpty()) {
+            return " \t";
+        }
+        StringBuffer sb = new StringBuffer();
+        Matcher m = Pattern.compile("\\s+").matcher(input);
+        while (m.find()) {
+            String replacement = " " + m.group() + "\t";
+            m.appendReplacement(sb, replacement);
+        }
+        m.appendTail(sb);
+        return sb.toString();
+    } 
 
     public static String craftErrorMessageInvolvingRandomContentParts(List<ContentPart> inputContentParts,
             Object expected, Object actual) {        

@@ -43,7 +43,7 @@ Object/*GS*/ /*GS*/getSmsScript()//GE
 
 //JS println("World")
     //GS*/
-	public Object //JS println("Hello")
+    public Object //JS println("Hello")
 getSmsConfig()/*JS println("Hello World from JS-star")
 var i = 3 + new Date(); 
 ...etc*/ {

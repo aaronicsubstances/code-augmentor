@@ -1,0 +1,30 @@
+{
+	"files": [
+    {
+        "fileId" : 1,
+        "relativePath" : "task-spec-02-0.java",
+        "srcDir": "%TEMP_DIR%",
+        "destDir": "%TEMP_DIR%%LINE_SEPARATOR%dest-02%LINE_SEPARATOR%com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest",
+        "changes": [
+        {
+            "id": 1,
+            "type": "exact_value",
+            "srcCharIndex": 1083,
+            "srcLineNumber": 55,
+            "srcColumnNumber": 9,
+            "currentSection": "return \r\n",
+            "destCharIndex": 1077,
+            "destLineNumber": 55,
+            "destColumnNumber": 3,
+            "expectedExactValue": {
+                "length": 4,
+                "prefix": null,
+                "updatedSection": "char",
+                "suffix": null,
+                "updatedSectionOffset": 0
+            }
+        }
+        ]
+    }
+    ]
+}

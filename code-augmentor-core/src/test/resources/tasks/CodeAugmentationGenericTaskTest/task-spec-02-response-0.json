@@ -5,7 +5,7 @@
 		"generatedCodes": [{
 			"id" : 1,
 			"contentParts" : [{
-                "content": "char f;"}
+                "content": " char f;"}
             ]
 		}]
 	}
