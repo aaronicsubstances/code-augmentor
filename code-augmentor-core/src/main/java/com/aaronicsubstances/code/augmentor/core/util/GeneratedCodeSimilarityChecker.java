@@ -64,7 +64,7 @@ public class GeneratedCodeSimilarityChecker {
 
     static final String MISMATCH_TYPE_END_OF_SECTION = "end_of_section";
     static final String MISMATCH_TYPE_EXACT = "exact_value";
-    static final String MISMATCH_TYPE_REQUIRED_SPACE = "required_spaces";
+    static final String MISMATCH_TYPE_REQUIRED_SPACE = "required_spacing";
 
     private static final String NON_NEWLINE_WS_CHARS;
     private static final RegexNode optionalMultipleSpaceRegex;

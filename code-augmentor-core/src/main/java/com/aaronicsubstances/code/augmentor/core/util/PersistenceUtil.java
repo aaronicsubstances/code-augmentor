@@ -1,8 +1,8 @@
 package com.aaronicsubstances.code.augmentor.core.util;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -29,7 +29,7 @@ public class PersistenceUtil {
     }
 
     private final BufferedReader bufferedReader;
-    private final PrintWriter printWriter;
+    private final BufferedWriter bufferedWriter;
     private JsonReader jsonReader;
     private JsonWriter jsonWriter;
     private final boolean closeWhenDone;
@@ -39,15 +39,15 @@ public class PersistenceUtil {
 
     public PersistenceUtil(BufferedReader reader, boolean closeWhenDone) {
         this.bufferedReader = reader;
-        this.printWriter = null;
+        this.bufferedWriter = null;
         this.jsonReader = null;
         this.jsonWriter = null;
         this.closeWhenDone = closeWhenDone;
     }
 
-    public PersistenceUtil(PrintWriter writer, boolean closeWhenDone) {
+    public PersistenceUtil(BufferedWriter writer, boolean closeWhenDone) {
         this.bufferedReader = null;
-        this.printWriter = writer;
+        this.bufferedWriter = writer;
         this.jsonReader = null;
         this.jsonWriter = null;
         this.closeWhenDone = closeWhenDone;
@@ -55,7 +55,7 @@ public class PersistenceUtil {
 
     public PersistenceUtil(JsonReader reader, boolean closeWhenDone) {
         this.bufferedReader = null;
-        this.printWriter = null;
+        this.bufferedWriter = null;
         this.jsonReader = reader;
         this.jsonWriter = null;
         this.closeWhenDone = closeWhenDone;
@@ -63,19 +63,20 @@ public class PersistenceUtil {
 
     public PersistenceUtil(JsonWriter writer, boolean closeWhenDone) {
         this.bufferedReader = null;
-        this.printWriter = null;
+        this.bufferedWriter = null;
         this.jsonReader = null;
         this.jsonWriter = writer;
         this.closeWhenDone = closeWhenDone;
     }
 
     public void println(String s) throws IOException {
-        printWriter.println(s);
+        bufferedWriter.write(s);
+        bufferedWriter.newLine();
     }
 
     public void flush() throws Exception {
-        if (printWriter != null) {
-            printWriter.flush();
+        if (bufferedWriter != null) {
+            bufferedWriter.flush();
         }
         if (jsonWriter != null) {
             jsonWriter.flush();
@@ -103,8 +104,8 @@ public class PersistenceUtil {
         if (bufferedReader != null) {
             bufferedReader.close();
         }
-        if (printWriter != null) {
-            printWriter.close();
+        if (bufferedWriter != null) {
+            bufferedWriter.close();
         }
         if (jsonReader != null) {
             jsonReader.close();

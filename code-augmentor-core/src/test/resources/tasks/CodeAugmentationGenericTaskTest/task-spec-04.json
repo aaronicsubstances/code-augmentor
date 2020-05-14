@@ -1,0 +1,6 @@
+{
+	"generatedCodeFiles" : [ "task-spec-04-response-0.json", "task-spec-04-response-1.json" ],
+	"prepFile" : "task-spec-04-prep.json",
+	"destDir" : "dest-04",
+    "loggingEnabled": true
+}

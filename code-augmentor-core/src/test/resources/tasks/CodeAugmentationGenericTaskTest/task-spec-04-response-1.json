@@ -1,0 +1,106 @@
+{ "contentStreamingEnabled": false }
+[
+	{
+		"fileId": 1,
+		"generatedCodes": [{
+			"id" : 2,
+            "disableAutoIndent": true,
+			"contentParts" : [{
+                "content": "import javax.persistence.Entity;\r\n"
+            }, {
+                "content": "@Entity\r\n"
+            }, {
+                "content": "public class C0 {\r\n"
+            }, {
+                "content": "    private long id;\r\n"
+            }, {
+                "content": "\r\n"
+            }, {
+                "content": "    public long getId() {\r\n"
+            }, {
+                "content": "        return id;\r\n"
+            }, {
+                "content": "    }\r\n"
+            },{
+                "content": "\r\n" 
+            }, {
+                "content": "    public void setId() {\r\n"
+            }, {
+                "content": "        this.id = id;\r\n"
+            }, {
+                "content": "    }\r\n"
+            }, {
+                "content": "}"
+            }]
+		}]
+	},
+    {
+		"fileId": 2,
+		"generatedCodes": [{
+			"id" : 2,
+            "replaceAugCodeDirectives": true,
+            "disableAutoIndent": true,
+			"contentParts" : [{
+                "content": "import javax.persistence.Entity;\r\n"
+            }, {
+                "content": "@Entity\r\n"
+            }, {
+                "content": "public class C1 {\r\n"
+            }, {
+                "content": "    private long id;\r\n"
+            }, {
+                "content": "\r\n"
+            }, {
+                "content": "    public long getId() {\r\n"
+            }, {
+                "content": "        return id;\r\n"
+            }, {
+                "content": "    }\r\n"
+            },{
+                "content": "\r\n" 
+            }, {
+                "content": "    public void setId() {\r\n"
+            }, {
+                "content": "        this.id = id;\r\n"
+            }, {
+                "content": "    }\r\n"
+            }, {
+                "content": "}"
+            }]
+		}]
+	},
+    {
+		"fileId": 3,
+		"generatedCodes": [{
+			"id" : 2,
+            "disableAutoIndent": true,
+			"contentParts" : [{
+                "content": "import javax.persistence.Entity;\r\n"
+            }, {
+                "content": "@Entity\r\n"
+            }, {
+                "content": "public class C2 {\r\n"
+            }, {
+                "content": "    private long id;\r\n"
+            }, {
+                "content": "\r\n"
+            }, {
+                "content": "    public long getId() {\r\n"
+            }, {
+                "content": "        return id;\r\n"
+            }, {
+                "content": "    }\r\n"
+            },{
+                "content": "\r\n" 
+            }, {
+                "content": "    public void setId() {\r\n"
+            }, {
+                "content": "        this.id = id;\r\n"
+            }, {
+                "content": "    }\r\n"
+            }, {
+                "content": "}"
+            }]
+		}]
+	}
+]

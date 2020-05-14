@@ -1,0 +1,84 @@
+{
+	"files": [
+    {
+        "fileId" : 1,
+        "relativePath" : "task-spec-04-0.java",
+        "srcDir": "%TEMP_DIR%",
+        "destDir": "%TEMP_DIR%%LINE_SEPARATOR%dest-04%LINE_SEPARATOR%com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest",
+        "changes": [
+        {
+            "id": 1,
+            "type": "exact_value",
+            "srcCharIndex": 28,
+            "srcLineNumber": 2,
+            "srcColumnNumber": 1,
+            "currentSection": "",
+            "destCharIndex": 30,
+            "destLineNumber": 2,
+            "destColumnNumber": 3,
+            "expectedExactValue": {
+                "length": 4,
+                "prefix": null,
+                "updatedSection": "//GS",
+                "suffix": null,
+                "updatedSectionOffset": 0
+            }
+        },{
+            "id": 2,
+            "type": "exact_value",
+            "srcCharIndex": 74,
+            "srcLineNumber": 5,
+            "srcColumnNumber": 1,
+            "currentSection": "",
+            "destCharIndex": 158,
+            "destLineNumber": 9,
+            "destColumnNumber": 1,
+            "expectedExactValue": {
+                "length": 4,
+                "prefix": null,
+                "updatedSection": "//GS",
+                "suffix": null,
+                "updatedSectionOffset": 0
+            }
+        }
+        ]
+    },
+    {
+        "fileId" : 2,
+        "relativePath" : "task-spec-04-1.java",
+        "srcDir": "%TEMP_DIR%",
+        "destDir": "%TEMP_DIR%%LINE_SEPARATOR%dest-04%LINE_SEPARATOR%com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest",
+        "changes": [
+        {
+            "id": 1,
+            "type": "required_spacing",
+            "srcCharIndex": 6,
+            "srcLineNumber": 1,
+            "srcColumnNumber": 7,
+            "currentSection": ":A:Project.licenseHeader\r\n    ",
+            "destCharIndex": 2,
+            "destLineNumber": 1,
+            "destColumnNumber": 3
+        },
+        {
+            "id": 2,
+            "type": "exact_value",
+            "srcCharIndex": 116,
+            "srcLineNumber": 6,
+            "srcColumnNumber": 5,
+            "currentSection": "//:A:EntityUtil.tableSchema\r\n ",
+            "destCharIndex": 64,
+            "destLineNumber": 3,
+            "destColumnNumber": 1,
+            "expectedExactValue": {
+                "length": 6,
+                "prefix": null,
+                "updatedSection": "import",
+                "suffix": null,
+                "updatedSectionOffset": 0
+            }
+        }
+        ]
+    }
+    ]
+}

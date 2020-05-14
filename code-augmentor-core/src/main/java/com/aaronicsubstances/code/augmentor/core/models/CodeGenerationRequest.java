@@ -1,12 +1,12 @@
 package com.aaronicsubstances.code.augmentor.core.models;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
@@ -151,7 +151,7 @@ public class CodeGenerationRequest {
     }
 
     private PersistenceUtil beginSerialize(Writer stream, boolean closeStream) throws Exception {
-        PersistenceUtil persistenceUtil= new PersistenceUtil(new PrintWriter(stream), closeStream);
+        PersistenceUtil persistenceUtil= new PersistenceUtil(new BufferedWriter(stream), closeStream);
         printHeader(persistenceUtil, true);
         return persistenceUtil;
     }
@@ -195,7 +195,7 @@ public class CodeGenerationRequest {
     }
 
     public void serialize(Writer stream, boolean serializeAllAsJson) throws Exception {
-        PersistenceUtil persistenceUtil = new PersistenceUtil(new PrintWriter(stream), false);
+        PersistenceUtil persistenceUtil = new PersistenceUtil(new BufferedWriter(stream), false);
         printHeader(persistenceUtil, !serializeAllAsJson);
         if (serializeAllAsJson) {
             String json = PersistenceUtil.serializeFormattedToJson(sourceFileAugmentingCodes);

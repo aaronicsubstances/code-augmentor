@@ -1,6 +1,8 @@
 package com.aaronicsubstances.code.augmentor.core.tasks;
 
 import static org.testng.Assert.*;
+import static org.hamcrest.Matchers.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,6 +33,7 @@ public class CodeAugmentationGenericTaskTest {
         public String[] generatedCodeFiles;
         public String destDir;
         public boolean loggingEnabled;
+        public boolean codeChangeDetectionDisabled;
     }
 
     private final File TEMP_GEN_DIR;
@@ -47,6 +50,7 @@ public class CodeAugmentationGenericTaskTest {
         
         CodeAugmentationGenericTask task = new CodeAugmentationGenericTask();
         task.setCharset(StandardCharsets.UTF_8);
+        task.setCodeChangeDetectionDisabled(taskSpec.codeChangeDetectionDisabled);
 
         // copy prep file to temp dir.
         String contents = TestResourceLoader.loadResource(taskSpec.prepFile, 
@@ -85,7 +89,10 @@ public class CodeAugmentationGenericTaskTest {
         CodeAugmentationGenericTask task = deserialize(jsonPath);
         PreCodeAugmentationResult prepResult = PreCodeAugmentationResult.deserialize(
             task.getPrepFile());
-        CodeGenerationResponseChangeSet expectedChanges = loadChanges(jsonPath);
+        CodeGenerationResponseChangeSet expectedChanges = null;
+        if (!task.isCodeChangeDetectionDisabled()) {
+            expectedChanges = loadChanges(jsonPath);
+        }
         List<String> expectedGeneratedCodes = new ArrayList<>();
         // transfer class path resources for original source files to
         // temp directory.
@@ -106,8 +113,9 @@ public class CodeAugmentationGenericTaskTest {
             }
         }
         task.execute();
-        assertEquals(0, task.getAllErrors().size());
-        assertEquals(task.isCodeChangeDetected(), !expectedChangeSetIndices.isEmpty());
+        assertThat(task.getAllErrors(), is(empty()));
+        assertEquals(task.isCodeChangeDetected(), 
+            !task.isCodeChangeDetectionDisabled() && !expectedChangeSetIndices.isEmpty());
         CodeChangeSummary changeSummary = CodeChangeSummary.deserialize(
             task.getChangeSummaryFile());
         int actualChangeSetSize = changeSummary.getChangedFiles().size();
@@ -119,17 +127,21 @@ public class CodeAugmentationGenericTaskTest {
             String actual = FileUtils.readFileToString(f, task.getCharset());            
             assertEquals(actual, expected, "Unexpected contents found in " + f);
         }
-        CodeGenerationResponseChangeSet actualChanges = CodeGenerationResponseChangeSet.deserialize(
-            task.getChangeDetailsFile());
-        assertEquals(actualChanges, expectedChanges);
-        CodeChangeSummary expectedChangeSummary = new CodeChangeSummary(new ArrayList<>());
-        for (SourceFileChangeSet s : actualChanges.getSourceFileChangeSets()) {
-            ChangedFile cf = new ChangedFile(s.getRelativePath(), s.getSrcDir(), s.getDestDir());
-            expectedChangeSummary.getChangedFiles().add(cf);
+        if (task.isCodeChangeDetectionDisabled()) {
+            assertNull(task.getChangeDetailsFile());
         }
-        CodeChangeSummary actualChangeSummary = CodeChangeSummary.deserialize(
-            task.getChangeSummaryFile());
-        assertEquals(actualChangeSummary, expectedChangeSummary);
+        else {
+            assertNotNull(task.getChangeDetailsFile());
+            CodeGenerationResponseChangeSet actualChanges = CodeGenerationResponseChangeSet.deserialize(
+                task.getChangeDetailsFile());
+            assertEquals(actualChanges, expectedChanges);
+            CodeChangeSummary expectedChangeSummary = new CodeChangeSummary(new ArrayList<>());
+            for (SourceFileChangeSet s : actualChanges.getSourceFileChangeSets()) {
+                ChangedFile cf = new ChangedFile(s.getRelativePath(), s.getSrcDir(), s.getDestDir());
+                expectedChangeSummary.getChangedFiles().add(cf);
+            }
+            assertEquals(changeSummary, expectedChangeSummary);
+        }
     }
 
     @DataProvider
@@ -137,7 +149,9 @@ public class CodeAugmentationGenericTaskTest {
         return new Object[][]{
             new Object[] { "task-spec-00.json", Arrays.asList() },
             new Object[] { "task-spec-01.json", Arrays.asList(0, 1) },
-            new Object[] { "task-spec-02.json", Arrays.asList(0) }
+            new Object[] { "task-spec-02.json", Arrays.asList(0) },
+            new Object[] { "task-spec-03.json", Arrays.asList(0, 1, 2) },
+            new Object[] { "task-spec-04.json", Arrays.asList(0, 1) },
         };
     }
 

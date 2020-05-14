@@ -8,15 +8,13 @@ for /F "usebackq tokens=*" %%A in ("%DIRNAME%\CHANGE-SUMMARY.txt") do (
         set c=%%A
         set /A COUNTER=COUNTER+1
         if defined confirmed (
-            set msg="!COUNTER!. copying !b!\!a! to !c!\!a!"
-            echo !msg:"=!
+            echo !COUNTER!. copying !b!\!a! to !c!\!a!
             copy "!b!\!a!" "!c!\!a!" /B /Y
             if !ERRORLEVEL! neq 0 (
                 exit /B !ERRORLEVEL!
             )
         ) else (
-            set msg="!COUNTER!. will copy !b!\!a! to !c!\!a!"
-            echo !msg:"=!
+            echo !COUNTER!. will copy !b!\!a! to !c!\!a!
         )
         set a=
         set b=
@@ -30,7 +28,6 @@ echo.
 if defined confirmed (
     echo Done
 ) else (
-    set msg="NB: Add /Y as first command line arg to actually copy and overwrite"
-    echo !msg:"=!
+    echo NB: Add /Y as first command line arg to actually copy and overwrite
 )
 endlocal

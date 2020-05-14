@@ -61,13 +61,18 @@ public class CodeAugmentationGenericTask {
 
         GeneratedCodeFetcher generatedCodeFetcher = new GeneratedCodeFetcher(generatedCodeFiles);
         
-        changeDetailsFile = new File(destDir, CHANGE_DETAILS_FILE_NAME);
-        CodeGenerationResponseChangeSet resultChangeSet = new CodeGenerationResponseChangeSet();
-        Object resultChangeSetWriter = resultChangeSet.beginSerialize(changeDetailsFile);
-        
         changeSummaryFile = new File(destDir, CHANGE_SUMMARY_FILE_NAME);
         CodeChangeSummary resultChangeSummary = new CodeChangeSummary();
         Object resultChangeSummaryWriter = resultChangeSummary.beginSerialize(changeSummaryFile);
+        
+        changeDetailsFile = null;
+        CodeGenerationResponseChangeSet resultChangeSet = null;
+        Object resultChangeSetWriter = null;
+        if (!codeChangeDetectionDisabled) {
+            changeDetailsFile = new File(destDir, CHANGE_DETAILS_FILE_NAME);
+            resultChangeSet = new CodeGenerationResponseChangeSet();
+            resultChangeSetWriter = resultChangeSet.beginSerialize(changeDetailsFile);
+        }
 
         SourceFileDescriptor sourceFileDescriptor;
         while ((sourceFileDescriptor = SourceFileDescriptor.deserialize(resultReader)) != null) {
@@ -131,9 +136,11 @@ public class CodeAugmentationGenericTask {
                 // modify content parts to end with newline if necessary and
                 // correct split CR-LFs
                 String newline = augCodeDescriptor.getLineSeparator();
-                ContentPart lastContentPart = genCode.getContentParts().get(genCode.getContentParts().size() - 1);
-                lastContentPart.setContent(
-                        CodeGenerationResponseProcessor.ensureEndingNewline(lastContentPart.getContent(), newline));
+                if (!genCode.isReplaceAugCodeDirectives() && !genCode.isReplaceGenCodeDirectives()) {
+                    ContentPart lastContentPart = genCode.getContentParts().get(genCode.getContentParts().size() - 1);
+                    lastContentPart.setContent(
+                            CodeGenerationResponseProcessor.ensureEndingNewline(lastContentPart.getContent(), newline));
+                }
                 CodeGenerationResponseProcessor.repairSplitCrLfs(genCode.getContentParts());
 
                 // format content parts to consititute replacement text if possible.
@@ -223,25 +230,26 @@ public class CodeAugmentationGenericTask {
                 String transformedCode = transformer.getTransformedText();
                 TaskUtils.writeFile(destFile, charset, transformedCode);
 
-                if (!codeChangeDetectionDisabled) {
-                    // write out change summary.
-                    // normalize file paths for intended shell scripts.
-                    new CodeChangeSummary.ChangedFile(sourceFileDescriptor.getRelativePath(),
-                        new File(sourceFileDescriptor.getDir()).getCanonicalPath(),
-                        destSubDir.getCanonicalPath()).serialize(resultChangeSummaryWriter);
+                // write out change summary.
+                // normalize file paths for intended shell scripts.
+                new CodeChangeSummary.ChangedFile(sourceFileDescriptor.getRelativePath(),
+                    new File(sourceFileDescriptor.getDir()).getCanonicalPath(),
+                    destSubDir.getCanonicalPath()).serialize(resultChangeSummaryWriter);
 
-                    // write out change details
+                // write out change details only if code change detection is enabled.
+                if (!codeChangeDetectionDisabled) {
+                    codeChangeDetected = true;
                     SourceFileChangeSet s = new SourceFileChangeSet(changes);
                     s.setFileId(sourceFileDescriptor.getFileId());
                     s.setRelativePath(sourceFileDescriptor.getRelativePath());
                     s.setSrcDir(sourceFileDescriptor.getDir());
                     s.setDestDir(destSubDir.getPath());
                     s.serialize(resultChangeSetWriter);
-
-                    codeChangeDetected = true;
                 }
 
-                TaskUtils.logInfo(logAppender, "Changes needed for %s successfully written to\n %s", srcFile, destFile);
+                if (!codeChangeDetectionDisabled) {
+                    TaskUtils.logInfo(logAppender, "Changes needed for %s successfully written to\n %s", srcFile, destFile);
+                }
             }
 
             Instant endInstant = Instant.now();
@@ -254,11 +262,12 @@ public class CodeAugmentationGenericTask {
         generatedCodeFetcher.close();
 
         // close writers
-        resultChangeSet.endSerialize(resultChangeSetWriter);
         resultChangeSummary.endSerialize(resultChangeSummaryWriter);
 
         // generate shell scripts for effecting code changes.
-        if (codeChangeDetected) {
+        if (!codeChangeDetectionDisabled) {
+            resultChangeSet.endSerialize(resultChangeSetWriter);
+            
             final String shellScriptPrefix = "EFFECT-CHANGES";
             InputStream shellScriptRes = getClass().getResourceAsStream("windows-copy-batch-file.bat");
             ByteArrayOutputStream outStream = new ByteArrayOutputStream();

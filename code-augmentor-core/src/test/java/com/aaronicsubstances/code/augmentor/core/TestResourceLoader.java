@@ -100,12 +100,18 @@ public class TestResourceLoader {
 
     public static String generateRandomEquivalentWholeContentParts(String input) {
         if (input.isEmpty()) {
-            return " \t";
+            return "" + (RAND_GEN.nextBoolean() ? "" : "\t");
         }
         StringBuffer sb = new StringBuffer();
         Matcher m = Pattern.compile("\\s+").matcher(input);
         while (m.find()) {
-            String replacement = " " + m.group() + "\t";
+            String replacement = m.group();
+            if (RAND_GEN.nextBoolean()) {
+                replacement = " " + replacement;
+            }
+            if (RAND_GEN.nextBoolean()) {
+                replacement += "\t";
+            }
             m.appendReplacement(sb, replacement);
         }
         m.appendTail(sb);

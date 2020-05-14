@@ -1,0 +1,56 @@
+{ "contentStreamingEnabled": false }
+[
+	{
+		"fileId": 1,
+		"generatedCodes": [{
+			"id" : 1,
+            "indent": "  ",
+			"contentParts" : [{
+                "content": "// Copyright Aaronic Substances 2020.\r\n"
+            }, {
+                "content": "// All rights reserved."
+            }]
+		}]
+	},
+    {
+		"fileId": 2,
+		"generatedCodes": [{
+			"id" : 1,
+            "disableAutoIndent": true,
+            "replaceAugCodeDirectives": true,
+            "replaceGenCodeDirectives": true,
+			"contentParts" : [{
+                "content": "// Copyright Aaronic Substances 2020.\r\n"
+            }, {
+                "content": "// All rights reserved."
+            }]
+		}]
+	},
+    {
+		"fileId": 3,
+		"generatedCodes": [{
+			"id" : 1,
+            "disableAutoIndent": true,
+            "replaceGenCodeDirectives": true,
+			"contentParts" : [{
+                "content": "\r\n  //GS\r\n"
+            }, {
+                "content": "/* Copyright Aaronic Substances 2020.\r\n"
+            }, {
+                "content": "   All rights reserved. */\r\n"
+            }, {
+                "content": "  //GE\r\n"
+            }]
+		}]
+	},
+    {
+		"fileId": 4,
+		"generatedCodes": [{
+			"id" : 1,
+            "skipped": true
+        },{
+			"id" : 2,
+            "skipped": true
+        }]
+	}
+]
