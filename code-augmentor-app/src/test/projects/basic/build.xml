@@ -1,31 +1,48 @@
 <project name="basic-ant" default="default">
-    <description>Basic ANT project testing CodeAugmentor-app</description>
+    <description>Basic ANT project testing code-augmentor-app</description>
     
-    <!-- uncomment this if running outside CodeAugmentor-app -->
-    <!--<taskdef resource="CodeAugmentorTasks.xml" onerror="failall"/>-->
+    <!-- not needed unless running outside code-augmentor-app -->
+    <taskdef resource="CodeAugmentorTasks.xml" onerror="failall"/>
     
     <property name="src.dir" location="src" />
     <property name="build.dir" location="build" />
+    <property name="build.code-augmentor.dir" location="${build.dir}/codeAugmentor" />
+    <property name="code-augmentor.verbose" value="false" />
+    <property name="augCode.file" location="${build.code-augmentor.dir}/augCodes.json" />
+    <property name="genCode.file" location="${build.code-augmentor.dir}/genCodes.json" />
+    
+    <!--this property and its usages can be omitted since it is the default prepFile-->
+    <property name="prepareResults.file" location="${build.code-augmentor.dir}/parseResults.json" />
     
     <target name="clean" description="deletes build directory">
         <delete dir="${build.dir}" />
     </target>
     
     <target name="prepare" description="prepares code augmentor">
-        <code_aug_prepare verbose="true">
+        <code_aug_prepare verbose="${code-augmentor.verbose}" prepFile="${prepareResults.file}">
             <srcDir dir="${src.dir}"
                 includes="**/*.java" />
+            <!--this element can be omitted since it is the default augCodeSpec-->
+            <augCodeSpec destFile="${augCode.file}">
+                <directive value="//:AUG_CODE:" />
+            </augCodeSpec>
         </code_aug_prepare>
     </target>
     
     <target name="process" description="process code augmentor parse results">
-        
+        <exec executable="groovy" failonerror="true" vmlauncher="false">
+            <arg value="main.groovy" />
+            <arg value="${augCode.file}" />
+            <arg value="${genCode.file}" />
+            <arg value="${code-augmentor.verbose}" />
+        </exec>
     </target>
     
     <target name="complete" description="completes code augmentor operation">
-        <!--<code_aug_complete>
-            
-        </code_aug_complete>-->
+        <code_aug_complete verbose="${code-augmentor.verbose}" prepFile="${prepareResults.file}">
+            <!--this element can be omitted since it is the default genCodeSpec-->
+            <genCodeSpec file="${genCode.file}" />
+        </code_aug_complete>
     </target>
     
     <target name="default" description="runs entire code augmentor operation"

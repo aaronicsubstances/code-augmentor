@@ -20,9 +20,11 @@ public abstract class AbstractPluginMojoTest {
         return Boolean.parseBoolean(System.getProperty("alltests"));
     }
 
-    public static String readText(File f) {
+    public static String readTextAndDeleteFile(File f) {
         try {
-            return FileUtils.fileRead(f);
+            String s = FileUtils.fileRead(f);
+            f.delete();
+            return s;
         }
         catch (Exception ex) {
             return ex.toString();

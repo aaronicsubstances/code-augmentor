@@ -109,7 +109,7 @@ public class CompletionTask extends DefaultTask {
                     logger.info("\tgeneratedCodeFiles[" + i + "]: " + genericTask.getGeneratedCodeFiles().get(i));
                 }
             }
-            logger.info("\tresolvedCodeChangeDetectionDisabled: " + genericTask.isCodeChangeDetectionDisabled());
+            logger.info("\tcodeChangeDetectionDisabled: " + genericTask.isCodeChangeDetectionDisabled());
             logger.info("\tfailOnChanges: " + resolvedFailOnChanges);
             logger.info("\tgenericTask.logAppender: " + genericTask.getLogAppender());
         }

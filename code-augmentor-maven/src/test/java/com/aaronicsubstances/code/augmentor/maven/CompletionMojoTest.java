@@ -21,7 +21,7 @@ public class CompletionMojoTest extends AbstractPluginMojoTest {
         File output = File.createTempFile("stdout+err-", ".txt");
         int actualExitCode = PluginUtils.execCommand(projectDir, output, output, "mvn", true, 
             getPluginPrefix() + ":complete", "-e");
-        String outputText = readText(output);
+        String outputText = readTextAndDeleteFile(output);
         assertEquals(actualExitCode, 0, outputText);
         Reporter.log(outputText);
     }

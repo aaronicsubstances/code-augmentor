@@ -51,7 +51,9 @@ public class PreCodeAugmentationGenericTask {
         prepResult.setGenCodeStartDirective(genCodeStartDirectives.get(0));
         prepResult.setGenCodeEndDirective(genCodeEndDirectives.get(0));
         // ensure dir exists for prepFile
-        prepFile.getParentFile().mkdirs();
+        if (prepFile.getParentFile() != null) {
+            prepFile.getParentFile().mkdirs();
+        }
         Object resultWriter = prepResult.beginSerialize(prepFile);
 
         List<Object> codeGenRequestWriters = new ArrayList<>();

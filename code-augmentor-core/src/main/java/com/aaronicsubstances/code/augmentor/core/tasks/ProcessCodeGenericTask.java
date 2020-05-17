@@ -44,7 +44,9 @@ public class ProcessCodeGenericTask {
     public void execute(EvalFunction evalFunction) throws Exception {
         allErrors.clear();
         // ensure dir exists for outputFile
-        outputFile.getParentFile().mkdirs();
+        if (outputFile.getParentFile() != null) {
+            outputFile.getParentFile().mkdirs();
+        }
 
         // create a context for sharing variables needed when
         // an aug code section is used more than once in a file, or

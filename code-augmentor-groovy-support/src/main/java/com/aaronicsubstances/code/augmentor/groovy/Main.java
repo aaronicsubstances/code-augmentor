@@ -1,4 +1,4 @@
-package com.aaronicsubstances.code.augmentor.app;
+package com.aaronicsubstances.code.augmentor.groovy;
 
 import java.io.File;
 import java.net.URL;

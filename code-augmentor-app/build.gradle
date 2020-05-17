@@ -13,8 +13,12 @@ java {
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 
-application {
+ext {
     mainClassName = "com.aaronicsubstances.code.augmentor.app.Main"
+}
+
+application {
+    mainClassName = project.mainClassName
     applicationDefaultJvmArgs = [ '-Dapp.name=' + applicationName ]
 }
 
@@ -32,4 +36,12 @@ dependencies {
 
 test {
 	useTestNG()
+}
+
+task('alltests', type: JavaExec, dependsOn: compileJava) {
+    def psep = File.separator
+    args = [ "-f", "src${psep}test${psep}projects${psep}basic${psep}build.xml" ]
+    main = project.mainClassName
+    classpath(sourceSets.main.runtimeClasspath)
+    enableAssertions = true
 }
