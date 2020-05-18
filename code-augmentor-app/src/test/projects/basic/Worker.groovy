@@ -11,7 +11,6 @@ static generateMainClass(augCode, context) {
     }
     // now generate main class file contents
     def g = context.newGenCode()
-    assert g instanceof LinkedHashMap
     def out = g.contentParts
     String indent = ' ' * 4 
     if (pkgName) {

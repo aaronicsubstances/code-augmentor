@@ -19,6 +19,9 @@ dependencies {
     testImplementation 'org.spockframework:spock-core:1.3-groovy-2.5'
 }
 
+task alltests(dependsOn: build) {
+}
+
 gradlePlugin {
     plugins {
         simplePlugin {

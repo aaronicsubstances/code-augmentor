@@ -1,1 +1,1 @@
-include ':code-augmentor-core', ':code-augmentor-ant', ':code-augmentor-gradle', ':code-augmentor-app', ':code-augmentor-groovy-support'
+include ':code-augmentor-core', ':code-augmentor-ant', ':code-augmentor-gradle', ':code-augmentor-app', ':code-augmentor-groovy-support', ':code-augmentor-maven'

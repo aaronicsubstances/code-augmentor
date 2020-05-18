@@ -38,7 +38,19 @@ test {
 	useTestNG()
 }
 
-task('alltests', type: JavaExec, dependsOn: compileJava) {
+task('publishCoreDependency', type: Exec) {
+    def cmdPlusArgs = []
+    if (System.getProperty("os.name") =~ /(?i)win/) {
+        cmdPlusArgs << 'cmd' << '/c'
+    }
+    cmdPlusArgs << 'gradlew'
+    cmdPlusArgs << ':code-augmentor-core:build'
+    cmdPlusArgs << ':code-augmentor-core:publishToMavenLocal'
+    commandLine cmdPlusArgs
+    workingDir '..'
+}
+
+task('alltests', type: JavaExec, dependsOn: [ 'publishCoreDependency', 'build' ]) {
     def psep = File.separator
     args = [ "-f", "src${psep}test${psep}projects${psep}basic${psep}build.xml" ]
     main = project.mainClassName

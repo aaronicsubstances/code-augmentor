@@ -1,0 +1,29 @@
+task('publishCoreDependency', type: Exec) {
+    def cmdPlusArgs = []
+    if (System.getProperty("os.name") =~ /(?i)win/) {
+        cmdPlusArgs << 'cmd' << '/c'
+    }
+    cmdPlusArgs << 'gradlew'
+    cmdPlusArgs << ':code-augmentor-core:build'
+    cmdPlusArgs << ':code-augmentor-core:publishToMavenLocal'
+    commandLine cmdPlusArgs
+    workingDir '..'
+}
+
+task('build', type: Exec, dependsOn: 'publishCoreDependency') {
+    def cmdPlusArgs = []
+    if (System.getProperty("os.name") =~ /(?i)win/) {
+        cmdPlusArgs << 'cmd' << '/c'
+    }
+    cmdPlusArgs << 'mvn' << 'clean' << 'install'
+    commandLine cmdPlusArgs
+}
+
+task('alltests', type: Exec, dependsOn: 'build') {
+    def cmdPlusArgs = []
+    if (System.getProperty("os.name") =~ /(?i)win/) {
+        cmdPlusArgs << 'cmd' << '/c'
+    }
+    cmdPlusArgs << 'mvn' << '-Dalltests=true' << 'test'
+    commandLine cmdPlusArgs
+}

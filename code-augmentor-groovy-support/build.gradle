@@ -41,7 +41,7 @@ test {
 	useTestNG()
 }
 
-task('alltests', type: JavaExec, dependsOn: compileJava) {
+task('alltests', type: JavaExec, dependsOn: build) {
     def psep = File.separator
     args = [ "-d", "src${psep}test${psep}projects${psep}basic" ]
     main = project.mainClassName
