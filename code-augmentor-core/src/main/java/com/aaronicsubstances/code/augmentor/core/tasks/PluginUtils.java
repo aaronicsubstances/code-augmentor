@@ -110,10 +110,10 @@ public class PluginUtils {
 
     private static List<StackTraceElement> sanitizeStackTrace(Throwable t,
             List<String> stackTraceLimitPrefixes, List<String> stackTraceFilterPrefixes,
-            int maxFilteredSize) {        
+            int maxFilteredSize) {
         // Only show stack trace if it includes limit prefixes.
         // Also skip irrelevant stack trace elements using filter prefixes.
-        List<StackTraceElement> filtered = new ArrayList<>();        
+        List<StackTraceElement> filtered = new ArrayList<>();
         StackTraceElement[] stackTrace = t.getStackTrace();
         if (stackTrace == null) {
             return filtered;
