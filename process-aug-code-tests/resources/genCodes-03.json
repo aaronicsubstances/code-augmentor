@@ -1,0 +1,56 @@
+{ "contentStreamingEnabled": false }
+[
+
+{
+    "fileId": 1,
+    "generatedCodes": [{
+        "id": 1,
+        "indent": "  ",
+        "skipped": false,
+        "replaceAugCodeDirectives": false,
+        "replaceGenCodeDirectives": false,
+        "disableAutoIndent": false,
+        "contentParts": [{
+            "exactMatch": false,
+            "content": "{"
+        }]
+    },
+    {
+        "id": 4,
+        "indent": "  ",
+        "skipped": false,
+        "replaceAugCodeDirectives": false,
+        "replaceGenCodeDirectives": false,
+        "disableAutoIndent": false,
+        "contentParts": [{
+            "exactMatch": false,
+            "content": "}"
+        }]
+    },
+    {
+        "id": 2,
+        "indent": "  ",
+        "skipped": false,
+        "replaceAugCodeDirectives": true,
+        "replaceGenCodeDirectives": true,
+        "disableAutoIndent": true,
+        "contentParts": [{
+            "exactMatch": true,
+            "content": "//TODO"
+        }]
+    },
+    {
+        "id": 3,
+        "indent": null,
+        "skipped": true,
+        "replaceAugCodeDirectives": false,
+        "replaceGenCodeDirectives": false,
+        "disableAutoIndent": false,
+        "contentParts": [{
+            "exactMatch": false,
+            "content": ""
+        }]
+    }]
+}
+
+]

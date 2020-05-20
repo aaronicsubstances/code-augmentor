@@ -60,24 +60,30 @@ class MyTestCase {
     @Test
     void testProcessCodeTasks() {
         testSingleRun("augCodes-01.json", 0, 0, "genCodes-01.json")
+        testSingleRun("augCodes-02.json", 0, 0, "genCodes-02.json")
+        testSingleRun("augCodes-03.json", 0, 0, "genCodes-03.json")
     }
 
     void testSingleRun(String inputFileName, int successExitCode, int expectedErrorCount,
             String expectedOutputFileName) {
         0.upto(3) {
-            def actualOutputFile = new File(buildDir, inputFileName + "-out")
+            def actualOutputFile
             def ant
             switch (it) {
                 case 0:
+                    actualOutputFile = new File(buildDir, inputFileName + "-out-js")
                     ant = execOnNodeJs(inputFileName, actualOutputFile)
                     break;
                 case 1:
+                    actualOutputFile = new File(buildDir, inputFileName + "-out-php")
                     ant = execOnPHP(inputFileName, actualOutputFile)
                     break;
                 case 2:
+                    actualOutputFile = new File(buildDir, inputFileName + "-out-py3")
                     ant = execOnPython3(inputFileName, actualOutputFile)
                     break;
                 case 3:
+                    actualOutputFile = new File(buildDir, inputFileName + "-out-java")
                     ant = execOnGroovy(inputFileName, actualOutputFile)
                     break;
                 default:
@@ -100,13 +106,14 @@ class MyTestCase {
                     new File(scriptDir, "resources/$expectedOutputFileName"))
                 def actualGenCode = CodeGenerationResponse.deserialize(
                     actualOutputFile)
-                assert actualGenCode == expectedGenCode
+                assertEquals(expectedGenCode, actualGenCode)
             }
         }
     }
 
     def execOnNodeJs(inputFileName, outputFile) {
         def ant = new AntBuilder()
+        ant.echo("execOnNodeJs with $inputFileName")
         ant.exec(executable: 'node', vmlauncher: false, dir: scriptDir,
                 errorproperty: PRINT_OUT, resultproperty: EXIT_RESULT) {
             arg(value: "main.js")
@@ -121,6 +128,7 @@ class MyTestCase {
 
     def execOnPHP(inputFileName, outputFile) {
         def ant = new AntBuilder()
+        ant.echo("execOnPHP with $inputFileName")
         ant.exec(executable: 'php', vmlauncher: false, dir: scriptDir,
                 errorproperty: PRINT_OUT, resultproperty: EXIT_RESULT) {
             arg(value: "main.php")
@@ -135,6 +143,7 @@ class MyTestCase {
 
     def execOnPython3(inputFileName, outputFile) {
         def ant = new AntBuilder()
+        ant.echo("execOnPython3 with $inputFileName")
         ant.exec(executable: LocalConfig.PYTHON_EXEC, vmlauncher: false, dir: scriptDir,
                 errorproperty: PRINT_OUT, resultproperty: EXIT_RESULT) {
             arg(value: "-B")
@@ -150,6 +159,7 @@ class MyTestCase {
 
     def execOnGroovy(inputFileName, outputFile) {        
         def ant = new AntBuilder()
+        ant.echo("execOnGroovy with $inputFileName")
         ant.exec(executable: 'groovy', vmlauncher: false, dir: scriptDir,
                 errorproperty: PRINT_OUT, resultproperty: EXIT_RESULT) {
             arg(value: "build/java/main.groovy")

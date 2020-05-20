@@ -24,7 +24,7 @@ instance = ProcessCodeTask()
 instance.inputFile = sys.argv[1]
 instance.outputFile = sys.argv[2]
 if len(sys.argv) > 3:
-    instance.logVerbose = bool(sys.argv[3])
+    instance.verbose = bool(sys.argv[3])
 instance.execute(callUserFunction)
 if instance.allErrors:
     print(str(len(instance.allErrors)) + " error(s) found.", file=sys.stderr)

@@ -1,0 +1,52 @@
+{ "contentStreamingEnabled": false }
+[
+
+{
+    "fileId": 1,
+    "generatedCodes": [{
+        "id": 1,
+        "indent": null,
+        "skipped": false,
+        "replaceAugCodeDirectives": false,
+        "replaceGenCodeDirectives": false,
+        "disableAutoIndent": false,
+        "contentParts": [{
+            "exactMatch": false,
+            "content": "private static final int serialVersionUID = 23L;"
+        }]
+    }]
+},
+
+{
+    "fileId": 2,
+    "generatedCodes": [{
+        "id": 1,
+        "indent": null,
+        "skipped": false,
+        "replaceAugCodeDirectives": false,
+        "replaceGenCodeDirectives": false,
+        "disableAutoIndent": false,
+        "contentParts": [{
+            "exactMatch": true,
+            "content": "\" SELECT * FROM contacts \r\n\" +"
+        },
+        {
+            "exactMatch": true,
+            "content": "\" WHERE contacts.id = ? \""
+        }]
+    },
+    {
+        "id": 2,
+        "indent": null,
+        "skipped": false,
+        "replaceAugCodeDirectives": false,
+        "replaceGenCodeDirectives": false,
+        "disableAutoIndent": false,
+        "contentParts": [{
+            "exactMatch": false,
+            "content": "public boolean getExpired() {\r\n    return expired;\r\n}"
+        }]
+    }]
+}
+
+]

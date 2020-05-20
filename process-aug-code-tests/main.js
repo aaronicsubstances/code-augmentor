@@ -18,7 +18,7 @@ function callUserFunction(functionName, augCode, context) {
 const config = {
     inputFile: process.argv[2],
     outputFile: process.argv[3],
-    logVerbose: !!process.argv[4]
+    verbose: !!process.argv[4]
 };
 assert.ok(config.inputFile);
 assert.ok(config.outputFile);
