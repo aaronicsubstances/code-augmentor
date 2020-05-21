@@ -71,3 +71,17 @@ exports.testNegativeIdBypass = function(augCode, context) {
     g.contentParts.push(context.newContent('test'));
     return [ g ];
 }
+
+exports.testHeader = function(augCode, context) {
+    assert.equal('//:GS:', context.header.genCodeStartDirective);
+    assert.equal('//:GE:', context.header.genCodeEndDirective);
+    assert.equal('//:STR:', context.header.embeddedStringDirective);
+    assert.equal('//:JSON:', context.header.embeddedJsonDirective);
+    assert.equal('//:SS:', context.header.skipCodeStartDirective);
+    assert.equal('//:SE:', context.header.skipCodeEndDirective);
+    assert.equal('//:AUG_CODE:', context.header.augCodeDirective);
+    assert.equal('//:GG:', context.header.inlineGenCodeDirective);
+    assert.equal('[', context.header.nestedLevelStartMarker);
+    assert.equal(']', context.header.nestedLevelEndMarker);
+    return '';
+}

@@ -99,12 +99,14 @@ public class ProcessCodeGenericTaskTest {
             Method method = cls.getMethod(methodName, AugmentingCode.class, ProcessCodeContext.class);
             return method.invoke(null, a, c);
         };
+        EvalFunction evalerWithoutReturn = (f, a, c) -> null;
         int count = 0;
         return new Object[][] {
             { count++, "aug_codes-00.json", evaler, "expected_gen_codes.json", 0 },
             { count++, "aug_codes-00.json", evalerProducingUnsetIds, null, 2 },
             { count++, "aug_codes-01.json", evalerProducingDuplicateIds, null, 1 },
-            { count++, "aug_codes-01.json", productionEvaler, null, 2 }
+            { count++, "aug_codes-01.json", productionEvaler, null, 2 },            
+            { count++, "aug_codes-01.json", evalerWithoutReturn, null, 1 }
         };
     }
 }

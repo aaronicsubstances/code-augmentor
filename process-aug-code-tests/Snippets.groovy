@@ -70,4 +70,18 @@ public class Snippets {
         g.contentParts.add(context.newContent('test'));
         return [ g ];
     }
+
+    static testHeader(augCode, context) {
+        assert '//:GS:' == context.header.genCodeStartDirective
+        assert '//:GE:' == context.header.genCodeEndDirective
+        assert '//:STR:' == context.header.embeddedStringDirective
+        assert '//:JSON:' == context.header.embeddedJsonDirective
+        assert '//:SS:' == context.header.skipCodeStartDirective
+        assert '//:SE:' == context.header.skipCodeEndDirective
+        assert '//:AUG_CODE:' == context.header.augCodeDirective
+        assert '//:GG:' == context.header.inlineGenCodeDirective
+        assert '[' == context.header.nestedLevelStartMarker
+        assert ']' == context.header.nestedLevelEndMarker
+        return ''
+    }
 }

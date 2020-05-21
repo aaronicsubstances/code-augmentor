@@ -91,7 +91,7 @@ public class CodeGenerationResponseProcessor {
         if (genCode.isDisableAutoIndent()) {
             return "";
         }
-        if (!TaskUtils.isEmpty(genCode.getIndent())) {
+        if (genCode.getIndent() != null) {
             return genCode.getIndent();
         }
         return augCodeDescriptor.getIndent();

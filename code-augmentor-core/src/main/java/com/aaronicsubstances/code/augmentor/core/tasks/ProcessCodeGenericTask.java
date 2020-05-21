@@ -142,7 +142,7 @@ public class ProcessCodeGenericTask {
     
             // Convert various alternative representations of List<GeneratedCode>     
             if (result == null) {
-                return Arrays.asList();
+                return Arrays.asList(convertGenCodeItem(null));
             }
             else if (result instanceof Collection) {
                 List<GeneratedCode> listResult = new ArrayList<>();

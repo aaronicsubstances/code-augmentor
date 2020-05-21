@@ -282,7 +282,7 @@ public class CodeGenerationResponseProcessorTest {
             { 
                 new GeneratedCode(0, false, "", false, false, false, null),
                 new AugmentingCodeDescriptor(0, 0, 0, " ", 0, null),
-                " " 
+                "" 
             },
             { 
                 new GeneratedCode(0, false, null, false, false, false, null),

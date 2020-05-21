@@ -64,6 +64,7 @@ class MyTestCase {
         testSingleRun("augCodes-03.json", 0, 0, "genCodes-03.json")
         testSingleRun("augCodes-04.json", 1, 2, null)
         testSingleRun("augCodes-05.json", 0, 0, "genCodes-05.json")
+        testSingleRun("augCodes-06.json", 0, 0, "genCodes-06.json")
     }
 
     void testSingleRun(String inputFileName, int successExitCode, int expectedErrorCount,
