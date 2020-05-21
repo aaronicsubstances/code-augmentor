@@ -375,7 +375,7 @@ public class CodeGenerationRequestCreatorTest {
             }
             else {
                 assertEquals(ex.getLineNumber(), (int)expected, "Line numbers differ");
-                System.out.println("testIdentifyAugCodeSectionsForErrors[" + index +
+                System.err.println("testIdentifyAugCodeSectionsForErrors[" + index +
                     "].exceptionMessage = " + ex.getMessage());
             }
         }
@@ -463,7 +463,7 @@ public class CodeGenerationRequestCreatorTest {
             }
             else {
                 assertEquals(ex.getLineNumber(), (int)expected, "Line numbers differ");
-                System.out.println("testValidateAugCodeSection[" + index +
+                System.err.println("testValidateAugCodeSection[" + index +
                     "].exceptionMessage = " + ex.getMessage());
             }
         }

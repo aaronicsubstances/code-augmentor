@@ -1,0 +1,53 @@
+{ "contentStreamingEnabled": false, "genCodeStartDirective": "#GS", "genCodeEndDirective": "#GE", "embeddedStringDirective": "#ES", "embeddedJsonDirective": "#ARG", "augCodeDirective": "#PHP5", "skipCodeStartDirective": "//--<<", "skipCodeEndDirective": "//--",       "inlineGenCodeDirective": "#GG#", "nestedLevelStartMarker": "[[", "nestedLevelEndMarker": "]]" }
+[
+	{
+		"fileId": 1,
+		"relativePath": "task-spec-03-0.py",
+		"augmentingCodes": [{
+			"id" : 1,
+			"directiveMarker" : "#PHP7",
+			"indent": " ",
+            "lineNumber": 1,
+            "lineSeparator": "\n",
+			"blocks" : [{
+				"content" : " generate\n"
+			},
+            {
+				"jsonify" : true,
+				"content" : " [\n ]"
+			}]
+		},
+		{
+			"id" : 3,
+			"directiveMarker" : "#PHP5",
+			"indent": "",
+            "lineNumber": 10,
+            "lineSeparator": "\n",
+            "hasNestedLevelStartMarker": true,
+            "nestedLevelNumber": 1,
+			"blocks" : [{
+				"content" : " complete"
+			},
+			{
+				"stringify" : true,
+				"content" : ": tree"
+			}]
+		},
+		{
+			"id" : 4,
+			"directiveMarker" : "#PHP7",
+			"indent": "",
+            "lineNumber": 13,
+            "lineSeparator": "\n",
+            "hasNestedLevelEndMarker": true,
+            "nestedLevelNumber": 1,
+			"blocks" : [{
+				"content" : "-----------"
+			},
+            {
+				"stringify" : true,
+				"content" : " ending again"
+			}]
+		}]
+	}
+]

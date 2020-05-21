@@ -1,0 +1,37 @@
+{ "contentStreamingEnabled": false, "genCodeStartDirective": "#GS", "genCodeEndDirective": "#GE", "embeddedStringDirective": "#ES", "embeddedJsonDirective": "#ARG", "augCodeDirective": "#PHP", "skipCodeStartDirective": "//--<<", "skipCodeEndDirective": "//--",       "inlineGenCodeDirective": "#GG#", "nestedLevelStartMarker": null, "nestedLevelEndMarker": null }
+[
+	{
+		"fileId": 1,
+		"relativePath": "task-spec-04-0.py",
+		"augmentingCodes": [{
+			"id" : 1,
+			"directiveMarker" : "#PHP",
+			"indent": " ",
+            "lineNumber": 3,
+            "lineSeparator": "\n",
+            
+			"blocks" : [{
+                "content": " generate\n"
+            },
+            {
+                "jsonify": true,
+				"content" : " [\n ]"
+			}]
+		},
+		{
+			"id" : 2,
+			"directiveMarker" : "#PHP",
+			"indent": "",
+            "lineNumber": 12,
+            "lineSeparator": "\n",
+            
+			"blocks" : [{
+                "content": "))-----------"
+            },
+            {
+                "stringify": true,
+				"content" : " ending again"
+			}]
+		}]
+	}
+]

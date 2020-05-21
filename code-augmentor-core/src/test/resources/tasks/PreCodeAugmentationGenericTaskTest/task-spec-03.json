@@ -1,0 +1,21 @@
+{
+	"relativePaths" : [ "task-spec-03-0.py" ],
+    "loggingEnabled" : true,
+	"genCodeStartDirectives" : [ "#GS" ],
+	"genCodeEndDirectives" : [ "#GE" ],
+	"embeddedStringDirectives" : [ "#ES" ],
+	"embeddedJsonDirectives" : [ "#ARG" ],
+	"skipCodeStartDirectives" : [ "//--<<" ],
+	"skipCodeEndDirectives" : [ "//--" ],
+    "inlineGenCodeDirectives": [ "#GG#" ],
+    "nestedLevelStartMarkers": [ "[[", "{{", "((" ],
+    "nestedLevelEndMarkers": [ "]]", "}}", "))" ],
+	"prepFile" : "task-spec-03-actual-prep.json",
+	"augCodeDirectives" : [{
+		"file": "task-spec-03-actual-request-0.json",
+		"directives": [ "#PHP" ]
+	},{
+		"file": "task-spec-03-actual-request-1.json",
+		"directives": [ "#PHP5", "#PHP7" ]
+	}]
+}

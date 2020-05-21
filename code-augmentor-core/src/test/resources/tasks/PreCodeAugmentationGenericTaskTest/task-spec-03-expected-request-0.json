@@ -1,0 +1,30 @@
+{ "contentStreamingEnabled": false, "genCodeStartDirective": "#GS", "genCodeEndDirective": "#GE", "embeddedStringDirective": "#ES", "embeddedJsonDirective": "#ARG", "augCodeDirective": "#PHP", "skipCodeStartDirective": "//--<<", "skipCodeEndDirective": "//--",       "inlineGenCodeDirective": "#GG#", "nestedLevelStartMarker": "[[", "nestedLevelEndMarker": "]]" }
+[
+	{
+		"fileId": 1,
+		"relativePath": "task-spec-03-0.py",
+		"augmentingCodes": [{
+			"id" : 2,
+			"directiveMarker" : "#PHP",
+			"indent": "    ",
+            "lineNumber": 6,
+            "lineSeparator": "\n",
+            "hasNestedLevelStartMarker": true,
+            
+			"blocks" : [{
+				"content" : " separate"
+			}]
+		},
+		{
+			"id" : 5,
+			"directiveMarker" : "#PHP",
+			"indent": "    ",
+            "lineNumber": 16,
+            "lineSeparator": "\n",
+            "hasNestedLevelEndMarker": true,
+			"blocks" : [{
+				"content" : "  ------------"
+			}]
+		}]
+	}
+]

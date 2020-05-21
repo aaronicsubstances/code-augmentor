@@ -1,0 +1,64 @@
+{ "contentStreamingEnabled": false, "genCodeStartDirective": "#GS", "genCodeEndDirective": "#GE" }
+[
+	{
+		"fileId": 1,
+		"relativePath": "task-spec-03-0.py",
+        "contentHash": "e1ddf4c64fcf603771da2b107274d9b5",
+		"codeSnippets": [
+		{
+			"augmentingCodeDescriptor": {
+				"id" : 1,
+				"startPos" : 0,
+				"endPos" : 41,
+				"indent" : " ",
+                "lineNumber": 1,
+                "lineSeparator": "\n"
+			}
+		},
+		{
+			"augmentingCodeDescriptor": {
+				"id" : 2,
+				"startPos" : 43,
+				"endPos" : 63,
+				"indent" : "    ",
+                "lineNumber": 6,
+                "lineSeparator": "\n"
+			},
+			"generatedCodeDescriptor": {
+				"startDirectiveStartPos" : 64,
+				"endDirectiveEndPos" : 80,
+                "inline": true
+			}
+		},
+        {
+			"augmentingCodeDescriptor": {
+				"id" : 3,
+				"startPos" : 81,
+				"endPos" : 108,
+				"indent" : "",
+                "lineNumber": 10,
+                "lineSeparator": "\n"
+			}
+		},
+        {
+			"augmentingCodeDescriptor": {
+				"id" : 4,
+				"startPos" : 109,
+				"endPos" : 145,
+				"indent" : "",
+                "lineNumber": 13,
+                "lineSeparator": "\n"
+			}
+		},
+        {
+			"augmentingCodeDescriptor": {
+				"id" : 5,
+				"startPos" : 146,
+				"endPos" : 171,
+				"indent" : "    ",
+                "lineNumber": 16,
+                "lineSeparator": "\n"
+			}
+		}]
+	}
+]

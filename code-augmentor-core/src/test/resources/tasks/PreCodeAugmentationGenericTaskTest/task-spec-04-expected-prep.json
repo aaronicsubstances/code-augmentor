@@ -1,0 +1,39 @@
+{ "contentStreamingEnabled": false, "genCodeStartDirective": "#GS", "genCodeEndDirective": "#GE" }
+[
+	{
+		"fileId": 1,
+		"relativePath": "task-spec-04-0.py",
+        "contentHash": "08366fa0834a36d8ecdbaa6fc8394564",
+		"codeSnippets": [
+		{
+			"augmentingCodeDescriptor": {
+				"id" : 1,
+				"startPos" : 7,
+				"endPos" : 46,
+				"indent" : " ",
+                "lineNumber": 3,
+                "lineSeparator": "\n"
+			},
+			"generatedCodeDescriptor": {
+				"startDirectiveStartPos" : 49,
+				"endDirectiveEndPos" : 86,
+                "inline": true
+			}
+		},
+		{
+			"augmentingCodeDescriptor": {
+				"id" : 2,
+				"startPos" : 86,
+				"endPos" : 121,
+				"indent" : "",
+                "lineNumber": 12,
+                "lineSeparator": "\n"
+			},
+			"generatedCodeDescriptor": {
+				"startDirectiveStartPos" : 122,
+				"endDirectiveEndPos" : 127,
+                "inline": true
+			}
+		}]
+	}
+]

@@ -1,0 +1,15 @@
+{
+	"relativePaths" : [ "task-spec-04-0.py" ],
+	"genCodeStartDirectives" : [ "#GS" ],
+	"genCodeEndDirectives" : [ "#GE" ],
+	"embeddedStringDirectives" : [ "#ES" ],
+	"embeddedJsonDirectives" : [ "#ARG" ],
+	"skipCodeStartDirectives" : [ "//--<<" ],
+	"skipCodeEndDirectives" : [ "//--" ],
+    "inlineGenCodeDirectives": [ "#GG#" ],
+	"prepFile" : "task-spec-04-actual-prep.json",
+	"augCodeDirectives" : [{
+		"file": "task-spec-04-actual-request-0.json",
+		"directives": [ "#PHP" ]
+	}]
+}

@@ -30,6 +30,9 @@ public class PreCodeAugmentationGenericTaskTest {
         public String[] embeddedStringDirectives, embeddedJsonDirectives;
         public String[] skipCodeStartDirectives, skipCodeEndDirectives;
         public AugCodeSpec[] augCodeDirectives;
+        public String[] inlineGenCodeDirectives;
+        public String[] nestedLevelStartMarkers;
+        public String[] nestedLevelEndMarkers;
 
         public String prepFile;
 
@@ -40,8 +43,10 @@ public class PreCodeAugmentationGenericTaskTest {
             public String[] directives;
         }
     }
+
+    File tempDir = new File(FileUtils.getTempDirectory(), getClass().getName());
     
-    public PreCodeAugmentationGenericTask deserialize(String path) throws IOException {
+    public PreCodeAugmentationGenericTask deserialize(String path, String newline) throws IOException {
         String text = TestResourceLoader.loadResource(path, getClass());
         Gson gson = new Gson();
         TaskLite taskSpec = gson.fromJson(text, TaskLite.class);
@@ -52,11 +57,10 @@ public class PreCodeAugmentationGenericTaskTest {
         task.setBaseDirs(new ArrayList<>());
 
         // copy files to temp dir.
-        File tempDir = new File(FileUtils.getTempDirectory(), getClass().getName());
         tempDir.mkdir();
         for (String relativePath : taskSpec.relativePaths) {
             String contents = TestResourceLoader.loadResourceNewlinesNormalized(relativePath, 
-                PreCodeAugmentationGenericTaskTest.class, "\r\n");
+                PreCodeAugmentationGenericTaskTest.class, newline);
             FileUtils.write(new File(tempDir, relativePath), contents, task.getCharset());
             task.getRelativePaths().add(relativePath);
             task.getBaseDirs().add(tempDir);
@@ -80,6 +84,15 @@ public class PreCodeAugmentationGenericTaskTest {
         if (taskSpec.skipCodeEndDirectives != null) {
             task.setSkipCodeEndDirectives(Arrays.asList(taskSpec.skipCodeEndDirectives));
         }
+        if (taskSpec.inlineGenCodeDirectives != null) {
+            task.setInlineGenCodeDirectives(Arrays.asList(taskSpec.inlineGenCodeDirectives));
+        }
+        if (taskSpec.nestedLevelStartMarkers != null) {
+            task.setNestedLevelStartMarkers(Arrays.asList(taskSpec.nestedLevelStartMarkers));
+        }
+        if (taskSpec.nestedLevelEndMarkers != null) {
+            task.setNestedLevelEndMarkers(Arrays.asList(taskSpec.nestedLevelEndMarkers));
+        }
 
         if (taskSpec.loggingEnabled) {
             task.setLogAppender((level, msgSrc) -> 
@@ -90,8 +103,8 @@ public class PreCodeAugmentationGenericTaskTest {
     }
 
     @Test(dataProvider = "createTestExecuteData")
-    public void testExecute(String jsonPath) throws Exception {
-        PreCodeAugmentationGenericTask task = deserialize(jsonPath);
+    public void testExecute(String jsonPath, String newline) throws Exception {
+        PreCodeAugmentationGenericTask task = deserialize(jsonPath, newline);
         String expectedPrepFileContents = TestResourceLoader.loadResource(
             jsonPath.replace(".json", "-expected-prep.json"), getClass());
         PreCodeAugmentationResult expResult = PreCodeAugmentationResult.deserialize(
@@ -112,10 +125,10 @@ public class PreCodeAugmentationGenericTaskTest {
         PreCodeAugmentationResult actualResult = PreCodeAugmentationResult.deserialize(
             task.getPrepFile());
         // to enable easier testing, don't require dir (we won't know temp dir on every
-        // host dev't machine), and content hash
+        // host dev't machine)
         for (SourceFileDescriptor f : actualResult.getFileDescriptors()) {
+            assertEquals(f.getDir(), tempDir.getPath());
             f.setDir(null);
-            f.setContentHash(null);
         }
         assertEquals(actualResult, expResult, 
             "Unexpected contents found in " + task.getPrepFile());
@@ -126,6 +139,7 @@ public class PreCodeAugmentationGenericTaskTest {
             // to enable easier testing, don't require dir (we won't know temp dir on every
             // host dev't machine)
             for (SourceFileAugmentingCode a : actual.getSourceFileAugmentingCodes()) {
+                assertEquals(a.getDir(), tempDir.getPath());
                 a.setDir(null);
             }
             assertEquals(actual, expected, "Unexpected contents found in " + f);
@@ -135,9 +149,11 @@ public class PreCodeAugmentationGenericTaskTest {
     @DataProvider
     public Object[][] createTestExecuteData() {
         return new Object[][]{
-            new Object[] { "task-spec-00.json" },
-            new Object[] { "task-spec-01.json" },
-            new Object[] { "task-spec-02.json" }
+            new Object[] { "task-spec-00.json", "\r\n" },
+            new Object[] { "task-spec-01.json", "\r\n" },
+            new Object[] { "task-spec-02.json", "\r\n" },
+            new Object[] { "task-spec-03.json", "\n" },
+            new Object[] { "task-spec-04.json", "\n" }
         };
     }
 }

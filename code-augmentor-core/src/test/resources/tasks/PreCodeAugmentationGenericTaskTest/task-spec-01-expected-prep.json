@@ -3,6 +3,7 @@
 	{
 		"fileId": 1,
 		"relativePath": "task-spec-01-0.java",
+        "contentHash": "fc07b10c7caf6f520c8f322a68cca5c2",
 		"codeSnippets": [{
 			"augmentingCodeDescriptor": {
 				"id" : 1,
@@ -23,6 +24,7 @@
 	{
 		"fileId": 2,
 		"relativePath": "task-spec-01-1.java",
+        "contentHash": "933f29f743a69a60473bcf32e7201e41",
 		"codeSnippets": [{
 			"augmentingCodeDescriptor": {
 				"id" : 1,

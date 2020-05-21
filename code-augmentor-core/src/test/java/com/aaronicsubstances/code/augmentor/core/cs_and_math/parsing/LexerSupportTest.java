@@ -349,7 +349,7 @@ public class LexerSupportTest {
             fail("Expected RuntimeException");
         }
         catch (RuntimeException ex) {
-            System.out.println(ex.getClass().getName() + ": " + 
+            System.err.println(ex.getClass().getName() + ": " + 
                     ex.getMessage());
         }
     }
@@ -398,7 +398,7 @@ public class LexerSupportTest {
             fail("Expected RuntimeException");
         }
         catch (RuntimeException ex) {
-            System.out.println(ex.getClass().getName() + ": " + 
+            System.err.println(ex.getClass().getName() + ": " + 
                     ex.getMessage());
         }
     }
