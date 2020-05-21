@@ -62,6 +62,8 @@ class MyTestCase {
         testSingleRun("augCodes-01.json", 0, 0, "genCodes-01.json")
         testSingleRun("augCodes-02.json", 0, 0, "genCodes-02.json")
         testSingleRun("augCodes-03.json", 0, 0, "genCodes-03.json")
+        testSingleRun("augCodes-04.json", 1, 2, null)
+        testSingleRun("augCodes-05.json", 0, 0, "genCodes-05.json")
     }
 
     void testSingleRun(String inputFileName, int successExitCode, int expectedErrorCount,
@@ -95,11 +97,11 @@ class MyTestCase {
         
             def m = ant.project.getProperty(PRINT_OUT) =~ /(?i)\d+ error\(s\) found/
             if (expectedErrorCount) {
+                assert m.find(): ant.project.getProperty(PRINT_OUT)
                 assert m.group() == "$expectedErrorCount error(s) found"
-                assert m
             }
             else {
-                assert !m
+                assert !m.find(): ant.project.getProperty(PRINT_OUT)
             }
             if (expectedOutputFileName != null) {
                 def expectedGenCode = CodeGenerationResponse.deserialize(

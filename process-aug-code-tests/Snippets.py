@@ -56,3 +56,9 @@ def testSettingAllGenCodeProps(augCode, context):
     nextGenCode.skipped = True
     nextGenCode.contentParts.append(context.newContent(""))
     return [ genCode, nextGenCode ]
+
+def testNegativeIdBypass(augCode, context):
+    g = context.newGenCode()
+    g.id = -1
+    g.contentParts.append(context.newContent('test'))
+    return [ g ]

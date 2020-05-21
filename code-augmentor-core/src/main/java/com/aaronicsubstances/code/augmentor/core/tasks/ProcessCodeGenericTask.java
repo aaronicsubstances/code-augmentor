@@ -201,12 +201,13 @@ public class ProcessCodeGenericTask {
             .collect(Collectors.toList());
         // Interpret use of -1 or negatives as intentional and skip
         // validating negative ids.
+        List<Integer> validIds = ids.stream().filter(x -> x > 0).collect(Collectors.toList());
         if (ids.stream().anyMatch(x -> x == 0)) {
             errors.add(createException(context,
                 "At least one generated code id was not set. Found: " +
                     ids, null));
         }
-        else if (ids.stream().filter(x -> x > 0).distinct().count() < ids.size()) {
+        else if (validIds.stream().distinct().count() < validIds.size()) {
             errors.add(createException(context,
                 "Valid generated code ids must be unique, but found duplicates: " + ids, null));
         }

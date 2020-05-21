@@ -63,4 +63,11 @@ public class Snippets {
         nextGenCode.contentParts.push(context.newContent(""));
         return [ genCode, nextGenCode ];
     }
+
+    static testNegativeIdBypass(augCode, context) {
+        def g = context.newGenCode();
+        g.id = -1;
+        g.contentParts.add(context.newContent('test'));
+        return [ g ];
+    }
 }

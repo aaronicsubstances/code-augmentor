@@ -69,4 +69,11 @@ class Snippets {
         $nextGenCode->contentParts[] = $context->newContent("");
         return [ $genCode, $nextGenCode ];
     }
+
+    public static function testNegativeIdBypass($augCode, $context) {
+        $g = $context->newGenCode();
+        $g->id = -1;
+        $g->contentParts[] = $context->newContent('test');
+        return [ $g ];
+    }
 }

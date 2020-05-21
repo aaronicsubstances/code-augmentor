@@ -64,3 +64,10 @@ exports.testSettingAllGenCodeProps = function(augCode, context) {
     nextGenCode.contentParts.push(context.newContent(""));
     return [ genCode, nextGenCode ];
 }
+
+exports.testNegativeIdBypass = function(augCode, context) {
+    const g = context.newGenCode();
+    g.id = -1;
+    g.contentParts.push(context.newContent('test'));
+    return [ g ];
+}

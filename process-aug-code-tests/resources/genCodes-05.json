@@ -1,0 +1,19 @@
+{ "contentStreamingEnabled": false }
+[
+
+{
+    "fileId": 1,
+    "generatedCodes": [{
+        "id": -1,
+        "indent": null,
+        "skipped": false,
+        "replaceAugCodeDirectives": false,
+        "replaceGenCodeDirectives": false,
+        "disableAutoIndent": false,
+        "contentParts": [{
+            "exactMatch": false,
+            "content": "test"
+        }]
+    }]
+}
+]
