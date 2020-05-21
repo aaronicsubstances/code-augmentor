@@ -60,7 +60,8 @@ public class SourceCodeTokenizerTest {
 		return new Object[][]{
 			{ "sample-code.php.txt", "\r\n", "sample-code.php.json" },
 			{ "sample-code.java.txt", "\r\n", "sample-code.java.json" },
-			{ "sample-code-on-unix.php.txt", "\n", "sample-code-on-unix.php.json" }
+			{ "sample-code-on-unix.php.txt", "\n", "sample-code-on-unix.php.json" },
+			{ "sample-code-on-nested.txt", "\n", "sample-code-on-nested.json" }
 		};
 	}
 }

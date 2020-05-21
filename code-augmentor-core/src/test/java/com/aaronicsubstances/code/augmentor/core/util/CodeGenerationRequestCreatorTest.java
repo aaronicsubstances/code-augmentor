@@ -66,6 +66,40 @@ public class CodeGenerationRequestCreatorTest {
         List<AugmentingCode> augCodes41 = Arrays.asList(
             createAugCode("\r\n", "", 2, "#PHP7", 6, new Block("", false, false))
         );
+        
+        List<CodeSnippetDescriptor> bodySnippets5 = Arrays.asList(
+            new CodeSnippetDescriptor(createAugCodeDescriptor("\n", " ", 1, 0, 41, 1), null),
+            new CodeSnippetDescriptor(createAugCodeDescriptor("\n", "    ", 2, 43, 63, 6),
+                new GeneratedCodeDescriptor(64, 0, 0, 80, true)),
+            new CodeSnippetDescriptor(createAugCodeDescriptor("\n", "", 3, 81, 108, 10), null),
+            new CodeSnippetDescriptor(createAugCodeDescriptor("\n", "", 4, 109, 145, 13), null),                
+            new CodeSnippetDescriptor(createAugCodeDescriptor("\n", "    ", 5, 146, 171, 16), null)
+        );
+        List<AugmentingCode> augCodes50 = Arrays.asList(
+            createAugCode("\n", "    ", 2, "#PHP", 6, new Block(" separate", false, false)),
+            createAugCode("\n", "    ", 5, "#PHP", 16,
+                new Block("  ------------", false, false))
+        );
+        List<AugmentingCode> augCodes51 = Arrays.asList(
+            createAugCode("\n", " ", 1, "#PHP7", 1,
+                new Block(" generate\n", false, false),
+                new Block(" [\n ]", false, true)),
+            
+            createAugCode("\n", "", 3, "#PHP5", 10,
+                new Block(" complete", false, false),
+                new Block(": tree", true, false)),
+
+            createAugCode("\n", "", 4, "#PHP7", 13, 
+                new Block("-----------", false, false),
+                new Block(" ending again", true, false))                
+        );
+        augCodes50.get(0).setHasNestedLevelStartMarker(true);
+        augCodes50.get(1).setHasNestedLevelEndMarker(true);
+        augCodes51.get(1).setHasNestedLevelStartMarker(true);
+        augCodes51.get(2).setHasNestedLevelEndMarker(true);
+        augCodes51.get(1).setNestedLevelNumber(1);
+        augCodes51.get(2).setNestedLevelNumber(1);
+
         return new Object[][] {
             new Object[]{ "tokens-for-process-source-00.json", 
                 Arrays.asList(), Arrays.asList(), Arrays.asList() },
@@ -74,16 +108,18 @@ public class CodeGenerationRequestCreatorTest {
             new Object[]{ "tokens-for-process-source-02.json", 
                 Arrays.asList(), Arrays.asList(), Arrays.asList() },
             new Object[]{ "tokens-for-process-source-03.json",
-                bodySnippets4, augCodes40, augCodes41 }
+                bodySnippets4, augCodes40, augCodes41 },
+            new Object[]{ "tokens-for-process-source-04.json",
+                bodySnippets5, augCodes50, augCodes51 }
         };
     }
 
     private static AugmentingCode createAugCode(String newline, String indent,
-            int index, String directiveMarker,
+            int id, String directiveMarker,
             int lineNumber, Block... blocks) {
         AugmentingCode augCode = new AugmentingCode(Arrays.asList(blocks));
         augCode.setDirectiveMarker(directiveMarker);
-        augCode.setId(index);
+        augCode.setId(id);
         augCode.setLineNumber(lineNumber);
         augCode.setIndent(indent != null ? indent : "");
         augCode.setLineSeparator(newline);
@@ -91,12 +127,12 @@ public class CodeGenerationRequestCreatorTest {
     }
 
     private static AugmentingCodeDescriptor createAugCodeDescriptor(String newline,
-            String indent, int index, int startPos, int endPos, int lineNumber) {        
+            String indent, int id, int startPos, int endPos, int lineNumber) {        
         AugmentingCodeDescriptor augCodeDesc = new AugmentingCodeDescriptor();
         augCodeDesc.setIndent(indent != null ? indent : "");
         augCodeDesc.setStartPos(startPos);
         augCodeDesc.setEndPos(endPos);
-        augCodeDesc.setId(index);
+        augCodeDesc.setId(id);
         augCodeDesc.setLineNumber(lineNumber);
         augCodeDesc.setLineSeparator(newline);
         return augCodeDesc;
