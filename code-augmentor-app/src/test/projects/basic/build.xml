@@ -7,7 +7,8 @@
     <property name="src.dir" location="src" />
     <property name="build.dir" location="build" />
     <property name="build.code-augmentor.dir" location="${build.dir}/codeAugmentor" />
-    <property name="code-augmentor.verbose" value="false" />
+    <property name="grape.dir" location="${build.dir}/scriptDeps" />
+    <property name="code-augmentor.verbose" value="true" />
     <property name="augCode.file" location="${build.code-augmentor.dir}/augCodes.json" />
     <property name="genCode.file" location="${build.code-augmentor.dir}/genCodes.json" />
     
@@ -29,8 +30,17 @@
         </code_aug_prepare>
     </target>
     
+    <target name="-prepare-for-no-code-change">
+        <code_aug_prepare verbose="${code-augmentor.verbose}">
+            <srcDir dir="${src.dir}"
+                includes="**/*.java" excludes="com/Main2.java" />
+        </code_aug_prepare>
+    </target>
+    
     <target name="process" description="process code augmentor parse results">
+        <delete dir="${grapes.dir}"/>
         <exec executable="groovy" failonerror="true" vmlauncher="false">
+            <arg value="-Dgrape.root=${grape.dir}" />
             <arg value="main.groovy" />
             <arg value="${augCode.file}" />
             <arg value="${genCode.file}" />
@@ -45,6 +55,31 @@
         </code_aug_complete>
     </target>
     
-    <target name="default" description="runs entire code augmentor operation"
+    <target name="-complete-by-disabling-code-change-detection">
+        <code_aug_complete verbose="${code-augmentor.verbose}"
+            codeChangeDetectionDisabled="true" />
+    </target>
+    
+    <target name="-complete-by-disabling-fail-on-code-change">
+        <code_aug_complete verbose="${code-augmentor.verbose}"
+            failOnChanges="false" />
+    </target>
+
+    <target name="default" description="default"
+        depends="code-change-absent" />
+    
+    <target name="code-change-present" description="runs entire code augmentor operation with default settings"
         depends="prepare,process,complete" />
+    
+    <target name="do-not-detect-code-change"
+        description="disables code changes and runs entire code augmentor operation"
+        depends="prepare,process,-complete-by-disabling-code-change-detection" />
+    
+    <target name="code-change-absent"
+        description="skips files necessary to run entire code augmentor operation successfully"
+        depends="-prepare-for-no-code-change,process,complete" />
+    
+    <target name="code-change-present-DF"
+        description="disables fail on build option and runs entire code augmentor operation"
+        depends="prepare,process,-complete-by-disabling-fail-on-code-change" />
 </project>

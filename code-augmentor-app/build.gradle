@@ -50,10 +50,38 @@ task('publishCoreDependency', type: Exec) {
     workingDir '..'
 }
 
-task('alltests', type: JavaExec, dependsOn: [ 'publishCoreDependency', 'build' ]) {
-    def psep = File.separator
-    args = [ "-f", "src${psep}test${psep}projects${psep}basic${psep}build.xml" ]
+task('alltests', dependsOn: [ 'build', 'testant'])
+
+task('testant', dependsOn: ['compileJava', 'publishCoreDependency',
+        'do-not-detect-code-change', 'code-change-absent', 'code-change-present-DF' ])
+testant.mustRunAfter publishCoreDependency
+
+task('do-not-detect-code-change', type: JavaExec) {
+    args = createAntCallArgs(name)
     main = project.mainClassName
     classpath(sourceSets.main.runtimeClasspath)
     enableAssertions = true
+}
+
+task('code-change-absent', type: JavaExec) {
+    args = createAntCallArgs(null) // test that default target is used
+    main = project.mainClassName
+    classpath(sourceSets.main.runtimeClasspath)
+    enableAssertions = true
+}
+
+task('code-change-present-DF', type: JavaExec) {
+    args = createAntCallArgs(name)
+    main = project.mainClassName
+    classpath(sourceSets.main.runtimeClasspath)
+    enableAssertions = true
+}
+
+def createAntCallArgs(antTarget) {
+    def psep = File.separator
+    def args = [ "-f", "src${psep}test${psep}projects${psep}basic${psep}build.xml" ]
+    if (antTarget) {
+        args += [ "-t", antTarget ]
+    }
+    return args
 }

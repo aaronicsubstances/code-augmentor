@@ -15,7 +15,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.tools.ant.BuildLogger;
-import org.apache.tools.ant.DefaultLogger;
+import org.apache.tools.ant.NoBannerLogger;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.ProjectHelper;
 
@@ -84,12 +84,11 @@ public class Main {
         Project antProject = new Project();
         ProjectHelper helper = ProjectHelper.getProjectHelper();
         antProject.addReference(ProjectHelper.PROJECTHELPER_REFERENCE, helper);
-        final BuildLogger logger = new DefaultLogger(); // new NoBannerLogger();
+        final BuildLogger logger = new NoBannerLogger();
         logger.setMessageOutputLevel(Project.MSG_INFO);
         logger.setOutputPrintStream(System.out);
         logger.setErrorPrintStream(System.err);
         antProject.addBuildListener(logger);
-        //antProject.setUserProperty("ant.file", buildFile.getAbsolutePath());
         antProject.init();
         setUpTaskDefinitions(antProject);
         helper.parse(antProject, buildFile);

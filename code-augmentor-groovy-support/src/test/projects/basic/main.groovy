@@ -1,6 +1,7 @@
-println "args: $args"
+assert args.size() == 2
 ant.code_aug_run(verbose: true) {
     srcDir(dir: 'src') {
-        includes: '**/*.java'
+        include(name: '**/*.java')
+        exclude(name: 'com/Main2.java')
     }
 }

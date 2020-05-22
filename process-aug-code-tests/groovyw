@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+
+DIRNAME=`dirname $0`
+if [ -z "$DIRNAME" ]; then DIRNAME=.; fi
+grapedir=$DIRNAME/build
+if [ -d "$grapedir" ]; then
+    rm -rf "$grapedir"
+fi
+groovy "-Dgrape.root=$grapedir" "$@"

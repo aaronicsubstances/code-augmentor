@@ -39,11 +39,16 @@ public class Main {
                                 .argName( "groovy dir" ).hasArg()
                                 .desc( "use given Groovy script directory" )
                                 .build();
+        Option entryPtOpt = Option.builder("m").longOpt("main")
+                                .argName( "main script" ).hasArg()
+                                .desc( "use given Groovy main script name" )
+                                .build();
         Option helpOpt = Option.builder("h").longOpt("help")
                                 .desc("help information")
                                 .build();
         Options options = new Options();
         options.addOption(dirOpt)
+            .addOption(entryPtOpt)
             .addOption(helpOpt);
 
         if (hasHelp(helpOpt, args)) {
@@ -65,7 +70,7 @@ public class Main {
             return;
         }
         String scriptDirPath = cmd.getOptionValue(dirOpt.getOpt());
-        startGroovyScript(args, new File(scriptDirPath));
+        startGroovyScript(args, new File(scriptDirPath), cmd.getOptionValue(entryPtOpt.getOpt()));
     }
     
     private static boolean hasHelp(Option help, String[] args) {
@@ -84,7 +89,7 @@ public class Main {
         }
     }
 
-    private static void startGroovyScript(String[] args, File scriptDir) throws Exception {
+    private static void startGroovyScript(String[] args, File scriptDir, String mainScriptName) throws Exception {
         URL[] scriptEngineRoots = new URL[]{ scriptDir.toURI().toURL() };
         GroovyScriptEngine scriptEngine = new GroovyScriptEngine(scriptEngineRoots);
         CompilerConfiguration cc = new CompilerConfiguration();
@@ -92,7 +97,10 @@ public class Main {
         scriptEngine.setConfig(cc);
         Binding binding = new Binding();
         binding.setVariable("args", args);
-        Script entryScript = scriptEngine.createScript("main.groovy", binding);
+        if (mainScriptName == null) {
+            mainScriptName = "main.groovy";
+        }
+        Script entryScript = scriptEngine.createScript(mainScriptName, binding);
         AntBuilder antBuilder = createAntBuilder(scriptDir, entryScript);
         binding.setVariable("ant", antBuilder);
         entryScript.run();

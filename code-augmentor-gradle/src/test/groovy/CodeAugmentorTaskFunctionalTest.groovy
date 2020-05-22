@@ -1,11 +1,10 @@
 package com.aaronicsubstances.code.augmentor.gradle
 
 import org.gradle.testkit.runner.GradleRunner
+import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
-
-import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 class CodeAugmentorTaskFunctionalTest extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
@@ -73,16 +72,55 @@ class CodeAugmentorTaskFunctionalTest extends Specification {
         |//:GEN_CODE_END:
         |""".stripMargin()
 
+        File main2SrcFile = new File(srcPkgFolder, "Main2.java")
+        main2SrcFile << """//:AUG_CODE: Worker.generateMainClass
+        |//:STR: com.Main2
+        |//:GEN_CODE_START:
+        |package com;
+        |
+        |public class Main {
+        |
+        |    public static void main(String[] args) {
+        |        System.out.println("Hello from CodeAugmentor!");
+        |    }
+        |}
+        |//:GEN_CODE_END:
+        |""".stripMargin()
+
         undeletedWorkingDir = new File(System.getProperty("java.io.tmpdir"), 
             "CodeAugmentationTaskFunctionalTest")
         undeletedWorkingDir.mkdir()
         new File(undeletedWorkingDir, "Main-copy.java").bytes = mainSrcFile.bytes
+        new File(undeletedWorkingDir, "Main2-copy.java").bytes = main2SrcFile.bytes
         new File(undeletedWorkingDir, "Worker-copy.groovy").bytes = workerFile.bytes
         undeletedDestDir = new File(undeletedWorkingDir, "generated")
         undeletedDestDir.mkdir()
     }
 
-    def "test codeAugmentorRun task with main class generation"() {
+    def "test codeAugmentorRun task: code change detection disabled"() {
+        buildFile << """
+            codeAugmentor {
+                fileSets.add(project.fileTree('${srcFolder.name}') {
+                    include '**/*.java'
+                })
+                groovyScriptDir = "${scriptDir.name}"
+                destDir = /${undeletedDestDir}/
+                codeChangeDetectionDisabled = true
+            }
+        """
+
+        when:
+        def result = GradleRunner.create()
+            .withProjectDir(testProjectDir.root)
+            .withArguments('codeAugmentorRun', '--stacktrace')
+            .withPluginClasspath()
+            .build()
+
+        then:
+        result.task(":codeAugmentorRun").outcome == TaskOutcome.SUCCESS
+    }
+
+    def "test codeAugmentorRun task: code changes present"() {
         buildFile << """
             codeAugmentor {
                 fileSets.add(project.fileTree('${srcFolder.name}') {
@@ -98,9 +136,55 @@ class CodeAugmentorTaskFunctionalTest extends Specification {
             .withProjectDir(testProjectDir.root)
             .withArguments('codeAugmentorRun', '--stacktrace')
             .withPluginClasspath()
+            .buildAndFail()
+
+        then:
+        result.task(":codeAugmentorRun").outcome == TaskOutcome.FAILED
+    }
+
+    def "test codeAugmentorRun task: code changes present - DF"() {
+        buildFile << """
+            codeAugmentor {
+                fileSets.add(project.fileTree('${srcFolder.name}') {
+                    include '**/*.java'
+                })
+                groovyScriptDir = "${scriptDir.name}"
+                destDir = /${undeletedDestDir}/
+                failOnChanges = false
+            }
+        """
+
+        when:
+        def result = GradleRunner.create()
+            .withProjectDir(testProjectDir.root)
+            .withArguments('codeAugmentorRun', '--stacktrace')
+            .withPluginClasspath()
             .build()
 
         then:
-        result.task(":codeAugmentorRun").outcome == SUCCESS
+        result.task(":codeAugmentorRun").outcome == TaskOutcome.SUCCESS
+    }
+
+    def "test codeAugmentorRun task: code changes absent"() {
+        buildFile << """
+            codeAugmentor {
+                fileSets.add(project.fileTree('${srcFolder.name}') {
+                    include '**/*.java'
+                    exclude 'com/Main2.java'
+                })
+                groovyScriptDir = "${scriptDir.name}"
+                destDir = /${undeletedDestDir}/
+            }
+        """
+
+        when:
+        def result = GradleRunner.create()
+            .withProjectDir(testProjectDir.root)
+            .withArguments('codeAugmentorRun', '--stacktrace')
+            .withPluginClasspath()
+            .build()
+
+        then:
+        result.task(":codeAugmentorRun").outcome == TaskOutcome.SUCCESS
     }
 }

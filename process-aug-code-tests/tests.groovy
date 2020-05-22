@@ -19,7 +19,6 @@ class MyTestCase {
         scriptDir = new File(MyTestCase.class.protectionDomain.codeSource.location.path).parent
         buildDir = new File(scriptDir, 'build')
         def ant = new AntBuilder()
-        ant.delete(dir: buildDir)
 
         // set up nodejs scripts.
         ant.copy(todir: "$buildDir/nodejs", file: "$LocalConfig.NODEJS_REPO_PATH/index.js")

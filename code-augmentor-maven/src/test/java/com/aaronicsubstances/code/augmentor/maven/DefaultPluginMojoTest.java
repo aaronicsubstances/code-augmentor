@@ -16,13 +16,20 @@ public class DefaultPluginMojoTest extends AbstractPluginMojoTest {
         if (!isFunctionalTestsEnabled()) {
             return;
         }
+        runTest("do-not-detect-code-change", 0);
+        runTest("code-change-absent", 0);
+        runTest("code-change-present", 1);
+        runTest("code-change-present-DF", 0);
+    }
+
+    private void runTest(String executionId, int expectedExitCode) throws Exception {
         File projectDir = new File(getTestProjectsDir(), "default-mojo-project");
         assertTrue( projectDir.exists() );
         File output = File.createTempFile("stdout+err-", ".txt");
         int actualExitCode = PluginUtils.execCommand(projectDir, output, output, "mvn", true, 
-            getPluginPrefix() + ":run", "-e");
+            "clean", getPluginPrefix() + ":run@" + executionId, "-e");
         String outputText = readTextAndDeleteFile(output);
-        assertEquals(actualExitCode, 0, outputText);
+        assertEquals(actualExitCode, expectedExitCode, outputText);
         Reporter.log(outputText);
     }
 }
