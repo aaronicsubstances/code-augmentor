@@ -11,13 +11,13 @@ do
         counter=`expr $counter + 1`
         if [ -n "$confirmed" ]
         then
-            echo "$counter. copying $b/$a to $c/$a"
-            cp -f "$b/$a" "$c/$a"
+            echo "$counter. copying $c/$a to $b/$a"
+            cp -f "$c/$a" "$b/$a"
             if [ $? -ne 0 ]; then
                 exit $?
             fi
         else
-            echo "$counter. will copy $b/$a to $c/$a"
+            echo "$counter. will copy $c/$a to $b/$a"
         fi
         a=
         b=

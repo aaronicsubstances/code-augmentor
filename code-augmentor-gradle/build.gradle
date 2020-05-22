@@ -25,7 +25,7 @@ task alltests(dependsOn: build) {
 gradlePlugin {
     plugins {
         simplePlugin {
-            id = 'com.aaronicsubstances.codeaugmentor'
+            id = 'com.aaronicsubstances.code-augmentor'
             implementationClass = 'com.aaronicsubstances.code.augmentor.gradle.CodeAugmentorPlugin'
         }
     }
@@ -34,6 +34,7 @@ gradlePlugin {
 publishing {
 	publications {
 		maven(MavenPublication) {
+            artifactId = 'code-augmentor-gradle-plugin'
 			from components.java
 		}
 	}

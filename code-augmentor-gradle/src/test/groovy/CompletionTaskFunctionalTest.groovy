@@ -15,7 +15,7 @@ class CompletionTaskFunctionalTest extends Specification {
         buildFile = testProjectDir.newFile('build.gradle')
         buildFile << """
             plugins {
-                id 'com.aaronicsubstances.codeaugmentor'
+                id 'com.aaronicsubstances.code-augmentor'
             }
         """
         File workingDir = testProjectDir.newFolder("build", "codeAugmentor")

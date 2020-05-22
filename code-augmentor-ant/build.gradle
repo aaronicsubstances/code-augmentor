@@ -51,6 +51,7 @@ task alltests(dependsOn: build) {
 publishing {
 	publications {
 		maven(MavenPublication) {
+            artifactId = 'code-augmentor-ant-plugin'
 			from components.java
 			artifact sourceJar
 			artifact javadocJar
