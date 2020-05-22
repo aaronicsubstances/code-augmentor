@@ -4,6 +4,7 @@
 		"fileId": 1,
 		"relativePath": "task-spec-01-0.java",
 		"dir": "%TEMP_DIR%",
+        "contentHash": "dca77f302d4ae070a4d5a903073879fd",
 		"codeSnippets": [{
 			"augmentingCodeDescriptor": {
 				"id" : 1,
@@ -19,6 +20,7 @@
 		"fileId": 2,
 		"relativePath": "task-spec-01-1.java",
 		"dir": "%TEMP_DIR%",
+        "contentHash": "1ee5930ec09d1b4f04b247d0db9be75f",
 		"codeSnippets": [{
 			"augmentingCodeDescriptor": {
 				"id" : 1,

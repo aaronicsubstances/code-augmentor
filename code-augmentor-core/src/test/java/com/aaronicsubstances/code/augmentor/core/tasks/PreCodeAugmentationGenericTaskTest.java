@@ -156,4 +156,30 @@ public class PreCodeAugmentationGenericTaskTest {
             new Object[] { "task-spec-04.json", "\n" }
         };
     }
+    
+    @Test(dataProvider = "createTestExecuteForErrorsData")
+    public void testExecuteForErrors(String jsonPath, String newline, 
+            List<Integer> expErrLineNums) throws Exception {
+        PreCodeAugmentationGenericTask task = deserialize(jsonPath, newline);
+        task.execute();
+        assertEquals(task.getAllErrors().size(), expErrLineNums.size(),
+            task.getAllErrors().toString());
+        System.err.println(task.getAllErrors().toString());
+        for (int i  = 0; i < expErrLineNums.size(); i++) {
+            Integer expLineNum = expErrLineNums.get(i);
+            if (expLineNum != null) {
+                Throwable taskExc = task.getAllErrors().get(i);
+                assertEquals(((GenericTaskException) taskExc).getLineNumber(), (int)expLineNum);
+            }
+        }
+    }
+
+    @DataProvider
+    public Object[][] createTestExecuteForErrorsData() {
+        return new Object[][]{
+            // tests invalid json, and mismatch between aug code kinds of  
+            // nested level start and end markers.
+            new Object[] { "task-spec-05.json", "\n", Arrays.asList(13, 16, 3) }
+        };
+    }
 }

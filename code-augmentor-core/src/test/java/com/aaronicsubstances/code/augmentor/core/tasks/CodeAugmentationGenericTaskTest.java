@@ -43,7 +43,7 @@ public class CodeAugmentationGenericTaskTest {
         TEMP_GEN_DIR.mkdir();
     }
     
-    public CodeAugmentationGenericTask deserialize(String path) throws IOException {
+    public CodeAugmentationGenericTask deserialize(String path, String newline) throws IOException {
         String text = TestResourceLoader.loadResource(path, getClass());
         Gson gson = new Gson();
         TaskLite taskSpec = gson.fromJson(text, TaskLite.class);
@@ -65,7 +65,7 @@ public class CodeAugmentationGenericTaskTest {
         task.setGeneratedCodeFiles(new ArrayList<>());
         for (String genCodePath : taskSpec.generatedCodeFiles) {            
             contents = TestResourceLoader.loadResourceNewlinesNormalized(genCodePath, 
-                getClass(), "\r\n");
+                getClass(), newline);
             f = new File(TEMP_GEN_DIR, genCodePath);
             FileUtils.write(f, contents, task.getCharset());
             task.getGeneratedCodeFiles().add(f);
@@ -85,8 +85,8 @@ public class CodeAugmentationGenericTaskTest {
     }
 
     @Test(dataProvider = "createTestExecuteData")
-    public void testExecute(String jsonPath, List<Integer> expectedChangeSetIndices) throws Exception {
-        CodeAugmentationGenericTask task = deserialize(jsonPath);
+    public void testExecute(String jsonPath, String newline, List<Integer> expectedChangeSetIndices) throws Exception {
+        CodeAugmentationGenericTask task = deserialize(jsonPath, newline);
         PreCodeAugmentationResult prepResult = PreCodeAugmentationResult.deserialize(
             task.getPrepFile());
         CodeGenerationResponseChangeSet expectedChanges = null;
@@ -100,7 +100,7 @@ public class CodeAugmentationGenericTaskTest {
             SourceFileDescriptor f = prepResult.getFileDescriptors().get(i);
             assertNotNull(f.getDir());
             String contents = TestResourceLoader.loadResourceNewlinesNormalized(
-                f.getRelativePath(), getClass(), "\r\n");
+                f.getRelativePath(), getClass(), newline);
             FileUtils.write(new File(f.getDir(), f.getRelativePath()), contents, task.getCharset());
 
             // fetch expected generated codes.
@@ -108,7 +108,7 @@ public class CodeAugmentationGenericTaskTest {
                 String baseName = FilenameUtils.getBaseName(f.getRelativePath());
                 String ext = FilenameUtils.getExtension(f.getRelativePath());
                 String expGenGode = TestResourceLoader.loadResourceNewlinesNormalized(
-                    baseName + "-expected." + ext, getClass(), "\r\n");
+                    baseName + "-expected." + ext, getClass(), newline);
                 expectedGeneratedCodes.add(expGenGode);
             }
         }
@@ -147,11 +147,53 @@ public class CodeAugmentationGenericTaskTest {
     @DataProvider
     public Object[][] createTestExecuteData() {
         return new Object[][]{
-            new Object[] { "task-spec-00.json", Arrays.asList() },
-            new Object[] { "task-spec-01.json", Arrays.asList(0, 1) },
-            new Object[] { "task-spec-02.json", Arrays.asList(0) },
-            new Object[] { "task-spec-03.json", Arrays.asList(0, 1, 2) },
-            new Object[] { "task-spec-04.json", Arrays.asList(0, 1) },
+            new Object[] { "task-spec-00.json", "\r\n", Arrays.asList() },
+            new Object[] { "task-spec-01.json", "\r\n", Arrays.asList(0, 1) },
+            new Object[] { "task-spec-02.json", "\n", Arrays.asList(0) },
+            new Object[] { "task-spec-03.json", "\r\n", Arrays.asList(0, 1, 2) },
+            new Object[] { "task-spec-04.json", "\r\n", Arrays.asList(0, 1) },
+        };
+    }
+    
+    @Test(dataProvider = "createTestExecuteForErrorsData")
+    public void testExecuteForErrors(String jsonPath, String newline,
+            List<Integer> expErrLineNums) throws Exception {
+        CodeAugmentationGenericTask task = deserialize(jsonPath, newline);
+        PreCodeAugmentationResult prepResult = PreCodeAugmentationResult.deserialize(
+            task.getPrepFile());
+        // transfer class path resources for original source files to
+        // temp directory.
+        for (int i = 0; i < prepResult.getFileDescriptors().size(); i++) {
+            SourceFileDescriptor f = prepResult.getFileDescriptors().get(i);
+            assertNotNull(f.getDir());
+            String contents = TestResourceLoader.loadResourceNewlinesNormalized(
+                f.getRelativePath(), getClass(), newline);
+            FileUtils.write(new File(f.getDir(), f.getRelativePath()), contents, task.getCharset());
+        }
+        task.execute();
+        assertEquals(task.getAllErrors().size(), expErrLineNums.size(),
+            task.getAllErrors().toString());
+        System.err.println(task.getAllErrors().toString());
+        for (int i  = 0; i < expErrLineNums.size(); i++) {
+            Integer expLineNum = expErrLineNums.get(i);
+            if (expLineNum != null) {
+                Throwable taskExc = task.getAllErrors().get(i);
+                assertEquals(((GenericTaskException) taskExc).getLineNumber(), (int)expLineNum);
+            }
+        }
+    }
+
+    @DataProvider
+    public Object[][] createTestExecuteForErrorsData() {
+        return new Object[][]{
+            // tests null content parts array, empty content parts array,
+            // null/invalid file content hashes.
+            new Object[] { "task-spec-05.json", "\r\n", Arrays.asList(null, 1, 2, null) },
+            
+            // tests non existent gen code section for an entire file,
+            // non existent gen code for a particular aug code,
+            // null content part, and null content field of a content part.
+            new Object[] { "task-spec-06.json", "\r\n", Arrays.asList(2, 1, null, 2) }
         };
     }
 

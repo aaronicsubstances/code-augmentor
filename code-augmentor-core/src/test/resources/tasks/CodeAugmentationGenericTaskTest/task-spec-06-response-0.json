@@ -1,0 +1,32 @@
+{ "contentStreamingEnabled": false }
+[
+	{
+		"fileId": 1,
+        "generatedCodes": []
+	},
+    {
+		"fileId": 2,
+		"generatedCodes": [{
+			"id" : 1,
+            "replaceAugCodeDirectives": true,
+            "disableAutoIndent": true,
+			"contentParts" : [{
+                "content": "import javax.persistence.Entity;\r\n"
+            }, null]
+		}]
+	},
+    {
+		"fileId": 4,
+		"generatedCodes": [{
+			"id" : 1,
+            "contentParts" : [
+            {},
+            {
+                "content": "import javax.persistence.Entity;\r\n"
+            },
+            {
+                "content": "import javax.persistence.EntityManager;\r\n"
+            }]
+		}]
+	}
+]

@@ -4,20 +4,21 @@
 		"fileId": 1,
 		"relativePath": "task-spec-02-0.java",
 		"dir": "%TEMP_DIR%",
+        "contentHash": "9c55c2d4d6073385cc8f0aa2aa00e064",
 		"codeSnippets": [{
 			"augmentingCodeDescriptor": {
 				"id" : 1,
-				"startPos" : 1025,
-				"endPos" : 1065,
+				"startPos" : 975,
+				"endPos" : 1012,
 				"indent" : "\t",
                 "lineNumber": 51,
-                "lineSeparator": "\r\n"
+                "lineSeparator": "\n"
 			},
 			"generatedCodeDescriptor": {
-				"startDirectiveStartPos" : 1065,
-				"startDirectiveEndPos" : 1075,
-				"endDirectiveStartPos" : 1092,
-				"endDirectiveEndPos" : 1102
+				"startDirectiveStartPos" : 1012,
+				"startDirectiveEndPos" : 1021,
+				"endDirectiveStartPos" : 1037,
+				"endDirectiveEndPos" : 1046
 			}
 		}]
 	}

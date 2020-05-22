@@ -80,17 +80,6 @@ public class CodeAugmentationGenericTask {
             TaskUtils.logVerbose(logAppender, "Processing %s", srcFile);
 
             Instant startInstant = Instant.now();
-            String sourceCode = TaskUtils.readFile(srcFile, charset);
-            if (sourceFileDescriptor.getContentHash() != null) {
-                String inputHash = TaskUtils.calcHash(sourceCode, charset);
-                if (!inputHash.equals(sourceFileDescriptor.getContentHash())) {
-                    GenericTaskException fileIntegrityError = createException(
-                            "Source file has changed unexpectedly. Regeneration required.", null, srcFile);
-                    TaskUtils.logWarn(logAppender, fileIntegrityError.getMessage());
-                    allErrors.add(fileIntegrityError);
-                    continue;
-                }
-            }
 
             if (!generatedCodeFetcher.prepareForFile(sourceFileDescriptor.getFileId())) {
                 GenericTaskException missingFileAugCodesError = createException(
@@ -98,6 +87,16 @@ public class CodeAugmentationGenericTask {
                         srcFile);
                 TaskUtils.logWarn(logAppender, missingFileAugCodesError.getMessage());
                 allErrors.add(missingFileAugCodesError);
+                continue;
+            }
+            
+            String sourceCode = TaskUtils.readFile(srcFile, charset);
+            String inputHash = TaskUtils.calcHash(sourceCode, charset);
+            if (!inputHash.equals(sourceFileDescriptor.getContentHash())) {
+                GenericTaskException fileIntegrityError = createException(
+                        "Source file has changed unexpectedly. Regeneration required.", null, srcFile);
+                TaskUtils.logWarn(logAppender, fileIntegrityError.getMessage());
+                allErrors.add(fileIntegrityError);
                 continue;
             }
 

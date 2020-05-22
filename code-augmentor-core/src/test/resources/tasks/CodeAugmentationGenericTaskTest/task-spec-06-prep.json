@@ -1,0 +1,74 @@
+{ "contentStreamingEnabled": false, "genCodeStartDirective": "//GS", "genCodeEndDirective": "//GE" }
+[
+	{
+		"fileId": 1,
+		"relativePath": "task-spec-06-0.java",
+		"dir": "%TEMP_DIR%",
+        "contentHash": "f1127339ec5496c1c7cd129ec1d43702",
+		"codeSnippets": [{
+			"augmentingCodeDescriptor": {
+				"id" : 1,
+				"startPos" : 2,
+				"endPos" : 42,
+				"indent" : "",
+                "lineNumber": 2,
+                "lineSeparator": "\r\n"
+			}
+		}]
+	},
+    {
+		"fileId": 2,
+		"relativePath": "task-spec-06-1.java",
+		"dir": "%TEMP_DIR%",
+        "contentHash": "3089a454fe1feb9add98b93ef154ef97",
+		"codeSnippets": [{
+			"augmentingCodeDescriptor": {
+				"id" : 1,
+				"startPos" : 0,
+				"endPos" : 52,
+				"indent" : "        ",
+                "lineNumber": 1,
+                "lineSeparator": "\r\n"
+			}
+		}]
+	},
+    {
+		"fileId": 3,
+		"relativePath": "task-spec-06-2.java",
+		"dir": "%TEMP_DIR%",
+        "contentHash": "4c792d049c1492e0846dfa86e038c060",
+		"codeSnippets": [{
+			"augmentingCodeDescriptor": {
+				"id" : 1,
+				"startPos" : 2,
+				"endPos" : 46,
+				"indent" : "  ",
+                "lineNumber": 2,
+                "lineSeparator": "\r\n"
+			},
+			"generatedCodeDescriptor": {
+				"startDirectiveStartPos" : 46,
+				"startDirectiveEndPos" : 52,
+				"endDirectiveStartPos" : 254,
+				"endDirectiveEndPos" : 260,
+                "inline": false
+			}
+		}]
+	},
+    {
+		"fileId": 4,
+		"relativePath": "task-spec-06-3.java",
+		"dir": "%TEMP_DIR%",
+        "contentHash": "f1127339ec5496c1c7cd129ec1d43702",
+		"codeSnippets": [{
+			"augmentingCodeDescriptor": {
+				"id" : 1,
+				"startPos" : 2,
+				"endPos" : 42,
+				"indent" : "",
+                "lineNumber": 2,
+                "lineSeparator": "\r\n"
+			}
+		}]
+	}
+]

@@ -28,7 +28,7 @@
         "disableAutoIndent": false,
         "contentParts": [{
             "exactMatch": true,
-            "content": "\" SELECT * FROM contacts \r\n\" +"
+            "content": "\" SELECT * FROM contacts \n\" +"
         },
         {
             "exactMatch": true,
@@ -44,7 +44,7 @@
         "disableAutoIndent": false,
         "contentParts": [{
             "exactMatch": false,
-            "content": "public boolean getExpired() {\r\n    return expired;\r\n}"
+            "content": "public boolean getExpired() {\n    return expired;\n}"
         }]
     }]
 }
