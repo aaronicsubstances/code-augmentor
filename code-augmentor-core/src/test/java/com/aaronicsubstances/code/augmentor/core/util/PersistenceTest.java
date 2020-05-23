@@ -279,7 +279,7 @@ public class PersistenceTest {
 
                             generatedCode.setId(j);
                             generatedCode.setIndent(randomIndent());
-                            generatedCode.setDisableAutoIndent(TestResourceLoader.RAND_GEN.nextBoolean());
+                            generatedCode.setDisableEnsureEndingNewline(TestResourceLoader.RAND_GEN.nextBoolean());
                             generatedCode.setSkipped(TestResourceLoader.RAND_GEN.nextBoolean());
                             generatedCode.setReplaceAugCodeDirectives(TestResourceLoader.RAND_GEN.nextBoolean());
                             generatedCode.setReplaceGenCodeDirectives(TestResourceLoader.RAND_GEN.nextBoolean());

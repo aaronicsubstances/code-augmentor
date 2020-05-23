@@ -9,7 +9,6 @@
 		"generatedCodes": [{
 			"id" : 1,
             "replaceAugCodeDirectives": true,
-            "disableAutoIndent": true,
 			"contentParts" : [{
                 "content": "import javax.persistence.Entity;\r\n"
             }, null]

@@ -73,7 +73,7 @@ public class GeneratedCode {
     private boolean skipped;
     private boolean replaceAugCodeDirectives;
     private boolean replaceGenCodeDirectives;
-    private boolean disableAutoIndent;
+    private boolean disableEnsureEndingNewline;
 
     public GeneratedCode() {
 
@@ -83,7 +83,7 @@ public class GeneratedCode {
         this.contentParts = contentParts;        
     }
 
-    public GeneratedCode(int id, boolean disableAutoIndent, String indent, boolean skipped,
+    public GeneratedCode(int id, boolean disableEnsureEndingNewline, String indent, boolean skipped,
             boolean replaceAugCodeDirectives, boolean replaceGenCodeDirectives,            
             List<ContentPart> contentParts) {
         this.id = id;
@@ -92,7 +92,7 @@ public class GeneratedCode {
         this.skipped = skipped;
         this.replaceAugCodeDirectives = replaceAugCodeDirectives;
         this.replaceGenCodeDirectives = replaceGenCodeDirectives;
-        this.disableAutoIndent = disableAutoIndent;
+        this.disableEnsureEndingNewline = disableEnsureEndingNewline;
     }
 
     public int getId() {
@@ -111,12 +111,12 @@ public class GeneratedCode {
         this.indent = indent;
     }
 
-    public boolean isDisableAutoIndent() {
-        return disableAutoIndent;
+    public boolean isDisableEnsureEndingNewline() {
+        return disableEnsureEndingNewline;
     }
 
-    public void setDisableAutoIndent(boolean disableAutoIndent) {
-        this.disableAutoIndent = disableAutoIndent;
+    public void setDisableEnsureEndingNewline(boolean disableEnsureEndingNewline) {
+        this.disableEnsureEndingNewline = disableEnsureEndingNewline;
     }
 
     public boolean isSkipped() {
@@ -164,7 +164,7 @@ public class GeneratedCode {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((contentParts == null) ? 0 : contentParts.hashCode());
-        result = prime * result + (disableAutoIndent ? 1231 : 1237);
+        result = prime * result + (disableEnsureEndingNewline ? 1231 : 1237);
         result = prime * result + id;
         result = prime * result + ((indent == null) ? 0 : indent.hashCode());
         result = prime * result + (replaceAugCodeDirectives ? 1231 : 1237);
@@ -187,7 +187,7 @@ public class GeneratedCode {
                 return false;
         } else if (!contentParts.equals(other.contentParts))
             return false;
-        if (disableAutoIndent != other.disableAutoIndent)
+        if (disableEnsureEndingNewline != other.disableEnsureEndingNewline)
             return false;
         if (id != other.id)
             return false;
@@ -207,7 +207,7 @@ public class GeneratedCode {
 
     @Override
     public String toString() {
-        return "GeneratedCode{contentParts=" + contentParts + ", disableAutoIndent=" + disableAutoIndent + ", id=" + id
+        return "GeneratedCode{contentParts=" + contentParts + ", disableEnsureEndingNewline=" + disableEnsureEndingNewline + ", id=" + id
                 + ", indent=" + indent + ", replaceAugCodeDirectives=" + replaceAugCodeDirectives
                 + ", replaceGenCodeDirectives=" + replaceGenCodeDirectives + ", skipped=" + skipped + "}";
     }

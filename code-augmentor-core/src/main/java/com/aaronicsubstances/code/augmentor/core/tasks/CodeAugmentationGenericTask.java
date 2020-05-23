@@ -135,10 +135,13 @@ public class CodeAugmentationGenericTask {
                 // modify content parts to end with newline if necessary and
                 // correct split CR-LFs
                 String newline = augCodeDescriptor.getLineSeparator();
-                if (!genCode.isReplaceAugCodeDirectives() && !genCode.isReplaceGenCodeDirectives()) {
-                    ContentPart lastContentPart = genCode.getContentParts().get(genCode.getContentParts().size() - 1);
-                    lastContentPart.setContent(
-                            CodeGenerationResponseProcessor.ensureEndingNewline(lastContentPart.getContent(), newline));
+                boolean shouldEnsureEndingNewline = CodeGenerationResponseProcessor.
+                    getShouldEnsureEndingNewline(genCode);
+                if (shouldEnsureEndingNewline) {
+                    ContentPart lastContentPart = genCode.getContentParts().get(
+                        genCode.getContentParts().size() - 1);
+                    lastContentPart.setContent(CodeGenerationResponseProcessor.
+                        ensureEndingNewline(lastContentPart.getContent(), newline));
                 }
                 CodeGenerationResponseProcessor.repairSplitCrLfs(genCode.getContentParts());
 

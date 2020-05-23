@@ -50,10 +50,9 @@ public class Snippets {
     static testSettingAllGenCodeProps(augCode, context) {
         def genCode = context.newGenCode();
         genCode.id = augCode.id;
-        genCode.indent = "  ";
         genCode.replaceAugCodeDirectives = true;
         genCode.replaceGenCodeDirectives = true;
-        genCode.disableAutoIndent = true;
+        genCode.disableEnsureEndingNewline = true;
         genCode.contentParts.push(context.newContent("//TODO", true));
 
         def nextAugCode = context.fileAugCodes.augmentingCodes[context.augCodeIndex + 1];

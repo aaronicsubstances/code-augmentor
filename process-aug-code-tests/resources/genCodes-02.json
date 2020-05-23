@@ -9,7 +9,7 @@
         "skipped": false,
         "replaceAugCodeDirectives": false,
         "replaceGenCodeDirectives": false,
-        "disableAutoIndent": false,
+        "disableEnsureEndingNewline": false,
         "contentParts": [{
             "exactMatch": false,
             "content": "private static final int serialVersionUID = 23L;"
@@ -25,7 +25,7 @@
         "skipped": false,
         "replaceAugCodeDirectives": false,
         "replaceGenCodeDirectives": false,
-        "disableAutoIndent": false,
+        "disableEnsureEndingNewline": false,
         "contentParts": [{
             "exactMatch": true,
             "content": "\" SELECT * FROM contacts \n\" +"
@@ -41,7 +41,7 @@
         "skipped": false,
         "replaceAugCodeDirectives": false,
         "replaceGenCodeDirectives": false,
-        "disableAutoIndent": false,
+        "disableEnsureEndingNewline": false,
         "contentParts": [{
             "exactMatch": false,
             "content": "public boolean getExpired() {\n    return expired;\n}"

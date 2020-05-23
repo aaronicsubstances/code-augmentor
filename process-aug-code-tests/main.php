@@ -1,11 +1,9 @@
 <?php declare(strict_types=1);
-require_once 'build/php7/models/ContentPart.php';
-require_once 'build/php7/models/GeneratedCode.php';
-require_once 'build/php7/models/ProcessCodeContext.php';
-require_once 'build/php7/tasks/ProcessCodeTask.php';
+require_once 'build/php7/ProcessCodeTask.php';
+require_once 'build/php7/ProcessCodeContext.php';
 require_once 'Snippets.php';
 
-$instance = new \aaronicsubstances\code_augmentor_support\tasks\ProcessCodeTask();
+$instance = new \aaronicsubstances\code_augmentor_support\ProcessCodeTask();
 $instance->inputFile = $argv[1];
 $instance->outputFile = $argv[2];
 if ($argc > 3) {

@@ -50,10 +50,9 @@ exports.intentionalBlock = function(augCode, context) {
 exports.testSettingAllGenCodeProps = function(augCode, context) {
     const genCode = context.newGenCode();
     genCode.id = augCode.id;
-    genCode.indent = "  ";
     genCode.replaceAugCodeDirectives = true;
     genCode.replaceGenCodeDirectives = true;
-    genCode.disableAutoIndent = true;
+    genCode.disableEnsureEndingNewline = true;
     genCode.contentParts.push(context.newContent("//TODO", true));
 
     const nextAugCode = context.fileAugCodes.augmentingCodes[context.augCodeIndex + 1];

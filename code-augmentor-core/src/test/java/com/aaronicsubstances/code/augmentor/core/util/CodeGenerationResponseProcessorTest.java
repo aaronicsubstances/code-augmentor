@@ -230,6 +230,24 @@ public class CodeGenerationResponseProcessorTest {
         };
     }
 
+    @Test(dataProvider = "createTestGetShouldEnsureEndingNewlineData")
+    public void testGetShouldEnsureEndingNewline(GeneratedCode genCode, boolean expected) {
+        boolean actual = CodeGenerationResponseProcessor.getShouldEnsureEndingNewline(genCode);
+        assertEquals(actual, expected);
+    }
+
+    @DataProvider
+    public Object[][] createTestGetShouldEnsureEndingNewlineData() {
+        return new Object[][]{
+            { new GeneratedCode(0, true, null, true, false, false, null), true },
+            { new GeneratedCode(0, false, null, true, false, false, null), true },
+            { new GeneratedCode(0, true, null, true, true, false, null), false },
+            { new GeneratedCode(0, false, null, true, false, true, null), true },
+            { new GeneratedCode(0, true, null, true, true, true, null), false },
+            { new GeneratedCode(0, false, null, true, true, true, null), true }
+        };
+    }
+
     @Test(dataProvider = "createEnsureEndingNewlineData")
     public void testEnsureEndingNewline(String str, String newline, String expected) {
         String actual = CodeGenerationResponseProcessor.ensureEndingNewline(str, newline);
@@ -262,10 +280,15 @@ public class CodeGenerationResponseProcessorTest {
             { 
                 new GeneratedCode(0, true, " ", false, false, false, null),
                 new AugmentingCodeDescriptor(0, 0, 0, "", 0, null),
-                "" 
+                " " 
             },
             { 
                 new GeneratedCode(0, true, null, false, false, false, null),
+                new AugmentingCodeDescriptor(0, 0, 0, "\t", 0, null),
+                "\t" 
+            },
+            { 
+                new GeneratedCode(0, true, null, true, false, true, null),
                 new AugmentingCodeDescriptor(0, 0, 0, "\t", 0, null),
                 "" 
             },
@@ -293,6 +316,21 @@ public class CodeGenerationResponseProcessorTest {
                 new GeneratedCode(0, false, null, false, false, false, null),
                 new AugmentingCodeDescriptor(0, 0, 0, "\t", 0, null),
                 "\t"
+            },
+            { 
+                new GeneratedCode(0, false, null, false, true, false, null),
+                new AugmentingCodeDescriptor(0, 0, 0, "\t", 0, null),
+                ""
+            },
+            { 
+                new GeneratedCode(0, false, null, false, true, true, null),
+                new AugmentingCodeDescriptor(0, 0, 0, "\t", 0, null),
+                ""
+            },
+            { 
+                new GeneratedCode(0, false, " ", false, true, true, null),
+                new AugmentingCodeDescriptor(0, 0, 0, "\t", 0, null),
+                " "
             }
         };
     }

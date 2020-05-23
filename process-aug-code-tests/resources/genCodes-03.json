@@ -9,7 +9,7 @@
         "skipped": false,
         "replaceAugCodeDirectives": false,
         "replaceGenCodeDirectives": false,
-        "disableAutoIndent": false,
+        "disableEnsureEndingNewline": false,
         "contentParts": [{
             "exactMatch": false,
             "content": "{"
@@ -21,7 +21,7 @@
         "skipped": false,
         "replaceAugCodeDirectives": false,
         "replaceGenCodeDirectives": false,
-        "disableAutoIndent": false,
+        "disableEnsureEndingNewline": false,
         "contentParts": [{
             "exactMatch": false,
             "content": "}"
@@ -29,11 +29,11 @@
     },
     {
         "id": 2,
-        "indent": "  ",
+        "indent": null,
         "skipped": false,
         "replaceAugCodeDirectives": true,
         "replaceGenCodeDirectives": true,
-        "disableAutoIndent": true,
+        "disableEnsureEndingNewline": true,
         "contentParts": [{
             "exactMatch": true,
             "content": "//TODO"
@@ -45,7 +45,7 @@
         "skipped": true,
         "replaceAugCodeDirectives": false,
         "replaceGenCodeDirectives": false,
-        "disableAutoIndent": false,
+        "disableEnsureEndingNewline": false,
         "contentParts": [{
             "exactMatch": false,
             "content": ""

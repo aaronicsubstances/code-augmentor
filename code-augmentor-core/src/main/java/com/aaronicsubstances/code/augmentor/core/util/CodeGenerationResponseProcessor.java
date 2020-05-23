@@ -58,6 +58,16 @@ public class CodeGenerationResponseProcessor {
         return replacementRange;
     }
 
+	public static boolean getShouldEnsureEndingNewline(GeneratedCode genCode) {
+        // if replace aug or gen code directives, then let gen code completely control
+        // whether or not to ensure ending newline.
+        if (genCode.isReplaceAugCodeDirectives() || genCode.isReplaceGenCodeDirectives()) {
+            return !genCode.isDisableEnsureEndingNewline();
+        }
+        // always ensure ending newline by default.
+        return true;
+	}
+
     public static String ensureEndingNewline(String code, String newline) {
         boolean genCodeEndsWithNewline = false;
         if (!code.isEmpty()) {
@@ -88,12 +98,15 @@ public class CodeGenerationResponseProcessor {
 
     public static String getEffectiveIndent(AugmentingCodeDescriptor augCodeDescriptor, 
             GeneratedCode genCode) {
-        if (genCode.isDisableAutoIndent()) {
-            return "";
-        }
         if (genCode.getIndent() != null) {
             return genCode.getIndent();
         }
+        // if replace aug or gen code directives, then let gen code completely control
+        // indentation.
+        if (genCode.isReplaceAugCodeDirectives() || genCode.isReplaceGenCodeDirectives()) {
+            return "";
+        }
+        // by default use aug code descriptor's indent.
         return augCodeDescriptor.getIndent();
     }
 

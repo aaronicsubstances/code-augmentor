@@ -9,7 +9,7 @@
         "skipped": false,
         "replaceAugCodeDirectives": false,
         "replaceGenCodeDirectives": false,
-        "disableAutoIndent": false,
+        "disableEnsureEndingNewline": false,
         "contentParts": [{
             "exactMatch": false,
             "content": ""

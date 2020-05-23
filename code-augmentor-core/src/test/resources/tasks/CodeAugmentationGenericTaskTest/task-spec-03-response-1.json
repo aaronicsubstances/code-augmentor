@@ -4,7 +4,8 @@
 		"fileId": 1,
 		"generatedCodes": [{
 			"id" : 2,
-            "disableAutoIndent": true,
+            "indent": "",
+            "disableEnsureEndingNewline": true,
 			"contentParts" : [{
                 "content": "import javax.persistence.Entity;\r\n"
             }, {
@@ -39,7 +40,7 @@
 		"generatedCodes": [{
 			"id" : 2,
             "replaceAugCodeDirectives": true,
-            "disableAutoIndent": true,
+            "disableEnsureEndingNewline": true,
 			"contentParts" : [{
                 "content": "import javax.persistence.Entity;\r\n"
             }, {
@@ -73,7 +74,8 @@
 		"fileId": 3,
 		"generatedCodes": [{
 			"id" : 2,
-            "disableAutoIndent": true,
+            "indent": "",
+            "disableEnsureEndingNewline": true,
 			"contentParts" : [{
                 "content": "import javax.persistence.Entity;\r\n"
             }, {
