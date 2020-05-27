@@ -45,24 +45,32 @@ class MyTestCase {
     }
 
     @Test
-    void testAssertions() {
-        assertTrue(1 == 1)
-        assertEquals("test", "test")
+    void testProcessCodeTasks1() {
+        testSingleRun("augCodes-01.json", 0, 0, "genCodes-01.json")
+    }
 
-        def x = "42"
-        assertNotNull "x must not be null", x
-        assertNull null
+    @Test
+    void testProcessCodeTasks2() {
+        testSingleRun("augCodes-02.json", 0, 0, "genCodes-02.json")
+    }
 
-        assertSame x, x
+    @Test
+    void testProcessCodeTasks3() {
+        testSingleRun("augCodes-03.json", 0, 0, "genCodes-03.json")
+    }
+
+    @Test
+    void testProcessCodeTasks4() {
+        testSingleRun("augCodes-04.json", 1, 2, null)
+    }
+
+    @Test
+    void testProcessCodeTasks5() {
+        testSingleRun("augCodes-05.json", 0, 0, "genCodes-05.json")
     }
     
     @Test
-    void testProcessCodeTasks() {
-        testSingleRun("augCodes-01.json", 0, 0, "genCodes-01.json")
-        testSingleRun("augCodes-02.json", 0, 0, "genCodes-02.json")
-        testSingleRun("augCodes-03.json", 0, 0, "genCodes-03.json")
-        testSingleRun("augCodes-04.json", 1, 2, null)
-        testSingleRun("augCodes-05.json", 0, 0, "genCodes-05.json")
+    void testProcessCodeTasks6() {
         testSingleRun("augCodes-06.json", 0, 0, "genCodes-06.json")
     }
 

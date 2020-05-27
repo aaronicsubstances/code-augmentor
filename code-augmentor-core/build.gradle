@@ -1,10 +1,14 @@
 plugins {
 	id 'java-library'
-	id 'maven-publish'
+    id 'maven-publish'
+    id 'signing'
 }
 
 group = "com.aaronicsubstances"
-version = "1.0-SNAPSHOT"
+version = "1.0"
+description = '''Provides common functionality to 
+	related plugins and command line tools in bringing code 
+	generation facilities to the ordinary programmer'''
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -48,11 +52,77 @@ task alltests(dependsOn: build) {
 }
 
 publishing {
-	publications {
-		maven(MavenPublication) {
-			from components.java
-			artifact sourceJar
-			artifact javadocJar
-		}
-	}
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifact sourceJar
+            artifact javadocJar
+
+            versionMapping {
+                usage('java-api') {
+                    fromResolutionOf('runtimeClasspath')
+                }
+                usage('java-runtime') {
+                    fromResolutionResult()
+                }
+            }
+
+            def gitRepoUrl = 'https://github.com/aaronicsubstances/code-augmentor'
+            pom {
+                name = "$project.name"
+                description = "$project.description"
+                inceptionYear = '2020'
+                url = "$gitRepoUrl"
+                properties = [
+                    "maven.compiler.source": "1.8",
+                    "maven.compiler.target": "1.8",
+                    "project.build.sourceEncoding": "UTF-8"
+                ]
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'https://opensource.org/licenses/MIT'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'aaronic'
+                        name = 'Aaron Baffour-Awuah'
+                        email = 'aaronbaffourawuah@gmail.com'
+                    }
+                }
+                scm {
+                    connection = "scm:git:$gitRepoUrl"
+                    developerConnection = "scm:git:$gitRepoUrl"
+                    url = "$gitRepoUrl"
+                }
+                withXml {
+                    def distMgt = asNode().appendNode('distributionManagement')
+                    def snapshotSection = distMgt.appendNode('snapshotRepository')
+                    snapshotSection.appendNode('id', 'ossrh')
+                    snapshotSection.appendNode('url', 
+                        'https://oss.sonatype.org/content/repositories/snapshots/')
+                    def releaseSection = distMgt.appendNode('repository')
+                    releaseSection.appendNode('id', 'ossrh')
+                    releaseSection.appendNode('url',
+                        'https://oss.sonatype.org/service/local/staging/deploy/maven2')
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'staging'
+            url = 'https://oss.sonatype.org/service/local/staging/deploy/maven2'
+            credentials {
+                username = nexusUsername
+                password = nexusPassword
+            }
+        }
+    }
+}
+
+signing {
+    required { !version.endsWith("SNAPSHOT") }
+    sign publishing.publications.mavenJava
 }
