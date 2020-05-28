@@ -1,0 +1,18 @@
+
+
+The secring.gpg file has been removed in GPG 2.1.
+However, GPG still can create such a file
+>gpg --export-secret-keys -o secring.gpg
+
+to get short format of keys
+>gpg --list-keys --keyid-format short
+
+to export
+>gpg --keyserver hkp://keyserver.ubuntu.com --send-keys 1704A2E3
+>gpg --keyserver hkp://pool.sks-keyservers.net --send-keys 1704A2E3
+
+to search
+>gpg --keyserver hkp://keyserver.ubuntu.com --search-keys 1704A2E3
+
+to purge cached passphrases
+>gpg-connect-agent reloadagent /bye

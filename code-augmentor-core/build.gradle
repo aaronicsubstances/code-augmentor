@@ -123,6 +123,7 @@ publishing {
 }
 
 signing {
+    useGpgCmd()
     required { !version.endsWith("SNAPSHOT") }
     sign publishing.publications.mavenJava
 }

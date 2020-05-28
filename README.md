@@ -81,6 +81,7 @@ By employing *CodeAugmentor*, one can develop a strategy of settling for a simpl
    * Apache Maven 3.5.2
    * Gradle 5.6.4
    * Windows 10 Professional
+   * Visual Studio Code 1.42.0
    * Groovy 2.4.13
    * NodeJS v12.13.0
    * Python 3.8.1
