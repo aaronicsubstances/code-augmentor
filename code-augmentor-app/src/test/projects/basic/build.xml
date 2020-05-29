@@ -1,8 +1,5 @@
-<project name="basic-ant" default="default">
+<project name="basic-ant" default="test-default">
     <description>Basic ANT project testing code-augmentor-app</description>
-    
-    <!-- not needed unless running outside code-augmentor-app -->
-    <taskdef resource="CodeAugmentorTasks.xml" onerror="failall"/>
     
     <property name="src.dir" location="src" />
     <property name="build.dir" location="build" />
@@ -11,6 +8,8 @@
     <property name="code-augmentor.verbose" value="true" />
     <property name="augCode.file" location="${build.code-augmentor.dir}/augCodes.json" />
     <property name="genCode.file" location="${build.code-augmentor.dir}/genCodes.json" />
+    <property name="summaryFile" location="${build.code-augmentor.dir}/generated/CHANGE-SUMMARY.txt" />
+    <property name="multiProjectCodeBase.dir" location="${ant.basedir}/../../../../../.."/>
     
     <!--this property and its usages can be omitted since it is the default prepFile-->
     <property name="prepareResults.file" location="${build.code-augmentor.dir}/parseResults.json" />
@@ -65,21 +64,52 @@
             failOnChanges="false" />
     </target>
 
-    <target name="default" description="default"
+    <target name="test-default" description="default target used for test"
         depends="code-change-absent" />
     
-    <target name="code-change-present" description="runs entire code augmentor operation with default settings"
-        depends="prepare,process,complete" />
+    <target name="default" description="runs entire code augmentor operation with default settings"
+        depends="clean,prepare,process,complete" />
     
     <target name="do-not-detect-code-change"
         description="disables code changes and runs entire code augmentor operation"
-        depends="prepare,process,-complete-by-disabling-code-change-detection" />
+        depends="clean,prepare,process,-complete-by-disabling-code-change-detection" />
     
     <target name="code-change-absent"
         description="skips files necessary to run entire code augmentor operation successfully"
-        depends="-prepare-for-no-code-change,process,complete" />
+        depends="clean,-prepare-for-no-code-change,process,complete" />
+    
+    <target name="code-change-present"
+            description="runs entire code augmentor operation in a child process and asserts failure due to code changes">
+        <exec executable="gradlew" failonerror="false" vmlauncher="false" 
+                dir="${multiProjectCodeBase.dir}"
+                resultProperty="codeChangeBuildTest.resultProperty">
+            <arg value=":code-augmentor-app:run" />
+            <arg value="--args=&quot;-fsrc/test/projects/basic/codeChangeBuildTest.xml&quot;" />
+        </exec>
+        <fail message="Expected child process to fail but instead it succeeded">
+            <condition>
+                <equals arg1="${codeChangeBuildTest.resultProperty}" arg2="0"/>
+            </condition>
+        </fail>
+        <fail message="Expected file not created: ${summaryFile}">
+            <condition>
+                <not>
+                    <resourceexists>
+                        <file file="${summaryFile}"/>
+                    </resourceexists>
+                </not>
+            </condition>
+        </fail>
+        <loadfile property="codeChangeBuildTest.summaryFileContent" srcFile="${summaryFile}" />
+        <fail message="Expected created file not to be empty">
+            <condition>
+                <equals arg1="${codeChangeBuildTest.summaryFileContent}" arg2=""/>
+            </condition>
+        </fail>
+        <echo message="Expectation of build exception in child process successfully met" />
+    </target>
     
     <target name="code-change-present-DF"
         description="disables fail on build option and runs entire code augmentor operation"
-        depends="prepare,process,-complete-by-disabling-fail-on-code-change" />
+        depends="clean,prepare,process,-complete-by-disabling-fail-on-code-change" />
 </project>

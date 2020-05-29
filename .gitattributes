@@ -2,3 +2,4 @@ gradlew text eol=lf
 groovyw text eol=lf
 *.sh text eol=lf
 *.bat text eol=crlf
+LICENSE text eol=lf

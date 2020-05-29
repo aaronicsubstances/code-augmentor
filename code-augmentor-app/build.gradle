@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.aaronicsubstances"
-version = "1.0-SNAPSHOT"
+version = "1.0"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -38,7 +38,7 @@ test {
 	useTestNG()
 }
 
-task('publishCoreDependency', type: Exec) {
+task('publishProjectDependencies', type: Exec) {
     def cmdPlusArgs = []
     if (System.getProperty("os.name") =~ /(?i)win/) {
         cmdPlusArgs << 'cmd' << '/c'
@@ -46,35 +46,52 @@ task('publishCoreDependency', type: Exec) {
     cmdPlusArgs << 'gradlew'
     cmdPlusArgs << ':code-augmentor-core:build'
     cmdPlusArgs << ':code-augmentor-core:publishToMavenLocal'
+    cmdPlusArgs << ':code-augmentor-ant:build'
+    cmdPlusArgs << ':code-augmentor-ant:publishToMavenLocal'
     commandLine cmdPlusArgs
     workingDir '..'
 }
 
-task('alltests', dependsOn: [ 'build', 'testant'])
-
-task('testant', dependsOn: ['compileJava', 'publishCoreDependency',
-        'do-not-detect-code-change', 'code-change-absent', 'code-change-present-DF' ])
-testant.mustRunAfter publishCoreDependency
-
-task('do-not-detect-code-change', type: JavaExec) {
-    args = createAntCallArgs(name)
+task('doNotDetectCodeChange', type: JavaExec) {
+    args = createAntCallArgs('do-not-detect-code-change')
     main = project.mainClassName
     classpath(sourceSets.main.runtimeClasspath)
     enableAssertions = true
 }
 
-task('code-change-absent', type: JavaExec) {
+task('codeChangeAbsent', type: JavaExec) {
     args = createAntCallArgs(null) // test that default target is used
     main = project.mainClassName
     classpath(sourceSets.main.runtimeClasspath)
     enableAssertions = true
 }
 
-task('code-change-present-DF', type: JavaExec) {
-    args = createAntCallArgs(name)
+task('codeChangePresentSoFail', type: JavaExec) {
+    args = createAntCallArgs('code-change-present')
     main = project.mainClassName
     classpath(sourceSets.main.runtimeClasspath)
     enableAssertions = true
+}
+
+task('codeChangePresentButPass', type: JavaExec) {
+    args = createAntCallArgs('code-change-present-DF')
+    main = project.mainClassName
+    classpath(sourceSets.main.runtimeClasspath)
+    enableAssertions = true
+}
+
+task('groovyBasedTests', type: Exec) {
+    def psep = File.separator
+    workingDir "src${psep}test${psep}projects${psep}basic"
+    
+    def cmdPlusArgs = []
+    if (System.getProperty("os.name") =~ /(?i)win/) {
+        cmdPlusArgs << 'cmd' << '/c'
+    }
+    cmdPlusArgs << 'groovy'
+    cmdPlusArgs << "-Dgrape.root=build${psep}scriptDeps"
+    cmdPlusArgs << 'tests.groovy'
+    commandLine cmdPlusArgs
 }
 
 def createAntCallArgs(antTarget) {
@@ -85,3 +102,13 @@ def createAntCallArgs(antTarget) {
     }
     return args
 }
+
+// let groovy run after at least one of the ant tasks so that grapes cache is refreshed for use.
+groovyBasedTests.mustRunAfter doNotDetectCodeChange
+
+task('testant', dependsOn: ['compileJava', 'publishProjectDependencies',
+        'doNotDetectCodeChange', 'codeChangeAbsent', 'codeChangePresentSoFail', 'codeChangePresentButPass',
+        'groovyBasedTests'])
+testant.mustRunAfter publishProjectDependencies
+
+task('alltests', dependsOn: [ 'build', 'testant'])

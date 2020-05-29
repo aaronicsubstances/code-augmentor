@@ -1,0 +1,39 @@
+<project name="basic-ant-helper" default="default">
+    <description>Helper ANT build testing for expected failures in code-augmentor-app</description>
+    
+    <property name="src.dir" location="src" />
+    <property name="build.dir" location="build" />
+    <property name="build.code-augmentor.dir" location="${build.dir}/codeAugmentor" />
+    <property name="grape.dir" location="${build.dir}/scriptDeps" />
+    <property name="code-augmentor.verbose" value="true" />
+    <property name="augCode.file" location="${build.code-augmentor.dir}/augCodes.json" />
+    <property name="genCode.file" location="${build.code-augmentor.dir}/genCodes.json" />
+    
+    <target name="clean" description="deletes build directory">
+        <delete dir="${build.dir}" />
+    </target>
+    
+    <target name="prepare" description="prepares code augmentor">
+        <code_aug_prepare verbose="${code-augmentor.verbose}">
+            <srcDir dir="${src.dir}" includes="**/*.java" />
+        </code_aug_prepare>
+    </target>
+    
+    <target name="process" description="process code augmentor parse results">
+        <delete dir="${grapes.dir}"/>
+        <exec executable="groovy" failonerror="true" vmlauncher="false">
+            <arg value="-Dgrape.root=${grape.dir}" />
+            <arg value="main.groovy" />
+            <arg value="${augCode.file}" />
+            <arg value="${genCode.file}" />
+            <arg value="${code-augmentor.verbose}" />
+        </exec>
+    </target>
+    
+    <target name="complete" description="completes code augmentor operation">
+        <code_aug_complete verbose="${code-augmentor.verbose}" />
+    </target>
+    
+    <target name="default" description="runs entire code augmentor operation with default settings"
+        depends="clean,prepare,process,complete" />
+</project>
