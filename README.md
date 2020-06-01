@@ -14,7 +14,7 @@ The tool heavily relies on JSON as the standard data exchange format of choice.
 Operationally, the tool has two aspects: one part which resembles a preprocessor (such as the C/C++ preprocessor), and another part which resembles a linter (such as ESLint). However there are important differences: 
 
    * Like a C/C++ preprocessor, one part of *CodeAugmentor* is about code generation. In *CodeAugmentor* however, code generation is the main goal. It shares that same goal with C/C++ preproccessor macro exapansion facility, and thus with any general purpose macro processor (e.g m4). It is *not* about header file inclusion and conditional compilation which are offered by the C/C++ preprocessor.
-   * *CodeAugmentor* enables the programmer to employ JSON and a scripting language to generate code, removing the need to learn a dedicated macro processor language. In principle any scripting language can be employed with some small setup implementation required. However the following languages have been given priority by having their setup implementations implemented: Groovy, NodeJS, Python 3 and PHP 7.
+   * *CodeAugmentor* enables the programmer to employ JSON and a scripting language to generate code, removing the need to learn a dedicated macro processor language. In principle any scripting language can be employed with some small setup implementation required. However the following languages have been given priority by having their setup implementations implemented: Java (and other JVM languages), [NodeJS](https://github.com/aaronicsubstances/code-augmentor-nodejs), [Python 3](https://github.com/aaronicsubstances/code-augmentor-python) and [PHP 7](https://github.com/aaronicsubstances/code-augmentor-php).
    * Unlike a C/C++ preprocessor which modifies code "under the hood", *CodeAugmentor* modifies the programmer's source code "in place" from external code generator scripts, and synchronizes the generated code with the scripts. Any changes to the scripts, or any tampering of generated code by programmer will trigger an out-of-sync error.
    * Like a linter, the other part of *CodeAugmentor* validates code without modifying it. This enables straightforward integration of this part with build tools, as hooking a custom step into most build tools is far easier if the step doesn't modify any source code.
 
@@ -28,51 +28,13 @@ The workflow of the programmer using this tool may be exemplified in the followi
 
 ## Background
 
-The motivation for this tool is to support emergent, fragile or aging software architectures and maintain expected levels of code quality.
+See [Wiki](https://github.com/aaronicsubstances/code-augmentor/wiki)
 
-First, some observations:
-
-   * From the book "Design Patterns: Elements of Reusable Object-Oriented Software" written by the so-called "Gang of Four" (Gamma et al), it can be observed that most of the problems the 23 design patterns are supposed to solve have to do with code duplication, ie having to update and synchronize similar code sections in multiple places in response to changes in software requirements.
-
-   * In Robert Glass' "Facts and Fallacies of Software Engineering" book, he asserts that maintenance of code is mostly about implementing new software requirements, which translates into adding new code which has to work with the existing codebase.
-
-   * Agile methodologies (e.g.  https://www.agilealliance.org/resources/sessions/emergent-architecture-just-enough-just-in-time/) emphasize "emergent" or "serendipitous" architectures over waterfall/fully preplanned ones, in order to speed up the development of product releases to customers, and solicit feedback for subsequent iterations.
-
-What all this means is that
-
-   * Lack of familiarity/experience with design patterns may result in a fragile architecture in which code duplication is inevitable, and possibly a problem.
-
-   * Changing software requirements can make a previously satisfactory architecture become increasingly unsuitable, and make it prone to code duplication.
-
-   * Under time constraints imposed by stakeholders or the software methodology employed, the architecture which emerges may not be ideal/optimized, and therefore might be prone to code duplication.
-
-Usually, code duplication is frowned upon because it increases likelihood of errors, threatens reliablity and hence quality of code. 
-
-**The goal of *CodeAugmentor* is to compensate for the cost of passing over waterfall software architectures** (such as code duplication), by employing **data-driven programming** techniques. These techinques aim to have a single point of truth (SPOT) data specification from which a number of related code sections can be generated. Many possiblities for code quality improvement become possible. For example, the programmer can:
-
-   * generate code snippets commonly occuring as boilerplate.
-   * automate the process of synchronizing similar code sections in multiple places.
-   * implement patterns which are much easier/less time consuming to do with code generation than with code (re)design.
-   * generate documentation in a format not natively supported by programming environment (or simply for his/her own purposes).
-   * create links among comments in the code base which can be machine validated in some way.
-   * better maintain workarounds which can easily be updated/migrated when superior alternatives arrive.
-
-The last point deserves some explanation. In the modern day development of software, programming languages, libraries, frameworks and even platforms (such as Android) are "works in progress" (meaning they evolve in response to usage patterns by developers).
-
-   * Android has changed quite drastically since its inception, and continues to change. Its introduction of LiveData and ViewModel libraries are just few examples of significant introductions meant to steer the development community in a certain direction (by the way, those two libraries were Google's response to the problem of Android fragment interaction with async calls/requests).
-   * Programming languages nowadays evolve in part by copying features from each another. In the past Java was a popular exception, but now all the popular 10 languages try to incorporate language features from others which they deem helpful.
-   * Java is often criticized as been too verbose, and hence there are many occasions where one has to employ object-oriented design in a competent way to prevent Java code from becoming verbose or overly complex (by the way, this project will particularly be helpful to Java developers).
-
-Thus if a programmer encounters a situation in which the programming framework is missing something, or makes implementing something unnecessarily tedious, it may be not be in the long-term interest of the programmer to craft a comprehensive solution to the problem. The larger community or company backing that framework may also notice the problem and develop a more elegant solution, and any workaround will likely have to be changed.
-
-By employing *CodeAugmentor*, one can develop a strategy of settling for a simpler workaround, well documented, and involving code generation in which synchronization problem is catered for by *CodeAugmentor*. Then when a superior alternative arrive, it is easy to identify all affected code sections and update them in a way in which errors cannot elude the programmer.
-
-
-## Artifacts to be published
+## Published Artifacts
  
-   * Standalone command line application will be published for use with any programming language.
-   * Plugins will be published for Ant, Maven and Gradle for scripting with Groovy, and for easier integration with Java and Android IDEs.
-   * Packages will be published for NodeJS, Python 3 and PHP 7.
+   * Standalone command line application available on [Releases](https://github.com/aaronicsubstances/code-augmentor/releases) for use with any programming language, with the requirement of Java 8 JRE or JDK.
+   * Ant, Maven and Gradle plugins available on [Maven Central](https://search.maven.org/search?q=com.aaronicsubstances) and [Gradle plugin portal](https://plugins.gradle.org/plugin/com.aaronicsubstances.code-augmentor), for scripting with Groovy and for easier integration with Java and Android IDEs.
+   * Packages for officially supported languages available for [NodeJS](https://www.npmjs.com/package/code-augmentor-support), [Python 3](https://pypi.org/project/code-augmentor-support/) and [PHP 7](https://packagist.org/packages/aaronicsubstances/code-augmentor-support).
 
 ## Development Environment
 
@@ -86,3 +48,127 @@ By employing *CodeAugmentor*, one can develop a strategy of settling for a simpl
    * NodeJS v12.13.0
    * Python 3.8.1
    * PHP 7.4.5 (cli)
+
+
+## Documentation of Artifacts
+
+
+### Ant Plugin
+
+### Maven Plugin
+
+### Gradle Plugin
+
+## Documentation for Code Generator Scripts
+
+The following documents the structure of the JSON objects in aug code input files and gen code output files.
+
+### Code Generation Request
+
+The entire contents of an aug code file constitute a code generation request. It consists of a single **header** object, and zero or more **fileAugmentingCodes** objects.
+
+#### header
+
+Has the following string fields, which correspond to the configuration for the prepare task/mojo in the plugins. Unlike in the plugins where arrays are used, this object picks only the first item of each array of directives.
+
+   * genCodeStartDirective
+   * genCodeEndDirective
+   * embeddedStringDirective
+   * embeddedJsonDirective
+   * skipCodeStartDirective
+   * skipCodeEndDirective
+   * augCodeDirective
+   * inlineGenCodeDirective
+   * nestedLevelStartMarker
+   * nestedLevelEndMarker
+
+#### fileAugmentingCodes
+
+Has the following fields:
+
+   * dir - directory of fileSet containing the file whose augmenting codes are represented by this object.
+   * relativePath - path of file relative to dir
+   * augmentingCodes - array of **augmentingCode** objects
+
+#### augmentingCode
+
+Has the following fields:
+
+   * id - int uniquely identifying augmenting code section in file.
+   * blocks - array of one or more *block* elements.
+   * directiveMarker - string for the particular aug code directive used for the first line of the augmenting code section.
+   * indent - string for minimum indent of lines in augmenting code section. Is empty string if no line is indented.
+   * lineNumber - int for line number of first line of augmenting code section. Starts from 1.
+   * lineSeparator - string which indicates newlines used in the augmenting code section. All lines in augmenting code section must end with a newline. This field is available for inserting newlines into generated code to ensure generating code scripts work properly regardless of the OS platform they were written in, or the target OS platform they are being executed on.
+   * nestedLevelNumber - int indicating level of nesting. Starts from 0.
+   * hasNestedLevelStartMarker - boolean indicating whether augmenting code section starts a nested level. Subsequent augmenting code sections will have a higher nested level, until the corresponding augmenting code section with the same nested level as this object and having an end marker is reached. 
+   * hasNestedLevelEndMarker - boolean indicating the end of a previous augmenting code section of the same nested level which started a nested level. 
+
+#### block
+
+Has the following fields
+
+   * content - string
+   * stringify - boolean which if true means content is intended to be used as a string argument of some sort.
+   * jsonify - boolean which if  true means content is intented to be used as any kind of JSON value of some sort (ie not just JSON object, but JSON arrays, strings, numbers, boolean, nulls).
+
+#### Extra fields on augmentingCode object
+
+The following fields are available for use with code generator scripts:
+
+   * args - array of elements corresponding to contents of blocks which have either stringify field or jsonify field set to true. In the case of jsonify, the content is parsed as JSON for use.
+   * processed - boolean field which can be set to true on any element of *fileAugmentingCodes.augmentingCodes* array which is yet to be processed, to cause processing logic to skip it.
+
+### Code Generation Response
+
+The entire contents of a gen code file constitute a code generation response. It consists of zero or more **generatedCode** objects.
+
+#### generatedCode
+
+This contains the generated code for a given augmenting code section. The following fields specify how it should be formatted and inserted. Most of the fields are optional. The required fields are id and contentParts.
+   
+   * id - id of corresponding augmenting code section.
+   * contentParts - array of one or more **contentPart** objects. Must have at least 1 element. Each element represents a snippet of an entire generated code section. Concatenating all snippets in order equals an entire generated code section.
+   * disableEnsureEndingNewline - optional boolean. By default every generated code section will be appended with a newline if it lacks one. This option if set to true skips the appending. Defaults to false.
+   * indent - optional string to apply indenting to entire generated code section. Use empty string to disable indenting. Default is null which fallbacks to indent of corresponding augmenting code section. 
+   * skipped - optional boolean which indicates that corresponding augmenting code section should not be processed at all. Defauls to false.
+
+By default, generated code sections are written out between a *genCodeStartDirective* line and a *genCodeEndDirective* line. The source code can specify one to immediately follow an augmenting code section (intervening blank lines are allowed), in which case no new directives will be issued, and the generated code section will be written as is.
+
+The following two optional boolean fields are available for use in advanced cases to do something different from this default generated code insertion behaviour. Both default to false.
+
+   * replaceAugCodeDirectives - Indicates that the insertion/replacement range should include the augmenting code section itself. Defaults to false.
+   * replaceGenCodeDirectives - Indicates that the insertion/replacement range should include the range from the end of the augmenting code section to the end of the generating code section if one exists. Defaults to false.
+
+Note that:
+   * A generated code section range always ends with a newline character, whether using default range or ranges enabled by use of advanced options.
+   * Use of replaceAugCodeDirectives and/or replaceGenCodeDirectives causes the default indenting with augmenting code section indent to be skipped. If indenting is desired, specify non-empty indent field in generatedCode object.
+   * Use of *inlineGenCodeDirective* lines require enabling replaceGenCodeDirectives to skip default insertion behaviour.
+
+#### contentPart
+
+Has the following fields:
+
+   * content - string containing snippet of generated code. Must not to be null.
+   * exactMatch - optional boolean indicating whether this snippet should be matched exactly against existing generated code section in the similarity test possibly leading to a code change detection. Defaults to false.
+
+### Algorithm for Similarity Test of Generated Code Sections
+
+When comparing an existing generated code section for similarity with an updated one,  certain tabs and space characters inside the content parts are treated as insignificant.
+
+The rules involve either completely removing a contiguous space ("removed" for short), or reducing a contiguous space to a single space character ("reduced" for short) inside non-exact content parts. Every contiguous space inside an exact content part cannot be removed or reduced at all.
+
+By default,
+   * Leading spaces of lines are removed.
+   * Trailing spaces of lines are removed.
+   * Any contiguous spaces inside lines (ie surrounded on both sides by non-newline characters) are reduced.
+
+When exact content parts are present, the following exceptions apply:
+   * any contiguous space immediately followed by an exact content part is not removed, but reduced.
+   * any contiguous space which ends the entire generated code section and immediately follows an exact content part is not removed, but reduced.
+   * if an exact content part does not end with a newline, then any contiguous space immediately following it is not removed, but reduced.
+
+*When there are only exact content parts present, then the rules simply become a test of exact string equality.*
+
+If code change detection is enabled and code changes are detected, OS shell scripts named *EFFECT-CHANGES* will be found in the configured generated code directory. Running these scripts with the *-f* option from the command line will  copy over/overwrite/update the existing source code files with the generated codes. Omitting the *-f* command line option simulates the copying only.
+
