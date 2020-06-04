@@ -55,9 +55,15 @@ See [Wiki](https://github.com/aaronicsubstances/code-augmentor/wiki)
 
 ### Ant Plugin
 
+See [here](https://github.com/aaronicsubstances/code-augmentor/wiki/Ant-Plugin).
+
 ### Maven Plugin
 
+See [here](https://github.com/aaronicsubstances/code-augmentor/wiki/Maven-Plugin).
+
 ### Gradle Plugin
+
+See [here](https://github.com/aaronicsubstances/code-augmentor/wiki/Gradle-Plugin).
 
 ## Documentation for Code Generator Scripts
 
