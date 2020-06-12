@@ -51,3 +51,6 @@ nb-configuration.xml
 
 .vscode/
 !/code-augmentor-app/src/dist/
+
+/examples/**/tempSrc/
+/examples/**/generated/

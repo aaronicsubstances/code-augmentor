@@ -34,7 +34,7 @@ The workflow of the programmer using this tool may be exemplified in the followi
 
 ## Getting Started with standalone command line application
 
-1. Ensure you have Java 8 JDK or JRE installed on your computer. Run `java -version` from command line to verity, and should get a output resembling the following:
+1. Ensure you have Java 8 JDK or JRE installed on your computer. Run `java -version` from command line to verify, and should get output resembling the following:
 
    ```
    java version "1.8.0_152"
@@ -82,7 +82,7 @@ The workflow of the programmer using this tool may be exemplified in the followi
 
 7. Else sample project directory name has *-sync* suffix, in which case Code Augmentor will complain/fail with (normal) error that files are now out of sync. Investigate `generated` subdirectory beside build.xml, and some text files and shell scripts should be present.
 
-   a. CHANGE-SUMMARY.txt - contains all paths in `src`, or paths in `tempSrc` with out-of-sync changes
+   a. CHANGE-SUMMARY.txt - contains paths in `src` or `tempSrc` with out-of-sync changes
    
    b. CHANGE-DETAILS.json - contains location information on what actually changed.
    
