@@ -2,7 +2,6 @@ PLUGIN_BASE_TASK_TYPE = 'AbstractMojo'
 PLUGIN_FILE_SET_TYPE = 'FileSet'
 PLUGIN_EXECUTION_EXCEPTION_TYPE = 'MojoExecutionException'
 PLUGIN_PREPARE_TASK_TYPE = 'PreparationMojo'
-PLUGIN_PROCESS_TASK_TYPE = 'ProcessingMojo'
 PLUGIN_COMPLETE_TASK_TYPE = 'CompletionMojo'
 
 VAL_ERROR_NO_FILESET = '"at least 1 element is required in fileSets"'
@@ -17,8 +16,6 @@ VAL_ERROR_RUN_NULL_AUG_CODE_FILE = '"unexpected absence of augCodeFile"'
 VAL_ERROR_NULL_FILE_SET_AT_I = '"invalid null value found at fileSets[" + i + "]"'
 VAL_ERROR_COMPLETE_NULL_GEN_CODE_FILE_AT_I = '"invaid null value found at generatedCodeFiles[" + i + "]"'
 VAL_ERROR_RUN_NULL_GEN_CODE_FILE = '"unexpected absence of genCodeFile"'
-VAL_ERROR_PROCESS_NULL_AUG_CODE_FILE = VAL_ERROR_PREPARE_NULL_AUG_CODE_FILE_AT_I
-VAL_ERROR_PROCESS_NULL_GEN_CODE_FILE = VAL_ERROR_COMPLETE_NULL_GEN_CODE_FILE_AT_I
 VAL_ERROR_NO_GROOVY_SCRIPT_DIR = '"groovyScriptDir property is required"'
 
 PREPARE_FILES_VALIDATION_CODE = """
@@ -39,22 +36,10 @@ PREPARE_FILES_VALIDATION_CODE = """
 
 PROCESS_FILES_VALIDATION_CODE = """
         if (resolvedAugCodeFile == null) {
-            if (task instanceof $PLUGIN_PROCESS_TASK_TYPE) {
-                int i = resolvedAugCodeSpecIndex;
-                throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE($VAL_ERROR_PROCESS_NULL_AUG_CODE_FILE);
-            }
-            else {
-                throw new RuntimeException($VAL_ERROR_RUN_NULL_AUG_CODE_FILE);
-            }
+            throw new RuntimeException($VAL_ERROR_RUN_NULL_AUG_CODE_FILE);
         }
         if (resolvedGenCodeFile == null) {
-            if (task instanceof $PLUGIN_PROCESS_TASK_TYPE) {
-                int i = resolvedGenCodeFileIndex;
-                throw new $PLUGIN_EXECUTION_EXCEPTION_TYPE($VAL_ERROR_PROCESS_NULL_GEN_CODE_FILE);
-            }
-            else {
-                throw new RuntimeException($VAL_ERROR_RUN_NULL_GEN_CODE_FILE);
-            }
+            throw new RuntimeException($VAL_ERROR_RUN_NULL_GEN_CODE_FILE);
         }"""
 
 COMPLETION_FILES_VALIDATION_CODE = ''
@@ -110,10 +95,6 @@ LOG_PREPARE_TASK_PROPERTIES = """logger.info("Configuration properties:");
             logger.info("\\tgenericTask.relativePaths: " + genericTask.getRelativePaths());"""
             
 LOG_PROCESS_TASK_PROPERTIES = """logger.info("Configuration properties:");
-            if (task instanceof $PLUGIN_PROCESS_TASK_TYPE) {
-                logger.info("\\taugCodeSpecIndex: " + resolvedAugCodeSpecIndex);
-                logger.info("\\tgenCodeFileIndex: " + resolvedGenCodeFileIndex);
-            }
             logger.info("\\tgroovyScriptDir: " + resolvedGroovyScriptDir);
             logger.info("\\tgroovyEntryScriptName: " + resolvedGroovyEntryScriptName);
             logger.info("\\tgenericTask.inputFile: " + resolvedAugCodeFile);
@@ -122,7 +103,6 @@ LOG_PROCESS_TASK_PROPERTIES = """logger.info("Configuration properties:");
             logger.info("\\tgenericTask.jsonParseFunction: " + genericTask.getJsonParseFunction());"""
 
 LOG_COMPLETE_TASK_PROPERTIES = """logger.info("Configuration properties:");
-            logger.info("\\tencoding: " + genericTask.getCharset());
             logger.info("\\tdestDir: " + genericTask.getDestDir());
             if (task instanceof $PLUGIN_COMPLETE_TASK_TYPE) {
                 logger.info("\\tprepFile: " + genericTask.getPrepFile());

@@ -1,7 +1,6 @@
 package com.aaronicsubstances.code.augmentor.gradle;
 
 import java.io.File;
-import java.nio.charset.Charset;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,7 +22,6 @@ import org.gradle.api.tasks.TaskAction;
  */
 public class CompletionTask extends DefaultTask {
     private final Property<Boolean> verbose;
-    private final Property<String> encoding;
     private final ListProperty<Object> generatedCodeFiles;
     private final Property<Object> prepFile;
     private final Property<Object> destDir;
@@ -33,7 +31,6 @@ public class CompletionTask extends DefaultTask {
     public CompletionTask() {
         ObjectFactory objectFactory = getProject().getObjects();
         verbose = objectFactory.property(Boolean.class);
-        encoding = objectFactory.property(String.class);
         prepFile = objectFactory.property(Object.class);
         generatedCodeFiles = objectFactory.listProperty(Object.class);
         destDir = objectFactory.property(Object.class);
@@ -45,14 +42,13 @@ public class CompletionTask extends DefaultTask {
     public void execute() throws GradleException {
         try {
             boolean resolvedVerbose = verbose.get();
-            String resolvedEncoding = encoding.get();
             File resolvedPrepFile = getProject().file(prepFile);
             List<File> resolvedGenCodeFiles = generatedCodeFiles.get().
                 stream().map(x -> getProject().file(x)).collect(Collectors.toList());
             File resolvedDestDir = getProject().file(destDir);
             boolean resolvedCodeChangeDetectionDisabled = codeChangeDetectionDisabled.get();
             boolean resolvedFailOnChanges = failOnChanges.get();
-            completeExecute(this, resolvedEncoding, resolvedVerbose,
+            completeExecute(this, resolvedVerbose,
                 resolvedPrepFile, resolvedGenCodeFiles, resolvedDestDir,
                 resolvedCodeChangeDetectionDisabled, resolvedFailOnChanges);
         }
@@ -65,14 +61,13 @@ public class CompletionTask extends DefaultTask {
     }
 
 //:SKIP_CODE_START:
-    static void completeExecute(DefaultTask task, String resolvedEncoding,
+    static void completeExecute(DefaultTask task,
             boolean resolvedVerbose, File resolvedPrepFile,
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
             boolean resolvedCodeChangeDetectionDisabled,
             boolean resolvedFailOnChanges) throws Exception {
         
         // validate
-        Charset charset = Charset.forName(resolvedEncoding);
         for (int i = 0; i < resolvedGenCodeFiles.size(); i++) {
             File resolvedGenCodeFile = resolvedGenCodeFiles.get(i);
             if (resolvedGenCodeFile == null) {
@@ -90,7 +85,6 @@ public class CompletionTask extends DefaultTask {
         Logger logger = task.getLogger();
 
         CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
-        genericTask.setCharset(charset);
         genericTask.setLogAppender(TaskUtils.createLogAppender(task, resolvedVerbose));
         genericTask.setPrepFile(resolvedPrepFile);
         genericTask.setGeneratedCodeFiles(resolvedGenCodeFiles);
@@ -101,7 +95,6 @@ public class CompletionTask extends DefaultTask {
             // Print plugin task properties and any extra useful values for user.
             // As much as possible use generic task properties.
             logger.info("Configuration properties:");
-            logger.info("\tencoding: " + genericTask.getCharset());
             logger.info("\tdestDir: " + genericTask.getDestDir());
             if (task instanceof CompletionTask) {
                 logger.info("\tprepFile: " + genericTask.getPrepFile());
@@ -143,17 +136,6 @@ public class CompletionTask extends DefaultTask {
     @Internal
     public Property<Boolean> getVerbose() {
         return verbose;
-    }
-
-    /**
-     * External source file encoding.
-     * Task-generated files are always read and written in UTF-8.
-     * @return encoding used to read and write external source code files. 
-     */
-
-    @Internal
-    public Property<String> getEncoding() {
-        return encoding;
     }
 
     @Internal

@@ -51,10 +51,8 @@ public class CodeAugmentorPlugin implements Plugin<Project> {
         extension.getNestedLevelStartMarkers().convention(Arrays.asList("{"));
         extension.getNestedLevelEndMarkers().convention(Arrays.asList("}"));
 
-        // set defaults for process task.
+        // set defaults for run task.
         extension.getGroovyEntryScriptName().convention("main.groovy");
-        extension.getAugCodeSpecIndex().convention(0);
-        extension.getGenCodeFileIndex().convention(0);
 
         // sets defaults for complete task.
         extension.getDestDir().convention(buildDir.dir(workingDirPrefix + "generated"));
@@ -85,21 +83,6 @@ public class CodeAugmentorPlugin implements Plugin<Project> {
                 prepareTask.getNestedLevelEndMarkers().set(extension.getNestedLevelEndMarkers());
             }
         });
-        project.getTasks().register("codeAugmentorProcess", ProcessingTask.class, new Action<ProcessingTask>() {
-
-            @Override
-            public void execute(ProcessingTask processTask) {
-                processTask.setDescription("Determines generated code per each extracted augmenting code");
-                processTask.setGroup(EXTENSION_NAME);
-                processTask.getVerbose().set(extension.getVerbose());
-                processTask.getGroovyScriptDir().set(extension.getGroovyScriptDir());
-                processTask.getGroovyEntryScriptName().set(extension.getGroovyEntryScriptName());
-                processTask.getAugCodeSpecs().set(extension.getAugCodeSpecs());
-                processTask.getAugCodeSpecIndex().set(extension.getAugCodeSpecIndex());
-                processTask.getGeneratedCodeFiles().set(extension.getGeneratedCodeFiles());
-                processTask.getGenCodeFileIndex().set(extension.getGenCodeFileIndex());
-            }
-        });
         project.getTasks().register("codeAugmentorComplete", CompletionTask.class, new Action<CompletionTask>() {
 
             @Override
@@ -107,7 +90,6 @@ public class CodeAugmentorPlugin implements Plugin<Project> {
                 generateTask.setDescription("Generates for each outdated source file one with generated code section updated");
                 generateTask.setGroup(EXTENSION_NAME);
                 generateTask.getVerbose().set(extension.getVerbose());
-                generateTask.getEncoding().set(extension.getEncoding());
                 generateTask.getPrepFile().set(extension.getPrepFile());
                 generateTask.getGeneratedCodeFiles().set(extension.getGeneratedCodeFiles());
                 generateTask.getDestDir().set(extension.getDestDir());

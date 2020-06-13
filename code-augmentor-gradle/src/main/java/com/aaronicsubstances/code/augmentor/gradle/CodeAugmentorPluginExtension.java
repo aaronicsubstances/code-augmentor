@@ -39,9 +39,6 @@ public class CodeAugmentorPluginExtension {
 
     private final Property<Boolean> verbose;
 
-    private final Property<Integer> augCodeSpecIndex;
-    private final Property<Integer> genCodeFileIndex;
-
     private final Project project;
 
     public CodeAugmentorPluginExtension(Project project) {
@@ -69,8 +66,6 @@ public class CodeAugmentorPluginExtension {
 
         groovyScriptDir = objectFactory.property(Object.class);
         groovyEntryScriptName = objectFactory.property(String.class);
-        augCodeSpecIndex = objectFactory.property(Integer.class);
-        genCodeFileIndex = objectFactory.property(Integer.class);
 
         verbose = objectFactory.property(Boolean.class);
     }
@@ -164,12 +159,4 @@ public class CodeAugmentorPluginExtension {
 	public Property<Boolean> getVerbose() {
 		return verbose;
 	}
-
-    public Property<Integer> getAugCodeSpecIndex() {
-        return augCodeSpecIndex;
-    }
-
-    public Property<Integer> getGenCodeFileIndex() {
-        return genCodeFileIndex;
-    }
 }

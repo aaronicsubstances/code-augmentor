@@ -99,7 +99,7 @@ public class PrepareTask extends Task {
         skipCodeEndDirectives.add(val);
     }
 
-    public void addConfiguredInlineGenCodeDirectives(Directive d) {
+    public void addConfiguredInlineGenCodeDirective(Directive d) {
         String val = null;
         if (d.getValue() != null) {
             val = d.getValue();
@@ -107,7 +107,7 @@ public class PrepareTask extends Task {
         inlineGenCodeDirectives.add(val);
     }
 
-    public void addConfiguredNestedLevelStartMarkers(Directive d) {
+    public void addConfiguredNestedLevelStartMarker(Directive d) {
         String val = null;
         if (d.getValue() != null) {
             val = d.getValue();
@@ -115,7 +115,7 @@ public class PrepareTask extends Task {
         nestedLevelStartMarkers.add(val);
     }
 
-    public void addConfiguredNestedLevelEndMarkers(Directive d) {
+    public void addConfiguredNestedLevelEndMarker(Directive d) {
         String val = null;
         if (d.getValue() != null) {
             val = d.getValue();

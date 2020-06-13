@@ -5,7 +5,7 @@
 
 @Grab('com.aaronicsubstances:code-augmentor-core:1.1.0-SNAPSHOT')
 
-import com.aaronicsubstances.code.augmentor.ant.ProcessTask
+import com.aaronicsubstances.code.augmentor.ant.CodeAugmentorTask
 import com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeGenericTask
 
 import groovy.json.JsonSlurper
@@ -71,14 +71,14 @@ class MyTestCase {
         
         ant.taskdef(resource: "CodeAugmentorTasks.xml", onerror: "failall")
         
-        ant.project.addReference(ProcessTask.PROJECT_REFERENCE_DEFAULT_STACK_TRACE_LIMIT_PREFIXES, 
+        ant.project.addReference(CodeAugmentorTask.PROJECT_REFERENCE_DEFAULT_STACK_TRACE_LIMIT_PREFIXES, 
             [ getClass().name ] )
 
         def jsonParser = new JsonSlurper()
         ProcessCodeGenericTask.JsonParseFunction jsonParseFunction = {
             return jsonParser.parseText(it)
         }
-        ant.project.addReference(ProcessTask.PROJECT_REFERENCE_JSON_PARSE_FUNCTION,
+        ant.project.addReference(CodeAugmentorTask.PROJECT_REFERENCE_JSON_PARSE_FUNCTION,
             jsonParseFunction)
 
         
@@ -89,7 +89,7 @@ class MyTestCase {
             binding.context = context
             return groovyShell.evaluate(functionName + '(augCode, context)')
         }
-        ant.project.addReference(ProcessTask.PROJECT_REFERENCE_SCRIPT_EVAL_FUNCTION,
+        ant.project.addReference(CodeAugmentorTask.PROJECT_REFERENCE_SCRIPT_EVAL_FUNCTION,
             scriptEvalFunction)
     }
     

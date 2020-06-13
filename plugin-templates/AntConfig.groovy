@@ -59,9 +59,6 @@ PREPARE_FILES_VALIDATION_CODE = '''// set up defaults
         }'''
 
 COMPLETION_FILES_VALIDATION_CODE = '''// set up defaults
-        if (resolvedEncoding == null) {
-            resolvedEncoding = "UTF-8";
-        }
         if (resolvedPrepFile == null) {
             resolvedPrepFile = TaskUtils.getDefaultPrepFile(task);
         }
@@ -121,7 +118,6 @@ LOG_PREPARE_TASK_PROPERTIES = """task.log("Configuration properties:");
             task.log("\\tsrcDirs: " + resolvedFileSets);"""
 
 LOG_COMPLETE_TASK_PROPERTIES = """task.log("Configuration properties:");
-            task.log("\\tencoding: " + genericTask.getCharset());
             task.log("\\tdestDir: " + genericTask.getDestDir());
             if (task instanceof $PLUGIN_COMPLETE_TASK_TYPE) {
                 task.log("\\tprepFile: " + genericTask.getPrepFile());

@@ -1,18 +1,29 @@
 package com.aaronicsubstances.code.augmentor.gradle;
 
 import java.io.File;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.aaronicsubstances.code.augmentor.core.tasks.PluginUtils;
+import com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeGenericTask;
+
+import org.codehaus.groovy.control.CompilerConfiguration;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.ConfigurableFileTree;
+import org.gradle.api.logging.Logger;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
+
+import groovy.json.JsonSlurper;
+import groovy.lang.Binding;
+import groovy.util.GroovyScriptEngine;
 
 public class CodeAugmentorTask extends DefaultTask {
     private final Property<Boolean> verbose;
@@ -39,6 +50,8 @@ public class CodeAugmentorTask extends DefaultTask {
     private final Property<Object> prepFile;
     private final Property<Object> augCodeFile;
     private final Property<Object> genCodeFile;
+
+    private static final JsonSlurper JSON_PARSER = new JsonSlurper();
     
     public CodeAugmentorTask() {
         ObjectFactory objectFactory = getProject().getObjects();
@@ -106,7 +119,7 @@ public class CodeAugmentorTask extends DefaultTask {
             }
             String resolvedGroovyEntryScriptName = groovyEntryScriptName.get();
             
-            ProcessingTask.completeExecute(this, resolvedVerbose, 0, 0, 
+            executeProcessStage(resolvedVerbose,
                 resolvedAugCodeFile, resolvedGenCodeFile,
                 resolvedGroovyScriptDir, resolvedGroovyEntryScriptName);
 
@@ -114,7 +127,7 @@ public class CodeAugmentorTask extends DefaultTask {
             File resolvedDestDir = getProject().file(destDir);            
             boolean resolvedCodeChangeDetectionDisabled = codeChangeDetectionDisabled.get();
             boolean resolvedFailOnChanges = failOnChanges.get();
-            CompletionTask.completeExecute(this, resolvedEncoding, resolvedVerbose,
+            CompletionTask.completeExecute(this, resolvedVerbose,
                 resolvedPrepFile, Arrays.asList(resolvedGenCodeFile), resolvedDestDir,
                 resolvedCodeChangeDetectionDisabled, resolvedFailOnChanges);
         }
@@ -123,6 +136,65 @@ public class CodeAugmentorTask extends DefaultTask {
         }
         catch (Throwable ex) {
             throw new GradleException("General plugin error: " + ex, ex);
+        }
+    }
+    
+    private void executeProcessStage(boolean resolvedVerbose,
+            File resolvedAugCodeFile, File resolvedGenCodeFile,
+            File resolvedGroovyScriptDir, String resolvedGroovyEntryScriptName) throws Exception {
+        
+        if (resolvedAugCodeFile == null) {
+            throw new RuntimeException("unexpected absence of augCodeFile");
+        }
+        if (resolvedGenCodeFile == null) {
+            throw new RuntimeException("unexpected absence of genCodeFile");
+        }
+        // groovy script dir is required.
+        if (resolvedGroovyScriptDir == null) {
+            throw new GradleException("groovyScriptDir property is required");
+        }
+        Logger logger = getLogger();
+        ProcessCodeGenericTask genericTask = new ProcessCodeGenericTask();
+        genericTask.setLogAppender(TaskUtils.createLogAppender(this, resolvedVerbose));
+        genericTask.setInputFile(resolvedAugCodeFile);
+        genericTask.setOutputFile(resolvedGenCodeFile);
+        genericTask.setJsonParseFunction(s -> JSON_PARSER.parseText(s));
+
+        if (resolvedVerbose) {
+            // Print plugin task properties and any extra useful values for user.
+            // As much as possible use generic task properties.
+            logger.info("Configuration properties:");
+            logger.info("\tgroovyScriptDir: " + resolvedGroovyScriptDir);
+            logger.info("\tgroovyEntryScriptName: " + resolvedGroovyEntryScriptName);
+            logger.info("\tgenericTask.inputFile: " + resolvedAugCodeFile);
+            logger.info("\tgenericTask.outputFile: " + resolvedGenCodeFile);
+            logger.info("\tgenericTask.logAppender: " + genericTask.getLogAppender());
+            logger.info("\tgenericTask.jsonParseFunction: " + genericTask.getJsonParseFunction());
+        }
+
+        URL[] scriptEngineRoots = new URL[]{ resolvedGroovyScriptDir.toURI().toURL() };
+        GroovyScriptEngine scriptEngine = new GroovyScriptEngine(scriptEngineRoots);
+        CompilerConfiguration cc = new CompilerConfiguration();
+        cc.setRecompileGroovySource(false);
+        scriptEngine.setConfig(cc);
+        Binding binding = new Binding();
+        binding.setVariable("parentTask", genericTask);
+        logger.info("Launching " + resolvedGroovyEntryScriptName + "...");        
+        List<Throwable> scriptErrors = new ArrayList<>();
+        try {
+            scriptEngine.run(resolvedGroovyEntryScriptName, binding);
+        }
+        catch (Throwable t) {
+            scriptErrors.add(t);
+        }
+
+        scriptErrors.addAll(genericTask.getAllErrors());
+
+        // fail build if there were errors.
+        if (!scriptErrors.isEmpty()) {
+            String allExMsg = PluginUtils.stringifyPossibleScriptErrors(
+                scriptErrors, true, null, null);
+            throw new GradleException(allExMsg);
         }
     }
 

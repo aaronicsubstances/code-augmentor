@@ -35,7 +35,8 @@ public class Snippets {
                 it.hasNestedLevelEndMarker;
         };
         assert endingAugCodeIndex != -1;
-        def endingAugCode = context.fileAugCodes.augmentingCodes[endingAugCodeIndex];
+        def endingAugCode = context.fileAugCodes.augmentingCodes[endingAugCodeIndex];        
+        assert augCode.contentWithinNestedMarkers == "intentionalContent"
         def startGenCode = context.newGenCode();
         startGenCode.id = augCode.id;
         startGenCode.indent = "  ";

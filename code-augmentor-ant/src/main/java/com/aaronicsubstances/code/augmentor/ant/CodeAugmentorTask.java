@@ -6,6 +6,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.aaronicsubstances.code.augmentor.core.tasks.PluginUtils;
+import com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeGenericTask;
+
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.types.FileSet;
@@ -15,6 +18,13 @@ import org.apache.tools.ant.types.FileSet;
  * tool.
  */
 public class CodeAugmentorTask extends Task {
+    public static final String PROJECT_REFERENCE_JSON_PARSE_FUNCTION = 
+        "codeAugmentor.jsonParseFunction";
+    public static final String PROJECT_REFERENCE_SCRIPT_EVAL_FUNCTION = 
+        "codeAugmentor.scriptEvalFunction";
+    public static String PROJECT_REFERENCE_DEFAULT_STACK_TRACE_LIMIT_PREFIXES = 
+        "codeAugmentor.defaultStackTraceLimitPrefixes";
+
     private String encoding;
     private boolean verbose;
     private final List<FileSet> srcDirs = new ArrayList<>();
@@ -100,7 +110,7 @@ public class CodeAugmentorTask extends Task {
         skipCodeEndDirectives.add(val);
     }
 
-    public void addConfiguredInlineGenCodeDirectives(Directive d) {
+    public void addConfiguredInlineGenCodeDirective(Directive d) {
         String val = null;
         if (d.getValue() != null) {
             val = d.getValue();
@@ -108,7 +118,7 @@ public class CodeAugmentorTask extends Task {
         inlineGenCodeDirectives.add(val);
     }
 
-    public void addConfiguredNestedLevelStartMarkers(Directive d) {
+    public void addConfiguredNestedLevelStartMarker(Directive d) {
         String val = null;
         if (d.getValue() != null) {
             val = d.getValue();
@@ -116,7 +126,7 @@ public class CodeAugmentorTask extends Task {
         nestedLevelStartMarkers.add(val);
     }
 
-    public void addConfiguredNestedLevelEndMarkers(Directive d) {
+    public void addConfiguredNestedLevelEndMarker(Directive d) {
         String val = null;
         if (d.getValue() != null) {
             val = d.getValue();
@@ -203,7 +213,7 @@ public class CodeAugmentorTask extends Task {
                     .collect(Collectors.toList());
             }
             
-            ProcessTask.completeExecute(this, verbose, 0, 0, augCodeFile, genCodeFile, 
+            executeProcessStage(verbose, augCodeFile, genCodeFile, 
                 resolvedStackTraceLimitPrefixes, resolvedStackTraceFilterPrefixes);
 
             // complete.
@@ -211,7 +221,7 @@ public class CodeAugmentorTask extends Task {
             if (genCodeFile != null) {
                 genCodeFiles.add(genCodeFile);
             }
-            CompletionTask.completeExecute(this, encoding, verbose, prepFile,
+            CompletionTask.completeExecute(this, verbose, prepFile,
                 genCodeFiles, destDir, codeChangeDetectionDisabled, failOnChanges);
         }
         catch (BuildException ex) {
@@ -219,6 +229,85 @@ public class CodeAugmentorTask extends Task {
         }
         catch (Throwable ex) {
             throw new BuildException("General error: " + ex, ex);
+        }
+    }
+    
+    @SuppressWarnings("unchecked")
+    private void executeProcessStage(boolean resolvedVerbose,
+            File resolvedAugCodeFile, File resolvedGenCodeFile,
+            List<String> resolvedStackTraceLimitPrefixes, 
+            List<String> resolvedStackTraceFilterPrefixes) throws Exception {
+        // set up defaults
+        if (resolvedAugCodeFile == null) {
+            resolvedAugCodeFile = TaskUtils.getDefaultAugCodeFile(this);
+        }
+        if (resolvedGenCodeFile == null) {
+            resolvedGenCodeFile = TaskUtils.getDefaultGenCodeFile(this);
+        }
+        
+        // json parse function is required.            
+        ProcessCodeGenericTask.JsonParseFunction resolvedJsonParseFunction = 
+            (ProcessCodeGenericTask.JsonParseFunction) getProject().getReference(
+                PROJECT_REFERENCE_JSON_PARSE_FUNCTION);
+        if (resolvedJsonParseFunction == null) {
+            throw new BuildException(PROJECT_REFERENCE_JSON_PARSE_FUNCTION +
+                " reference is not set");
+        }
+
+        // eval function is required.            
+        ProcessCodeGenericTask.EvalFunction resolvedScriptEvalFunction = 
+            (ProcessCodeGenericTask.EvalFunction) getProject().getReference(
+                PROJECT_REFERENCE_SCRIPT_EVAL_FUNCTION);
+        if (resolvedScriptEvalFunction == null) {
+            throw new BuildException(PROJECT_REFERENCE_SCRIPT_EVAL_FUNCTION +
+                " reference is not set");
+        }
+
+        // make use of default stack trace limit prefix if present
+        if (resolvedStackTraceLimitPrefixes == null ||
+                resolvedStackTraceLimitPrefixes.isEmpty()) {
+            List<String> defaultStackTraceLimitPrefixes =
+                (List<String>) getProject().getReference(
+                    PROJECT_REFERENCE_DEFAULT_STACK_TRACE_LIMIT_PREFIXES);
+            resolvedStackTraceLimitPrefixes = defaultStackTraceLimitPrefixes;
+        }
+
+        ProcessCodeGenericTask genericTask = new ProcessCodeGenericTask();
+        genericTask.setLogAppender(TaskUtils.createLogAppender(this, resolvedVerbose));
+        genericTask.setInputFile(resolvedAugCodeFile);
+        genericTask.setOutputFile(resolvedGenCodeFile);
+        genericTask.setJsonParseFunction(resolvedJsonParseFunction);
+
+        if (resolvedVerbose) {
+            // Print plugin task properties and any extra useful values for user.
+            // As much as possible use generic task properties.
+            log("Configuration properties:");
+            log("\taugCodeFile: " + resolvedAugCodeFile);
+            log("\tgenCodeFile: " + resolvedGenCodeFile);
+            log("\t" + PROJECT_REFERENCE_SCRIPT_EVAL_FUNCTION +
+                 " reference: " + resolvedScriptEvalFunction);
+            log("\tstackTraceLimitPrefixes: " + resolvedStackTraceLimitPrefixes);
+            log("\tstackTraceFilterPrefixes: " + resolvedStackTraceFilterPrefixes);
+            log("\tgenericTask.logAppender: " + genericTask.getLogAppender());
+            log("\tgenericTask.jsonParseFunction: " + genericTask.getJsonParseFunction());
+        }
+
+        List<Throwable> scriptErrors = new ArrayList<>();
+        try {
+            genericTask.execute(resolvedScriptEvalFunction);
+        }
+        catch (Throwable t) {
+            scriptErrors.add(t);
+        }
+
+        scriptErrors.addAll(genericTask.getAllErrors());
+
+        // fail build if there were errors.
+        if (!scriptErrors.isEmpty()) {
+            String allExMsg = PluginUtils.stringifyPossibleScriptErrors(
+                scriptErrors, true, 
+                resolvedStackTraceLimitPrefixes, resolvedStackTraceFilterPrefixes);
+            throw new BuildException(allExMsg);
         }
     }
 }

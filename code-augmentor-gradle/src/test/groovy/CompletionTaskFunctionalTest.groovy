@@ -20,7 +20,7 @@ class CompletionTaskFunctionalTest extends Specification {
         """
         File workingDir = testProjectDir.newFolder("build", "codeAugmentor")
         File testPrepFile = new File(workingDir, "prepResults.json")
-        testPrepFile << """{}
+        testPrepFile << """{ "encoding": "UTF-8" }
         """
         File genCodesFile = new File(workingDir, "genCodes.json")
         genCodesFile << """{}

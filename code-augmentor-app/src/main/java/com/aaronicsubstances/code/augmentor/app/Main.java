@@ -5,7 +5,6 @@ import java.io.File;
 import com.aaronicsubstances.code.augmentor.ant.CodeAugmentorTask;
 import com.aaronicsubstances.code.augmentor.ant.CompletionTask;
 import com.aaronicsubstances.code.augmentor.ant.PrepareTask;
-import com.aaronicsubstances.code.augmentor.ant.ProcessTask;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -101,7 +100,6 @@ public class Main {
     private static void setUpTaskDefinitions(Project antProject) {
         antProject.addTaskDefinition("code_aug_run", CodeAugmentorTask.class);
         antProject.addTaskDefinition("code_aug_prepare", PrepareTask.class);
-        antProject.addTaskDefinition("code_aug_process", ProcessTask.class);
         antProject.addTaskDefinition("code_aug_complete", CompletionTask.class);
     }
 }

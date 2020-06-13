@@ -1,12 +1,9 @@
-    static void completeExecute(Task task, String resolvedEncoding,
+    static void completeExecute(Task task,
             boolean resolvedVerbose, File resolvedPrepFile,
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
             boolean resolvedCodeChangeDetectionDisabled,
             boolean resolvedFailOnChanges) throws Exception {
         // set up defaults
-        if (resolvedEncoding == null) {
-            resolvedEncoding = "UTF-8";
-        }
         if (resolvedPrepFile == null) {
             resolvedPrepFile = TaskUtils.getDefaultPrepFile(task);
         }
@@ -17,7 +14,6 @@
             resolvedDestDir = TaskUtils.getDefaultDestDir(task);
         }
         // validate
-        Charset charset = Charset.forName(resolvedEncoding);
         for (int i = 0; i < resolvedGenCodeFiles.size(); i++) {
             File resolvedGenCodeFile = resolvedGenCodeFiles.get(i);
             if (resolvedGenCodeFile == null) {
@@ -34,7 +30,6 @@
         
 
         CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
-        genericTask.setCharset(charset);
         genericTask.setLogAppender(TaskUtils.createLogAppender(task, resolvedVerbose));
         genericTask.setPrepFile(resolvedPrepFile);
         genericTask.setGeneratedCodeFiles(resolvedGenCodeFiles);
@@ -45,7 +40,6 @@
             // Print plugin task properties and any extra useful values for user.
             // As much as possible use generic task properties.
             task.log("Configuration properties:");
-            task.log("\tencoding: " + genericTask.getCharset());
             task.log("\tdestDir: " + genericTask.getDestDir());
             if (task instanceof CompletionTask) {
                 task.log("\tprepFile: " + genericTask.getPrepFile());
@@ -53,7 +47,7 @@
                     task.log("\tgenCodeSpecs[" + i + "].file: " + genericTask.getGeneratedCodeFiles().get(i));
                 }
             }
-            task.log("\tresolvedCodeChangeDetectionDisabled: " + genericTask.isCodeChangeDetectionDisabled());
+            task.log("\tcodeChangeDetectionDisabled: " + genericTask.isCodeChangeDetectionDisabled());
             task.log("\tfailOnChanges: " + resolvedFailOnChanges);
             task.log("\tgenericTask.logAppender: " + genericTask.getLogAppender());
         }

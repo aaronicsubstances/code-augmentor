@@ -1,11 +1,10 @@
-    static void completeExecute(DefaultTask task, String resolvedEncoding,
+    static void completeExecute(DefaultTask task,
             boolean resolvedVerbose, File resolvedPrepFile,
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
             boolean resolvedCodeChangeDetectionDisabled,
             boolean resolvedFailOnChanges) throws Exception {
         
         // validate
-        Charset charset = Charset.forName(resolvedEncoding);
         for (int i = 0; i < resolvedGenCodeFiles.size(); i++) {
             File resolvedGenCodeFile = resolvedGenCodeFiles.get(i);
             if (resolvedGenCodeFile == null) {
@@ -23,7 +22,6 @@
         Logger logger = task.getLogger();
 
         CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
-        genericTask.setCharset(charset);
         genericTask.setLogAppender(TaskUtils.createLogAppender(task, resolvedVerbose));
         genericTask.setPrepFile(resolvedPrepFile);
         genericTask.setGeneratedCodeFiles(resolvedGenCodeFiles);
@@ -34,7 +32,6 @@
             // Print plugin task properties and any extra useful values for user.
             // As much as possible use generic task properties.
             logger.info("Configuration properties:");
-            logger.info("\tencoding: " + genericTask.getCharset());
             logger.info("\tdestDir: " + genericTask.getDestDir());
             if (task instanceof CompletionTask) {
                 logger.info("\tprepFile: " + genericTask.getPrepFile());
@@ -42,7 +39,7 @@
                     logger.info("\tgeneratedCodeFiles[" + i + "]: " + genericTask.getGeneratedCodeFiles().get(i));
                 }
             }
-            logger.info("\tresolvedCodeChangeDetectionDisabled: " + genericTask.isCodeChangeDetectionDisabled());
+            logger.info("\tcodeChangeDetectionDisabled: " + genericTask.isCodeChangeDetectionDisabled());
             logger.info("\tfailOnChanges: " + resolvedFailOnChanges);
             logger.info("\tgenericTask.logAppender: " + genericTask.getLogAppender());
         }

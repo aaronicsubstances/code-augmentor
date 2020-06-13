@@ -1,7 +1,6 @@
 package com.aaronicsubstances.code.augmentor.ant;
 
 import java.io.File;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,7 +13,6 @@ import org.apache.tools.ant.Task;
 
 public class CompletionTask extends Task {
     private boolean verbose;
-    private String encoding;
     private File prepFile;
     private File destDir;
     private final List<GenCodeSpec> genCodeSpecs = new ArrayList<>();
@@ -23,10 +21,6 @@ public class CompletionTask extends Task {
 
     public void setVerbose(boolean verbose) {
         this.verbose = verbose;
-    }
-
-    public void setEncoding(String encoding) {
-        this.encoding = encoding;
     }
 
     public void setDestDir(File destDir) {
@@ -59,7 +53,7 @@ public class CompletionTask extends Task {
                 }
                 resolvedGenCodeFiles.add(genCodeFile);
             }
-            completeExecute(this, encoding, verbose, prepFile, 
+            completeExecute(this, verbose, prepFile, 
                 resolvedGenCodeFiles, destDir, codeChangeDetectionDisabled, failOnChanges);
         }
         catch (BuildException ex) {
@@ -71,15 +65,12 @@ public class CompletionTask extends Task {
     }
 
 //:SKIP_CODE_START:
-    static void completeExecute(Task task, String resolvedEncoding,
+    static void completeExecute(Task task,
             boolean resolvedVerbose, File resolvedPrepFile,
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
             boolean resolvedCodeChangeDetectionDisabled,
             boolean resolvedFailOnChanges) throws Exception {
         // set up defaults
-        if (resolvedEncoding == null) {
-            resolvedEncoding = "UTF-8";
-        }
         if (resolvedPrepFile == null) {
             resolvedPrepFile = TaskUtils.getDefaultPrepFile(task);
         }
@@ -90,7 +81,6 @@ public class CompletionTask extends Task {
             resolvedDestDir = TaskUtils.getDefaultDestDir(task);
         }
         // validate
-        Charset charset = Charset.forName(resolvedEncoding);
         for (int i = 0; i < resolvedGenCodeFiles.size(); i++) {
             File resolvedGenCodeFile = resolvedGenCodeFiles.get(i);
             if (resolvedGenCodeFile == null) {
@@ -107,7 +97,6 @@ public class CompletionTask extends Task {
         
 
         CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
-        genericTask.setCharset(charset);
         genericTask.setLogAppender(TaskUtils.createLogAppender(task, resolvedVerbose));
         genericTask.setPrepFile(resolvedPrepFile);
         genericTask.setGeneratedCodeFiles(resolvedGenCodeFiles);
@@ -118,7 +107,6 @@ public class CompletionTask extends Task {
             // Print plugin task properties and any extra useful values for user.
             // As much as possible use generic task properties.
             task.log("Configuration properties:");
-            task.log("\tencoding: " + genericTask.getCharset());
             task.log("\tdestDir: " + genericTask.getDestDir());
             if (task instanceof CompletionTask) {
                 task.log("\tprepFile: " + genericTask.getPrepFile());

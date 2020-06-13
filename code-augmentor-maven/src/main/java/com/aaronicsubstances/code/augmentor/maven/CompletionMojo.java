@@ -1,7 +1,6 @@
 package com.aaronicsubstances.code.augmentor.maven;
 
 import java.io.File;
-import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 
@@ -24,14 +23,13 @@ public class CompletionMojo extends AbstractPluginMojo {
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         try {
-            String resolvedEncoding = getEncoding();
             boolean resolvedVerbose = isVerbose();
             File resolvedPrepFile = getPrepFile();
             List<File> resolvedGenCodeFiles = Arrays.asList(getGeneratedCodeFiles());
             File resolvedDestDir = getDestDir();
             boolean resolvedCodeChangeDetectionDisabled = getCodeChangeDetectionDisabled();
             boolean resolvedFailOnChanges = getFailOnChanges();
-            completeExecute(this, resolvedEncoding, resolvedVerbose, resolvedPrepFile, 
+            completeExecute(this, resolvedVerbose, resolvedPrepFile, 
                 resolvedGenCodeFiles, resolvedDestDir, resolvedCodeChangeDetectionDisabled,
                 resolvedFailOnChanges);
         }
@@ -47,14 +45,13 @@ public class CompletionMojo extends AbstractPluginMojo {
     }
 
 // :SKIP_CODE_START:
-    static void completeExecute(AbstractMojo task, String resolvedEncoding,
+    static void completeExecute(AbstractMojo task,
             boolean resolvedVerbose, File resolvedPrepFile,
             List<File> resolvedGenCodeFiles, File resolvedDestDir,
             boolean resolvedCodeChangeDetectionDisabled,
             boolean resolvedFailOnChanges) throws Exception {
         
         // validate
-        Charset charset = Charset.forName(resolvedEncoding);
         for (int i = 0; i < resolvedGenCodeFiles.size(); i++) {
             File resolvedGenCodeFile = resolvedGenCodeFiles.get(i);
             if (resolvedGenCodeFile == null) {
@@ -71,7 +68,6 @@ public class CompletionMojo extends AbstractPluginMojo {
         Log logger = task.getLog();
 
         CodeAugmentationGenericTask genericTask = new CodeAugmentationGenericTask();
-        genericTask.setCharset(charset);
         genericTask.setLogAppender(TaskUtils.createLogAppender(task, resolvedVerbose));
         genericTask.setPrepFile(resolvedPrepFile);
         genericTask.setGeneratedCodeFiles(resolvedGenCodeFiles);
@@ -82,7 +78,6 @@ public class CompletionMojo extends AbstractPluginMojo {
             // Print plugin task properties and any extra useful values for user.
             // As much as possible use generic task properties.
             logger.info("Configuration properties:");
-            logger.info("\tencoding: " + genericTask.getCharset());
             logger.info("\tdestDir: " + genericTask.getDestDir());
             if (task instanceof CompletionMojo) {
                 logger.info("\tprepFile: " + genericTask.getPrepFile());
