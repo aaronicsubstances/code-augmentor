@@ -5,7 +5,7 @@ import static org.testng.Assert.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -37,6 +37,7 @@ public class PreCodeAugmentationGenericTaskTest {
         public String prepFile;
 
         public boolean loggingEnabled;
+        public String encoding;
 
         public static class AugCodeSpec {
             public String file;
@@ -52,7 +53,8 @@ public class PreCodeAugmentationGenericTaskTest {
         TaskLite taskSpec = gson.fromJson(text, TaskLite.class);
         
         PreCodeAugmentationGenericTask task = new PreCodeAugmentationGenericTask();
-        task.setCharset(StandardCharsets.UTF_8);
+        Charset taskCharset = Charset.forName(taskSpec.encoding);
+        task.setCharset(taskCharset);
         task.setRelativePaths(new ArrayList<>());
         task.setBaseDirs(new ArrayList<>());
 

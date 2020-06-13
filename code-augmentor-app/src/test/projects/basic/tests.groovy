@@ -1,9 +1,9 @@
 // systemClassLoader needed so CodeAugmentorTasks.xml can be loaded
 // successfully.
 @GrabConfig(systemClassLoader=true)
-@Grab('com.aaronicsubstances:code-augmentor-ant:1.0-SNAPSHOT')
+@Grab('com.aaronicsubstances:code-augmentor-ant:1.1.0-SNAPSHOT')
 
-@Grab('com.aaronicsubstances:code-augmentor-core:1.0-SNAPSHOT')
+@Grab('com.aaronicsubstances:code-augmentor-core:1.1.0-SNAPSHOT')
 
 import com.aaronicsubstances.code.augmentor.ant.ProcessTask
 import com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeGenericTask

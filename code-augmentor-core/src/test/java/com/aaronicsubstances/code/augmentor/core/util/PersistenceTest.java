@@ -85,6 +85,7 @@ public class PersistenceTest {
             @Override
             public Object[] next() {
                 PreCodeAugmentationResult instance = new PreCodeAugmentationResult(new ArrayList<>());
+                instance.setEncoding(generateRandomString(false));
                 instance.setGenCodeStartDirective(generateRandomString(false));
                 instance.setGenCodeEndDirective(generateRandomString(false));
                 if (count > 0) {

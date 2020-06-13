@@ -5,10 +5,10 @@ plugins {
 }
 
 group = "com.aaronicsubstances"
-version = "1.0"
+version = "1.1.0-SNAPSHOT"
 description = '''Provides common functionality to 
 	related plugins and command line tools in bringing code 
-	generation facilities to the ordinary programmer'''
+	generation facilities to every programmer'''
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -92,8 +92,8 @@ publishing {
                     }
                 }
                 scm {
-                    connection = "scm:git:$gitRepoUrl"
-                    developerConnection = "scm:git:$gitRepoUrl"
+                    connection = "scm:git:${gitRepoUrl}.git"
+                    developerConnection = "scm:git:${gitRepoUrl}.git"
                     url = "$gitRepoUrl"
                 }
                 withXml {

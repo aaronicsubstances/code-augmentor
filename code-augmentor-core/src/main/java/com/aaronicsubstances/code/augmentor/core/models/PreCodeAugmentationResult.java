@@ -18,11 +18,13 @@ import com.aaronicsubstances.code.augmentor.core.util.PersistenceUtil;
 public class PreCodeAugmentationResult {
 
     static class Header {
+        String encoding;
         String genCodeStartDirective;
         String genCodeEndDirective;
         Boolean contentStreamingEnabled;
     }
 
+    private String encoding;
     private String genCodeStartDirective;
     private String genCodeEndDirective;
 
@@ -41,6 +43,14 @@ public class PreCodeAugmentationResult {
 
     public void setFileDescriptors(List<SourceFileDescriptor> fileDescriptors) {
         this.fileDescriptors = fileDescriptors;
+    }
+
+    public String getEncoding() {
+        return encoding;
+    }
+
+    public void setEncoding(String encoding) {
+        this.encoding = encoding;
     }
 
     public String getGenCodeStartDirective() {
@@ -79,6 +89,7 @@ public class PreCodeAugmentationResult {
     private void printHeader(PersistenceUtil persistenceUtil, boolean contentStreamEnabled) 
             throws Exception {        
         Header header = new Header();
+        header.encoding = encoding;
         header.genCodeStartDirective = genCodeStartDirective;
         header.genCodeEndDirective = genCodeEndDirective;
         // try not to set contentStreamEnabled to true since it's true by default.
@@ -147,6 +158,7 @@ public class PreCodeAugmentationResult {
     private boolean readHeader(PersistenceUtil persistenceUtil) throws Exception {
         String headerString = persistenceUtil.readLine();
         Header header = PersistenceUtil.deserializeFromJson(headerString, Header.class);
+        encoding = header.encoding;
         genCodeStartDirective = header.genCodeStartDirective;
         genCodeEndDirective = header.genCodeEndDirective;
         // enable content streaming by default.
@@ -188,6 +200,7 @@ public class PreCodeAugmentationResult {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
+        result = prime * result + ((encoding == null) ? 0 : encoding.hashCode());
         result = prime * result + ((fileDescriptors == null) ? 0 : fileDescriptors.hashCode());
         result = prime * result + ((genCodeEndDirective == null) ? 0 : genCodeEndDirective.hashCode());
         result = prime * result + ((genCodeStartDirective == null) ? 0 : genCodeStartDirective.hashCode());
@@ -203,6 +216,11 @@ public class PreCodeAugmentationResult {
         if (getClass() != obj.getClass())
             return false;
         PreCodeAugmentationResult other = (PreCodeAugmentationResult) obj;
+        if (encoding == null) {
+            if (other.encoding != null)
+                return false;
+        } else if (!encoding.equals(other.encoding))
+            return false;
         if (fileDescriptors == null) {
             if (other.fileDescriptors != null)
                 return false;
@@ -223,7 +241,8 @@ public class PreCodeAugmentationResult {
 
     @Override
     public String toString() {
-        return "PreCodeAugmentationResult{fileDescriptors=" + fileDescriptors + ", genCodeEndDirective="
-                + genCodeEndDirective + ", genCodeStartDirective=" + genCodeStartDirective + "}";
+        return "PreCodeAugmentationResult{encoding=" + encoding + ", fileDescriptors=" + fileDescriptors
+                + ", genCodeEndDirective=" + genCodeEndDirective + ", genCodeStartDirective=" + genCodeStartDirective
+                + "}";
     }
 }

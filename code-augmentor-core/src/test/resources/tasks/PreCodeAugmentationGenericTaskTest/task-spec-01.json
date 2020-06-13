@@ -1,4 +1,5 @@
 {
+	"encoding": "UTF-8",
 	"relativePaths" : [ "task-spec-01-0.java", "task-spec-01-1.java" ],
 	"genCodeStartDirectives" : [ "//GS" ],
 	"genCodeEndDirectives" : [ "//GE" ],

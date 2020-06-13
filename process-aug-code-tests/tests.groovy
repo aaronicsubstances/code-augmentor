@@ -1,4 +1,4 @@
-@Grab('com.aaronicsubstances:code-augmentor-core:1.0-SNAPSHOT')
+@Grab('com.aaronicsubstances:code-augmentor-core:1.1.0-SNAPSHOT')
 
 import com.aaronicsubstances.code.augmentor.core.models.CodeGenerationResponse
 

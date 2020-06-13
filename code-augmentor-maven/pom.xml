@@ -3,7 +3,7 @@
  
   <groupId>com.aaronicsubstances</groupId>
   <artifactId>code-augmentor-maven-plugin</artifactId>
-  <version>1.0</version>
+  <version>1.1.0-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
  
   <name>code-augmentor-maven-plugin</name>
@@ -53,7 +53,7 @@
     <dependency>
       <groupId>com.aaronicsubstances</groupId>
       <artifactId>code-augmentor-core</artifactId>
-      <version>1.0</version>
+      <version>1.1.0-SNAPSHOT</version>
     </dependency>
 
     <dependency>

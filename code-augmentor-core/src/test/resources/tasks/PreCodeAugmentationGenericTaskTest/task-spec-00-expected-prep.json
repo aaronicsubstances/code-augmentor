@@ -1,2 +1,2 @@
-{ "contentStreamingEnabled": false, "genCodeStartDirective": "//GS", "genCodeEndDirective": "//GE" }
+{ "contentStreamingEnabled": false, "encoding": "UTF-8", "genCodeStartDirective": "//GS", "genCodeEndDirective": "//GE" }
 []

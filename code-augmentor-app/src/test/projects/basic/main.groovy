@@ -1,4 +1,4 @@
-@Grab('com.aaronicsubstances:code-augmentor-core:1.0-SNAPSHOT')
+@Grab('com.aaronicsubstances:code-augmentor-core:1.1.0-SNAPSHOT')
 
 // import scripts with functions.
 // fortunately in Groovy, we only have to do this for scripts

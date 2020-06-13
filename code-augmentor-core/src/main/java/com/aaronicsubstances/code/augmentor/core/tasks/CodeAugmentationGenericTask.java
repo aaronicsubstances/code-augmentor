@@ -36,7 +36,6 @@ public class CodeAugmentationGenericTask {
 
     // input properties.
     private BiConsumer<GenericTaskLogLevel, Supplier<String>> logAppender;
-    private Charset charset;
     private File prepFile;
     private List<File> generatedCodeFiles;
     private File destDir;
@@ -58,6 +57,7 @@ public class CodeAugmentationGenericTask {
 
         PreCodeAugmentationResult result = new PreCodeAugmentationResult();
         Object resultReader = result.beginDeserialize(prepFile);
+        Charset charset = Charset.forName(result.getEncoding());
 
         GeneratedCodeFetcher generatedCodeFetcher = new GeneratedCodeFetcher(generatedCodeFiles);
         
@@ -346,14 +346,6 @@ public class CodeAugmentationGenericTask {
 
     public void setLogAppender(BiConsumer<GenericTaskLogLevel, Supplier<String>> logAppender) {
         this.logAppender = logAppender;
-    }
-
-    public Charset getCharset() {
-        return charset;
-    }
-
-    public void setCharset(Charset charset) {
-        this.charset = charset;
     }
 
     public File getPrepFile() {

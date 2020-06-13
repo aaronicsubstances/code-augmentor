@@ -1,4 +1,4 @@
-{ "contentStreamingEnabled": false, "genCodeStartDirective": "//GS", "genCodeEndDirective": "//GE" }
+{ "contentStreamingEnabled": false, "encoding": "ISO-8859-1", "genCodeStartDirective": "//GS", "genCodeEndDirective": "//GE" }
 [
 	{
 		"fileId": 1,

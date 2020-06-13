@@ -48,6 +48,7 @@ public class PreCodeAugmentationGenericTask {
         allErrors.clear();
 
         PreCodeAugmentationResult prepResult = new PreCodeAugmentationResult();
+        prepResult.setEncoding(charset.name());
         prepResult.setGenCodeStartDirective(genCodeStartDirectives.get(0));
         prepResult.setGenCodeEndDirective(genCodeEndDirectives.get(0));
         // ensure dir exists for prepFile

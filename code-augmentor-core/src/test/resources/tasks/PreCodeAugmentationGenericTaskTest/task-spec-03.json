@@ -1,4 +1,5 @@
 {
+	"encoding": "utf8",
 	"relativePaths" : [ "task-spec-03-0.py" ],
     "loggingEnabled" : true,
 	"genCodeStartDirectives" : [ "#GS" ],

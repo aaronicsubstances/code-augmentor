@@ -1,4 +1,5 @@
 {
+	"encoding": "UTF8",
 	"relativePaths" : [ "task-spec-05-0.py",  "task-spec-05-1.py" ],
 	"genCodeStartDirectives" : [ "#GS" ],
 	"genCodeEndDirectives" : [ "#GE" ],

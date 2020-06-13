@@ -1,4 +1,5 @@
 {
+	"encoding": "iso-8859-1",
 	"relativePaths" : [ "task-spec-02-0.java" ],
     "loggingEnabled" : true,
 	"genCodeStartDirectives" : [ "//GS" ],

@@ -7,6 +7,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,32 +43,42 @@ public class CodeAugmentationGenericTaskTest {
         TEMP_GEN_DIR = new File(FileUtils.getTempDirectory(), getClass().getName());
         TEMP_GEN_DIR.mkdir();
     }
-    
-    public CodeAugmentationGenericTask deserialize(String path, String newline) throws IOException {
+
+    private TaskLite startDeserialize(String path) throws IOException {
         String text = TestResourceLoader.loadResource(path, getClass());
         Gson gson = new Gson();
         TaskLite taskSpec = gson.fromJson(text, TaskLite.class);
-        
-        CodeAugmentationGenericTask task = new CodeAugmentationGenericTask();
-        task.setCharset(StandardCharsets.UTF_8);
-        task.setCodeChangeDetectionDisabled(taskSpec.codeChangeDetectionDisabled);
+        return taskSpec;
+    }
 
+    private File continueDeserialize(TaskLite taskSpec) throws IOException {
         // copy prep file to temp dir.
         String contents = TestResourceLoader.loadResource(taskSpec.prepFile, 
             getClass());
         // replace any %TEMP_DIR% variable with temp dir
         contents = transformWithVars(contents);
         File f = new File(TEMP_GEN_DIR, taskSpec.prepFile);
-        FileUtils.write(f, contents, task.getCharset());        
-        task.setPrepFile(f);
+        FileUtils.write(f, contents, StandardCharsets.UTF_8);
+        return f;
+    }
+    
+    private CodeAugmentationGenericTask completeDeserialize(TaskLite taskSpec, 
+            File prepFile, Charset taskCharset,
+            String newline) throws IOException {
+        CodeAugmentationGenericTask task = new CodeAugmentationGenericTask();
+        task.setCodeChangeDetectionDisabled(taskSpec.codeChangeDetectionDisabled);
+        
+        task.setPrepFile(prepFile);
 
+        String contents;
+        File f;
         // copy generated code files to temp dir.
         task.setGeneratedCodeFiles(new ArrayList<>());
         for (String genCodePath : taskSpec.generatedCodeFiles) {            
             contents = TestResourceLoader.loadResourceNewlinesNormalized(genCodePath, 
                 getClass(), newline);
             f = new File(TEMP_GEN_DIR, genCodePath);
-            FileUtils.write(f, contents, task.getCharset());
+            FileUtils.write(f, contents, taskCharset);
             task.getGeneratedCodeFiles().add(f);
         }
 
@@ -86,9 +97,13 @@ public class CodeAugmentationGenericTaskTest {
 
     @Test(dataProvider = "createTestExecuteData")
     public void testExecute(String jsonPath, String newline, List<Integer> expectedChangeSetIndices) throws Exception {
-        CodeAugmentationGenericTask task = deserialize(jsonPath, newline);
+        TaskLite taskSpec = startDeserialize(jsonPath);
+        File prepFile = continueDeserialize(taskSpec);
         PreCodeAugmentationResult prepResult = PreCodeAugmentationResult.deserialize(
-            task.getPrepFile());
+            prepFile);
+        final Charset taskCharset = Charset.forName(prepResult.getEncoding());
+        CodeAugmentationGenericTask task = completeDeserialize(taskSpec, prepFile, 
+            taskCharset, newline);
         CodeGenerationResponseChangeSet expectedChanges = null;
         if (!task.isCodeChangeDetectionDisabled()) {
             expectedChanges = loadChanges(jsonPath);
@@ -101,7 +116,7 @@ public class CodeAugmentationGenericTaskTest {
             assertNotNull(f.getDir());
             String contents = TestResourceLoader.loadResourceNewlinesNormalized(
                 f.getRelativePath(), getClass(), newline);
-            FileUtils.write(new File(f.getDir(), f.getRelativePath()), contents, task.getCharset());
+            FileUtils.write(new File(f.getDir(), f.getRelativePath()), contents, taskCharset);
 
             // fetch expected generated codes.
             if (expectedChangeSetIndices.contains(i)) {
@@ -124,7 +139,7 @@ public class CodeAugmentationGenericTaskTest {
             String expected = expectedGeneratedCodes.get(i);
             ChangedFile cf = changeSummary.getChangedFiles().get(i);
             File f = new File(cf.getDestDir(), cf.getRelativePath());
-            String actual = FileUtils.readFileToString(f, task.getCharset());            
+            String actual = FileUtils.readFileToString(f, taskCharset);            
             assertEquals(actual, expected, "Unexpected contents found in " + f);
         }
         if (task.isCodeChangeDetectionDisabled()) {
@@ -158,9 +173,13 @@ public class CodeAugmentationGenericTaskTest {
     @Test(dataProvider = "createTestExecuteForErrorsData")
     public void testExecuteForErrors(String jsonPath, String newline,
             List<Integer> expErrLineNums) throws Exception {
-        CodeAugmentationGenericTask task = deserialize(jsonPath, newline);
+        TaskLite taskSpec = startDeserialize(jsonPath);
+        File prepFile = continueDeserialize(taskSpec);
         PreCodeAugmentationResult prepResult = PreCodeAugmentationResult.deserialize(
-            task.getPrepFile());
+            prepFile);
+        final Charset taskCharset = Charset.forName(prepResult.getEncoding());
+        CodeAugmentationGenericTask task = completeDeserialize(taskSpec, prepFile, 
+            taskCharset, newline);
         // transfer class path resources for original source files to
         // temp directory.
         for (int i = 0; i < prepResult.getFileDescriptors().size(); i++) {
@@ -168,7 +187,7 @@ public class CodeAugmentationGenericTaskTest {
             assertNotNull(f.getDir());
             String contents = TestResourceLoader.loadResourceNewlinesNormalized(
                 f.getRelativePath(), getClass(), newline);
-            FileUtils.write(new File(f.getDir(), f.getRelativePath()), contents, task.getCharset());
+            FileUtils.write(new File(f.getDir(), f.getRelativePath()), contents, taskCharset);
         }
         task.execute();
         assertEquals(task.getAllErrors().size(), expErrLineNums.size(),

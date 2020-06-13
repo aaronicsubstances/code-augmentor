@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.aaronicsubstances"
-version = "1.0"
+version = "1.1.0-SNAPSHOT"
 description = "Apache Ant plugin for Code Augmentor"
 
 java {
@@ -91,8 +91,8 @@ publishing {
                     }
                 }
                 scm {
-                    connection = "scm:git:$gitRepoUrl"
-                    developerConnection = "scm:git:$gitRepoUrl"
+                    connection = "scm:git:${gitRepoUrl}.git"
+                    developerConnection = "scm:git:${gitRepoUrl}.git"
                     url = "$gitRepoUrl"
                 }
                 withXml {
