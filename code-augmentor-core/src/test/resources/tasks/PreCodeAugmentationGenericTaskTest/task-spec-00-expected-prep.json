@@ -1,2 +1,15 @@
 { "contentStreamingEnabled": false, "encoding": "UTF-8", "genCodeStartDirective": "//GS", "genCodeEndDirective": "//GE" }
-[]
+[
+	{
+		"fileId": 1,
+		"relativePath": "task-spec-00-0.java",
+        "contentHash": "f95b70fdc3088560732a5ac135644506",
+        "codeSnippets": []
+    },
+    {
+		"fileId": 2,
+		"relativePath": "task-spec-00-1.java",
+        "contentHash": "cbb184dd8e05c9709e5dcaedaa0495cf",
+        "codeSnippets": []
+    }
+]

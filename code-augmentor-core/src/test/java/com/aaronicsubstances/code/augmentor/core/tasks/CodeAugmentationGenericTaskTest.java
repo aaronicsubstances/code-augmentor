@@ -167,6 +167,7 @@ public class CodeAugmentationGenericTaskTest {
             new Object[] { "task-spec-02.json", "\n", Arrays.asList(0) },
             new Object[] { "task-spec-03.json", "\r\n", Arrays.asList(0, 1, 2) },
             new Object[] { "task-spec-04.json", "\r\n", Arrays.asList(0, 1) },
+            new Object[] { "task-spec-07.json", "\n", Arrays.asList(0, 1) },
         };
     }
     

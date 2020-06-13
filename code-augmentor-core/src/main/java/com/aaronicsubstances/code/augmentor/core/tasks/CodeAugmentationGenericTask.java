@@ -81,14 +81,8 @@ public class CodeAugmentationGenericTask {
 
             Instant startInstant = Instant.now();
 
-            if (!generatedCodeFetcher.prepareForFile(sourceFileDescriptor.getFileId())) {
-                GenericTaskException missingFileAugCodesError = createException(
-                        "Could not locate generated codes for file with id " + sourceFileDescriptor.getFileId(), null,
-                        srcFile);
-                TaskUtils.logWarn(logAppender, missingFileAugCodesError.getMessage());
-                allErrors.add(missingFileAugCodesError);
-                continue;
-            }
+            boolean someGenCodeExistsForFile = generatedCodeFetcher.prepareForFile(
+                sourceFileDescriptor.getFileId());
             
             String sourceCode = TaskUtils.readFile(srcFile, charset);
             String inputHash = TaskUtils.calcHash(sourceCode, charset);
@@ -109,10 +103,19 @@ public class CodeAugmentationGenericTask {
                 AugmentingCodeDescriptor augCodeDescriptor = snippetDescriptor.getAugmentingCodeDescriptor();
                 GeneratedCode genCode = generatedCodeFetcher.getGeneratedCode(sourceFileDescriptor.getFileId(),
                         augCodeDescriptor.getId());
-                if (genCode == null) {
+                if (genCode == null) {                    
+                    if (!someGenCodeExistsForFile) {
+                        GenericTaskException missingFileAugCodesError = createException(
+                                "Could not locate generated codes for file with id " + sourceFileDescriptor.getFileId(), null,
+                                srcFile);
+                        TaskUtils.logWarn(logAppender, missingFileAugCodesError.getMessage());
+                        allErrors.add(missingFileAugCodesError);
+                        break;
+                    }
                     allErrors.add(createException("Could not find generated code with id " + augCodeDescriptor.getId(),
                             augCodeDescriptor, srcFile));
-                } else {
+                } 
+                else {
                     // Don't process skipped aug codes.
                     if (genCode.isSkipped()) {
                         continue;

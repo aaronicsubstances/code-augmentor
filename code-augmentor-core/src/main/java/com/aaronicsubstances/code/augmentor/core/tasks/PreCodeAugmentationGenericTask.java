@@ -141,8 +141,11 @@ public class PreCodeAugmentationGenericTask {
                 int identifiedAugCodeCount = 0;
                 // don't bother to serialize any further if there are
                 // previous errors.
-                // also skip seriaize if no snippets were generated.
-                if (allErrors.isEmpty() && !codeSnippets.isEmpty()) {
+                // used to also skip if no snippets were found, but not anymore
+                // in order to cater for code change detection being disabled
+                // (since in that case we want all files to show up in generated file 
+                // regardless).
+                if (allErrors.isEmpty()) {
                     // write out descriptor.
                     s.setCodeSnippets(codeSnippets);
                     s.serialize(resultWriter);

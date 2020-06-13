@@ -2,14 +2,14 @@
 [
 	{
 		"fileId": 1,
-        "relativePath": "task-spec-00-0.java",
+        "relativePath": "task-spec-07-0.java",
         "dir": "%TEMP_DIR%",
         "contentHash": "f95b70fdc3088560732a5ac135644506",
         "codeSnippets": []
     },
     {
 		"fileId": 2,
-        "relativePath": "task-spec-00-1.java",
+        "relativePath": "task-spec-07-1.java",
         "dir": "%TEMP_DIR%",
         "contentHash": "cbb184dd8e05c9709e5dcaedaa0495cf",
         "codeSnippets": []
