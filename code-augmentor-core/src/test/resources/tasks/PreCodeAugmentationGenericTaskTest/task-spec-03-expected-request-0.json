@@ -10,7 +10,7 @@
             "lineNumber": 6,
             "lineSeparator": "\n",
             "hasNestedLevelStartMarker": true,
-            
+            "contentWithinNestedMarkers": "\n#GG# print(145)\n\n#PHP5(( complete\n#ES: tree\n\n#PHP7))-----------\n#ES ending again\n\n",
 			"blocks" : [{
 				"content" : " separate"
 			}]

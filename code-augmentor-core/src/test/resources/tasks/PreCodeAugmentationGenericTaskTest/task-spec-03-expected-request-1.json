@@ -23,7 +23,8 @@
 			"indent": "",
             "lineNumber": 10,
             "lineSeparator": "\n",
-            "hasNestedLevelStartMarker": true,
+			"hasNestedLevelStartMarker": true,
+			"contentWithinNestedMarkers": "\n",
             "nestedLevelNumber": 1,
 			"blocks" : [{
 				"content" : " complete"

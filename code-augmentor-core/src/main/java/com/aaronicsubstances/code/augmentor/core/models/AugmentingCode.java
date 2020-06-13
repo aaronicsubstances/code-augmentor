@@ -88,6 +88,7 @@ public class AugmentingCode {
     private int nestedLevelNumber;
     private boolean hasNestedLevelStartMarker;
     private boolean hasNestedLevelEndMarker;
+    private String contentWithinNestedMarkers;
 
     // used to attach results of processing aug codes.
     // not persisted
@@ -189,12 +190,21 @@ public class AugmentingCode {
         this.hasNestedLevelEndMarker = hasNestedLevelEndMarker;
     }
 
+    public String getContentWithinNestedMarkers() {
+        return contentWithinNestedMarkers;
+    }
+
+    public void setContentWithinNestedMarkers(String contentWithinNestedMarkers) {
+        this.contentWithinNestedMarkers = contentWithinNestedMarkers;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((args == null) ? 0 : args.hashCode());
         result = prime * result + ((blocks == null) ? 0 : blocks.hashCode());
+        result = prime * result + ((contentWithinNestedMarkers == null) ? 0 : contentWithinNestedMarkers.hashCode());
         result = prime * result + ((directiveMarker == null) ? 0 : directiveMarker.hashCode());
         result = prime * result + (hasNestedLevelEndMarker ? 1231 : 1237);
         result = prime * result + (hasNestedLevelStartMarker ? 1231 : 1237);
@@ -225,6 +235,11 @@ public class AugmentingCode {
             if (other.blocks != null)
                 return false;
         } else if (!blocks.equals(other.blocks))
+            return false;
+        if (contentWithinNestedMarkers == null) {
+            if (other.contentWithinNestedMarkers != null)
+                return false;
+        } else if (!contentWithinNestedMarkers.equals(other.contentWithinNestedMarkers))
             return false;
         if (directiveMarker == null) {
             if (other.directiveMarker != null)
@@ -258,10 +273,10 @@ public class AugmentingCode {
 
     @Override
     public String toString() {
-        return "AugmentingCode{args=" + args + ", blocks=" + blocks + ", directiveMarker=" + directiveMarker
-                + ", hasNestedLevelEndMarker=" + hasNestedLevelEndMarker + ", hasNestedLevelStartMarker="
-                + hasNestedLevelStartMarker + ", id=" + id + ", indent=" + indent + ", lineNumber=" + lineNumber
-                + ", lineSeparator=" + lineSeparator + ", nestedLevelNumber=" + nestedLevelNumber + ", processed="
-                + processed + "}";
+        return "AugmentingCode{args=" + args + ", blocks=" + blocks + ", contentWithinNestedMarkers="
+                + contentWithinNestedMarkers + ", directiveMarker=" + directiveMarker + ", hasNestedLevelEndMarker="
+                + hasNestedLevelEndMarker + ", hasNestedLevelStartMarker=" + hasNestedLevelStartMarker + ", id=" + id
+                + ", indent=" + indent + ", lineNumber=" + lineNumber + ", lineSeparator=" + lineSeparator
+                + ", nestedLevelNumber=" + nestedLevelNumber + ", processed=" + processed + "}";
     }
 }

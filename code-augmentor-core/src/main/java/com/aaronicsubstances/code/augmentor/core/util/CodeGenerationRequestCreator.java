@@ -75,6 +75,18 @@ public class CodeGenerationRequestCreator {
             augmentingCode.setNestedLevelNumber(firstToken.nestedLevelNumber);
             augmentingCode.setHasNestedLevelStartMarker(firstToken.nestedLevelStartMarker != null);
             augmentingCode.setHasNestedLevelEndMarker(firstToken.nestedLevelEndMarker != null);
+
+            if (augmentingCode.getHasNestedLevelStartMarker()) {
+                // look for corresponding end marker aug code section.
+                for (int j = i + 1; j < augCodeSections.size(); j++) {                    
+                    Token candidateAugCodeSectionRep = augCodeSections.get(j).get(0);
+                    if (candidateAugCodeSectionRep.nestedLevelNumber == augmentingCode.getNestedLevelNumber() &&
+                            candidateAugCodeSectionRep.nestedLevelEndMarker != null) {                        
+                        augmentingCode.setContentWithinNestedMarkers(i + "-" + j);
+                        break;
+                    }
+                }
+            }
             
             // d. validate json directive contents.
             for (int j = 0; j < blocks.size(); j++) {

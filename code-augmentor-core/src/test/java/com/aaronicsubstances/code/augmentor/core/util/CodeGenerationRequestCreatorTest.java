@@ -94,8 +94,10 @@ public class CodeGenerationRequestCreatorTest {
                 new Block(" ending again", true, false))                
         );
         augCodes50.get(0).setHasNestedLevelStartMarker(true);
+        augCodes50.get(0).setContentWithinNestedMarkers("1-4");
         augCodes50.get(1).setHasNestedLevelEndMarker(true);
         augCodes51.get(1).setHasNestedLevelStartMarker(true);
+        augCodes51.get(1).setContentWithinNestedMarkers("2-3");
         augCodes51.get(2).setHasNestedLevelEndMarker(true);
         augCodes51.get(1).setNestedLevelNumber(1);
         augCodes51.get(2).setNestedLevelNumber(1);

@@ -157,6 +157,23 @@ public class PreCodeAugmentationGenericTask {
                         if (specAugCodes.isEmpty()) {
                             continue;
                         }
+                        // set content within nested start and end markers.
+                        for (AugmentingCode augCode : specAugCodes) {
+                            String c = augCode.getContentWithinNestedMarkers();
+                            if (c != null) {
+                                int sepIndex = c.indexOf("-");
+                                int augCodeDescriptorStartIndex = Integer.parseInt(
+                                    c.substring(0, sepIndex));
+                                int contentStartPos = codeSnippets.get(augCodeDescriptorStartIndex
+                                    ).getAugmentingCodeDescriptor().getEndPos();
+                                int augCodeDescriptorEndIndex = Integer.parseInt(
+                                    c.substring(sepIndex + 1));
+                                int contentEndPos = codeSnippets.get(augCodeDescriptorEndIndex
+                                    ).getAugmentingCodeDescriptor().getStartPos();
+                                augCode.setContentWithinNestedMarkers(input.substring(contentStartPos,
+                                    contentEndPos));
+                            }
+                        }
                         identifiedAugCodeCount += specAugCodes.size();
                         SourceFileAugmentingCode sourceFileAugCode = new SourceFileAugmentingCode(specAugCodes);
                         sourceFileAugCode.setFileId(s.getFileId());
