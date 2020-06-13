@@ -32,6 +32,25 @@ The workflow of the programmer using this tool may be exemplified in the followi
    * Ant, Maven and Gradle plugins available on [Maven Central](https://search.maven.org/search?q=com.aaronicsubstances) and [Gradle plugin portal](https://plugins.gradle.org/plugin/com.aaronicsubstances.code-augmentor), for scripting with Groovy and for easier integration with Java and Android IDEs.
    * Packages for officially supported languages available for [NodeJS](https://www.npmjs.com/package/code-augmentor-support), [Python 3](https://pypi.org/project/code-augmentor-support/) and [PHP 7](https://packagist.org/packages/aaronicsubstances/code-augmentor-support).
 
+   
+## How It Works
+
+The operation of Code Augmentor is achieved in three stages: preparation, processing, and completion.
+
+During preparation, the source files passed to Code Augmentor are tokenized into lines, and then lines with special prefixes known as **directives** are identified, and classified into augmenting code sections, generated code sections or code sections to be skipped over by Code Augmentor.
+
+An augmenting code section generally consists of 3 parts: JSON data, raw string data, or code string. Code strings are meant to be evaluated as code in some scripting language (such as Groovy, NodeJS, Python or PHP). The expected and recommended structure of an augmenting code section is that it consists of an initial code string line which is the name of a procedure in a scripting language, and then optionally following it are either JSON or raw string data which are the arguments to be passed to the procedure.
+
+The preparation stage tokenizes source files and retrieves the augmenting code sections in them, saving them into two kinds of files: prep file and aug code file. prep file is a file full of numbers needed by completion stage, and is not of interest to the script writer, except for script writer to pass it around to whatever stage requiring it.
+
+aug code file is passed to processing stage. Generally for each augmenting code section, code generator scripts have to produce content for its generated code section. The output of this stage is referred to as gen code file.
+
+Completion stage uses prep file and gen code file to insert generated code content into generated code sections for each augmenting code section. During this stage generated code sections are created if none existed previously where insertions must be made.
+
+If code change detection remains enabled, then completion stage identifies source files whose content is not equivalent to that obtained after inserting generated code content. This could be because there was no generated code content at all, or the generated code content which used to be there is different from the incoming one. Plugins and command line application will normally turn any code change detected into an error for programmer to reconcile using shell scripts provided by Code Augmentor.
+
+Further information helpful to script writers is available on related [wiki page](https://github.com/aaronicsubstances/code-augmentor/wiki/Documentation-for-Code-Generator-Scripts).
+
 ## Getting Started with standalone command line application
 
 1. Ensure you have Java 8 JDK or JRE installed on your computer. Run `java -version` from command line to verify, and should get output resembling the following:
@@ -112,7 +131,7 @@ One can at this stage experiment with the synchronization mechanism by editing a
 
 In practice it is desired to automate synchronization mechanism by setting up `code-augmentor-app -f build.xml` to be called just before the following common build steps, whichever is the earliest of compilation, transpilation or runtime initialization.
 
-   a. For Apache Maven, the *validate* phase is perfectly suitable for attaching **code-augmentor:complete** or **code-augmentor:run** goal.
+   a. For Apache Maven, the *validate* phase is perfectly suitable for attaching **code-augmentor:run** goal.
    
    b. For Gradle, letting *compileJava* task depend on **codeAugmentorComplete** or **codeAugmentorRun** task will do.
    
@@ -120,13 +139,9 @@ In practice it is desired to automate synchronization mechanism by setting up `c
 
 ## Documentation of Plugins
 
-   - [Ant Plugin](https://github.com/aaronicsubstances/code-augmentor/wiki/Ant-Plugin)
-   - [Maven Plugin](https://github.com/aaronicsubstances/code-augmentor/wiki/Maven-Plugin)
-   - [Gradle Plugin](https://github.com/aaronicsubstances/code-augmentor/wiki/Gradle-Plugin)
-
-## Further Documentation
-
-See [wiki](https://github.com/aaronicsubstances/code-augmentor/wiki).
+   - [Ant Plugin](https://github.com/aaronicsubstances/code-augmentor/tree/master/code-augmentor-ant/README.md)
+   - [Maven Plugin](https://github.com/aaronicsubstances/code-augmentor/tree/master/code-augmentor-maven/README.md)
+   - [Gradle Plugin](https://github.com/aaronicsubstances/code-augmentor/tree/master/code-augmentor-gradle/README.md)
 
 ## Development Environment
 
