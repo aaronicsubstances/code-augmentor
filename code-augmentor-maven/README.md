@@ -174,7 +174,7 @@ Following are the configuration of each goal. Unless otherwise stated, configura
       - file of augmenting codes produced by prepare stage and meant as input to process stage (aka augCodeFile) is set to ${project.build.directory}/codeAugmentor/augCodes.json
       - file of generated codes produced by process stage and meant as input to completion stage (aka genCodeFile) is set to ${project.build.directory}/codeAugmentor/genCodes.json
 
-## Example POM
+## Example POMs
 
 ### Intended for code-augmentor:run
 
