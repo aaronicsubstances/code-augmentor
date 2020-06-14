@@ -1,0 +1,34 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'com.aaronicsubstances.code-augmentor' version '1.0'
+}
+
+application {
+    mainClassName = "demo.Main"
+}
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    implementation 'org.slf4j:slf4j-api:1.7.25'
+    implementation 'org.slf4j:slf4j-simple:1.7.25'
+
+    testImplementation 'org.testng:testng:6.8.1'
+}
+
+test {
+    useTestNG()
+}
+
+codeAugmentor {
+    verbose = true
+    fileSets.add(project.fileTree('src/main/java') {
+        include '**/*java'
+    })
+    groovyScriptDir = '../codeAugmentorScripts'
+}
+
+compileJava.dependsOn codeAugmentorRun

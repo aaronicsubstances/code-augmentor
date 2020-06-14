@@ -103,6 +103,7 @@ Following are the properties of each task. Unless otherwise stated, the properti
 
 ## Example Build Files
 
+
 ### Intended for codeAugmentorRun
 
 `codeAugmentorRun` can easily be hooked to a Gradle build. Sample build file below demonstrates how to make it execute before `compileJava` task, ie before source files are compiled. As mentioned above though, Groovy is the only scripting platform that can be used with this task.
@@ -125,6 +126,8 @@ codeAugmentor {
 
 compileJava.dependsOn codeAugmentorRun
 ```
+
+**NB:** [Examples](https://github.com/aaronicsubstances/code-augmentor/tree/master/examples) directory contains working gradle plugin demonstration involving this build file.
 
 ### Not intended for codeAugmentorRun
 
