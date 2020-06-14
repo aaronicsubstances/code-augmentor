@@ -188,8 +188,8 @@ Following are the configuration of each goal. Unless otherwise stated, configura
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.example</groupId>
-  <artifactId>code-augmentor-with-maven-demo</artifactId>
+  <groupId>com.aaronicsubstances</groupId>
+  <artifactId>sample-app</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
@@ -200,7 +200,7 @@ Following are the configuration of each goal. Unless otherwise stated, configura
         <artifactId>code-augmentor-maven-plugin</artifactId>
         <version>1.0</version>
         <configuration>
-            <verbose>true</verbose>
+            <verbose>false</verbose>
             <fileSets>
                 <fileSet>
                     <directory>src</directory>
@@ -224,6 +224,8 @@ Following are the configuration of each goal. Unless otherwise stated, configura
   </build>
 </project>
 ```
+
+**NB:** [Examples](https://github.com/aaronicsubstances/code-augmentor/tree/master/examples) directory contains working maven plugin demonstration involving this build file.
 
 ### Not intended for code-augmentor:run
 
