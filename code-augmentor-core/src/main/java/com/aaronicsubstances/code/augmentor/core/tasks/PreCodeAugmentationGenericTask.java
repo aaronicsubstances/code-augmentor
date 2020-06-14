@@ -63,6 +63,8 @@ public class PreCodeAugmentationGenericTask {
 
         List<Object> codeGenRequestWriters = new ArrayList<>();
         List<CodeGenerationRequest> codeGenRequests = new ArrayList<>();
+
+        // aug code directives are the only required directives.
         for (AugCodeProcessingSpec augCodeSpec : augCodeProcessingSpecs) {
             CodeGenerationRequest codeGenRequest = new CodeGenerationRequest();
             codeGenRequests.add(codeGenRequest);
