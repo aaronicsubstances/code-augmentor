@@ -35,8 +35,10 @@ exports.intentionalBlock = function(augCode, context) {
         v.nestedLevelNumber == augCode.nestedLevelNumber &&
         v.hasNestedLevelEndMarker);
     assert.ok(augCodeWithEndMarkers.length);
-    endingAugCode = augCodeWithEndMarkers[0];    
-    assert.ok(augCode.contentWithinNestedMarkers == "intentionalContent");
+    endingAugCode = augCodeWithEndMarkers[0];
+    assert.ok(endingAugCode.matchingNestedLevelStartMarkerIndex  == context.augCodeIndex);
+    assert.ok(augCode.matchingNestedLevelEndMarkerIndex  == 3);
+    assert.ok(augCode.externalNestedContent == "intentionalContent");
     const startGenCode = context.newGenCode();
     startGenCode.id = augCode.id;
     startGenCode.indent = "  ";

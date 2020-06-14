@@ -1,12 +1,15 @@
 code-augmentor-ant/build.gradle:8
 code-augmentor-app/build.gradle:7
-code-augmentor-app/src/test/projects/basic/main.groovy:1
-code-augmentor-app/src/test/projects/basic/tests.groovy:4,6
 code-augmentor-core/build.gradle:8
 code-augmentor-gradle/build.gradle:9
 code-augmentor-maven/pom.xml:6,56
 code-augmentor-maven/src/test/resources/projects/complete-mojo-project/pom.xml:17
 code-augmentor-maven/src/test/resources/projects/default-mojo-project/pom.xml:21
 code-augmentor-maven/src/test/resources/projects/prepare-mojo-project/pom.xml:17
-code-augmentor-maven/src/test/resources/projects/process-mojo-project/pom.xml:17
-process-aug-code-tests/tests.groovy:1
+process-aug-code-tests/groovyw:3
+process-aug-code-tests/groovyw.bat:12
+
+gson deps:
+process-aug-code-tests/tests.groovy
+code-augmentor-app/src/test/projects/basic/main.groovy
+code-augmentor-app/src/test/projects/basic/tests.groovy

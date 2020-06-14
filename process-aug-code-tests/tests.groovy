@@ -1,4 +1,5 @@
-@Grab('com.aaronicsubstances:code-augmentor-core:1.1.0-SNAPSHOT')
+@GrabConfig(systemClassLoader=true) // needed so -cp deps can find grabbed deps
+@Grab('com.google.code.gson:gson:2.8.6')
 
 import com.aaronicsubstances.code.augmentor.core.models.CodeGenerationResponse
 
@@ -19,6 +20,8 @@ class MyTestCase {
         scriptDir = new File(MyTestCase.class.protectionDomain.codeSource.location.path).parent
         buildDir = new File(scriptDir, 'build')
         def ant = new AntBuilder()
+
+        ant.delete(dir: buildDir)
 
         // set up nodejs scripts.
         ant.copy(todir: "$buildDir/nodejs", file: "$LocalConfig.NODEJS_REPO_PATH/index.js")
@@ -170,7 +173,7 @@ class MyTestCase {
     def execOnGroovy(inputFileName, outputFile) {        
         def ant = new AntBuilder()
         ant.echo("execOnGroovy with $inputFileName")
-        ant.exec(executable: 'groovy', vmlauncher: false, dir: scriptDir,
+        ant.exec(executable: 'groovyw', vmlauncher: false, dir: scriptDir,
                 errorproperty: PRINT_OUT, resultproperty: EXIT_RESULT) {
             arg(value: "build/java/main.groovy")
             arg(value: "resources/$inputFileName")

@@ -1,9 +1,10 @@
 package com.aaronicsubstances.code.augmentor.core.models;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class AugmentingCode {
-    
+
     public static class Block {
         private String content;
         private boolean stringify;
@@ -88,10 +89,14 @@ public class AugmentingCode {
     private int nestedLevelNumber;
     private boolean hasNestedLevelStartMarker;
     private boolean hasNestedLevelEndMarker;
-    private String contentWithinNestedMarkers;
+    private Integer matchingNestedLevelStartMarkerIndex;
+    private Integer matchingNestedLevelEndMarkerIndex;
+    private String externalNestedContent;
+
+    // used temporarily during preparation stage.
+    private transient int[] externalNestedContentLocation;
 
     // used to attach results of processing aug codes.
-    // not persisted
     private transient List<Object> args;
     private transient boolean processed;
 
@@ -190,12 +195,36 @@ public class AugmentingCode {
         this.hasNestedLevelEndMarker = hasNestedLevelEndMarker;
     }
 
-    public String getContentWithinNestedMarkers() {
-        return contentWithinNestedMarkers;
+    public Integer getMatchingNestedLevelStartMarkerIndex() {
+        return matchingNestedLevelStartMarkerIndex;
     }
 
-    public void setContentWithinNestedMarkers(String contentWithinNestedMarkers) {
-        this.contentWithinNestedMarkers = contentWithinNestedMarkers;
+    public void setMatchingNestedLevelStartMarkerIndex(Integer matchingNestedLevelStartMarkerIndex) {
+        this.matchingNestedLevelStartMarkerIndex = matchingNestedLevelStartMarkerIndex;
+    }
+
+    public Integer getMatchingNestedLevelEndMarkerIndex() {
+        return matchingNestedLevelEndMarkerIndex;
+    }
+
+    public void setMatchingNestedLevelEndMarkerIndex(Integer matchingNestedLevelEndMarkerIndex) {
+        this.matchingNestedLevelEndMarkerIndex = matchingNestedLevelEndMarkerIndex;
+    }
+
+    public String getExternalNestedContent() {
+        return externalNestedContent;
+    }
+
+    public void setExternalNestedContent(String externalNestedContent) {
+        this.externalNestedContent = externalNestedContent;
+    }
+
+    public int[] getExternalNestedContentLocation() {
+        return externalNestedContentLocation;
+    }
+
+    public void setExternalNestedContentLocation(int[] externalNestedContentLocation) {
+        this.externalNestedContentLocation = externalNestedContentLocation;
     }
 
     @Override
@@ -204,14 +233,19 @@ public class AugmentingCode {
         int result = 1;
         result = prime * result + ((args == null) ? 0 : args.hashCode());
         result = prime * result + ((blocks == null) ? 0 : blocks.hashCode());
-        result = prime * result + ((contentWithinNestedMarkers == null) ? 0 : contentWithinNestedMarkers.hashCode());
         result = prime * result + ((directiveMarker == null) ? 0 : directiveMarker.hashCode());
+        result = prime * result + ((externalNestedContent == null) ? 0 : externalNestedContent.hashCode());
+        result = prime * result + Arrays.hashCode(externalNestedContentLocation);
         result = prime * result + (hasNestedLevelEndMarker ? 1231 : 1237);
         result = prime * result + (hasNestedLevelStartMarker ? 1231 : 1237);
         result = prime * result + id;
         result = prime * result + ((indent == null) ? 0 : indent.hashCode());
         result = prime * result + lineNumber;
         result = prime * result + ((lineSeparator == null) ? 0 : lineSeparator.hashCode());
+        result = prime * result
+                + ((matchingNestedLevelEndMarkerIndex == null) ? 0 : matchingNestedLevelEndMarkerIndex.hashCode());
+        result = prime * result
+                + ((matchingNestedLevelStartMarkerIndex == null) ? 0 : matchingNestedLevelStartMarkerIndex.hashCode());
         result = prime * result + nestedLevelNumber;
         result = prime * result + (processed ? 1231 : 1237);
         return result;
@@ -236,15 +270,17 @@ public class AugmentingCode {
                 return false;
         } else if (!blocks.equals(other.blocks))
             return false;
-        if (contentWithinNestedMarkers == null) {
-            if (other.contentWithinNestedMarkers != null)
-                return false;
-        } else if (!contentWithinNestedMarkers.equals(other.contentWithinNestedMarkers))
-            return false;
         if (directiveMarker == null) {
             if (other.directiveMarker != null)
                 return false;
         } else if (!directiveMarker.equals(other.directiveMarker))
+            return false;
+        if (externalNestedContent == null) {
+            if (other.externalNestedContent != null)
+                return false;
+        } else if (!externalNestedContent.equals(other.externalNestedContent))
+            return false;
+        if (!Arrays.equals(externalNestedContentLocation, other.externalNestedContentLocation))
             return false;
         if (hasNestedLevelEndMarker != other.hasNestedLevelEndMarker)
             return false;
@@ -264,6 +300,16 @@ public class AugmentingCode {
                 return false;
         } else if (!lineSeparator.equals(other.lineSeparator))
             return false;
+        if (matchingNestedLevelEndMarkerIndex == null) {
+            if (other.matchingNestedLevelEndMarkerIndex != null)
+                return false;
+        } else if (!matchingNestedLevelEndMarkerIndex.equals(other.matchingNestedLevelEndMarkerIndex))
+            return false;
+        if (matchingNestedLevelStartMarkerIndex == null) {
+            if (other.matchingNestedLevelStartMarkerIndex != null)
+                return false;
+        } else if (!matchingNestedLevelStartMarkerIndex.equals(other.matchingNestedLevelStartMarkerIndex))
+            return false;
         if (nestedLevelNumber != other.nestedLevelNumber)
             return false;
         if (processed != other.processed)
@@ -273,10 +319,13 @@ public class AugmentingCode {
 
     @Override
     public String toString() {
-        return "AugmentingCode{args=" + args + ", blocks=" + blocks + ", contentWithinNestedMarkers="
-                + contentWithinNestedMarkers + ", directiveMarker=" + directiveMarker + ", hasNestedLevelEndMarker="
+        return "AugmentingCode{args=" + args + ", blocks=" + blocks + ", directiveMarker=" + directiveMarker
+                + ", externalNestedContent=" + externalNestedContent + ", externalNestedContentLocation="
+                + Arrays.toString(externalNestedContentLocation) + ", hasNestedLevelEndMarker="
                 + hasNestedLevelEndMarker + ", hasNestedLevelStartMarker=" + hasNestedLevelStartMarker + ", id=" + id
                 + ", indent=" + indent + ", lineNumber=" + lineNumber + ", lineSeparator=" + lineSeparator
+                + ", matchingNestedLevelEndMarkerIndex=" + matchingNestedLevelEndMarkerIndex
+                + ", matchingNestedLevelStartMarkerIndex=" + matchingNestedLevelStartMarkerIndex
                 + ", nestedLevelNumber=" + nestedLevelNumber + ", processed=" + processed + "}";
     }
 }

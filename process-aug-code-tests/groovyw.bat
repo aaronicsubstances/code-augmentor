@@ -9,10 +9,5 @@ goto start
 
 :done
 rem (use %args% here)
-set DIRNAME=%~dp0
-if "%DIRNAME%" == "" set DIRNAME=.
-set grapedir=%DIRNAME%\build
-IF EXIST "%grapedir%" (
-    rmdir /S /Q "%grapedir%"
-)
-groovy "-Dgrape.root=%grapedir%" %args%
+set coreCp=..\code-augmentor-core\build\libs\code-augmentor-core-1.1.0-SNAPSHOT.jar
+groovy -cp "%coreCp%" %args%

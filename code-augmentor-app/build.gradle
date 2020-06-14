@@ -54,6 +54,7 @@ task('publishProjectDependencies', type: Exec) {
 
 task('doNotDetectCodeChange', type: JavaExec) {
     args = createAntCallArgs('do-not-detect-code-change')
+    systemProperties = ['app.version': "$version"]
     main = project.mainClassName
     classpath(sourceSets.main.runtimeClasspath)
     enableAssertions = true
@@ -61,6 +62,7 @@ task('doNotDetectCodeChange', type: JavaExec) {
 
 task('codeChangeAbsent', type: JavaExec) {
     args = createAntCallArgs(null) // test that default target is used
+    systemProperties = ['app.version': "$version"]
     main = project.mainClassName
     classpath(sourceSets.main.runtimeClasspath)
     enableAssertions = true
@@ -68,6 +70,16 @@ task('codeChangeAbsent', type: JavaExec) {
 
 task('codeChangePresentSoFail', type: JavaExec) {
     args = createAntCallArgs('code-change-present')
+    systemProperties = ['app.version': "$version"]
+    main = project.mainClassName
+    classpath(sourceSets.main.runtimeClasspath)
+    enableAssertions = true
+}
+
+task('codeChangePresentSubCmd', type: JavaExec) {
+    def fsep = File.separator
+    args = [ "-f", "src${fsep}test${fsep}projects${fsep}basic${fsep}codeChangeBuildTest.xml" ]
+    systemProperties = ['app.version': "$version"]
     main = project.mainClassName
     classpath(sourceSets.main.runtimeClasspath)
     enableAssertions = true
@@ -75,28 +87,38 @@ task('codeChangePresentSoFail', type: JavaExec) {
 
 task('codeChangePresentButPass', type: JavaExec) {
     args = createAntCallArgs('code-change-present-DF')
+    systemProperties = ['app.version': "$version"]
     main = project.mainClassName
     classpath(sourceSets.main.runtimeClasspath)
     enableAssertions = true
 }
 
 task('groovyBasedTests', type: Exec) {
-    def psep = File.separator
-    workingDir "src${psep}test${psep}projects${psep}basic"
-    
+    final boolean isRunningOnWindows = System.getProperty("os.name") =~ /(?i)windows/
+
+    def fsep = File.separator
+    workingDir "src${fsep}test${fsep}projects${fsep}basic"
+
+    def groovyCp = isRunningOnWindows ? "\"" : "'"
+    groovyCp += file("../code-augmentor-core/build/libs/code-augmentor-core-${version}.jar")
+    groovyCp += File.pathSeparator
+    groovyCp += file("../code-augmentor-ant/build/libs/code-augmentor-ant-${version}.jar")
+    groovyCp += (isRunningOnWindows ? "\"" : "'")
+
     def cmdPlusArgs = []
-    if (System.getProperty("os.name") =~ /(?i)win/) {
+    if (isRunningOnWindows) {
         cmdPlusArgs << 'cmd' << '/c'
     }
     cmdPlusArgs << 'groovy'
-    cmdPlusArgs << "-Dgrape.root=build${psep}scriptDeps"
+    cmdPlusArgs << '-cp'
+    cmdPlusArgs << groovyCp
     cmdPlusArgs << 'tests.groovy'
     commandLine cmdPlusArgs
 }
 
 def createAntCallArgs(antTarget) {
-    def psep = File.separator
-    def args = [ "-f", "src${psep}test${psep}projects${psep}basic${psep}build.xml" ]
+    def fsep = File.separator
+    def args = [ "-f", "src${fsep}test${fsep}projects${fsep}basic${fsep}build.xml" ]
     if (antTarget) {
         args += [ "-t", antTarget ]
     }

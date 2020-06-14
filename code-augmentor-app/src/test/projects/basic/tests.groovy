@@ -1,9 +1,5 @@
-// systemClassLoader needed so CodeAugmentorTasks.xml can be loaded
-// successfully.
-@GrabConfig(systemClassLoader=true)
-@Grab('com.aaronicsubstances:code-augmentor-ant:1.1.0-SNAPSHOT')
-
-@Grab('com.aaronicsubstances:code-augmentor-core:1.1.0-SNAPSHOT')
+@GrabConfig(systemClassLoader=true) // needed so -cp deps can find grabbed deps
+@Grab('com.google.code.gson:gson:2.8.6')
 
 import com.aaronicsubstances.code.augmentor.ant.CodeAugmentorTask
 import com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeGenericTask

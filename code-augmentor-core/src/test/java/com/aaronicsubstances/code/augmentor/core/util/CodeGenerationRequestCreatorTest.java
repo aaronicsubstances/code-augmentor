@@ -93,12 +93,18 @@ public class CodeGenerationRequestCreatorTest {
                 new Block("-----------", false, false),
                 new Block(" ending again", true, false))                
         );
+
         augCodes50.get(0).setHasNestedLevelStartMarker(true);
-        augCodes50.get(0).setContentWithinNestedMarkers("1-4");
+        augCodes50.get(0).setMatchingNestedLevelEndMarkerIndex(1);
+        augCodes50.get(0).setExternalNestedContentLocation(new int[]{1, 4});
         augCodes50.get(1).setHasNestedLevelEndMarker(true);
+        augCodes50.get(1).setMatchingNestedLevelStartMarkerIndex(0);
+
         augCodes51.get(1).setHasNestedLevelStartMarker(true);
-        augCodes51.get(1).setContentWithinNestedMarkers("2-3");
+        augCodes51.get(1).setMatchingNestedLevelEndMarkerIndex(2);
+        augCodes51.get(1).setExternalNestedContentLocation(new int[]{2, 3});;
         augCodes51.get(2).setHasNestedLevelEndMarker(true);
+        augCodes51.get(2).setMatchingNestedLevelStartMarkerIndex(1);
         augCodes51.get(1).setNestedLevelNumber(1);
         augCodes51.get(2).setNestedLevelNumber(1);
 

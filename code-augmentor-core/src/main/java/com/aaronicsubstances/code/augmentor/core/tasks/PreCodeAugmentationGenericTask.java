@@ -49,8 +49,12 @@ public class PreCodeAugmentationGenericTask {
 
         PreCodeAugmentationResult prepResult = new PreCodeAugmentationResult();
         prepResult.setEncoding(charset.name());
-        prepResult.setGenCodeStartDirective(genCodeStartDirectives.get(0));
-        prepResult.setGenCodeEndDirective(genCodeEndDirectives.get(0));
+        if (genCodeStartDirectives != null && !genCodeStartDirectives.isEmpty()) {
+            prepResult.setGenCodeStartDirective(genCodeStartDirectives.get(0));
+        }
+        if (genCodeEndDirectives != null && !genCodeEndDirectives.isEmpty()) {
+            prepResult.setGenCodeEndDirective(genCodeEndDirectives.get(0));
+        }
         // ensure dir exists for prepFile
         if (prepFile.getParentFile() != null) {
             prepFile.getParentFile().mkdirs();
@@ -67,8 +71,12 @@ public class PreCodeAugmentationGenericTask {
             codeGenRequest.setGenCodeStartDirective(prepResult.getGenCodeStartDirective());
             codeGenRequest.setGenCodeEndDirective(prepResult.getGenCodeEndDirective());
             codeGenRequest.setAugCodeDirective(augCodeSpec.getDirectives().get(0));
-            codeGenRequest.setEmbeddedStringDirective(embeddedStringDirectives.get(0));
-            codeGenRequest.setEmbeddedJsonDirective(embeddedJsonDirectives.get(0));
+            if (embeddedStringDirectives != null && !embeddedStringDirectives.isEmpty()) {
+                codeGenRequest.setEmbeddedStringDirective(embeddedStringDirectives.get(0));
+            }
+            if (embeddedJsonDirectives != null && !embeddedJsonDirectives.isEmpty()) {
+                codeGenRequest.setEmbeddedJsonDirective(embeddedJsonDirectives.get(0));
+            }
             if (skipCodeStartDirectives != null && !skipCodeStartDirectives.isEmpty()) {
                 codeGenRequest.setSkipCodeStartDirective(skipCodeStartDirectives.get(0));
             }
@@ -159,18 +167,13 @@ public class PreCodeAugmentationGenericTask {
                         }
                         // set content within nested start and end markers.
                         for (AugmentingCode augCode : specAugCodes) {
-                            String c = augCode.getContentWithinNestedMarkers();
-                            if (c != null) {
-                                int sepIndex = c.indexOf("-");
-                                int augCodeDescriptorStartIndex = Integer.parseInt(
-                                    c.substring(0, sepIndex));
-                                int contentStartPos = codeSnippets.get(augCodeDescriptorStartIndex
+                            int[] loc = augCode.getExternalNestedContentLocation();
+                            if (loc != null) {
+                                int contentStartPos = codeSnippets.get(loc[0]
                                     ).getAugmentingCodeDescriptor().getEndPos();
-                                int augCodeDescriptorEndIndex = Integer.parseInt(
-                                    c.substring(sepIndex + 1));
-                                int contentEndPos = codeSnippets.get(augCodeDescriptorEndIndex
+                                int contentEndPos = codeSnippets.get(loc[1]
                                     ).getAugmentingCodeDescriptor().getStartPos();
-                                augCode.setContentWithinNestedMarkers(input.substring(contentStartPos,
+                                augCode.setExternalNestedContent(input.substring(contentStartPos,
                                     contentEndPos));
                             }
                         }

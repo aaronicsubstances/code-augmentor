@@ -24,7 +24,8 @@
             "lineNumber": 10,
             "lineSeparator": "\n",
 			"hasNestedLevelStartMarker": true,
-			"contentWithinNestedMarkers": "\n",
+			"matchingNestedLevelEndMarkerIndex": 2,
+			"externalNestedContent": "\n",
             "nestedLevelNumber": 1,
 			"blocks" : [{
 				"content" : " complete"
@@ -41,6 +42,7 @@
             "lineNumber": 13,
             "lineSeparator": "\n",
             "hasNestedLevelEndMarker": true,
+			"matchingNestedLevelStartMarkerIndex": 1,
             "nestedLevelNumber": 1,
 			"blocks" : [{
 				"content" : "-----------"

@@ -31,12 +31,12 @@ public class CodeGenerationRequestCreator {
             validateAugCodeSection(augCodeSection, srcFile, errors);
         }
 
-        // 3a. If there are no validation errors,
+        // 3. If there are validation errors, dont' proceed further.
         if (errors != null && !errors.isEmpty()) {
             return null;
         }
 
-        // 3b. generate aug code blocks and associated descriptors
+        // 4. generate aug code blocks and associated descriptors
         List<CodeSnippetDescriptor> bodySnippets = new ArrayList<>();
         for (int i = 0; i < augCodeSections.size(); i++) {
             List<Token> augCodeSection = augCodeSections.get(i);
@@ -75,20 +75,24 @@ public class CodeGenerationRequestCreator {
             augmentingCode.setNestedLevelNumber(firstToken.nestedLevelNumber);
             augmentingCode.setHasNestedLevelStartMarker(firstToken.nestedLevelStartMarker != null);
             augmentingCode.setHasNestedLevelEndMarker(firstToken.nestedLevelEndMarker != null);
-
+            
+            // d. locate bounds for source file content external to aug code section
+            //    which exists between a start and its corresponding end nested level marker. 
             if (augmentingCode.getHasNestedLevelStartMarker()) {
-                // look for corresponding end marker aug code section.
-                for (int j = i + 1; j < augCodeSections.size(); j++) {                    
+                int endIdx = -1;
+                for (int j = i + 1; j < augCodeSections.size(); j++) {
                     Token candidateAugCodeSectionRep = augCodeSections.get(j).get(0);
                     if (candidateAugCodeSectionRep.nestedLevelNumber == augmentingCode.getNestedLevelNumber() &&
-                            candidateAugCodeSectionRep.nestedLevelEndMarker != null) {                        
-                        augmentingCode.setContentWithinNestedMarkers(i + "-" + j);
+                            candidateAugCodeSectionRep.nestedLevelEndMarker != null) {
+                        endIdx = j;
                         break;
                     }
                 }
+                assert endIdx != -1;
+                augmentingCode.setExternalNestedContentLocation(new int[]{i, endIdx});
             }
             
-            // d. validate json directive contents.
+            // e. validate json directive contents.
             for (int j = 0; j < blocks.size(); j++) {
                 Block b = blocks.get(j);
                 if (b.isJsonify() && TaskUtils.validateJson(b.getContent()) != null) {
@@ -101,6 +105,34 @@ public class CodeGenerationRequestCreator {
             List<AugmentingCode> applicableAugCodeList = specAugCodesList.get(
                 firstToken.augCodeSpecIndex);
             applicableAugCodeList.add(augmentingCode);
+        }
+
+        // 5. match start marker aug code sections to their corresponding 
+        //    end marker aug code sections.
+
+        // don't worry yourself if there were errors.
+        if (errors != null && !errors.isEmpty()) {
+            return null;
+        }
+
+        for (List<AugmentingCode> specAugCodes : specAugCodesList) {
+            for (int i = 0; i < specAugCodes.size(); i++) {
+                AugmentingCode augCode = specAugCodes.get(i);
+                if (augCode.getHasNestedLevelStartMarker()) {
+                    int endIdx = -1;
+                    for (int j = i + 1; j < specAugCodes.size(); j++) {
+                        AugmentingCode candidate = specAugCodes.get(j);
+                        if (candidate.getNestedLevelNumber() == augCode.getNestedLevelNumber() &&
+                                candidate.getHasNestedLevelEndMarker()) {
+                            endIdx = j;
+                            break;
+                        }
+                    }
+                    assert endIdx != -1;
+                    augCode.setMatchingNestedLevelEndMarkerIndex(endIdx);
+                    specAugCodes.get(endIdx).setMatchingNestedLevelStartMarkerIndex(i);
+                }
+            }
         }
 
         return bodySnippets;

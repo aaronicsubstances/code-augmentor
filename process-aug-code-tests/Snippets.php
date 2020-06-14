@@ -41,7 +41,9 @@ class Snippets {
         }, ARRAY_FILTER_USE_BOTH);
         assert($augCodeWithEndMarkers);
         $endingAugCode = array_values($augCodeWithEndMarkers)[0];
-        assert($augCode->contentWithinNestedMarkers == "intentionalContent");
+        assert($endingAugCode->matchingNestedLevelStartMarkerIndex  == $context->augCodeIndex);
+        assert($augCode->matchingNestedLevelEndMarkerIndex  == 3);
+        assert($augCode->externalNestedContent == "intentionalContent");
         $startGenCode = $context->newGenCode();
         $startGenCode->id = $augCode->id;
         $startGenCode->indent = "  ";

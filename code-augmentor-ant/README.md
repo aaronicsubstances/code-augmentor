@@ -33,9 +33,9 @@ Following are the fields and nested elements of each task. Unless otherwise stat
     <embeddedJsonDirective value="//:JSON:" />
     <skipCodeStartDirective value="//:SKIP_CODE_START:" />
     <skipCodeEndDirective value="//:SKIP_CODE_END:" />
-    <inlineGenCodeDirectives value="/*:GEN_CODE:*/" />
-    <nestedLevelStartMarkers value="{" />
-    <nestedLevelEndMarkers value="}" />
+    <inlineGenCodeDirective value="/*:GEN_CODE:*/" />
+    <nestedLevelStartMarker value="{" />
+    <nestedLevelEndMarker value="}" />
     <augCodeSpec 
             destFile="${ant.basedir}/build/codeAugmentor/augCodes.json">
         <directive value="//:AUG_CODE:" />
@@ -49,7 +49,7 @@ Following are the fields and nested elements of each task. Unless otherwise stat
 
    - At least one nested **srcDir** element of type [FileSet](https://ant.apache.org/manual/Types/fileset.html) is required.
    - Values for **encoding** attribute are validated according to their acceptance by Java's [Charset](https://docs.oracle.com/javase/8/docs/api/java/nio/charset/Charset.html) and [StandardCharsets](https://docs.oracle.com/javase/8/docs/api/java/nio/charset/StandardCharsets.html) classes.
-   - Each nested element (**genCodeStartDirective**, **genCodeEndDirective**, **embeddedStringDirective**, **embeddedJsonDirective**, **skipCodeStartDirective**, **skipCodeEndDirective**, **inlineGenCodeDirectives**, **nestedLevelStartMarkers**, **nestedLevelEndMarkers**, **augCodeSpec**, **directive**, **srcDir**) can be specified more than once.
+   - Each nested element (**genCodeStartDirective**, **genCodeEndDirective**, **embeddedStringDirective**, **embeddedJsonDirective**, **skipCodeStartDirective**, **skipCodeEndDirective**, **inlineGenCodeDirective**, **nestedLevelStartMarker**, **nestedLevelEndMarker**, **augCodeSpec**, **directive**, **srcDir**) can be specified more than once.
 
 ### code_aug_complete
 
@@ -90,9 +90,9 @@ Following are the fields and nested elements of each task. Unless otherwise stat
     <embeddedJsonDirective value="//:JSON:" />
     <skipCodeStartDirective value="//:SKIP_CODE_START:" />
     <skipCodeEndDirective value="//:SKIP_CODE_END:" />
-    <inlineGenCodeDirectives value="/*:GEN_CODE:*/" />
-    <nestedLevelStartMarkers value="{" />
-    <nestedLevelEndMarkers value="}" />
+    <inlineGenCodeDirective value="/*:GEN_CODE:*/" />
+    <nestedLevelStartMarker value="{" />
+    <nestedLevelEndMarker value="}" />
     <srcDir dir="src/main/java" includes="**/*.java" />
     <srcDir dir="src/test/java" includes="**/*.java" />
 </code_aug_run>

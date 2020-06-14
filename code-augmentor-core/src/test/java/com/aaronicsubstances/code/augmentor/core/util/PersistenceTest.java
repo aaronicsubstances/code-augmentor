@@ -196,7 +196,14 @@ public class PersistenceTest {
                             codeSnippet.setNestedLevelNumber(TestResourceLoader.RAND_GEN.nextInt());
                             codeSnippet.setHasNestedLevelStartMarker(TestResourceLoader.RAND_GEN.nextBoolean());
                             codeSnippet.setHasNestedLevelEndMarker(TestResourceLoader.RAND_GEN.nextBoolean());
-                            codeSnippet.setContentWithinNestedMarkers(generateRandomString(true));
+                            if (TestResourceLoader.RAND_GEN.nextBoolean()) {
+                                codeSnippet.setExternalNestedContent(
+                                    generateRandomString(true));
+                                codeSnippet.setMatchingNestedLevelStartMarkerIndex(
+                                    TestResourceLoader.RAND_GEN.nextInt());
+                                codeSnippet.setMatchingNestedLevelEndMarkerIndex(
+                                    TestResourceLoader.RAND_GEN.nextInt());
+                            }
                             
                             int blockCount = TestResourceLoader.RAND_GEN.nextInt(5);
                             for (int k = 0; k < blockCount; k++) {

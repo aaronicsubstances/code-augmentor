@@ -31,7 +31,9 @@ def intentionalBlock(augCode, context):
             endingAugCode = v
             break
     assert endingAugCode
-    assert augCode.contentWithinNestedMarkers == "intentionalContent"
+    assert endingAugCode.matchingNestedLevelStartMarkerIndex  == context.augCodeIndex
+    assert augCode.externalNestedContent == "intentionalContent"
+    assert augCode.matchingNestedLevelEndMarkerIndex  == i
     startGenCode = context.newGenCode()
     startGenCode.id = augCode.id
     startGenCode.indent = "  "

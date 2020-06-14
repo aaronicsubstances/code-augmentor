@@ -157,6 +157,13 @@ public class CodeAugmentationGenericTask {
                         snippetDescriptor.getGeneratedCodeDescriptor())) {
                     // employ default behaviour of ensuring generated code
                     // occurs within directive markers.
+                    if (result.getGenCodeStartDirective() == null ||
+                            result.getGenCodeEndDirective() == null) {                                
+                        allErrors.add(createException("No start/end directive markers found in prep file " +
+                            "with which to insert generated code for augmenting code section with id " + 
+                            augCodeDescriptor.getId(), augCodeDescriptor, srcFile));
+                        continue;
+                    }
                     List<ContentPart> updatedContentParts = new ArrayList<>(genCode.getContentParts());
                     updatedContentParts.add(0,
                             new ContentPart(indent + result.getGenCodeStartDirective() + newline, false));

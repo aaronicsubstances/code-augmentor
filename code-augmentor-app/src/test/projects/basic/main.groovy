@@ -1,4 +1,5 @@
-@Grab('com.aaronicsubstances:code-augmentor-core:1.1.0-SNAPSHOT')
+@GrabConfig(systemClassLoader=true) // needed so -cp deps can find grabbed deps
+@Grab('com.google.code.gson:gson:2.8.6')
 
 // import scripts with functions.
 // fortunately in Groovy, we only have to do this for scripts
