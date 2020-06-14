@@ -155,3 +155,29 @@ In practice it is desired to automate synchronization mechanism by setting up `c
    * NodeJS v12.13.0
    * Python 3.8.1
    * PHP 7.4.5 (cli)
+
+## Build Instructions
+
+   * Ensure the following are installed locally: JDK 8, Apache Maven, Groovy. 
+   * Also ensure **java**, **mvn** and **groovy** executables are placed on the system path.
+   * Clone repository and run `gradlew alltests` from root of project. Can also run `gradlew clean alltests` instead. This builds and tests all the Java projects, and can take up to 6 minutes to complete.
+
+### Tests Requiring Manual Inspection
+
+The following tests (currently all in the **code-augmentor-core** project) generate standard output/error messages which can be verified for correctness:
+
+   * core.cs_and_math.MathAlgorithmsTest.testShuffleList
+   * core.cs_and_math.parsing.LexerSupportTest.{testParseDecimalStringForError,testParseHexadecimalStringForError}
+   * core.tasks.\*
+   * core.util.CodeGenerationRequestCreatorTest.{testValidateAugCodeSection,testIdentifyAugCodeSectionsForErrors
+
+### Tests involving non-Java supported languages
+
+In order to run further tests involving supported non-Java languages in the [process-aug-code-tests](https://github.com/aaronicsubstances/code-augmentor/tree/master/process-aug-code-tests) directory, ensure the following are installed: NodeJS, Python 3, PHP 7 (CLI).
+   
+   * Ensure **node**, **python**/**python3** and **php** executables are placed on the system path.
+   * Clone the repositories for each of the supported languages from their respective repositories.
+   * In the **process-aug-code-tests** directory, make a copy of [LocalConfig.groovy.sample](https://github.com/aaronicsubstances/code-augmentor/blob/master/process-aug-code-tests/LocalConfig.groovy.sample) and name it *LocalConfig.groovy*. Edit the properties declared in it to match the locations of your supporting package project directories. Paths relative to Java repository can be used.
+   * (Optional) Run `gradlew :code-augmentor-core:build` from root of Java project. This can be skipped if Java projects have been built already.
+   * Make [process-aug-code-tests](https://github.com/aaronicsubstances/code-augmentor/tree/master/process-aug-code-tests) the current directory from command line and use `groovyw tests.groovy` to run tests involving non-Java packages. If all tests pass, should see 0 failures.
+
