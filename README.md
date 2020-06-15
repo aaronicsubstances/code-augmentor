@@ -158,9 +158,9 @@ In practice it is desired to automate synchronization mechanism by setting up `c
 
 ## Build Instructions
 
-   * Ensure the following are installed locally: JDK 8, Apache Maven, Groovy. 
+   * Ensure the following are installed locally: JDK 8, Apache Maven, Groovy. Ensure JAVA_HOME and GROOVY_HOME environment variables are set up properly.
    * Also ensure **java**, **mvn** and **groovy** executables are placed on the system path.
-   * Clone repository and run `gradlew alltests` from root of project. Can also run `gradlew clean alltests` instead. This builds and tests all the Java projects, and can take up to 6 minutes to complete.
+   * Clone repository and run `gradlew alltests` from root of project. Can also run `gradlew clean alltests` instead (Gradle 5.6.4 will be downloaded and used by the commands). This builds and tests all the Java projects, and can take up to 6 minutes to complete.
 
 ### Tests Requiring Manual Inspection
 

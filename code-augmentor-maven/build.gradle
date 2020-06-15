@@ -27,3 +27,12 @@ task('alltests', type: Exec, dependsOn: 'build') {
     cmdPlusArgs << 'mvn' << '-Dalltests=true' << 'test'
     commandLine cmdPlusArgs
 }
+
+task('publish', type: Exec) {
+    def cmdPlusArgs = []
+    if (System.getProperty("os.name") =~ /(?i)win/) {
+        cmdPlusArgs << 'cmd' << '/c'
+    }
+    cmdPlusArgs << 'mvn' << 'package' << 'gpg:sign' << 'deploy'
+    commandLine cmdPlusArgs
+}

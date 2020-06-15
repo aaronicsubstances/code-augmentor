@@ -114,8 +114,8 @@ publishing {
             name = 'staging'
             url = 'https://oss.sonatype.org/service/local/staging/deploy/maven2'
             credentials {
-                username = nexusUsername
-                password = nexusPassword
+                username = findProperty('nexusUsername')
+                password = findProperty('nexusPassword')
             }
         }
     }
@@ -123,6 +123,9 @@ publishing {
 
 signing {
     useGpgCmd()
-    required { !version.endsWith("SNAPSHOT") }
     sign publishing.publications.mavenJava
+}
+
+tasks.withType(Sign) {
+    onlyIf { !version.endsWith("SNAPSHOT") }
 }
