@@ -90,8 +90,15 @@ public class SourceCodeTokenizer {
             List<List<String>> augCodeDirectiveSets, 
             List<String> inlineGenCodeDirectives, 
             List<String> nestedLevelStartMarkers, 
-            List<String> nestedLevelEndMarkers) {
-        
+            List<String> nestedLevelEndMarkers) {       
+
+        // aug code directives are the only required directives.
+        for (int i = 0; i < augCodeDirectiveSets.size(); i++) {
+            for (String marker: augCodeDirectiveSets.get(i)) {
+                DirectiveDescriptor d = new DirectiveDescriptor(marker, i);
+                directiveDescriptors.add(d);
+            }
+        }
 
         if (genCodeStartDirectives != null) {
             for (String marker: genCodeStartDirectives) {
@@ -142,14 +149,7 @@ public class SourceCodeTokenizer {
             }
         }
 
-        // aug code directives are the only required directives.
-        for (int i = 0; i < augCodeDirectiveSets.size(); i++) {
-            for (String marker: augCodeDirectiveSets.get(i)) {
-                DirectiveDescriptor d = new DirectiveDescriptor(marker, i);
-                directiveDescriptors.add(d);
-            }
-        }
-
+        directiveDescriptors.removeIf(d -> TaskUtils.isBlank(d.marker));
         Collections.sort(directiveDescriptors);
 
         String lexerRegexBuilder = join("|", directiveDescriptors.stream()
@@ -176,6 +176,7 @@ public class SourceCodeTokenizer {
             }
         }
 
+        nestedLevelMarkerDescriptors.removeIf(d -> TaskUtils.isBlank(d.marker));
         Collections.sort(nestedLevelMarkerDescriptors);
 
         String nestedLevelMarkerRegexBuilder = join("|", nestedLevelMarkerDescriptors.stream()

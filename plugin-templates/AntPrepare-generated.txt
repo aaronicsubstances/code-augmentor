@@ -88,40 +88,34 @@
         }
 
         // Ensure uniqueness across directives.
-        Set<String> allDirectives = new HashSet<>();
-        int totalDirectiveCount = 0;
-        allDirectives.addAll(resolvedGenCodeStartDirectives);
-        totalDirectiveCount += resolvedGenCodeStartDirectives.size();
-        allDirectives.addAll(resolvedGenCodeEndDirectives);
-        totalDirectiveCount += resolvedGenCodeEndDirectives.size();
-        allDirectives.addAll(resolvedEmbeddedStringDirectives);
-        totalDirectiveCount += resolvedEmbeddedStringDirectives.size();
-        allDirectives.addAll(resolvedEmbeddedJsonDirectives);
-        totalDirectiveCount += resolvedEmbeddedJsonDirectives.size();
-        allDirectives.addAll(resolvedSkipCodeStartDirectives);
-        totalDirectiveCount += resolvedSkipCodeStartDirectives.size();
-        allDirectives.addAll(resolvedSkipCodeEndDirectives);
-        totalDirectiveCount += resolvedSkipCodeEndDirectives.size();
-        allDirectives.addAll(resolvedInlineGenCodeDirectives);
-        totalDirectiveCount += resolvedInlineGenCodeDirectives.size();
+        List<String> allDirectives = new ArrayList<>();
+        addAllIfEnabled(allDirectives, resolvedGenCodeStartDirectives);
+        addAllIfEnabled(allDirectives, resolvedGenCodeEndDirectives);
+        addAllIfEnabled(allDirectives, resolvedEmbeddedStringDirectives);
+        addAllIfEnabled(allDirectives, resolvedEmbeddedJsonDirectives);
+        addAllIfEnabled(allDirectives, resolvedSkipCodeStartDirectives);
+        addAllIfEnabled(allDirectives, resolvedSkipCodeEndDirectives);
+        addAllIfEnabled(allDirectives, resolvedInlineGenCodeDirectives);
         
         for (List<String> resolvedAugCodeDirectives : resolvedAugCodeSpecDirectives) {
-            allDirectives.addAll(resolvedAugCodeDirectives);
-            totalDirectiveCount += resolvedAugCodeDirectives.size();
+            addAllIfEnabled(allDirectives, resolvedAugCodeDirectives);
         }
-        if (totalDirectiveCount != allDirectives.stream().filter(x -> x != null && !x.trim().isEmpty()).count()) {
-            throw new BuildException("duplicates and/or blanks detected across directives");
+        if (allDirectives.stream().anyMatch(x -> x == null || x.trim().isEmpty())) {
+            throw new BuildException("nulls/blanks detected across directives");
+        }
+        if (allDirectives.size() != allDirectives.stream().distinct().count()) {
+            throw new BuildException("duplicates detected across directives");
         }
         
         // Ensure uniqueness across markers.
         allDirectives.clear();
-        totalDirectiveCount = 0;
-        allDirectives.addAll(resolvedNestedLevelStartMarkers);
-        totalDirectiveCount += resolvedNestedLevelStartMarkers.size();
-        allDirectives.addAll(resolvedNestedLevelEndMarkers);
-        totalDirectiveCount += resolvedNestedLevelEndMarkers.size();
-        if (totalDirectiveCount != allDirectives.stream().filter(x -> x != null && !x.trim().isEmpty()).count()) {
-            throw new BuildException("duplicates and/or blanks detected across nested level markers");
+        addAllIfEnabled(allDirectives, resolvedNestedLevelStartMarkers);
+        addAllIfEnabled(allDirectives, resolvedNestedLevelEndMarkers);
+        if (allDirectives.stream().anyMatch(x -> x == null || x.trim().isEmpty())) {
+            throw new BuildException("nulls/blanks detected across nested level markers");
+        }
+        if (allDirectives.size() != allDirectives.stream().distinct().count()) {
+            throw new BuildException("duplicates detected across nested level markers");
         }
 
         // Validation successful, so begin execution by fetching files inside file sets.
@@ -220,4 +214,16 @@
                 genericTask.getAllErrors(), false, null, null);
             throw new BuildException(allExMsg);
         }
+    }
+    
+    private static void addAllIfEnabled(List<String> allDirectives, List<String> particularDirectives) {
+        // When exactly one blank is specified for a set of directives or markers,
+        // interpret as explicit intention to specify a blank, and hence no use for that directive. 
+        if (particularDirectives.size() == 1) {
+            String loneDirective = particularDirectives.get(0);
+            if (loneDirective == null || loneDirective.trim().isEmpty()) {
+                return;
+            }
+        }
+        allDirectives.addAll(particularDirectives);
     }
