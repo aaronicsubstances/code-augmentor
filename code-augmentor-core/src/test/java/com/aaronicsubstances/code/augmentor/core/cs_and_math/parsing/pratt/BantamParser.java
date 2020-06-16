@@ -84,4 +84,10 @@ public class BantamParser extends PrattParser<DefaultToken, Expression> {
         throw new RuntimeException("Expected token " + expected +
             " and found " + token.type);
     }
+
+    @Override
+    protected RuntimeException createEndOfTokensException() {
+        // not needed since our lexer never runs out of tokens.
+        return new UnsupportedOperationException();
+    }
 }

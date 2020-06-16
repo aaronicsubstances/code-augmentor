@@ -22,13 +22,50 @@ import com.aaronicsubstances.code.augmentor.core.models.AugmentingCode.Block;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode.ContentPart;
 import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 
+/**
+ * Intended for use by plugins and scripts written in Groovy (and other JVM languages)
+ * to implement processing stage of Code Augmentor.
+ */
 public class ProcessCodeGenericTask {
 
+    /**
+     * Interface for scripts in JVM languages to parse JSON strings into
+     * objects relevant to their use cases. 
+     */
     public interface JsonParseFunction {
+
+        /**
+         * Parses json string into some object. Anytime {@link ProcessCodeGenericTask} needs
+         * to parse a JSON string, this method will be called.
+         * @param json JSON string
+         * @return parsed object
+         * @throws Exception
+         */
         Object parse(String json) throws Exception;
     }
 
+    /**
+     * Interface to code evaluation facility in JVM scripting language.
+     */
     public interface EvalFunction {
+
+        /**
+         * Invokes code evaluation facility in a scripting language context 
+         * to produce generated code object corresponding to an augmenting code object.
+         * @param function trimmed content of first line of current augmenting code object.
+         * Although script can do anything it wants to with current augmenting code object,
+         * it is strongly recommended that data driven programming paradigm be followed.
+         * In that case this parameter refers to name of a function code evaluation facility should 
+         * call with (at least) 2 arguments: current augmenting code object and a 
+         * helper context object.
+         * @param augCode current augmenting code object
+         * @param context helper context object available for use by script
+         * @return {@link GeneratedCode} instance or an array of such instances.
+         * {@link ContentPart} instances can be returned as well. An instance of any other
+         * class will have toString() called on it and used as a content part with inexact
+         * matching.
+         * @throws Exception
+         */
         Object apply(String function, AugmentingCode augCode, ProcessCodeContext context) throws Exception;
     }
 
@@ -41,6 +78,18 @@ public class ProcessCodeGenericTask {
     // output properties
     private final List<Throwable> allErrors = new ArrayList<>();
 
+    /**
+     * Executes processing stage of Code Augmentor. Augmenting code objects
+     * will be read from input file, passed to eval mechanism of a 
+     * script, and the resulting generated code objects will be written out
+     * to output file.
+     * <p>
+     * Success of this operation depends on emptiness of allErrors property.
+     * @param evalFunction an interface into a script's code evaluation
+     * facility which will called to produce generated code objects corresponding
+     * to augmenting code objects in input file.
+     * @throws Exception
+     */
     public void execute(EvalFunction evalFunction) throws Exception {
         allErrors.clear();
         // ensure dir exists for outputFile
@@ -82,7 +131,8 @@ public class ProcessCodeGenericTask {
                         if (block.isJsonify()) {
                             Object parsedArg = jsonParseFunction.parse(block.getContent());
                             augCode.getArgs().add(parsedArg);
-                        } else if (block.isStringify()) {
+                        }
+                        else if (block.isStringify()) {
                             augCode.getArgs().add(block.getContent());
                         }
                     }
@@ -237,6 +287,11 @@ public class ProcessCodeGenericTask {
         this.logAppender = logAppender;
     }
 
+    /**
+     * Gets the input file to read augmenting code objects from.
+     * Corresponds to {@link AugCodeProcessingSpec#getDestFile()}
+     * @return input file for task.
+     */
     public File getInputFile() {
         return inputFile;
     }
@@ -245,6 +300,11 @@ public class ProcessCodeGenericTask {
         this.inputFile = inputFile;
     }
 
+    /**
+     * Gets the output file to write generated code objects to.
+     * Corresponds to {@link CodeAugmentationGenericTask#getGeneratedCodeFiles()}
+     * @return output file of this task.
+     */
     public File getOutputFile() {
         return outputFile;
     }

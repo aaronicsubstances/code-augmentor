@@ -21,14 +21,28 @@ public class RegexToNfaConvertor implements RegexNodeVisitor {
     private final Set<Integer> alphabet;
     private int stateGenerator = 1;
 
+    /**
+     * Creates new instance.
+     * @param alphabet optional alphabet to supply to created FSAs.
+     */
     public RegexToNfaConvertor(Set<Integer> alphabet) {
         this.alphabet = alphabet;
     }
 
+    /**
+     * If for some reason, one wants to modify the state number for
+     * the next state number generation request, this method can be used.
+     * @param newStart new next value.
+     */
     public void resetStateGenerator(int newStart) {
         this.stateGenerator = newStart;
     }
     
+    /**
+     * Converts a string of symbols to NFA.
+     * @param node string of symbols.
+     * @return {@link FiniteStateAutomaton} instance
+     */
     @Override
     public Object visit(LiteralStringRegexNode node) {
         Set<Integer> states = FiniteStateAutomaton.newSet();
@@ -75,6 +89,11 @@ public class RegexToNfaConvertor implements RegexNodeVisitor {
         return nfa;
     }
 
+    /**
+     * Converts a concatenation regex to NFA.
+     * @param node concatenation regex.
+     * @return {@link FiniteStateAutomaton} instance
+     */
     @Override
     public Object visit(ConcatRegexNode node) {
         // convert each child regex to nfa.
@@ -87,6 +106,11 @@ public class RegexToNfaConvertor implements RegexNodeVisitor {
         return makeConcatNfa(childNfas);
     }
 
+    /**
+     * Converts a union regex to NFA.
+     * @param node union regex.
+     * @return {@link FiniteStateAutomaton} instance
+     */
     @Override
     public Object visit(UnionRegexNode node) {
         // convert each child regex to nfa.
@@ -99,13 +123,17 @@ public class RegexToNfaConvertor implements RegexNodeVisitor {
         return makeUnionNfa(childNfas);
     }
 
+    /**
+     * Converts a Kleene closure regex to NFA.
+     * @param node Kleene closure regex.
+     * @return {@link FiniteStateAutomaton} instance
+     */
     @Override
     public Object visit(KleeneClosureRegexNode node) {
         FiniteStateAutomaton childNfa = (FiniteStateAutomaton) node.getChild().accept(this);
 
         return makeKleeneClosureNfa(childNfa);
     }
-
 
     public FiniteStateAutomaton makeKleeneClosureNfa(FiniteStateAutomaton childNfa) {
         // Reuse childNfa states and transition table.

@@ -30,9 +30,12 @@ import com.aaronicsubstances.code.augmentor.core.util.GeneratedCodeSimilarityChe
 import com.aaronicsubstances.code.augmentor.core.util.SourceCodeTransformer;
 import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 
+/**
+ * Implements completion stage of Code Augmentor.
+ */
 public class CodeAugmentationGenericTask {
-    private static final String CHANGE_SUMMARY_FILE_NAME = "CHANGE-SUMMARY.txt";
-    private static final String CHANGE_DETAILS_FILE_NAME = "CHANGE-DETAILS.json";
+    public static final String CHANGE_SUMMARY_FILE_NAME = "CHANGE-SUMMARY.txt";
+    public static final String CHANGE_DETAILS_FILE_NAME = "CHANGE-DETAILS.json";
 
     // input properties.
     private BiConsumer<GenericTaskLogLevel, Supplier<String>> logAppender;

@@ -90,11 +90,23 @@ public class GeneratedCodeSimilarityChecker {
     private final List<Object> similarityRegex;
     private final List<Integer> regexPositions;
 
+    /**
+     * Creates new instance for testing strings for equivalence with
+     * a given list of content parts.
+     * @param contentParts list of content parts.
+     */
     public GeneratedCodeSimilarityChecker(List<ContentPart> contentParts) {
         this(contentParts, false);
     }
 
-    public GeneratedCodeSimilarityChecker(List<ContentPart> contentParts,
+    /**
+     * Constructor for testing.
+     * @param contentParts content parts against which strings will be compared for
+     * equivalence.
+     * @param loggingEnabled whether diagnostic messages should be printed to standard output during
+     * building of internal regular expression object.
+     */
+    GeneratedCodeSimilarityChecker(List<ContentPart> contentParts,
             boolean loggingEnabled) {
         this.contentParts = contentParts;
         this.similarityRegex = new ArrayList<>();

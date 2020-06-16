@@ -1,31 +1,139 @@
 package com.aaronicsubstances.code.augmentor.core.util;
 
+/**
+ * Result of tokenizing file with {@link SourceCodeTokenizer}.
+ * <p>
+ * A token is a line with data associated with it for classifying it.
+ */
 public class Token {
+    /**
+     * Indicates that a token line starts a skip code section,
+     * starts a generated code section, or is an inline generated
+     * code section line.
+     */
     public static final int DIRECTIVE_TYPE_SKIP_CODE_START = 1;
+
+    /**
+     * Indicates that a token line ends a skip code section or
+     * a generated code section.
+     */
     public static final int DIRECTIVE_TYPE_SKIP_CODE_END = 2;
+
+    /**
+     * Indicates embedded string line.
+     */
     public static final int DIRECTIVE_TYPE_EMB_STRING = 3;
+    
+    /**
+     * Indicates embedded JSON line.
+     */
     public static final int DIRECTIVE_TYPE_EMB_JSON = 4;
+
+    /**
+     * Indicates augmenting code section line other than
+     * embedded string or embedded JSON line.
+     */
     public static final int DIRECTIVE_TYPE_AUG_CODE = 7;
 
+    /**
+     * Indicates line consisting of only whitespace.
+     */
     public static final int TYPE_BLANK = 20;
+    
+    /**
+     * Indicates line which does not start with a directive, and
+     * has non whitespace character.
+     */
     public static final int TYPE_OTHER = 50;
 
+    /**
+     * type of token line
+     */
     public int type;
+
+    /**
+     * full text of token line including any ending newline.
+     */
     public String text;
+
+    /**
+     * offset of token line
+     */
     public int startPos;
+
+    /**
+     * offset after end of token line.
+     */
     public int endPos;
+
+    /**
+     * Token line number. Starts from 1.
+     */
     public int lineNumber;
+
+    /**
+     * Used to store index of token in tokens parsed from a file.
+     */
     public int index;
 
+    /**
+     * Applies only to augmenting code token lines to indicate the
+     * index of the directive set of which the directive of the augmenting
+     * code line is part.
+     */
     public int augCodeSpecIndex;
+
+    /**
+     * Leading whitespace indent of token line.
+     */
     public String indent;
+
+    /**
+     * If token line has a directive as prefix, this field stores
+     * the text of that directive.
+     */
     public String directiveMarker;
+
+    /**
+     * Stores substring of line after directive text, after
+     * nested level marker, and before ending newline.
+     */
     public String directiveContent;
+
+    /**
+     * Ending newline of token line or null if line is the last line 
+     * of a file which doesn't end with a newline.
+     */
     public String newline;
+
+    /**
+     * Identifies use of generated code directive in a
+     * skip code directive token line.
+     */
     public boolean isGeneratedCodeMarker;
+
+    /**
+     * Identifies use of inline generated code directive in a
+     * skip code directive token line.
+     */
     public boolean isInlineGeneratedCodeMarker;
+
+    /**
+     * Stores any nested level start marker found in token line starting
+     * augmenting code section.
+     */
     public String nestedLevelStartMarker;
+    
+    /**
+     * Stores any nested level end marker found in token line starting
+     * augmenting code section.
+     */
     public String nestedLevelEndMarker;
+
+    /**
+     * Available for use during prepare stage of Code Augmentor to store
+     * nested level numbers of augmenting code token lines.
+     */
     public int nestedLevelNumber;
 
     /**
@@ -35,6 +143,10 @@ public class Token {
 
     }
 
+    /**
+     * Constructs token with required type of the token
+     * @param type token type
+     */
     public Token(int type) {
         this.type = type;
     }

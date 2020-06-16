@@ -23,6 +23,11 @@ public class NfaToDfaConvertor {
 
     private List<Set<Integer>> nfaStateSubsets;
     
+    /**
+     * Creates new instance for conversion
+     * @param nfa NFA to convert. The alphabet property must be set since it is needed by
+     * this algorithm.
+     */
     public NfaToDfaConvertor(FiniteStateAutomaton nfa) {
         this.nfa = nfa;
 
@@ -33,7 +38,15 @@ public class NfaToDfaConvertor {
     public List<Set<Integer>> getNfaStateSubsets() {
         return nfaStateSubsets;
     }
-    
+
+    /**
+     * Converts NFA to DFA.
+     * @param ignoreEmptyState whether or the DFA state corresponding to empty states of
+     * NFA should be ignored if encountered. If false, then it will be treated similarly to
+     * all other states; else if true, then even though it will be included in DFA states, 
+     * all transitions from or to that state will be omitted.
+     * @return DFA
+     */
     public FiniteStateAutomaton convert(boolean ignoreEmptyState) {
         Set<Integer> dfaStates = FiniteStateAutomaton.newSet();
         Set<Integer> dfaFinalStates = FiniteStateAutomaton.newSet();

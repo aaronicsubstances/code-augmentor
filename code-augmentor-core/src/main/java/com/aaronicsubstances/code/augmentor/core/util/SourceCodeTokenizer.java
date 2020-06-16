@@ -7,6 +7,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+/**
+ * Tokenizes source code files into token lines.
+ */
 public class SourceCodeTokenizer {    
 
     private static class DirectiveDescriptor implements Comparable<DirectiveDescriptor> {
@@ -80,6 +83,21 @@ public class SourceCodeTokenizer {
     private final Pattern lexerRegex;
     private final Pattern nestedLevelMarkerRegex;
 
+    /**
+     * Constructs an instance for tokenizing with a given set of
+     * directives. Null and empty string directives and directives consisting of only
+     * whitespace will be not be used, and will be skipped.
+     * @param genCodeStartDirectives
+     * @param genCodeEndDirectives
+     * @param embeddedStringDirectives
+     * @param embeddedJsonDirectives
+     * @param skipCodeStartDirectives
+     * @param skipCodeEndDirectives
+     * @param augCodeDirectiveSets
+     * @param inlineGenCodeDirectives
+     * @param nestedLevelStartMarkers
+     * @param nestedLevelEndMarkers
+     */
     public SourceCodeTokenizer(
             List<String> genCodeStartDirectives,
             List<String> genCodeEndDirectives,
@@ -201,6 +219,11 @@ public class SourceCodeTokenizer {
         return result.toString();
     }
     
+    /**
+     * Tokenizes source code file into tokens.
+     * @param source contents of source code file.
+     * @return tokens.
+     */
     public List<Token> tokenizeSource(String source) {
         List<String> splitSource = TaskUtils.splitIntoLines(source);
         List<Token> tokens = new ArrayList<>();

@@ -31,6 +31,19 @@ public class NfaSimulator {
         return observations;
     }
 
+    /**
+     * Simulates this NFA to match a substring of symbols
+     * @param input string of symbols.
+     * @param startIndex inclusive start index into input string
+     * @param endIndex exclusive end index int input string
+     * @param statesUnderObservation optional state numbers to observe during simulation.
+     * At start and upon any advance in input string, if there are next states in this
+     * list, a record is made with those states against the position in the input string 
+     * at that moment.
+     * @return -1 if simulation successfully matched all symbols in specified substring of
+     * input; a positive integer indicating the position after the last successful match
+     * is returned; or 0 if a match was never made in the string.
+     */
     public int simulate(int[] input, int startIndex, int endIndex, Set<Integer> statesUnderObservation) {
         this.statesUnderObservation = statesUnderObservation;
         observations = new ArrayList<>();

@@ -8,8 +8,18 @@ import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.function.BiFunction;
 
+/**
+ * Contains collection of computer science graph algorithms.
+ */
 public class GraphAlgorithms {
+    /**
+     * Key for getting the distance metric of a graph vertex from some source vertex.
+     */
     public static final String VERTEX_ATTRIBUTE_DIST = "dist";
+
+    /**
+     * Key for getting predecessor metric for a graph vertex.
+     */
     public static final String VERTEX_ATTRIBUTE_PRED = "pred";
 
     /**

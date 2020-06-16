@@ -13,7 +13,15 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * Models both deterministic and non-deterministic finite state automation (FSA for short) in
+ * theory of regular expressions.
+ */
 public class FiniteStateAutomaton {
+
+    /**
+     * Stands for null symbol or empty string in theory of regular expressions.
+     */
     public static final int NULL_SYMBOL = -1;
 
     private final Set<Integer> alphabet;
@@ -23,6 +31,18 @@ public class FiniteStateAutomaton {
     private final Map<Integer, Map<Integer, Set<Integer>>> nfaTransitionTable;
     private final Map<Integer, Map<Integer, Integer>> dfaTransitionTable;
 
+    /**
+     * Creates new instance.
+     * @param alphabet optional alphabet of symbols. May be required for some operations using
+     * instances of this class.
+     * @param states All states of FSA.
+     * @param startState start state of FSA.
+     * @param finalStates final states of FSA
+     * @param nfaTransitionTable transition table of NFA. This parameter is used to identify
+     * FSA as NFA.
+     * @param dfaTransitionTable transition table of DFA. This parameter is used to identify
+     * FSA as DFA.
+     */
     public FiniteStateAutomaton(Set<Integer> alphabet,
             Set<Integer> states, int startState, Set<Integer> finalStates,
             Map<Integer, Map<Integer, Set<Integer>>> nfaTransitionTable,            
@@ -59,14 +79,28 @@ public class FiniteStateAutomaton {
         return dfaTransitionTable;
     }
 
+    /**
+     * Regards this FSA instance as NFA if nfaTransitionTable property is not null. 
+     * @return true only if nfaTransitionTable property is not null. 
+     */
     public boolean isNfa() {
         return nfaTransitionTable != null;
     }
 
+    /**
+     * Regards this FSA instance as DFA if dfaTransitionTable property is not null. 
+     * @return true only if dfaTransitionTable property is not null. 
+     */
     public boolean isDfa() {
         return dfaTransitionTable != null;
     }
 
+    /**
+     * Available for use to create set of integers which have same implementation
+     * as the one this class uses.
+     * @param values set values
+     * @return new set instance.
+     */
     public static Set<Integer> newSet(int... values) {
         Set<Integer> set = new TreeSet<>();
         for (int v : values) {
@@ -75,6 +109,13 @@ public class FiniteStateAutomaton {
         return set;
     }
 
+    /**
+     * Generates a clone of this instance with equivalent functionality but having
+     * different state numbers. Useful during test of equivalence between FSAs.
+     * @param stateTranslationMap map from state numbers of this instance to state
+     * numbers in cloned isntance.
+     * @return cloned instance.
+     */
     public FiniteStateAutomaton generateCopy(Map<Integer, Integer> stateTranslationMap) {
         Set<Integer> newStates = newSet();
         for (int state : states) {
@@ -174,12 +215,23 @@ public class FiniteStateAutomaton {
 		return true;
 	}
 
+    /**
+     * Generates FSA state table representation of this instance.
+     * @return state table representation.
+     */
     @Override
 	public String toString() {
         char horLnChar = '-', vertLnChar = '|';
         return toString(horLnChar, vertLnChar);
     }
 
+    /**
+     * 
+     * Generates FSA state table representation of this instance.
+     * @param horLnChar character to use to draw horizontal lines. toString() uses '-'
+     * @param vertLnChar character to use to draw vertical lines. toString() uses '|'
+     * @return state table representation.
+     */
     public String toString(char horLnChar, char vertLnChar) {
         Set<Integer> invalidSymbols = newSet();
         List<Integer> alphabetList = gatherSymbols(invalidSymbols);
@@ -403,6 +455,13 @@ public class FiniteStateAutomaton {
         return setToList(validSymbols);
     }
 
+    /**
+     * Generates state diagram in Graphviz dot graph notation which can be passed
+     * to dot command line to generate a state diagram image.
+     * Will output an integer symbol as it is,
+     * and prefix state with 'S_'. e.g S_0, S_1.
+     * @return state diagram representation of this instance.
+     */
     public String toDotGraph() {
         return toDotGraph(null, null);
     }
@@ -587,15 +646,15 @@ public class FiniteStateAutomaton {
         return repetition.toString();
 	}
 
-	public static List<Integer> setToList(Set<Integer> set) {
+	private static List<Integer> setToList(Set<Integer> set) {
         return set.stream().sorted().collect(Collectors.toList());
     }
 
-    public static String setToString(Set<Integer> set) {
+    private static String setToString(Set<Integer> set) {
         return setToString(setToList(set));
     }
 
-    public static String setToString(List<Integer> set) {
+    private static String setToString(List<Integer> set) {
         StringBuilder repr = new StringBuilder();
         repr.append("{");
         int addedElemCount = 0;
@@ -726,6 +785,13 @@ public class FiniteStateAutomaton {
         return false;
     }
 
+    /**
+     * Determines equivalence classes of an FSA. Can be used to 
+     * determine equivalence of two FSAs.
+     * @param fsa
+     * @return list of list of state numbers, such that the members of a
+     * child list are equivalent to each other.
+     */
     public static List<List<Integer>> classifyIntoEquivalenceClasses(
             FiniteStateAutomaton fsa) {
         return classifyIntoEquivalenceClasses(fsa, null, false);
@@ -777,14 +843,19 @@ public class FiniteStateAutomaton {
         return listOfClassMembers;
     }
 
-    public static String describeEquivalenceClassMembers(List<List<Integer>> listOfExpectedClassMembers) {
+    /**
+     * Provides textual description of equivalance classes of FSA
+     * @param equivalenceClasses
+     * @return textual description in cartesian product terminology
+     */
+    public static String describeEquivalenceClassMembers(List<List<Integer>> equivalenceClasses) {
         StringBuilder temp = new StringBuilder();
-        for (int i = 0; i < listOfExpectedClassMembers.size(); i++) {
-            List<Integer> expectedClassMembers = listOfExpectedClassMembers.get(i);
+        for (int i = 0; i < equivalenceClasses.size(); i++) {
+            List<Integer> classMembers = equivalenceClasses.get(i);
             if (temp.length() > 0) {
                 temp.append(" by ");
             }
-            temp.append(expectedClassMembers.size());
+            temp.append(classMembers.size());
         }
         return temp.toString();
     }

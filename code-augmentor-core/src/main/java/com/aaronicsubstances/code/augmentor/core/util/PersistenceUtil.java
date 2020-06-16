@@ -9,14 +9,29 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
+/**
+ * Used to encapsulate streaming read/write operations of files with models used by
+ * Code Augmentor.
+ */
 public class PersistenceUtil {
     private static final Gson JSON_CONVERT = new GsonBuilder().setPrettyPrinting().create();
     private static final Gson JSON_CONVERT_COMPACT = new Gson();
 
+    /***
+     * Serializes object so that no newline is present.
+     * @param obj object to serialize
+     * @return serialized object
+     */
     public static String serializeCompactlyToJson(Object obj) {
         return JSON_CONVERT_COMPACT.toJson(obj);
     }
 
+    /***
+     * Serializes object with whitespace formatting so that during testing 
+     * output files can be conveniently investigated.
+     * @param obj object to serialize
+     * @return serialized object
+     */
     public static String serializeFormattedToJson(Object obj) {
         return JSON_CONVERT.toJson(obj);
     }

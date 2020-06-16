@@ -3,6 +3,10 @@ package com.aaronicsubstances.code.augmentor.core.tasks;
 import java.io.File;
 import java.util.List;
 
+/**
+ * Defines aug code processing directives and the destination file for augmenting code sections
+ * identified with those directives.
+ */
 public class AugCodeProcessingSpec {
     private File destFile;
     private List<String> directives;

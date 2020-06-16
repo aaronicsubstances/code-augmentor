@@ -163,6 +163,10 @@ public class AugmentingCode {
         this.nestedLevelNumber = nestedLevelNumber;
     }
 
+    /**
+     * Not serialized 
+     * @return args corresponding to blocks in which JSON blocks are parsed.
+     */
     public List<Object> getArgs() {
         return args;
     }
@@ -171,6 +175,10 @@ public class AugmentingCode {
         this.args = args;
     }
 
+    /**
+     * Not serialized 
+     * @return processed status
+     */
     public boolean isProcessed() {
         return processed;
     }
@@ -219,6 +227,10 @@ public class AugmentingCode {
         this.externalNestedContent = externalNestedContent;
     }
 
+    /**
+     * For internal use during preparation stage. Not serialized 
+     * @return externalNestedContentLocation
+     */
     public int[] getExternalNestedContentLocation() {
         return externalNestedContentLocation;
     }

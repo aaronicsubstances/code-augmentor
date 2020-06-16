@@ -15,10 +15,26 @@ import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.Au
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.GeneratedCodeDescriptor;
 import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskException;
 
+/**
+ * Contains helper methods used during preparation stage of Code Augmentor
+ * to extract augmenting code and generated code sections from
+ * source code files.
+ */
 public class CodeGenerationRequestCreator {
     private static final Pattern GSON_ERROR_MESSAGE_REGEX = Pattern.compile(
         "at\\s+line\\s+(\\d+)[^c]*(?:column\\s+(\\d+))?", Pattern.CASE_INSENSITIVE);
 
+    /**
+     * Extracts augmenting code and generated code sections from a source file.
+     * @param tokens results of tokenizing a source file
+     * @param srcFile source file
+     * @param specAugCodesList destination for saving augmenting code sections according
+     * to the index of their directive set as used during tokenization. 
+     * @param errors optional list for saving errors and continuing processing as far
+     * as possible. If null, then any error is immediately raised as an exception. 
+     * @return list of CodeSnippetDescriptor objects capturing location information for
+     * each augmenting code and generated code found.
+     */
     public static List<CodeSnippetDescriptor> processSourceFile(
             List<Token> tokens, File srcFile,
             List<List<AugmentingCode>> specAugCodesList, List<Exception> errors) {        
@@ -530,6 +546,9 @@ public class CodeGenerationRequestCreator {
                     String pointerPadding = TaskUtils.strMultiply(" ", embCol - 2);
                     // since directive token's text already ends with newline,
                     // no need to add intervening line.
+
+                    // using double caret since GSON doesn't seem to point out
+                    // actual offending column all the time.
                     snippet += pointerPadding + "^^";
                 }
             }

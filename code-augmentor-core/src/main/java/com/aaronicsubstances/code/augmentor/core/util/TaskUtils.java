@@ -119,18 +119,41 @@ public class TaskUtils {
         receipt[1] = winLn ? 2 : 1;
     }
 
+    /**
+     * Determines whether a character is a newline character.
+     * @param ch character to test
+     * @return true or false if ch is a newline character or not respectively.
+     */
     public static boolean isNewLine(char ch) {
         return ch == '\r' || ch == '\n';
     }
 
+    /**
+     * Determines whether a string is null or has no characters.
+     * @param s string to test
+     * @return true only if s is null/empty
+     */
     public static boolean isEmpty(String s) {
         return s == null || s.isEmpty();
     }
 
+    /**
+     * Determines whether a string is null, has no characters, or has
+     * only whitespace characters.
+     * @param s string to test
+     * @return true only if s is null/empty/whitespace only.
+     */
     public static boolean isBlank(String s) {
         return s == null || s.trim().isEmpty();
     }
 
+    /**
+     * Returns a string consisting of a concatenation of its duplicates 
+     * by a given number of times. 
+     * @param s string to duplicate
+     * @param nTimes duplication count
+     * @return multiplied string
+     */
     public static String strMultiply(String s, int nTimes) {
         if (s == null) {
             return null;
@@ -148,6 +171,11 @@ public class TaskUtils {
         return multiplied.toString();
     }
 
+    /**
+     * Determines whether a string is a valid JSON string.
+     * @param s string to validate.
+     * @return error message or null if s is valid JSON.
+     */
     public static String validateJson(String s) {
         // cannot use JsonParser.parse*() methods since they always
         // are used by GSON (as at 2.8.6) in lenient mode. 
@@ -182,6 +210,13 @@ public class TaskUtils {
         }
     }
 
+    /**
+     * Generates a name with a given prefix which is guaranteed to be absent in a given list. If 
+     * prefix is not in lists, then prefix is simply returned.
+     * @param names given list.
+     * @param originalName given prefix.
+     * @return a name which has originalName as a prefix and is not in names list.
+     */
     public static String modifyNameToBeAbsent(Collection<String> names, String originalName) {
         if (!names.contains(originalName)) {
             return originalName;
@@ -214,6 +249,13 @@ public class TaskUtils {
         }
     }
 
+    /**
+     * Calculate MD5 hash of file 
+     * @param contents file contents
+     * @param charset file encoding
+     * @return MD5 hash of file as hexadecimal (lowercase) string.
+     * @throws NoSuchAlgorithmException
+     */
     public static String calcHash(String contents, Charset charset) throws NoSuchAlgorithmException {
         byte[] binaryContent = contents.getBytes(charset);
         MessageDigest md = MessageDigest.getInstance("MD5");
@@ -241,6 +283,11 @@ public class TaskUtils {
         }
     }
 
+    /**
+     * Deletes a directory recursively. Silently ignores any failure to delete any directory
+     * encountered.
+     * @param dir directory to delete.
+     */
 	public static void deleteDir(File dir) {
         // ignore unsuccessful deletion and any errors.
         File[] contents = dir.listFiles();

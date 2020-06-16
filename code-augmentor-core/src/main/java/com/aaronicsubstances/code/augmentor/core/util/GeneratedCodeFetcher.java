@@ -10,6 +10,10 @@ import com.aaronicsubstances.code.augmentor.core.models.CodeGenerationResponse;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode;
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileGeneratedCode;
 
+/**
+ * This class is responsible for matching generated code objects to their
+ * descriptors.
+ */
 public class GeneratedCodeFetcher {
     private final List<CodeGenerationResponse> codeGenerationResponses;
     private final List<Object> codeGenerationResponseReaders;
@@ -48,6 +52,10 @@ public class GeneratedCodeFetcher {
         lastFetches = new ArrayList<>();
     }
 
+    /**
+     * Closes all opened code generation response files.
+     * @throws Exception
+     */
     public void close() throws Exception {        
         for (int i = 0; i < codeGenerationResponses.size(); i++) {
             CodeGenerationResponse instance = codeGenerationResponses.get(i);
@@ -56,6 +64,14 @@ public class GeneratedCodeFetcher {
         }
     }
     
+    /**
+     * Advances internal pointer of this object to locate a file of
+     * generated code objects. Must be called before attempts are
+     * made to find generated code objects for a file.
+     * @param fileId id of file of generated code objects.
+     * @return true if fileId was found; false if it was not found.
+     * @throws Exception
+     */
     public boolean prepareForFile(int fileId) throws Exception {
         boolean firstPrepare = false;
         if (lastFetches.isEmpty()) {
@@ -96,6 +112,13 @@ public class GeneratedCodeFetcher {
         return found;
     }
 
+    /**
+     * Finds a generated code in a file.
+     * @param fileId id of file
+     * @param augCodeId id of corresponding aug code
+     * @return generated code object or null if not found.
+     * @throws Exception
+     */
     public GeneratedCode getGeneratedCode(int fileId, int augCodeId) throws Exception {
         GeneratedCode nextGenCode = null;
         for (int i = 0; i < lastFetches.size(); i++) {

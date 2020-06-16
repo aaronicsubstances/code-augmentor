@@ -1,5 +1,8 @@
 package com.aaronicsubstances.code.augmentor.core.cs_and_math.parsing;
 
+/**
+ * Base of tokens for custom lexers and recursive-descent parsers
+ */
 public class GenericToken {
     public int type;
     public String text;

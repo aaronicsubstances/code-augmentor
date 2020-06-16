@@ -23,6 +23,9 @@ import com.aaronicsubstances.code.augmentor.core.util.SourceCodeTokenizer;
 import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 import com.aaronicsubstances.code.augmentor.core.util.Token;
 
+/**
+ * Implements preparation stage of Code Augmentor.
+ */
 public class PreCodeAugmentationGenericTask {
     // input properties
     private BiConsumer<GenericTaskLogLevel, Supplier<String>> logAppender;

@@ -8,8 +8,21 @@ import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.Au
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.GeneratedCodeDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode.ContentPart;
 
+/**
+ * Contains helper methods used by code generation responses processing to merge
+ * generated code content into source code files.
+ */
 public class CodeGenerationResponseProcessor {
 
+    /**
+     * Determines the substring of a source code file which should be replaced by
+     * generated code content.
+     * @param snippetDescriptor object containing location descriptors for a
+     * generated code object and its corresponding augmenting code object.
+     * @param genCode generated code object.
+     * @return 2-element int array in which first int is starting index (inclusive) 
+     * of substring and second int is ending index (exclusive) of substring.
+     */
     public static int[] determineReplacementRange(CodeSnippetDescriptor snippetDescriptor, 
             GeneratedCode genCode) {
         int[] replacementRange;
@@ -24,6 +37,9 @@ public class CodeGenerationResponseProcessor {
         }
         else if (genCode.isReplaceGenCodeDirectives()) {
             if (genCodeDescriptor != null) {
+                // NB: starting index is aug code section ending rather than gen code
+                // section beginning. This ensures blank lines between aug code
+                // and gen code are replaced.
                 replacementRange = new int[]{ augCodeDescriptor.getEndPos(),
                     genCodeDescriptor.getEndDirectiveEndPos() };
             }
@@ -58,6 +74,13 @@ public class CodeGenerationResponseProcessor {
         return replacementRange;
     }
 
+    /**
+     * Determines whether content of generated code should be appended with 
+     * newline if it doesn't end with one.
+     * @param genCode generated code object
+     * @return true to indicate that newline should be appended; 
+     * false to skip appending of newline.
+     */
 	public static boolean getShouldEnsureEndingNewline(GeneratedCode genCode) {
         // if replace aug or gen code directives, then let gen code completely control
         // whether or not to ensure ending newline.
@@ -68,6 +91,12 @@ public class CodeGenerationResponseProcessor {
         return true;
 	}
 
+    /**
+     * Appends a newline to a string unless the string already ends with a newline.
+     * @param code string to append newline to
+     * @param newline newline variant to use
+     * @return string which ends with newline.
+     */
     public static String ensureEndingNewline(String code, String newline) {
         boolean genCodeEndsWithNewline = false;
         if (!code.isEmpty()) {
@@ -82,6 +111,18 @@ public class CodeGenerationResponseProcessor {
         return code;
     }
 
+    /**
+     * Modifies content parts to remove split CR-LFs, that is, a sequence of 
+     * carriage return and line feeds which are split across content parts, so
+     * that the carriage return character ends a content part, and the following content part
+     * starts with the line feed character. 
+     * <p>
+     * The {@link #indentCode(List, String)} method and the similarity algorithm
+     * implemented by {@link GeneratedCodeSimilarityChecker} both depend on the absence of 
+     * split CR-LFs.
+     * 
+     * @param contentParts content parts to be modified.
+     */
     public static void repairSplitCrLfs(List<ContentPart> contentParts) {
         for (int i = 0; i < contentParts.size() - 1; i++) {
             ContentPart curr = contentParts.get(i);
@@ -96,6 +137,13 @@ public class CodeGenerationResponseProcessor {
         }
     }
 
+    /**
+     * Determines effective indent to apply to generated code content.
+     * @param augCodeDescriptor descriptor of augmenting code corresponding to
+     * generated code object.
+     * @param genCode generated code object.
+     * @return indent to apply or empty string if no indent should be applied.
+     */
     public static String getEffectiveIndent(AugmentingCodeDescriptor augCodeDescriptor, 
             GeneratedCode genCode) {
         if (genCode.getIndent() != null) {
@@ -110,6 +158,16 @@ public class CodeGenerationResponseProcessor {
         return augCodeDescriptor.getIndent();
     }
 
+    /**
+     * Determines whether generated code content should be wrapped in start/end
+     * directives.
+     * 
+     * @param genCode generated code object
+     * @param generatedCodeDescriptor generated code descriptor
+     * 
+     * @return true if wrapping should be done; false if wrapping should be
+     * skipped.
+     */
 	public static boolean shouldWrapInGenCodeDirectives(GeneratedCode genCode,
 			GeneratedCodeDescriptor generatedCodeDescriptor) {
         if (genCode.isReplaceAugCodeDirectives() || genCode.isReplaceGenCodeDirectives()) {
@@ -130,8 +188,8 @@ public class CodeGenerationResponseProcessor {
      * Postcondition: the result of the indentation should be the same
      * as indenting the string resulting from concatenating the content parts directly.
      * 
-     * @param contentParts
-     * @param indent
+     * @param contentParts content parts to be modified.
+     * @param indent indent to apply.
      */
     public static void indentCode(List<ContentPart> contentParts, String indent) {
         for (int i = 0; i < contentParts.size(); i++) {

@@ -12,13 +12,16 @@ import com.aaronicsubstances.code.augmentor.core.cs_and_math.regex.NfaToDfaConve
 import com.aaronicsubstances.code.augmentor.core.cs_and_math.regex.RegexNode;
 import com.aaronicsubstances.code.augmentor.core.cs_and_math.regex.RegexToNfaConvertor;
 
+/**
+ * Contains collection of regular expression algorithms.
+ */
 public class RegexAlgorithms {
 
     /**
      * Matches a string against a regular expression using NFA simulation.
      * {@link #simulateNfa(FiniteStateAutomaton, int[])}.
      * 
-     * @param regexNodeSpecs list of literal strings or RegexNode instances which will be 
+     * @param regexNodeSpecs list of strings, integer arrays or RegexNode instances which will be 
      * concatenated for matching.
      * @param inputSpec literal string to match
      * @return -1 if match was made; nonnegative integer for position of mismatch.
@@ -35,6 +38,12 @@ public class RegexAlgorithms {
         return simulateNfa(nfa, input);
     }
 
+    /**
+     * Converts a regex tree to an NFA
+     * @param regexTree regex tree
+     * @param alphabet optional alphabet to associate with NFA
+     * @return NFA
+     */
     public static FiniteStateAutomaton convertRegexTreeToNfa(RegexNode regexTree,
             Set<Integer> alphabet) {
         FiniteStateAutomaton nfa = (FiniteStateAutomaton) regexTree.accept(
@@ -42,6 +51,13 @@ public class RegexAlgorithms {
         return nfa;
     }
 
+    /**
+     * Converts a regex tree to an DFA
+     * @param regexNodeSpecs list of strings, integer arrays or RegexNode instances which
+     * will be concatenated for conversion
+     * @param alphabet required alphabet to associate with DFA
+     * @return DFA
+     */
     public static FiniteStateAutomaton convertRegexTreeToDfa(List<Object> regexNodeSpecs, 
             Set<Integer> alphabet) {
 		RegexNode regexAst = createRegexTree(regexNodeSpecs);
@@ -50,6 +66,13 @@ public class RegexAlgorithms {
         return dfa;
 	}
 
+    /**
+     * Creates a concatenated regex out of a list of regexes.
+     * @param regexNodeSpecs list of regex, items should be either RegexNode instances,
+     * strings whose codepoints will be used as string of symbols, or integer array serving
+     * as string of symbols.
+     * @return regex tree
+     */
     public static RegexNode createRegexTree(List<Object> regexNodeSpecs) {
         List<RegexNode> childRegexNodes = new ArrayList<>();
         for (Object regexNodeSpec : regexNodeSpecs) {
@@ -65,6 +88,12 @@ public class RegexAlgorithms {
         return regexNode;
     }
 
+    /**
+     * Converts a string to literal string of symbols using its codepoints,
+     * or returns literal string of symbols as is if it is an integer array. 
+     * @param literalStringSpec must be string or integer array
+     * @return integer array of symbols.
+     */
     public static int[] getLiteralString(Object literalStringSpec) {
         if (literalStringSpec instanceof int[]) {
             return (int[]) literalStringSpec;
@@ -105,7 +134,7 @@ public class RegexAlgorithms {
     /**
      * Converts an NFA to a DFA.
      * 
-     * @param nfa
+     * @param nfa NFA
      * @return DFA
      */
     public static FiniteStateAutomaton nfaToDfa(FiniteStateAutomaton nfa) {
