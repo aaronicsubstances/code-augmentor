@@ -36,6 +36,7 @@ import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 public class CodeAugmentationGenericTask {
     public static final String CHANGE_SUMMARY_FILE_NAME = "CHANGE-SUMMARY.txt";
     public static final String CHANGE_DETAILS_FILE_NAME = "CHANGE-DETAILS.json";
+    public static final String SHELL_SCRIPT_PREFIX = "EFFECT-CHANGES";
 
     // input properties.
     private BiConsumer<GenericTaskLogLevel, Supplier<String>> logAppender;
@@ -53,6 +54,8 @@ public class CodeAugmentationGenericTask {
     public void execute() throws Exception {
         allErrors.clear();
         codeChangeDetected = false;
+
+        // clean destination directory.
         TaskUtils.deleteDir(destDir);
         destDir.mkdirs();
         
@@ -164,7 +167,7 @@ public class CodeAugmentationGenericTask {
                             TaskUtils.isBlank(result.getGenCodeEndDirective())) {
                         boolean nullsPresent = result.getGenCodeStartDirective() == null ||
                                 result.getGenCodeEndDirective() == null;
-                        allErrors.add(createException((nullsPresent ? "No" : "Invalid blank") +
+                        allErrors.add(createException((nullsPresent ? "No/Null" : "Invalid blank") +
                             " start/end directive markers found in prep file " +
                             "with which to insert generated code for augmenting code section with id " + 
                             augCodeDescriptor.getId(), augCodeDescriptor, srcFile));
@@ -286,13 +289,12 @@ public class CodeAugmentationGenericTask {
         if (!codeChangeDetectionDisabled) {
             resultChangeSet.endSerialize(resultChangeSetWriter);
             
-            final String shellScriptPrefix = "EFFECT-CHANGES";
             InputStream shellScriptRes = getClass().getResourceAsStream("windows-copy-batch-file.bat");
             ByteArrayOutputStream outStream = new ByteArrayOutputStream();
             TaskUtils.copyStream(shellScriptRes, outStream);
             String contents = new String(outStream.toByteArray(), Charset.defaultCharset());
             contents = LexerSupport.NEW_LINE_REGEX.matcher(contents).replaceAll("\r\n");
-            TaskUtils.writeFile(new File(destDir, shellScriptPrefix + ".bat"), 
+            TaskUtils.writeFile(new File(destDir, SHELL_SCRIPT_PREFIX + ".bat"), 
                 Charset.defaultCharset(), contents);
             
             shellScriptRes = getClass().getResourceAsStream("unix-copy-bash-file.sh");
@@ -300,7 +302,7 @@ public class CodeAugmentationGenericTask {
             TaskUtils.copyStream(shellScriptRes, outStream);
             contents = new String(outStream.toByteArray(), Charset.defaultCharset());
             contents = LexerSupport.NEW_LINE_REGEX.matcher(contents).replaceAll("\n");
-            TaskUtils.writeFile(new File(destDir, shellScriptPrefix), 
+            TaskUtils.writeFile(new File(destDir, SHELL_SCRIPT_PREFIX), 
                 Charset.defaultCharset(), contents);
         }
     }

@@ -110,7 +110,8 @@ public class SourceCodeTokenizer {
             List<String> nestedLevelStartMarkers, 
             List<String> nestedLevelEndMarkers) {       
 
-        // aug code directives are the only required directives.
+        // add aug code directives first so they are preferred over other
+        // directives if there are duplicates.
         for (int i = 0; i < augCodeDirectiveSets.size(); i++) {
             for (String marker: augCodeDirectiveSets.get(i)) {
                 DirectiveDescriptor d = new DirectiveDescriptor(marker, i);

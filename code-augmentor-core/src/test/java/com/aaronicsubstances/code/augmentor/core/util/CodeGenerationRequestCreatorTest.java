@@ -96,13 +96,14 @@ public class CodeGenerationRequestCreatorTest {
 
         augCodes50.get(0).setHasNestedLevelStartMarker(true);
         augCodes50.get(0).setMatchingNestedLevelEndMarkerIndex(1);
-        augCodes50.get(0).setExternalNestedContentLocation(new int[]{1, 4});
+        augCodes50.get(0).setExternalNestedContent("\n#GG# print(145)\n\n#PHP5(( complete\n" +
+            "#ES: tree\n\n#PHP7))-----------\n#ES ending again\n\n");
         augCodes50.get(1).setHasNestedLevelEndMarker(true);
         augCodes50.get(1).setMatchingNestedLevelStartMarkerIndex(0);
 
         augCodes51.get(1).setHasNestedLevelStartMarker(true);
         augCodes51.get(1).setMatchingNestedLevelEndMarkerIndex(2);
-        augCodes51.get(1).setExternalNestedContentLocation(new int[]{2, 3});;
+        augCodes51.get(1).setExternalNestedContent("\n");
         augCodes51.get(2).setHasNestedLevelEndMarker(true);
         augCodes51.get(2).setMatchingNestedLevelStartMarkerIndex(1);
         augCodes51.get(1).setNestedLevelNumber(1);

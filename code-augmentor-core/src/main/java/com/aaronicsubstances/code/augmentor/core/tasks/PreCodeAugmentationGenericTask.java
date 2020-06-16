@@ -67,7 +67,6 @@ public class PreCodeAugmentationGenericTask {
         List<Object> codeGenRequestWriters = new ArrayList<>();
         List<CodeGenerationRequest> codeGenRequests = new ArrayList<>();
 
-        // aug code directives are the only required directives.
         for (AugCodeProcessingSpec augCodeSpec : augCodeProcessingSpecs) {
             CodeGenerationRequest codeGenRequest = new CodeGenerationRequest();
             codeGenRequests.add(codeGenRequest);
@@ -75,7 +74,9 @@ public class PreCodeAugmentationGenericTask {
             // initialize header.
             codeGenRequest.setGenCodeStartDirective(prepResult.getGenCodeStartDirective());
             codeGenRequest.setGenCodeEndDirective(prepResult.getGenCodeEndDirective());
-            codeGenRequest.setAugCodeDirective(augCodeSpec.getDirectives().get(0));
+            if (augCodeSpec.getDirectives() != null && !augCodeSpec.getDirectives().isEmpty()) {
+                codeGenRequest.setAugCodeDirective(augCodeSpec.getDirectives().get(0));
+            }
             if (embeddedStringDirectives != null && !embeddedStringDirectives.isEmpty()) {
                 codeGenRequest.setEmbeddedStringDirective(embeddedStringDirectives.get(0));
             }
@@ -99,7 +100,10 @@ public class PreCodeAugmentationGenericTask {
             }
 
             // ensure dir exists for destFile
-            augCodeSpec.getDestFile().getParentFile().mkdirs();
+            File destFileParent = augCodeSpec.getDestFile().getParentFile();
+            if (destFileParent != null) {
+                destFileParent.mkdirs();
+            }
             Object requestWriter = codeGenRequest.beginSerialize(augCodeSpec.getDestFile());
             codeGenRequestWriters.add(requestWriter);
         }
@@ -169,18 +173,6 @@ public class PreCodeAugmentationGenericTask {
                         List<AugmentingCode> specAugCodes = specAugCodesList.get(j);
                         if (specAugCodes.isEmpty()) {
                             continue;
-                        }
-                        // set content within nested start and end markers.
-                        for (AugmentingCode augCode : specAugCodes) {
-                            int[] loc = augCode.getExternalNestedContentLocation();
-                            if (loc != null) {
-                                int contentStartPos = codeSnippets.get(loc[0]
-                                    ).getAugmentingCodeDescriptor().getEndPos();
-                                int contentEndPos = codeSnippets.get(loc[1]
-                                    ).getAugmentingCodeDescriptor().getStartPos();
-                                augCode.setExternalNestedContent(input.substring(contentStartPos,
-                                    contentEndPos));
-                            }
                         }
                         identifiedAugCodeCount += specAugCodes.size();
                         SourceFileAugmentingCode sourceFileAugCode = new SourceFileAugmentingCode(specAugCodes);

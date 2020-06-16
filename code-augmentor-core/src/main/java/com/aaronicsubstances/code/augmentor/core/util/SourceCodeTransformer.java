@@ -58,7 +58,7 @@ public class SourceCodeTransformer {
     /**
      * Gets offset that can be added to an index into original string to 
      * get corresponding position in modified string. As long as index does not point
-     * to any section which has been changed, that index can be used as
+     * within any section which has been changed, that index can be used as
      * a position into modified string using this property.
      * @return offset for adjusting original positions.
      */

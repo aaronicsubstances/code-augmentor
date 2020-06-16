@@ -1,6 +1,5 @@
 package com.aaronicsubstances.code.augmentor.core.models;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class AugmentingCode {
@@ -92,9 +91,6 @@ public class AugmentingCode {
     private Integer matchingNestedLevelStartMarkerIndex;
     private Integer matchingNestedLevelEndMarkerIndex;
     private String externalNestedContent;
-
-    // used temporarily during preparation stage.
-    private transient int[] externalNestedContentLocation;
 
     // used to attach results of processing aug codes.
     private transient List<Object> args;
@@ -227,18 +223,6 @@ public class AugmentingCode {
         this.externalNestedContent = externalNestedContent;
     }
 
-    /**
-     * For internal use during preparation stage. Not serialized 
-     * @return externalNestedContentLocation
-     */
-    public int[] getExternalNestedContentLocation() {
-        return externalNestedContentLocation;
-    }
-
-    public void setExternalNestedContentLocation(int[] externalNestedContentLocation) {
-        this.externalNestedContentLocation = externalNestedContentLocation;
-    }
-
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -247,7 +231,6 @@ public class AugmentingCode {
         result = prime * result + ((blocks == null) ? 0 : blocks.hashCode());
         result = prime * result + ((directiveMarker == null) ? 0 : directiveMarker.hashCode());
         result = prime * result + ((externalNestedContent == null) ? 0 : externalNestedContent.hashCode());
-        result = prime * result + Arrays.hashCode(externalNestedContentLocation);
         result = prime * result + (hasNestedLevelEndMarker ? 1231 : 1237);
         result = prime * result + (hasNestedLevelStartMarker ? 1231 : 1237);
         result = prime * result + id;
@@ -292,8 +275,6 @@ public class AugmentingCode {
                 return false;
         } else if (!externalNestedContent.equals(other.externalNestedContent))
             return false;
-        if (!Arrays.equals(externalNestedContentLocation, other.externalNestedContentLocation))
-            return false;
         if (hasNestedLevelEndMarker != other.hasNestedLevelEndMarker)
             return false;
         if (hasNestedLevelStartMarker != other.hasNestedLevelStartMarker)
@@ -332,8 +313,7 @@ public class AugmentingCode {
     @Override
     public String toString() {
         return "AugmentingCode{args=" + args + ", blocks=" + blocks + ", directiveMarker=" + directiveMarker
-                + ", externalNestedContent=" + externalNestedContent + ", externalNestedContentLocation="
-                + Arrays.toString(externalNestedContentLocation) + ", hasNestedLevelEndMarker="
+                + ", externalNestedContent=" + externalNestedContent + ", hasNestedLevelEndMarker="
                 + hasNestedLevelEndMarker + ", hasNestedLevelStartMarker=" + hasNestedLevelStartMarker + ", id=" + id
                 + ", indent=" + indent + ", lineNumber=" + lineNumber + ", lineSeparator=" + lineSeparator
                 + ", matchingNestedLevelEndMarkerIndex=" + matchingNestedLevelEndMarkerIndex

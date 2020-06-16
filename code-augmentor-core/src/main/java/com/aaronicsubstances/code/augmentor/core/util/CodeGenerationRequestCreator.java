@@ -92,7 +92,7 @@ public class CodeGenerationRequestCreator {
             augmentingCode.setHasNestedLevelStartMarker(firstToken.nestedLevelStartMarker != null);
             augmentingCode.setHasNestedLevelEndMarker(firstToken.nestedLevelEndMarker != null);
             
-            // d. locate bounds for source file content external to aug code section
+            // d. set source file content external to aug code section
             //    which exists between a start and its corresponding end nested level marker. 
             if (augmentingCode.getHasNestedLevelStartMarker()) {
                 int endIdx = -1;
@@ -100,12 +100,16 @@ public class CodeGenerationRequestCreator {
                     Token candidateAugCodeSectionRep = augCodeSections.get(j).get(0);
                     if (candidateAugCodeSectionRep.nestedLevelNumber == augmentingCode.getNestedLevelNumber() &&
                             candidateAugCodeSectionRep.nestedLevelEndMarker != null) {
-                        endIdx = j;
+                        endIdx = candidateAugCodeSectionRep.index;
                         break;
                     }
                 }
                 assert endIdx != -1;
-                augmentingCode.setExternalNestedContentLocation(new int[]{i, endIdx});
+                StringBuilder externalNestedContent = new StringBuilder();
+                for (int j = lastToken.index + 1; j < endIdx; j++) {
+                    externalNestedContent.append(tokens.get(j).text);
+                }
+                augmentingCode.setExternalNestedContent(externalNestedContent.toString());
             }
             
             // e. validate json directive contents.
@@ -126,7 +130,7 @@ public class CodeGenerationRequestCreator {
         // 5. match start marker aug code sections to their corresponding 
         //    end marker aug code sections.
 
-        // don't worry yourself if there were errors.
+        // skip if there were errors.
         if (errors != null && !errors.isEmpty()) {
             return null;
         }
