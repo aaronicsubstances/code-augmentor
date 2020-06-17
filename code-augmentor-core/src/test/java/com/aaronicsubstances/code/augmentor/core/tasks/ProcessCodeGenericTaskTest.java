@@ -57,7 +57,9 @@ public class ProcessCodeGenericTaskTest {
         task.setJsonParseFunction(s -> null);
         task.setInputFile(inputFile);
         task.setOutputFile(actualOutputFile);
-        task.execute(evalFunction);
+        task.setEvalFunction(evalFunction);
+        task.setValidationCallback((f, a, c) -> null);
+        task.execute();
         if (!task.getAllErrors().isEmpty()) {
             String stringifiedErrors = PluginUtils.stringifyPossibleScriptErrors(
                 task.getAllErrors().stream().map(x -> (Throwable) x).collect(Collectors.toList()), 

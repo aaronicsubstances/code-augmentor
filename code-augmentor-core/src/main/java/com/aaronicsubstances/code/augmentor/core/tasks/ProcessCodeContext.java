@@ -5,21 +5,29 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.aaronicsubstances.code.augmentor.core.models.AugmentingCode;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode;
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileAugmentingCode;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode.ContentPart;
+import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 
 /**
  * Helper context object intended for use by scripts written in Groovy (and other JVM languages) during
  * processing stage of Code Augmentor.
  */
 public class ProcessCodeContext {
+    public static final String RESERVED_VAR_NAME_PREFIX = "codeAugmentor.";
+
     private Object header;
     private final Map<String, Object> globalScope = new HashMap<>();
     private final Map<String, Object> fileScope = new HashMap<>();
     private SourceFileAugmentingCode fileAugCodes;
     private int augCodeIndex;
     private File srcFile;
+
+    public ProcessCodeContext() {
+        globalScope.put(RESERVED_VAR_NAME_PREFIX + "indent", TaskUtils.strMultiply(" ", 4));
+    }
 
     /**
      * Creates a new {@link GeneratedCode} with an empty modifiable list of
@@ -123,5 +131,49 @@ public class ProcessCodeContext {
 
     void setSrcFile(File srcFile) {
         this.srcFile = srcFile;
+    }
+    
+    /**
+     * Gets a variable from file or global scopes, with 
+     * preference for file scope.
+     * @param name variable name
+     * @return variable value in file scope first, or in global
+     * scope.
+     */
+    public Object getScopeVar(String name) {
+        if (fileScope.containsKey(name)) {
+            return fileScope.get(name);
+        }
+        return globalScope.get(name);
+    }
+    
+    /**
+     * Sets/Replaces a variable in file scope.
+     * @param augCode
+     * @param context
+     */
+    public void setScopeVar(AugmentingCode augCode, ProcessCodeContext context) {
+        modifyScope(fileScope, augCode);
+    } 
+    
+    /**
+     * Sets/Replaces a variable in global scope.
+     * @param augCode
+     * @param context
+     */
+    public void setGlobalScopeVar(AugmentingCode augCode, ProcessCodeContext context) {
+        modifyScope(globalScope, augCode);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void modifyScope(Map<String, Object> scope, AugmentingCode augCode) {
+        for (Object arg : augCode.getArgs()) {
+            Map<String, Object> m = (Map<String, Object>) arg;
+            for (Map.Entry<String, Object> e: m.entrySet()) {
+                String name = e.getKey();
+                Object value = e.getValue();
+                scope.put(name, value);
+            }
+        }
     }
 }

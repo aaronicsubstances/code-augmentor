@@ -25,8 +25,10 @@ public class AugCodeProcessingSpec {
 
     /**
      * Sets the file for storing augmenting code associated with this 
-     * instance's directives.
+     * instance's directives. This will be used as input to the processing stage.
      * @param destFile
+     * 
+     * @see {@link ProcessCodeGenericTask#setInputFile(File)}
      */
     public void setDestFile(File destFile) {
         this.destFile = destFile;

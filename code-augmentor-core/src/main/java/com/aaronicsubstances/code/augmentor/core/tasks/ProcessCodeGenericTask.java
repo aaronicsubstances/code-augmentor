@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
@@ -52,7 +53,7 @@ public class ProcessCodeGenericTask {
         /**
          * Invokes code evaluation facility in a scripting language context 
          * to produce generated code object corresponding to an augmenting code object.
-         * @param function trimmed content of first line of current augmenting code object.
+         * @param functionName trimmed content of first line of current augmenting code object.
          * Although script can do anything it wants to with current augmenting code object,
          * it is strongly recommended that data driven programming paradigm be followed.
          * In that case this parameter refers to name of a function code evaluation facility should 
@@ -66,7 +67,24 @@ public class ProcessCodeGenericTask {
          * matching.
          * @throws Exception
          */
-        Object apply(String function, AugmentingCode augCode, ProcessCodeContext context) throws Exception;
+        Object apply(String functionName, AugmentingCode augCode,
+            ProcessCodeContext context) throws Exception;
+    }
+
+    /**
+     * Used to validate arguments passed to {@link EvalFunction}
+     */
+    public interface ValidationCallback {
+        /**
+         * Validates arguments of {@link EvalFunction#apply(String, AugmentingCode, ProcessCodeContext)}
+         * @param functionName
+         * @param augCode
+         * @param context
+         * @return validation error message or null to signal validation success
+         * @throws Exception
+         */
+        String validate(String functionName, AugmentingCode augCode,
+            ProcessCodeContext context) throws Exception;
     }
 
     // input properties
@@ -74,9 +92,21 @@ public class ProcessCodeGenericTask {
     private File inputFile;
     private File outputFile;
     private JsonParseFunction jsonParseFunction;
+    private ValidationCallback validationCallback;
+    private final ValidationCallback defaultValidationCallback;
+    private EvalFunction evalFunction;
 
     // output properties
     private final List<Throwable> allErrors = new ArrayList<>();
+
+    public ProcessCodeGenericTask() {
+        defaultValidationCallback = (f, a, c) -> {
+            if (f.startsWith("context.")) {
+                return null;
+            }
+            return "Expected method call on context helper object, but got: " + f;
+        };
+    }
 
     /**
      * Executes processing stage of Code Augmentor. Augmenting code objects
@@ -85,12 +115,16 @@ public class ProcessCodeGenericTask {
      * to output file.
      * <p>
      * Success of this operation depends on emptiness of allErrors property.
-     * @param evalFunction an interface into a script's code evaluation
-     * facility which will called to produce generated code objects corresponding
-     * to augmenting code objects in input file.
      * @throws Exception
      */
-    public void execute(EvalFunction evalFunction) throws Exception {
+    public void execute() throws Exception {
+        // validate input properties
+        Objects.requireNonNull(inputFile, "inputFile property is not set");
+        Objects.requireNonNull(outputFile, "outputFile property is not set");
+        Objects.requireNonNull(jsonParseFunction, "jsonParseFunction property is not set");
+        Objects.requireNonNull(validationCallback, "validationCallback property is not set");
+        Objects.requireNonNull(evalFunction, "evalFunction property is not set");
+
         allErrors.clear();
         // ensure dir exists for outputFile
         if (outputFile.getParentFile() != null) {
@@ -150,7 +184,7 @@ public class ProcessCodeGenericTask {
                     }
                     String functionName = augCode.getBlocks().get(0).getContent().trim();
                     context.setAugCodeIndex(i);
-                    List<GeneratedCode> genCodes = processAugCode(evalFunction, functionName, augCode, context,
+                    List<GeneratedCode> genCodes = processAugCode(functionName, augCode, context,
                             allErrors);
                     fileGenCodes.getGeneratedCodes().addAll(genCodes);
                 }
@@ -184,10 +218,20 @@ public class ProcessCodeGenericTask {
     }
 
     @SuppressWarnings("unchecked")
-    static List<GeneratedCode> processAugCode(EvalFunction evalFunction, 
+    List<GeneratedCode> processAugCode(
             String functionName, AugmentingCode augCode, ProcessCodeContext context, 
             List<Throwable> errors) {
         try {
+            String validationError = (validationCallback != null ?
+                    validationCallback : defaultValidationCallback).validate(functionName, 
+                augCode, context);
+            if (validationError != null) {                    
+                GenericTaskException evalEx = createException(context,
+                    "Invalid arguments to evalFunction: " + validationError, null);
+                errors.add(evalEx);
+                return Arrays.asList();
+            }
+
             Object result = evalFunction.apply(functionName, augCode, context);
     
             // Convert various alternative representations of List<GeneratedCode>     
@@ -283,6 +327,11 @@ public class ProcessCodeGenericTask {
         return logAppender;
     }
 
+    /**
+     * Sets logging procedure for this task. By default this property is null, 
+     * and so no logging is done.
+     * @param logAppender logging procedure or null for no logging
+     */
     public void setLogAppender(BiConsumer<GenericTaskLogLevel, Supplier<String>> logAppender) {
         this.logAppender = logAppender;
     }
@@ -317,10 +366,56 @@ public class ProcessCodeGenericTask {
         return jsonParseFunction;
     }
 
+    /**
+     * Sets the function object used to parse JSON strings into objects convenient
+     * for processing by a JVM language script.
+     * @param jsonParseFunction
+     */
     public void setJsonParseFunction(JsonParseFunction jsonParseFunction) {
         this.jsonParseFunction = jsonParseFunction;
     }
 
+    public ValidationCallback getValidationCallback() {
+        return validationCallback;
+    }
+
+    /**
+     * Sets procedure which will be used to validate function names before 
+     * script evaluation.
+     * @param validationCallback
+     */
+    public void setValidationCallback(ValidationCallback validationCallback) {
+        this.validationCallback = validationCallback;
+    }
+
+    /**
+     * Gets default validation callback which will be used if none is set with
+     * {@link #setValidationCallback(ValidationCallback)}
+     * @return
+     */
+    public ValidationCallback getDefaultValidationCallback() {
+        return defaultValidationCallback;
+    }
+
+    public EvalFunction getEvalFunction() {
+        return evalFunction;
+    }
+
+    /**
+     * Sets interface into a script's code evaluation
+     * facility which will be called to produce generated code objects corresponding
+     * to augmenting code objects in input file.
+     * @param evalFunction
+     */
+    public void setEvalFunction(EvalFunction evalFunction) {
+        this.evalFunction = evalFunction;
+    }
+
+    /**
+     * Gets the error results of executing this task.
+     * @return empty list if task execution was successful; non-empty list if
+     * task execution failed.
+     */
     public List<Throwable> getAllErrors() {
         return allErrors;
     }

@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
@@ -26,7 +27,8 @@ import com.aaronicsubstances.code.augmentor.core.util.SourceCodeTransformer;
 import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 
 /**
- * Implements completion stage of Code Augmentor.
+ * Implements completion stage of Code Augmentor, which is the third and final
+ * stage.
  */
 public class CodeAugmentationGenericTask {
     /**
@@ -68,6 +70,11 @@ public class CodeAugmentationGenericTask {
      * @throws Exception
      */
     public void execute() throws Exception {
+        // validate input properties
+        Objects.requireNonNull(prepFile, "prepFile property is not set");
+        Objects.requireNonNull(generatedCodeFiles, "generatedCodeFiles property is not set");
+        Objects.requireNonNull(destDir, "destDir property is not set");
+        
         allErrors.clear();
         codeChangeDetected = false;
 
@@ -323,6 +330,11 @@ public class CodeAugmentationGenericTask {
         return logAppender;
     }
 
+    /**
+     * Sets logging procedure for this task. By default this property is null, 
+     * and so no logging is done.
+     * @param logAppender logging procedure or null for no logging
+     */
     public void setLogAppender(BiConsumer<GenericTaskLogLevel, Supplier<String>> logAppender) {
         this.logAppender = logAppender;
     }
@@ -331,6 +343,12 @@ public class CodeAugmentationGenericTask {
         return prepFile;
     }
 
+    /**
+     * Sets this property with the prepFile output of the prepare stage.
+     * @param prepFile
+     * 
+     * @see {@link PreCodeAugmentationGenericTask#setPrepFile(File)}
+     */
     public void setPrepFile(File prepFile) {
         this.prepFile = prepFile;
     }
@@ -339,6 +357,14 @@ public class CodeAugmentationGenericTask {
         return generatedCodeFiles;
     }
 
+    /**
+     * Sets the files with generated code in them which will
+     * be merged into source files passed to the prepare stage. These are the 
+     * output files from the processing stage.
+     * @param generatedCodeFiles
+     * 
+     * @see {@link ProcessCodeGenericTask#setOutputFile(File)}
+     */
     public void setGeneratedCodeFiles(List<File> generatedCodeFiles) {
         this.generatedCodeFiles = generatedCodeFiles;
     }
@@ -347,6 +373,11 @@ public class CodeAugmentationGenericTask {
         return destDir;
     }
 
+    /**
+     * Sets the destination directory for generated files. A folder will be
+     * created in this directory for each file set passed to the preparation stage.
+     * @param destDir
+     */
     public void setDestDir(File destDir) {
         this.destDir = destDir;
     }
@@ -355,18 +386,50 @@ public class CodeAugmentationGenericTask {
         return codeChangeDetectionDisabled;
     }
 
+    /**
+     * Sets whether or not code change detection should be disabled. By default
+     * code change detection is enabled (ie this property is false), 
+     * and so a file will only be generated if
+     * they are going to be different from the corresponding source file. If
+     * this property is set to true, then all source files will have 
+     * files generated for them, unless code generation for a source file is 
+     * skipped.
+     * @param codeChangeDetectionDisabled
+     */
     public void setCodeChangeDetectionDisabled(boolean codeChangeDetectionDisabled) {
         this.codeChangeDetectionDisabled = codeChangeDetectionDisabled;
     }
 
+    /**
+     * Gets the error results of executing the task.
+     * @return empty list if task execution was successful; non-empty list if
+     * task execution failed.
+     */
     public List<Throwable> getAllErrors() {
         return allErrors;
     }
     
+    /**
+     * If task was successfully executed, this property points to a 
+     * file directly inside destination directory which contains
+     * listing of generated files and their corresponding files.
+     * Although readable by humans, it is more intended to be fed as input
+     * to OS shell scripts when code change detection is enabled,
+     * in order to overwrite source files and bring them up
+     * to date with generated files.
+     * @return file containing generated file paths.
+     */
     public File getChangeSummaryFile() {
         return changeSummaryFile;
     }
 
+    /**
+     * If code change detection is enabled, then this property
+     * informs on whether there were changes generated or not.
+     * @return true if code change detection is enabled and changes were 
+     * generated; false if code change detection is disabled, or there were
+     * no changed files.
+     */
     public boolean isCodeChangeDetected() {
         return codeChangeDetected;
     }
