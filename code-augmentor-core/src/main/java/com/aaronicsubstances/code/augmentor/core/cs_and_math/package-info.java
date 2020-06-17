@@ -1,5 +1,5 @@
 /**
- * Contains discrete algorithms and data structures relevant to constructing
- * lexers and parsers. Available for use by clients of this library.
+ * Contains discrete algorithms and data structures with a focus on
+ * those relevant for hand-crafting lexers and parsers.
  */
 package com.aaronicsubstances.code.augmentor.core.cs_and_math;

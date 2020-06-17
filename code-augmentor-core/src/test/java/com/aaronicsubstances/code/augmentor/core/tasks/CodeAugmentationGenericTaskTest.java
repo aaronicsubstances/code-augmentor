@@ -6,7 +6,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -15,9 +14,7 @@ import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.core.TestResourceLoader;
 import com.aaronicsubstances.code.augmentor.core.models.CodeChangeSummary;
-import com.aaronicsubstances.code.augmentor.core.models.CodeGenerationResponseChangeSet;
 import com.aaronicsubstances.code.augmentor.core.models.PreCodeAugmentationResult;
-import com.aaronicsubstances.code.augmentor.core.models.SourceFileChangeSet;
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.CodeChangeSummary.ChangedFile;
 import com.google.gson.Gson;
@@ -104,10 +101,6 @@ public class CodeAugmentationGenericTaskTest {
         final Charset taskCharset = Charset.forName(prepResult.getEncoding());
         CodeAugmentationGenericTask task = completeDeserialize(taskSpec, prepFile, 
             taskCharset, newline);
-        CodeGenerationResponseChangeSet expectedChanges = null;
-        if (!task.isCodeChangeDetectionDisabled()) {
-            expectedChanges = loadChanges(jsonPath);
-        }
         List<String> expectedGeneratedCodes = new ArrayList<>();
         // transfer class path resources for original source files to
         // temp directory.
@@ -131,6 +124,10 @@ public class CodeAugmentationGenericTaskTest {
         assertThat(task.getAllErrors(), is(empty()));
         assertEquals(task.isCodeChangeDetected(), 
             !task.isCodeChangeDetectionDisabled() && !expectedChangeSetIndices.isEmpty());
+        assertEquals(task.getChangeSummaryFile(), new File(task.getDestDir(),
+            task.isCodeChangeDetectionDisabled() ? 
+                CodeAugmentationGenericTask.WITHOUT_CHANGE_DETECTION_SUMMARY_FILE_NAME :
+                CodeAugmentationGenericTask.CHANGE_SUMMARY_FILE_NAME));
         CodeChangeSummary changeSummary = CodeChangeSummary.deserialize(
             task.getChangeSummaryFile());
         int actualChangeSetSize = changeSummary.getChangedFiles().size();
@@ -142,21 +139,6 @@ public class CodeAugmentationGenericTaskTest {
             String actual = FileUtils.readFileToString(f, taskCharset);            
             assertEquals(actual, expected, "Unexpected contents found in " + f);
         }
-        if (task.isCodeChangeDetectionDisabled()) {
-            assertNull(task.getChangeDetailsFile());
-        }
-        else {
-            assertNotNull(task.getChangeDetailsFile());
-            CodeGenerationResponseChangeSet actualChanges = CodeGenerationResponseChangeSet.deserialize(
-                task.getChangeDetailsFile());
-            assertEquals(actualChanges, expectedChanges);
-            CodeChangeSummary expectedChangeSummary = new CodeChangeSummary(new ArrayList<>());
-            for (SourceFileChangeSet s : actualChanges.getSourceFileChangeSets()) {
-                ChangedFile cf = new ChangedFile(s.getRelativePath(), s.getSrcDir(), s.getDestDir());
-                expectedChangeSummary.getChangedFiles().add(cf);
-            }
-            assertEquals(changeSummary, expectedChangeSummary);
-        }
     }
 
     @DataProvider
@@ -166,8 +148,10 @@ public class CodeAugmentationGenericTaskTest {
             new Object[] { "task-spec-01.json", "\r\n", Arrays.asList(0, 1) },
             new Object[] { "task-spec-02.json", "\n", Arrays.asList(0) },
             new Object[] { "task-spec-03.json", "\r\n", Arrays.asList(0, 1, 2) },
-            new Object[] { "task-spec-04.json", "\r\n", Arrays.asList(0, 1) },
-            new Object[] { "task-spec-07.json", "\n", Arrays.asList(0, 1) },
+            new Object[] { "task-spec-04.json", "\r\n", Arrays.asList(0, 1, 2) },
+            new Object[] { "task-spec-07.json", "\n", Arrays.asList() },
+            new Object[] { "task-spec-08.json", "\n", Arrays.asList(0, 1) },
+            new Object[] { "task-spec-09.json", "\n", Arrays.asList() }
         };
     }
     
@@ -215,15 +199,6 @@ public class CodeAugmentationGenericTaskTest {
             // null content part, and null content field of a content part.
             new Object[] { "task-spec-06.json", "\r\n", Arrays.asList(2, 1, null, 2) }
         };
-    }
-
-    private CodeGenerationResponseChangeSet loadChanges(String jsonPath) throws Exception {
-        String changesPath = jsonPath.replace(".json", "-CHANGES-expected.json");
-        String contents = TestResourceLoader.loadResource(changesPath, getClass());
-        contents = transformWithVars(contents);
-        CodeGenerationResponseChangeSet c = CodeGenerationResponseChangeSet.deserialize(
-            new StringReader(contents));
-        return c;
     }
 
     private String transformWithVars(String contents) {

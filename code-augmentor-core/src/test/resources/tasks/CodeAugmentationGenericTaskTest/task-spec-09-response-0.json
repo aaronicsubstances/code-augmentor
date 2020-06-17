@@ -1,0 +1,17 @@
+{ "contentStreamingEnabled": false }
+[
+	{
+		"fileId": 1,
+		"generatedCodes": [{
+			"id" : 1,
+            "skipped": true
+		}]
+	},
+	{
+		"fileId": 2,
+		"generatedCodes": [{
+			"id" : 1,
+            "skipped": true
+		}]
+	}
+]

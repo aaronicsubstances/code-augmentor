@@ -13,20 +13,15 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
-import com.aaronicsubstances.code.augmentor.core.cs_and_math.parsing.LexerSupport;
 import com.aaronicsubstances.code.augmentor.core.models.CodeChangeSummary;
-import com.aaronicsubstances.code.augmentor.core.models.CodeGenerationResponseChangeSet;
-import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetChangeDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.AugmentingCodeDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode.ContentPart;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode;
 import com.aaronicsubstances.code.augmentor.core.models.PreCodeAugmentationResult;
-import com.aaronicsubstances.code.augmentor.core.models.SourceFileChangeSet;
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileDescriptor;
 import com.aaronicsubstances.code.augmentor.core.util.CodeGenerationResponseProcessor;
 import com.aaronicsubstances.code.augmentor.core.util.GeneratedCodeFetcher;
-import com.aaronicsubstances.code.augmentor.core.util.GeneratedCodeSimilarityChecker;
 import com.aaronicsubstances.code.augmentor.core.util.SourceCodeTransformer;
 import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 
@@ -34,8 +29,20 @@ import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
  * Implements completion stage of Code Augmentor.
  */
 public class CodeAugmentationGenericTask {
+    /**
+     * Name of file used to store generated files when code change detection is enabled.
+     */
     public static final String CHANGE_SUMMARY_FILE_NAME = "CHANGE-SUMMARY.txt";
-    public static final String CHANGE_DETAILS_FILE_NAME = "CHANGE-DETAILS.json";
+
+    /**
+     * Name of file used to store generated files when code change detection is disabled.
+     */
+    public static final String WITHOUT_CHANGE_DETECTION_SUMMARY_FILE_NAME = "OUTPUT-SUMMARY.txt";
+
+    /**
+     * Base name of OS shell script for viewing and making changes to source files in which
+     * code changes were detected.
+     */
     public static final String SHELL_SCRIPT_PREFIX = "EFFECT-CHANGES";
 
     // input properties.
@@ -48,9 +55,18 @@ public class CodeAugmentationGenericTask {
     // output properties
     private final List<Throwable> allErrors = new ArrayList<>();
     private File changeSummaryFile;
-    private File changeDetailsFile;
     private boolean codeChangeDetected;
     
+    /**
+     * Runs completion stage. Will be successful only if allErrors property
+     * is empty after completion. If code change detection is enabled,
+     * then changeSummaryFile property will be used to store names of
+     * all files in which code changes were detected. Else changeSummaryFile property
+     * will be used to store all files except those for which all code generation
+     * requests were explicitly skipped.
+     * 
+     * @throws Exception
+     */
     public void execute() throws Exception {
         allErrors.clear();
         codeChangeDetected = false;
@@ -67,18 +83,10 @@ public class CodeAugmentationGenericTask {
 
         GeneratedCodeFetcher generatedCodeFetcher = new GeneratedCodeFetcher(generatedCodeFiles);
         
-        changeSummaryFile = new File(destDir, CHANGE_SUMMARY_FILE_NAME);
+        changeSummaryFile = new File(destDir, codeChangeDetectionDisabled ?
+            WITHOUT_CHANGE_DETECTION_SUMMARY_FILE_NAME : CHANGE_SUMMARY_FILE_NAME);
         CodeChangeSummary resultChangeSummary = new CodeChangeSummary();
         Object resultChangeSummaryWriter = resultChangeSummary.beginSerialize(changeSummaryFile);
-        
-        changeDetailsFile = null;
-        CodeGenerationResponseChangeSet resultChangeSet = null;
-        Object resultChangeSetWriter = null;
-        if (!codeChangeDetectionDisabled) {
-            changeDetailsFile = new File(destDir, CHANGE_DETAILS_FILE_NAME);
-            resultChangeSet = new CodeGenerationResponseChangeSet();
-            resultChangeSetWriter = resultChangeSet.beginSerialize(changeDetailsFile);
-        }
 
         SourceFileDescriptor sourceFileDescriptor;
         while ((sourceFileDescriptor = SourceFileDescriptor.deserialize(resultReader)) != null) {
@@ -101,6 +109,7 @@ public class CodeAugmentationGenericTask {
             }
 
             int beginErrorCount = allErrors.size();
+            int skipCount = 0;
 
             // fetch applicable generated code per aug code descriptor.
             List<GeneratedCode> generatedCodes = new ArrayList<>();
@@ -116,6 +125,8 @@ public class CodeAugmentationGenericTask {
                                 srcFile);
                         TaskUtils.logWarn(logAppender, missingFileAugCodesError.getMessage());
                         allErrors.add(missingFileAugCodesError);
+                        // don't waste time looking for other gen codes since
+                        // they won't be found anyway
                         break;
                     }
                     allErrors.add(createException("Could not find generated code with id " + augCodeDescriptor.getId(),
@@ -124,6 +135,7 @@ public class CodeAugmentationGenericTask {
                 else {
                     // Don't process skipped aug codes.
                     if (genCode.isSkipped()) {
+                        skipCount++;
                         continue;
                     }
                     validateContentParts(genCode, augCodeDescriptor, srcFile, allErrors);
@@ -191,53 +203,32 @@ public class CodeAugmentationGenericTask {
                 continue;
             }
 
+            // If there are no code generation requests, or all code generation requests 
+            // for aug codes in file were skipped, don't generate file even if code change 
+            // detection is disabled.
+            if (skipCount == sourceFileDescriptor.getCodeSnippets().size()) {
+                continue;
+            }
+
             // Now merge generated code into source code,
             // and try and detect changes.
-            List<CodeSnippetChangeDescriptor> changes = new ArrayList<>();
             SourceCodeTransformer transformer = new SourceCodeTransformer(sourceCode);
-            if (codeChangeDetectionDisabled) {
-                for (int i = 0; i < generatedCodes.size(); i++) {
-                    GeneratedCode genCode = generatedCodes.get(i);
-                    String replacementText = genCode.getWholeContent();
-                    int[] replacementRange = replacementRanges.get(i);
-                    transformer.addTransform(replacementText, replacementRange[0], replacementRange[1]);
-                }
-            }
-            else {
-                for (int i = 0; i < generatedCodes.size(); i++) {
-                    GeneratedCode genCode = generatedCodes.get(i);
-                    String replacementText = genCode.getWholeContent();
-                    int[] replacementRange = replacementRanges.get(i);
-                    String textToBeReplaced = sourceCode.substring(replacementRange[0], replacementRange[1]);
-
-                    // check for changes if there may be changes.
-                    CodeSnippetChangeDescriptor codeChange;
-                    if (textToBeReplaced.equals(replacementText)) {
-                        // definitely there are no changes if texts are exactly equal.
-                        codeChange = null;
-                    }
-                    else {
-                        // determine whether changes are superficial or significant.
-                        GeneratedCodeSimilarityChecker similarityAlg = new GeneratedCodeSimilarityChecker(
-                                genCode.getContentParts());
-                        codeChange = similarityAlg.match(textToBeReplaced);
-                    }
-                    
-                    if (codeChange != null) {
-                        changes.add(codeChange);
-                        codeChange.setId(genCode.getId());
-                        setSrcLineAndColumnNumbers(codeChange, sourceCode, replacementRange[0]);
-                        setDestLineAndColumnNumbers(codeChange, transformer, replacementRange[0]);
-                        transformer.addTransform(replacementText, replacementRange[0], replacementRange[1]);
-                    }
+            boolean srcFileHasChanged = false;
+            for (int i = 0; i < generatedCodes.size(); i++) {
+                GeneratedCode genCode = generatedCodes.get(i);
+                String replacementText = genCode.getWholeContent();
+                int[] replacementRange = replacementRanges.get(i);
+                transformer.addTransform(replacementText, replacementRange[0], replacementRange[1]);
+                if (!codeChangeDetectionDisabled && !srcFileHasChanged) {            
+                    String textToBeReplaced = sourceCode.substring(replacementRange[0],
+                        replacementRange[1]);
+                    srcFileHasChanged = !textToBeReplaced.equals(replacementText);
                 }
             }
 
             // always generate files if code change detection is disabled.
 
-            if (!codeChangeDetectionDisabled && changes.isEmpty()) {
-                TaskUtils.logVerbose(logAppender, "No changes needed for %s", srcFile);
-            } else {
+            if (codeChangeDetectionDisabled || srcFileHasChanged) {
                 String destSubDirName = destSubDirNameMap.get(sourceFileDescriptor.getDir());
                 if (destSubDirName == null) {
                     destSubDirName = new File(sourceFileDescriptor.getDir()).getName();
@@ -257,20 +248,13 @@ public class CodeAugmentationGenericTask {
                     new File(sourceFileDescriptor.getDir()).getCanonicalPath(),
                     destSubDir.getCanonicalPath()).serialize(resultChangeSummaryWriter);
 
-                // write out change details only if code change detection is enabled.
-                if (!codeChangeDetectionDisabled) {
+                if (srcFileHasChanged) {
                     codeChangeDetected = true;
-                    SourceFileChangeSet s = new SourceFileChangeSet(changes);
-                    s.setFileId(sourceFileDescriptor.getFileId());
-                    s.setRelativePath(sourceFileDescriptor.getRelativePath());
-                    s.setSrcDir(sourceFileDescriptor.getDir());
-                    s.setDestDir(destSubDir.getPath());
-                    s.serialize(resultChangeSetWriter);
-                }
-
-                if (!codeChangeDetectionDisabled) {
                     TaskUtils.logInfo(logAppender, "Changes needed for %s successfully written to\n %s", srcFile, destFile);
                 }
+            }
+            else {                
+                TaskUtils.logVerbose(logAppender, "No changes needed for %s", srcFile);
             }
 
             Instant endInstant = Instant.now();
@@ -287,13 +271,10 @@ public class CodeAugmentationGenericTask {
 
         // generate shell scripts for effecting code changes.
         if (!codeChangeDetectionDisabled) {
-            resultChangeSet.endSerialize(resultChangeSetWriter);
-            
             InputStream shellScriptRes = getClass().getResourceAsStream("windows-copy-batch-file.bat");
             ByteArrayOutputStream outStream = new ByteArrayOutputStream();
             TaskUtils.copyStream(shellScriptRes, outStream);
             String contents = new String(outStream.toByteArray(), Charset.defaultCharset());
-            contents = LexerSupport.NEW_LINE_REGEX.matcher(contents).replaceAll("\r\n");
             TaskUtils.writeFile(new File(destDir, SHELL_SCRIPT_PREFIX + ".bat"), 
                 Charset.defaultCharset(), contents);
             
@@ -301,7 +282,6 @@ public class CodeAugmentationGenericTask {
             outStream = new ByteArrayOutputStream();
             TaskUtils.copyStream(shellScriptRes, outStream);
             contents = new String(outStream.toByteArray(), Charset.defaultCharset());
-            contents = LexerSupport.NEW_LINE_REGEX.matcher(contents).replaceAll("\n");
             TaskUtils.writeFile(new File(destDir, SHELL_SCRIPT_PREFIX), 
                 Charset.defaultCharset(), contents);
         }
@@ -324,25 +304,6 @@ public class CodeAugmentationGenericTask {
                     augCodeDescriptor, srcFile));
             }
         }
-    }
-
-    private static void setSrcLineAndColumnNumbers(CodeSnippetChangeDescriptor codeChange,
-            String sourceCode, int replacementRangeStart) {
-        codeChange.setSrcCharIndex(codeChange.getSrcCharIndex() + replacementRangeStart);
-        int[] result = LexerSupport.calculateLineAndColumnNumbers(sourceCode, 
-            codeChange.getSrcCharIndex());
-        codeChange.setSrcLineNumber(result[0]);
-        codeChange.setSrcColumnNumber(result[1]);
-    }
-
-    private static void setDestLineAndColumnNumbers(CodeSnippetChangeDescriptor codeChange,
-            SourceCodeTransformer sourceCode, int replacementRangeStart) {
-        codeChange.setDestCharIndex(codeChange.getDestCharIndex() + replacementRangeStart +
-            sourceCode.getPositionAdjustment());
-        int[] result = LexerSupport.calculateLineAndColumnNumbers(sourceCode.getTransformedText(), 
-            codeChange.getDestCharIndex());
-        codeChange.setDestLineNumber(result[0]);
-        codeChange.setDestColumnNumber(result[1]);
     }
 
     private static GenericTaskException createException(String errorMessage, 
@@ -404,10 +365,6 @@ public class CodeAugmentationGenericTask {
     
     public File getChangeSummaryFile() {
         return changeSummaryFile;
-    }
-
-    public File getChangeDetailsFile() {
-        return changeDetailsFile;
     }
 
     public boolean isCodeChangeDetected() {

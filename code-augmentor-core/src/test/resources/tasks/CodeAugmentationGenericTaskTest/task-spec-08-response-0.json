@@ -1,0 +1,23 @@
+{ "contentStreamingEnabled": false }
+[
+	{
+		"fileId": 1,
+		"generatedCodes": [{
+			"id" : 1,
+            "replaceGenCodeDirectives": true,
+			"contentParts" : [{
+                "content": "/*:GEN_CODE:*/same"
+            }]
+		}]
+	},
+	{
+		"fileId": 2,
+		"generatedCodes": [{
+			"id" : 1,
+            "replaceGenCodeDirectives": true,
+			"contentParts" : [{
+                "content": "/*:GEN_CODE:*/yes\n"
+            }]
+		}]
+	}
+]

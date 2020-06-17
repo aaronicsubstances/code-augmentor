@@ -1,0 +1,45 @@
+{ "contentStreamingEnabled": false, "encoding": "UTF-8", "genCodeStartDirective": "//GS", "genCodeEndDirective": "//GE" }
+[
+	{
+		"fileId": 1,
+        "relativePath": "task-spec-08-0.java",
+        "dir": "%TEMP_DIR%",
+        "contentHash": "8f402bd2a2678c3a0163f90b689e66b3",
+        "codeSnippets": [{
+			"augmentingCodeDescriptor": {
+				"id" : 1,
+				"startPos" : 0,
+				"endPos" : 16,
+				"indent" : "",
+                "lineNumber": 1,
+                "lineSeparator": "\n"
+			},
+			"generatedCodeDescriptor": {
+				"startDirectiveStartPos" : 16,
+				"endDirectiveEndPos" : 35,
+                "inline": true
+			}
+		}]
+    },
+    {
+		"fileId": 2,
+        "relativePath": "task-spec-08-1.java",
+        "dir": "%TEMP_DIR%",
+        "contentHash": "9acf88a7fafed6232452ea01654297df",
+        "codeSnippets": [{
+			"augmentingCodeDescriptor": {
+				"id" : 1,
+				"startPos" : 0,
+				"endPos" : 16,
+				"indent" : "",
+                "lineNumber": 1,
+                "lineSeparator": "\n"
+			},
+			"generatedCodeDescriptor": {
+				"startDirectiveStartPos" : 16,
+				"endDirectiveEndPos" : 36,
+                "inline": true
+			}
+		}]
+    }
+]

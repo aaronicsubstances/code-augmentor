@@ -23,6 +23,11 @@ public class AugCodeProcessingSpec {
         return destFile;
     }
 
+    /**
+     * Sets the file for storing augmenting code associated with this 
+     * instance's directives.
+     * @param destFile
+     */
     public void setDestFile(File destFile) {
         this.destFile = destFile;
     }
@@ -31,6 +36,11 @@ public class AugCodeProcessingSpec {
         return directives;
     }
 
+    /**
+     * Sets the directives used to identify augmenting codes. 
+     * @param directives list of directive markers. Only markers with a non-whitespace
+     * character will actually be used.
+     */
     public void setDirectives(List<String> directives) {
         this.directives = directives;
     }

@@ -1,0 +1,6 @@
+{
+	"generatedCodeFiles" : [ "task-spec-08-response-0.json" ],
+	"prepFile" : "task-spec-08-prep.json",
+	"destDir"  : "dest-08",
+    "codeChangeDetectionDisabled": true
+}

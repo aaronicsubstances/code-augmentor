@@ -8,7 +8,6 @@ import java.util.Map;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode;
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileAugmentingCode;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode.ContentPart;
-import com.aaronicsubstances.code.augmentor.core.util.GeneratedCodeSimilarityChecker;
 
 /**
  * Helper context object intended for use by scripts written in Groovy (and other JVM languages) during
@@ -43,9 +42,8 @@ public class ProcessCodeContext {
     /**
      * Creates a new content part.
      * @param content string of content part.
-     * @param exactMatch true to match string exactly, false to
-     * use {@link GeneratedCodeSimilarityChecker} 
-     * to perform matching.
+     * @param exactMatch true to match string exactly and disallow insertion of
+     * indentation; false to admit insertion of leading indents.
      * @return new content part.
      */
     public ContentPart newContent(String content, boolean exactMatch) {
