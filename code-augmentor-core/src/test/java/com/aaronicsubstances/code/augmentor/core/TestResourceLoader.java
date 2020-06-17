@@ -9,8 +9,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.regex.Pattern;
 
-import com.aaronicsubstances.code.augmentor.core.cs_and_math.parsing.LexerSupport;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode.ContentPart;
 import com.aaronicsubstances.code.augmentor.core.util.Token;
@@ -22,9 +22,10 @@ import org.apache.commons.io.IOUtils;
 public class TestResourceLoader {
     public static final Random RAND_GEN = new Random();
     public static final Gson GSON_INST = new GsonBuilder().setPrettyPrinting().create();
+    public static final Pattern NEW_LINE_REGEX = Pattern.compile("\r\n|\r|\n");
 
     public static String loadResource(String path, Class<?> cls) {
-        String pathPrefix = "";;
+        String pathPrefix = "";
         if (cls != null) {
             int pkgNameLength = TestResourceLoader.class.getPackage().getName().length();
             pathPrefix = cls.getName().substring(pkgNameLength + 1).replace(".", "/") + "/";
@@ -49,7 +50,7 @@ public class TestResourceLoader {
     public static String loadResourceNewlinesNormalized(String path,
             Class<?> cls, String newLine) {
         String text = loadResource(path, cls);
-        return LexerSupport.NEW_LINE_REGEX.matcher(text).replaceAll(newLine);
+        return NEW_LINE_REGEX.matcher(text).replaceAll(newLine);
     }
 
 	public static List<Token> fetchTokens(String path, Class<?> cls) {

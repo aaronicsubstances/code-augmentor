@@ -3,7 +3,7 @@ package com.aaronicsubstances.code.augmentor.core.tasks;
 import java.util.Arrays;
 import java.util.List;
 
-import com.aaronicsubstances.code.augmentor.core.cs_and_math.parsing.LexerSupport;
+import com.aaronicsubstances.code.augmentor.core.TestResourceLoader;
 
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -57,6 +57,6 @@ public class PluginUtilsTest {
     }
 
     private static String[] getLines(String msg) {
-        return LexerSupport.NEW_LINE_REGEX.split(msg.trim(), -1);
+        return TestResourceLoader.NEW_LINE_REGEX.split(msg.trim(), -1);
     }
 }

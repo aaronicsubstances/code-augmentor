@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 import com.aaronicsubstances.code.augmentor.core.tasks.GenericTaskLogLevel;
 import com.google.gson.stream.JsonReader;
@@ -30,6 +31,7 @@ import com.google.gson.stream.MalformedJsonException;
  * Exposes helper methods for generic tasks
  */
 public class TaskUtils {
+    public static final Pattern NEW_LINE_REGEX = Pattern.compile("\r\n|\r|\n");
 
     /**
      * Splits a string into lines.

@@ -13,11 +13,8 @@ import com.aaronicsubstances.code.augmentor.core.models.AugmentingCode;
 import com.aaronicsubstances.code.augmentor.core.models.CodeChangeSummary;
 import com.aaronicsubstances.code.augmentor.core.models.AugmentingCode.Block;
 import com.aaronicsubstances.code.augmentor.core.models.CodeChangeSummary.ChangedFile;
-import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetChangeDescriptor.ExactValue;
 import com.aaronicsubstances.code.augmentor.core.models.CodeGenerationRequest;
 import com.aaronicsubstances.code.augmentor.core.models.CodeGenerationResponse;
-import com.aaronicsubstances.code.augmentor.core.models.CodeGenerationResponseChangeSet;
-import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetChangeDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.AugmentingCodeDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.CodeSnippetDescriptor.GeneratedCodeDescriptor;
@@ -25,7 +22,6 @@ import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode.ContentPart;
 import com.aaronicsubstances.code.augmentor.core.models.PreCodeAugmentationResult;
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileAugmentingCode;
-import com.aaronicsubstances.code.augmentor.core.models.SourceFileChangeSet;
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileDescriptor;
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileGeneratedCode;
 
@@ -312,94 +308,6 @@ public class PersistenceTest {
         };
     }
 
-    @Test(dataProvider = "createTestCodeGenerationResponseChangeSetPersistenceData")
-    public void testCodeGenerationResponseChangeSetPersistence(int index, 
-            CodeGenerationResponseChangeSet expected,
-            boolean stream) throws Exception {
-        // first, serialize
-        StringWriter sw = new StringWriter();
-        if (stream) {
-            Object serializer = expected.beginSerialize(sw);
-            for (SourceFileChangeSet fileChangeSet : expected.getSourceFileChangeSets()) {
-                fileChangeSet.serialize(serializer);
-            }
-            expected.endSerialize(serializer);
-        }
-        else {
-            expected.serialize(sw);
-        }
-        String expectedOutput = sw.toString();
-        //System.out.println(expectedOutput);
-            
-        // next, deserialize
-        StringReader sr = new StringReader(expectedOutput);
-        CodeGenerationResponseChangeSet actual;
-        if (stream) {
-            actual = new CodeGenerationResponseChangeSet();
-            Object deserializer = actual.beginDeserialize(sr);
-            SourceFileChangeSet fileChangeSet;
-            while ((fileChangeSet = SourceFileChangeSet.deserialize(deserializer)) != null) {
-                actual.getSourceFileChangeSets().add(fileChangeSet);
-            }
-            actual.endDeserialize(deserializer);
-        }
-        else {
-            actual = CodeGenerationResponseChangeSet.deserialize(sr);
-        }
-
-        // finally, compare deserialized result with original
-        assertEquals(actual, expected);
-    }
-
-    @DataProvider
-    public Iterator<Object[]> createTestCodeGenerationResponseChangeSetPersistenceData() {
-        return new Iterator<Object[]>() {
-            int count = 0;
-
-            @Override
-            public boolean hasNext() {
-                return count < 10;
-            }
-
-            @Override
-            public Object[] next() {
-                List<SourceFileChangeSet> files = new ArrayList<>();
-                CodeGenerationResponseChangeSet instance = new CodeGenerationResponseChangeSet(files);
-                if (count > 0) {
-                    int fileListSize = TestResourceLoader.RAND_GEN.nextInt(5);
-                    for (int i = 0; i < fileListSize; i++) {
-                        List<CodeSnippetChangeDescriptor> codeChanges = new ArrayList<>();
-                        SourceFileChangeSet file = new SourceFileChangeSet(codeChanges);
-                        files.add(file);
-                        file.setFileId(i);
-                        int generatedCodeListSize = TestResourceLoader.RAND_GEN.nextInt(5);
-                        for (int j = 0; j < generatedCodeListSize; j++) {
-                            CodeSnippetChangeDescriptor codeChange = new CodeSnippetChangeDescriptor();
-                            codeChanges.add(codeChange);
-
-                            codeChange.setId(j);
-                            codeChange.setType(generateRandomString(false));
-                            codeChange.setSrcCharIndex(TestResourceLoader.RAND_GEN.nextInt());
-                            codeChange.setSrcLineNumber(TestResourceLoader.RAND_GEN.nextInt());
-                            codeChange.setSrcColumnNumber(TestResourceLoader.RAND_GEN.nextInt());
-                            codeChange.setDestCharIndex(TestResourceLoader.RAND_GEN.nextInt());
-                            codeChange.setDestLineNumber(TestResourceLoader.RAND_GEN.nextInt());
-                            codeChange.setDestColumnNumber(TestResourceLoader.RAND_GEN.nextInt());
-                            codeChange.setCurrentSection(generateRandomString(true));
-
-                            if (TestResourceLoader.RAND_GEN.nextBoolean()) {
-                                ExactValue expected = generateRandomExactValue();
-                                codeChange.setExpectedExactValue(expected);
-                            }
-                        }
-                    }
-                }
-                return new Object[]{ count++, instance,
-                    TestResourceLoader.RAND_GEN.nextBoolean() };
-            }
-        };
-    }
-
     @Test(dataProvider = "createTestCodeChangeSummaryData")
     public void testCodeChangeSummary(int index, 
             CodeChangeSummary expected,
@@ -514,15 +422,5 @@ public class PersistenceTest {
             s.append(chars.charAt(randIndex));
         }
         return s.toString();
-    }
-
-    static ExactValue generateRandomExactValue() {
-        ExactValue exactValue = new ExactValue();
-        exactValue.setLength(TestResourceLoader.RAND_GEN.nextInt());
-        exactValue.setUpdatedSectionOffset(TestResourceLoader.RAND_GEN.nextInt());
-        exactValue.setPrefix(generateRandomString(true));
-        exactValue.setUpdatedSection(generateRandomString(true));
-        exactValue.setSuffix(generateRandomString(true));
-        return exactValue;
     }
 }
