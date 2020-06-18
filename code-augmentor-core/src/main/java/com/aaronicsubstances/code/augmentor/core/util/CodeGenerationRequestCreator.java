@@ -91,6 +91,10 @@ public class CodeGenerationRequestCreator {
             augmentingCode.setNestedLevelNumber(firstToken.nestedLevelNumber);
             augmentingCode.setHasNestedLevelStartMarker(firstToken.nestedLevelStartMarker != null);
             augmentingCode.setHasNestedLevelEndMarker(firstToken.nestedLevelEndMarker != null);
+
+            if (genCodeDescriptor != null) {
+                augmentingCode.setGenCodeIndent(genCodeDescriptor.getIndent());
+            }
             
             // d. set source file content external to aug code section
             //    which exists between a start and its corresponding end nested level marker. 
@@ -429,6 +433,7 @@ public class CodeGenerationRequestCreator {
             generatedCodeDescriptor.setStartDirectiveStartPos(st.startPos);
             generatedCodeDescriptor.setEndDirectiveEndPos(st.endPos);
             generatedCodeDescriptor.setInline(true);
+            generatedCodeDescriptor.setIndent(st.indent);
             // look for tokens of the same type as inline gen code,
             // and consecutive in line numbers.
             int expectedLineNumber = st.lineNumber + 1;
@@ -436,6 +441,9 @@ public class CodeGenerationRequestCreator {
                 Token t = sourceTokens.get(i);
                 if (t.isInlineGeneratedCodeMarker && t.lineNumber == expectedLineNumber) {
                     generatedCodeDescriptor.setEndDirectiveEndPos(t.endPos);
+                    if (t.indent.length() < generatedCodeDescriptor.getIndent().length()) {
+                        generatedCodeDescriptor.setIndent(t.indent);
+                    }
                     expectedLineNumber++;
                 }
                 else {
@@ -446,6 +454,7 @@ public class CodeGenerationRequestCreator {
         }
         else {
             // search for gen code end.
+            String minIndent = null;
             for (int i = startIndex + 1; i < sourceTokens.size(); i++) {
                 Token t = sourceTokens.get(i);
                 // skip all other tokens, except for gen/skip code starts, and
@@ -456,11 +465,16 @@ public class CodeGenerationRequestCreator {
                         break;
                     }
                     GeneratedCodeDescriptor generatedCodeDescriptor = new GeneratedCodeDescriptor(
-                        st.startPos, st.endPos, t.startPos, t.endPos);
+                        st.startPos, st.endPos, t.startPos, t.endPos, minIndent, false);
                     return generatedCodeDescriptor;
                 }
                 else if (t.type == Token.DIRECTIVE_TYPE_SKIP_CODE_START) {
                     break;
+                }
+                if (t.indent != null) {
+                    if (minIndent == null || t.indent.length() < minIndent.length()) {
+                        minIndent = t.indent;
+                    }
                 }
             }
 

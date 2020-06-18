@@ -5,6 +5,8 @@ import static org.testng.Assert.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.aaronicsubstances.code.augmentor.core.TestResourceLoader;
@@ -55,7 +57,7 @@ public class CodeGenerationRequestCreatorTest {
         List<CodeSnippetDescriptor> bodySnippets4 = Arrays.asList(
             new CodeSnippetDescriptor(createAugCodeDescriptor("\r\n", "    ", 1, 27, 58, 2), null),
             new CodeSnippetDescriptor(createAugCodeDescriptor("\r\n", "", 2, 61, 68, 6),
-                new GeneratedCodeDescriptor(68, 73, 78, 83))
+                new GeneratedCodeDescriptor(68, 73, 78, 83, "", false))
         );
         List<AugmentingCode> augCodes40 = Arrays.asList(
             createAugCode("\r\n", "    ", 1, "#PHP", 2,
@@ -66,11 +68,12 @@ public class CodeGenerationRequestCreatorTest {
         List<AugmentingCode> augCodes41 = Arrays.asList(
             createAugCode("\r\n", "", 2, "#PHP7", 6, new Block("", false, false))
         );
+        augCodes41.get(0).setGenCodeIndent("");
         
         List<CodeSnippetDescriptor> bodySnippets5 = Arrays.asList(
             new CodeSnippetDescriptor(createAugCodeDescriptor("\n", " ", 1, 0, 41, 1), null),
             new CodeSnippetDescriptor(createAugCodeDescriptor("\n", "    ", 2, 43, 63, 6),
-                new GeneratedCodeDescriptor(64, 0, 0, 80, true)),
+                new GeneratedCodeDescriptor(64, 0, 0, 80, "", true)),
             new CodeSnippetDescriptor(createAugCodeDescriptor("\n", "", 3, 81, 108, 10), null),
             new CodeSnippetDescriptor(createAugCodeDescriptor("\n", "", 4, 109, 145, 13), null),                
             new CodeSnippetDescriptor(createAugCodeDescriptor("\n", "    ", 5, 146, 171, 16), null)
@@ -94,6 +97,7 @@ public class CodeGenerationRequestCreatorTest {
                 new Block(" ending again", true, false))                
         );
 
+        augCodes50.get(0).setGenCodeIndent("");
         augCodes50.get(0).setHasNestedLevelStartMarker(true);
         augCodes50.get(0).setMatchingNestedLevelEndMarkerIndex(1);
         augCodes50.get(0).setExternalNestedContent("\n#GG# print(145)\n\n#PHP5(( complete\n" +
@@ -638,23 +642,23 @@ public class CodeGenerationRequestCreatorTest {
         return new Object[][]{
             { tokenSource, 0, null },
             { tokenSource, 5, null },
-            { tokenSource, 9, new GeneratedCodeDescriptor(227, 234, 329, 335) },
+            { tokenSource, 9, new GeneratedCodeDescriptor(227, 234, 329, 335, "", false) },
             { tokenSource, 10, null },
             { tokenSource, 13, null },
-            { tokenSource, 19, new GeneratedCodeDescriptor(337, 343, 508, 514) },
+            { tokenSource, 19, new GeneratedCodeDescriptor(337, 343, 508, 514, "", false) },
             { tokenSource, 20, null },
             { tokenSource, 24, null },
             { tokenSource, 30, null },
-            { tokenSource, 32, new GeneratedCodeDescriptor(574, 580, 663, 669) },
+            { tokenSource, 32, new GeneratedCodeDescriptor(574, 580, 663, 669, "", false) },
             { tokenSource, 33, null },
             { tokenSource, 40, null },
-            { tokenSource, 41, new GeneratedCodeDescriptor(723, 731, 1012, 1018) },
+            { tokenSource, 41, new GeneratedCodeDescriptor(723, 731, 1012, 1018, "", false) },
             { tokenSource, 60, null },
-            { tokenSource, 62, new GeneratedCodeDescriptor(1095, 1101, 1172, 1178) },
+            { tokenSource, 62, new GeneratedCodeDescriptor(1095, 1101, 1172, 1178, "", false) },
             { tokenSource, 67, null },
-            { tokenSource, 69, new GeneratedCodeDescriptor(1178, 1184, 1232, 1241) },
-            { tokenSource, 74, new GeneratedCodeDescriptor(1241, 1247, 1258, 1264) },
-            { tokenSource, 81, null} 
+            { tokenSource, 69, new GeneratedCodeDescriptor(1178, 1184, 1232, 1241, "   ", false) },
+            { tokenSource, 74, new GeneratedCodeDescriptor(1241, 1247, 1258, 1264, "", false) },
+            { tokenSource, 81, null } 
         };
     }
 
@@ -825,7 +829,14 @@ public class CodeGenerationRequestCreatorTest {
             }
             Token t = new Token(type);
             t.text = text;
-            t.indent = "";
+            if (t.type == Token.TYPE_OTHER) {                
+                Matcher m = Pattern.compile("^\\s*").matcher(text);
+                m.find();
+                t.indent = m.group();
+            }
+            else if (t.type != Token.TYPE_BLANK) {
+                t.indent = "";
+            }
             if (directiveContent != null) {
                 t.directiveContent = directiveContent;
                 t.directiveMarker = text.substring(0, commonMarkerLen);

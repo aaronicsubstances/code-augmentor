@@ -7,6 +7,7 @@
 			"id" : 1,
 			"directiveMarker" : "#PHP",
 			"indent": " ",
+            "genCodeIndent": "",
             "lineNumber": 3,
             "lineSeparator": "\n",
             
@@ -22,6 +23,7 @@
 			"id" : 2,
 			"directiveMarker" : "#PHP",
 			"indent": "",
+            "genCodeIndent": "",
             "lineNumber": 12,
             "lineSeparator": "\n",
             

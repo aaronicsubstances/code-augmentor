@@ -22,7 +22,7 @@
         "endPos": 35,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\r\n"
@@ -36,7 +36,7 @@
         "endPos": 93,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "\t",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\r\n"
@@ -64,7 +64,7 @@
         "endPos": 113,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "\t",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\r\n"
@@ -106,7 +106,7 @@
         "endPos": 250,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "\t",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\r\n"
@@ -120,7 +120,7 @@
         "endPos": 290,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "\t\t",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\r\n"
@@ -134,7 +134,7 @@
         "endPos": 309,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "\t\t",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\r\n"
@@ -148,7 +148,7 @@
         "endPos": 363,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "\t\t",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\r\n"
@@ -162,7 +162,7 @@
         "endPos": 414,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "\t\t",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\r\n"
@@ -176,7 +176,7 @@
         "endPos": 475,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "		",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\r\n"
@@ -219,7 +219,7 @@
         "endPos": 585,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "\t\t",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\r\n"
@@ -275,7 +275,7 @@
         "endPos": 677,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "\t",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\r\n"
@@ -289,7 +289,7 @@
         "endPos": 758,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "\t\t",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\r\n"
@@ -303,7 +303,7 @@
         "endPos": 795,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "\t\t",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\r\n"
@@ -346,7 +346,7 @@
         "endPos": 828,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "\t\t",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\r\n"
@@ -360,7 +360,7 @@
         "endPos": 855,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "\t\t\t",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\r\n"
@@ -374,7 +374,7 @@
         "endPos": 860,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "\t\t",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\r\n"
@@ -388,7 +388,7 @@
         "endPos": 875,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "\t\t",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\r\n"
@@ -402,7 +402,7 @@
         "endPos": 890,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "\t\t",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\r\n"
@@ -416,7 +416,7 @@
         "endPos": 894,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "\t",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\r\n"
@@ -444,7 +444,7 @@
         "endPos": 941,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "\t",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\r\n"
@@ -458,7 +458,7 @@
         "endPos": 945,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "\t",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\r\n"
@@ -486,7 +486,7 @@
         "endPos": 1019,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "\t\t",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\r\n"
@@ -500,7 +500,7 @@
         "endPos": 1040,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "\t\t",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\r\n"
@@ -528,7 +528,7 @@
         "endPos": 1052,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\r\n"

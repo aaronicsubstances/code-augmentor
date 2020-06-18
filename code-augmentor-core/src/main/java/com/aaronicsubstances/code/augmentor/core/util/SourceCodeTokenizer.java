@@ -77,6 +77,8 @@ public class SourceCodeTokenizer {
         NESTED_LEVEL_MARKER
     }
 
+    private static final Pattern INDENT_PAT = Pattern.compile("^\\s*");
+
     private final List<DirectiveDescriptor> directiveDescriptors = new ArrayList<>();
     private final List<DirectiveDescriptor> nestedLevelMarkerDescriptors = new ArrayList<>();
 
@@ -233,83 +235,88 @@ public class SourceCodeTokenizer {
             String line = splitSource.get(i);
             String terminator = splitSource.get(i + 1);
             Token t = null;
-            if (line.trim().isEmpty()) {
-                t = new Token(Token.TYPE_BLANK);
-            }
-            if (t == null) {
-                Matcher m = lexerRegex.matcher(line);
-                if (m.find() && !TaskUtils.isEmpty(m.group(1))) {
-                    String directiveMarker = m.group(1);
-                    int directiveMarkerIndex = m.start(1);
-                    DirectiveDescriptor directiveDescriptor = new DirectiveDescriptor(
-                        directiveMarker, -1);
-                    int idx = Collections.binarySearch(directiveDescriptors, 
-                        directiveDescriptor);
-                    directiveDescriptor = directiveDescriptors.get(idx);
-                    switch (directiveDescriptor.type) {
-                        case GEN_CODE_START:
-                            t = createToken(Token.DIRECTIVE_TYPE_SKIP_CODE_START, directiveMarker, 
-                                directiveMarkerIndex, line);
-                            t.isGeneratedCodeMarker = true;                       
-                            break;
-                        case GEN_CODE_END:
-                            t = createToken(Token.DIRECTIVE_TYPE_SKIP_CODE_END, directiveMarker, 
-                                directiveMarkerIndex, line);
-                            t.isGeneratedCodeMarker = true;
-                            break;
-                        case INLINE_GEN_CODE:
-                            t = createToken(Token.DIRECTIVE_TYPE_SKIP_CODE_START, directiveMarker,
-                                directiveMarkerIndex ,line);
-                            t.isGeneratedCodeMarker = true;
-                            t.isInlineGeneratedCodeMarker = true;
-                            break;
-                        case SKIP_CODE_START:
-                            t = createToken(Token.DIRECTIVE_TYPE_SKIP_CODE_START, directiveMarker,
-                                directiveMarkerIndex, line);
-                            break;
-                        case SKIP_CODE_END:
-                            t = createToken(Token.DIRECTIVE_TYPE_SKIP_CODE_END, directiveMarker, 
-                                directiveMarkerIndex, line);
-                            break;
-                        case EMB_STR:
-                            t = createToken(Token.DIRECTIVE_TYPE_EMB_STRING, directiveMarker,
-                                directiveMarkerIndex, line);
-                            break;
-                        case EMB_JSON:
-                            t = createToken(Token.DIRECTIVE_TYPE_EMB_JSON, directiveMarker,
-                                directiveMarkerIndex, line);
-                            break;
-                        default:
-                            break;
-                    }
-                    if (t == null) {
-                        assert directiveDescriptor.type == DirectiveDescriptorType.AUG_CODE;
-                        t = createToken(Token.DIRECTIVE_TYPE_AUG_CODE, directiveMarker,
+            Matcher m = lexerRegex.matcher(line);
+            if (m.find() && !TaskUtils.isEmpty(m.group(1))) {
+                String directiveMarker = m.group(1);
+                int directiveMarkerIndex = m.start(1);
+                DirectiveDescriptor directiveDescriptor = new DirectiveDescriptor(
+                    directiveMarker, -1);
+                int idx = Collections.binarySearch(directiveDescriptors, 
+                    directiveDescriptor);
+                directiveDescriptor = directiveDescriptors.get(idx);
+                switch (directiveDescriptor.type) {
+                    case GEN_CODE_START:
+                        t = createToken(Token.DIRECTIVE_TYPE_SKIP_CODE_START, directiveMarker, 
                             directiveMarkerIndex, line);
-                        t.augCodeSpecIndex = directiveDescriptor.augCodeIndex;
-                        
-                        m = nestedLevelMarkerRegex.matcher(t.directiveContent);
-                        if (m.find() && !TaskUtils.isEmpty(m.group())) {
-                            String nestedLevelMarker = m.group();
-                            DirectiveDescriptor nestedLevelMarkerDescriptor = new DirectiveDescriptor(nestedLevelMarker,
-                                    -1);
-                            idx = Collections.binarySearch(nestedLevelMarkerDescriptors,
-                                nestedLevelMarkerDescriptor);
-                            nestedLevelMarkerDescriptor = nestedLevelMarkerDescriptors.get(idx);
-                            if (nestedLevelMarkerDescriptor.isNestedLevelStart) {
-                                t.nestedLevelStartMarker = nestedLevelMarker;
-                            }
-                            else {
-                                t.nestedLevelEndMarker = nestedLevelMarker;
-                            }
-                            t.directiveContent = t.directiveContent.substring(m.end());
+                        t.isGeneratedCodeMarker = true;                       
+                        break;
+                    case GEN_CODE_END:
+                        t = createToken(Token.DIRECTIVE_TYPE_SKIP_CODE_END, directiveMarker, 
+                            directiveMarkerIndex, line);
+                        t.isGeneratedCodeMarker = true;
+                        break;
+                    case INLINE_GEN_CODE:
+                        t = createToken(Token.DIRECTIVE_TYPE_SKIP_CODE_START, directiveMarker,
+                            directiveMarkerIndex ,line);
+                        t.isGeneratedCodeMarker = true;
+                        t.isInlineGeneratedCodeMarker = true;
+                        break;
+                    case SKIP_CODE_START:
+                        t = createToken(Token.DIRECTIVE_TYPE_SKIP_CODE_START, directiveMarker,
+                            directiveMarkerIndex, line);
+                        break;
+                    case SKIP_CODE_END:
+                        t = createToken(Token.DIRECTIVE_TYPE_SKIP_CODE_END, directiveMarker, 
+                            directiveMarkerIndex, line);
+                        break;
+                    case EMB_STR:
+                        t = createToken(Token.DIRECTIVE_TYPE_EMB_STRING, directiveMarker,
+                            directiveMarkerIndex, line);
+                        break;
+                    case EMB_JSON:
+                        t = createToken(Token.DIRECTIVE_TYPE_EMB_JSON, directiveMarker,
+                            directiveMarkerIndex, line);
+                        break;
+                    default:
+                        break;
+                }
+                if (t == null) {
+                    assert directiveDescriptor.type == DirectiveDescriptorType.AUG_CODE;
+                    t = createToken(Token.DIRECTIVE_TYPE_AUG_CODE, directiveMarker,
+                        directiveMarkerIndex, line);
+                    t.augCodeSpecIndex = directiveDescriptor.augCodeIndex;
+                    
+                    m = nestedLevelMarkerRegex.matcher(t.directiveContent);
+                    if (m.find() && !TaskUtils.isEmpty(m.group())) {
+                        String nestedLevelMarker = m.group();
+                        DirectiveDescriptor nestedLevelMarkerDescriptor = new DirectiveDescriptor(nestedLevelMarker,
+                                -1);
+                        idx = Collections.binarySearch(nestedLevelMarkerDescriptors,
+                            nestedLevelMarkerDescriptor);
+                        nestedLevelMarkerDescriptor = nestedLevelMarkerDescriptors.get(idx);
+                        if (nestedLevelMarkerDescriptor.isNestedLevelStart) {
+                            t.nestedLevelStartMarker = nestedLevelMarker;
                         }
+                        else {
+                            t.nestedLevelEndMarker = nestedLevelMarker;
+                        }
+                        t.directiveContent = t.directiveContent.substring(m.end());
                     }
                 }
             }
             if (t == null) {
-                // token must be of some other type.
-                t = new Token(Token.TYPE_OTHER);
+                String trimmedLine = line.trim();
+                if (trimmedLine.isEmpty()) {
+                    t = new Token(Token.TYPE_BLANK);
+                    t.indent = null;
+                }
+                else {
+                    // token must be of some other type.
+                    t = new Token(Token.TYPE_OTHER);
+                    Matcher indentM = INDENT_PAT.matcher(line);
+                    indentM.find();
+                    t.indent = indentM.group();
+                }
             }
             t.text = line;
             if (terminator != null) {

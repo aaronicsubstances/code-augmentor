@@ -129,23 +129,19 @@ public class CodeSnippetDescriptor {
         private int endDirectiveStartPos = 0;
         private int endDirectiveEndPos = 0;
         private boolean inline;
+        private String indent;
 
         public GeneratedCodeDescriptor() {
         }
 
         public GeneratedCodeDescriptor(int startDirectiveStartPos, int startDirectiveEndPos,
-                int endDirectiveStartPos, int endDirectiveEndPos) {
-            this(startDirectiveStartPos, startDirectiveEndPos, 
-                endDirectiveStartPos, endDirectiveEndPos, false);
-        }
-
-        public GeneratedCodeDescriptor(int startDirectiveStartPos, int startDirectiveEndPos,
-                int endDirectiveStartPos, int endDirectiveEndPos,
+                int endDirectiveStartPos, int endDirectiveEndPos, String indent,
                 boolean inline) {
             this.startDirectiveStartPos = startDirectiveStartPos;
             this.startDirectiveEndPos = startDirectiveEndPos;
             this.endDirectiveStartPos = endDirectiveStartPos;
             this.endDirectiveEndPos = endDirectiveEndPos;
+            this.indent = indent;
             this.inline = inline;
         }
 
@@ -181,6 +177,14 @@ public class CodeSnippetDescriptor {
             this.endDirectiveEndPos = endDirectiveEndPos;
         }
 
+        public String getIndent() {
+            return indent;
+        }
+
+        public void setIndent(String indent) {
+            this.indent = indent;
+        }
+
         public boolean isInline() {
             return inline;
         }
@@ -195,6 +199,7 @@ public class CodeSnippetDescriptor {
             int result = 1;
             result = prime * result + endDirectiveEndPos;
             result = prime * result + endDirectiveStartPos;
+            result = prime * result + ((indent == null) ? 0 : indent.hashCode());
             result = prime * result + (inline ? 1231 : 1237);
             result = prime * result + startDirectiveEndPos;
             result = prime * result + startDirectiveStartPos;
@@ -214,6 +219,11 @@ public class CodeSnippetDescriptor {
                 return false;
             if (endDirectiveStartPos != other.endDirectiveStartPos)
                 return false;
+            if (indent == null) {
+                if (other.indent != null)
+                    return false;
+            } else if (!indent.equals(other.indent))
+                return false;
             if (inline != other.inline)
                 return false;
             if (startDirectiveEndPos != other.startDirectiveEndPos)
@@ -226,8 +236,8 @@ public class CodeSnippetDescriptor {
         @Override
         public String toString() {
             return "GeneratedCodeDescriptor{endDirectiveEndPos=" + endDirectiveEndPos + ", endDirectiveStartPos="
-                    + endDirectiveStartPos + ", inline=" + inline + ", startDirectiveEndPos=" + startDirectiveEndPos
-                    + ", startDirectiveStartPos=" + startDirectiveStartPos + "}";
+                    + endDirectiveStartPos + ", indent=" + indent + ", inline=" + inline + ", startDirectiveEndPos="
+                    + startDirectiveEndPos + ", startDirectiveStartPos=" + startDirectiveStartPos + "}";
         }
     }
     

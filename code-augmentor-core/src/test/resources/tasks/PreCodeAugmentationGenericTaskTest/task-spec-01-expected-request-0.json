@@ -7,6 +7,7 @@
 			"id" : 1,
 			"directiveMarker" : "//JS",
 			"indent": "",
+            "genCodeIndent": "",
             "lineNumber": 29,
             "lineSeparator": "\r\n",
 			"blocks" : [{

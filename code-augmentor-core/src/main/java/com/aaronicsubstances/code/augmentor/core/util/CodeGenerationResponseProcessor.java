@@ -139,12 +139,12 @@ public class CodeGenerationResponseProcessor {
 
     /**
      * Determines effective indent to apply to generated code content.
-     * @param augCodeDescriptor descriptor of augmenting code corresponding to
-     * generated code object.
+     * @param snippetDescriptor descriptor of augmenting code and
+     * generated code sections corresponding to generated code object.
      * @param genCode generated code object.
      * @return indent to apply or empty string if no indent should be applied.
      */
-    public static String getEffectiveIndent(AugmentingCodeDescriptor augCodeDescriptor, 
+    public static String getEffectiveIndent(CodeSnippetDescriptor snippetDescriptor, 
             GeneratedCode genCode) {
         if (genCode.getIndent() != null) {
             return genCode.getIndent();
@@ -154,8 +154,17 @@ public class CodeGenerationResponseProcessor {
         if (genCode.isReplaceAugCodeDirectives() || genCode.isReplaceGenCodeDirectives()) {
             return "";
         }
-        // by default use aug code descriptor's indent.
-        return augCodeDescriptor.getIndent();
+        // by default use gen code descriptor's indent, and if it is not available use 
+        // aug code descriptor's indent.
+        GeneratedCodeDescriptor genCodeDescriptor = snippetDescriptor.getGeneratedCodeDescriptor();
+        String indent = null;
+        if (genCodeDescriptor != null) {
+            indent = genCodeDescriptor.getIndent();
+        }
+        if (indent == null) {
+            indent = snippetDescriptor.getAugmentingCodeDescriptor().getIndent();
+        }
+        return indent;
     }
 
     /**

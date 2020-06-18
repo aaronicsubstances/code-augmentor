@@ -280,7 +280,7 @@
         "endPos": 196,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\n"
@@ -336,7 +336,7 @@
         "endPos": 231,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\n"
@@ -350,7 +350,7 @@
         "endPos": 240,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\n"
@@ -364,7 +364,7 @@
         "endPos": 257,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "    ",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\n"
@@ -378,7 +378,7 @@
         "endPos": 263,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\n"
@@ -392,7 +392,7 @@
         "endPos": 272,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "    ",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\n"
@@ -406,7 +406,7 @@
         "endPos": 277,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": " ",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": "\n"
@@ -420,7 +420,7 @@
         "endPos": 281,
 
         "augCodeSpecIndex": 0,
-        "indent": null,
+        "indent": "",
         "directiveMarker": null,
         "directiveContent": null,
         "newline": null

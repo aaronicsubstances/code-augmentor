@@ -27,7 +27,8 @@
 			"generatedCodeDescriptor": {
 				"startDirectiveStartPos" : 64,
 				"endDirectiveEndPos" : 80,
-                "inline": true
+                "inline": true,
+                "indent": ""
 			}
 		},
         {

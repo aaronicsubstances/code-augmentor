@@ -2,8 +2,33 @@ package com.aaronicsubstances.code.augmentor.core.models;
 
 import java.util.List;
 
+/**
+ * Represents contents of an augmenting code section.
+ */
 public class AugmentingCode {
 
+    /**
+     * Represents a contiguous block of lines in an
+     * augmenting code section which is either an
+     * embedded string section, an embedded JSON
+     * section, or not an embedded section. A block can
+     * be of only one of these kinds.
+     * <p>
+     * In general a block of augmenting code is to be
+     * interpreted as programming language codes to be evaluated
+     * dynamically during processing stage. With data driven 
+     * programming paradigm, the first block (which cannot be 
+     * an embedded string or JSON data) is interpreted as the name of a function,
+     * and subsequent augmenting code blocks are ignored. Embedded
+     * string and JSON blocks then provide the arguments to 
+     * pass to the function.
+     * <p>
+     * An embedded string block means that the processing stage
+     * should treat it as a literal string value.
+     * <p>
+     * An embedded JSON block means that the processing stage should
+     * treat it as a JSON value.
+     */
     public static class Block {
         private String content;
         private boolean stringify;
@@ -22,6 +47,11 @@ public class AugmentingCode {
             return content;
         }
 
+        /**
+         * Sets the content of a block/subsection of
+         * an augmenting code section.
+         * @param content
+         */
         public void setContent(String content) {
             this.content = content;
         }
@@ -30,6 +60,12 @@ public class AugmentingCode {
             return stringify;
         }
 
+        /**
+         * Sets the property identifying an augmenting code
+         * section portion as embedded string data.
+         * @param stringify true if this block is an embedded string,
+         * false if it is not.
+         */
         public void setStringify(boolean stringify) {
             this.stringify = stringify;
         }
@@ -38,6 +74,12 @@ public class AugmentingCode {
             return jsonify;
         }
 
+        /**
+         * Sets the property identifying a block/subsection of
+         * augmenting code section as embedded JSON value.
+         * @param jsonify true if this block is an embedded JSON value,
+         * false if it is not.
+         */
         public void setJsonify(boolean jsonify) {
             this.jsonify = jsonify;
         }
@@ -91,6 +133,7 @@ public class AugmentingCode {
     private Integer matchingNestedLevelStartMarkerIndex;
     private Integer matchingNestedLevelEndMarkerIndex;
     private String externalNestedContent;
+    private String genCodeIndent;
 
     // used to attach results of processing aug codes.
     private transient List<Object> args;
@@ -107,6 +150,11 @@ public class AugmentingCode {
         return id;
     }
 
+    /**
+     * Sets the positive integer uniquely identifying an
+     * augmenting code section in its file.
+     * @param id
+     */
     public void setId(int id) {
         this.id = id;
     }
@@ -115,6 +163,10 @@ public class AugmentingCode {
         return blocks;
     }
 
+    /**
+     * Sets the blocks an augmenting code section is made up of.
+     * @param blocks
+     */
     public void setBlocks(List<Block> blocks) {
         this.blocks = blocks;
     }
@@ -123,6 +175,11 @@ public class AugmentingCode {
         return directiveMarker;
     }
 
+    /**
+     * Sets the text of the directive used to identify the
+     * first block of an augmenting code section.
+     * @param directiveMarker
+     */
     public void setDirectiveMarker(String directiveMarker) {
         this.directiveMarker = directiveMarker;
     }
@@ -131,6 +188,11 @@ public class AugmentingCode {
         return indent;
     }
 
+    /**
+     * Sets the whitespace prefix of the lines of an augmenting code
+     * section with the minimum length.
+     * @param indent
+     */
     public void setIndent(String indent) {
         this.indent = indent;
     }
@@ -139,6 +201,11 @@ public class AugmentingCode {
         return lineNumber;
     }
 
+    /**
+     * Sets the line number of the first line of an augmenting
+     * code section. Line numbers are positive.
+     * @param lineNumber
+     */
     public void setLineNumber(int lineNumber) {
         this.lineNumber = lineNumber;
     }
@@ -147,6 +214,13 @@ public class AugmentingCode {
         return lineSeparator;
     }
 
+    /**
+     * Sets the line terminator of the first line of an
+     * augmenting code section. Every line of an augmenting
+     * code section must end with a new line.
+     * @param lineSeparator the newline ending the first line of
+     * this augmenting code section.
+     */
     public void setLineSeparator(String lineSeparator) {
         this.lineSeparator = lineSeparator;
     }
@@ -155,30 +229,48 @@ public class AugmentingCode {
         return nestedLevelNumber;
     }
 
+    /**
+     * Sets the nested level number assigned to an
+     * augmenting code section. Nested level numbers start from 0
+     * and are increased by 1 after a augmenting code section
+     * with a nested level start marker is encountered. It is 
+     * decreased by 1 upon encountering an augmenting code section
+     * with a nested level end marker.
+     * @param nestedLevelNumber
+     */
     public void setNestedLevelNumber(int nestedLevelNumber) {
         this.nestedLevelNumber = nestedLevelNumber;
     }
 
-    /**
-     * Not serialized 
-     * @return args corresponding to blocks in which JSON blocks are parsed.
-     */
     public List<Object> getArgs() {
         return args;
     }
 
+    /**
+     * This property is not serialized into files, and is
+     * only available during processing stage. It is used to
+     * conveniently provide processing stage functions
+     * with the embedded string or JSON blocks, in which JSON blocks are parsed. 
+     * @param args 
+     */
     public void setArgs(List<Object> args) {
         this.args = args;
     }
 
-    /**
-     * Not serialized 
-     * @return processed status
-     */
     public boolean isProcessed() {
         return processed;
     }
 
+    /**
+     * This property is not serialized into files, and is only available
+     * during processing stage. When processing stage encounters this property
+     * set to true it skips over the augmenting code and does not pass it to
+     * any processing stage function. This property is also used internally
+     * during processing stage function to skip augmenting code objects
+     * which have been processed ahead of iteration time by processing stage scripts.
+     * 
+     * @param processed
+     */
     public void setProcessed(boolean processed) {
         this.processed = processed;
     }
@@ -187,6 +279,12 @@ public class AugmentingCode {
         return hasNestedLevelStartMarker;
     }
 
+    /**
+     * Sets the property that identifies an augmenting code
+     * section as a start of a new nested level.
+     * @param hasNestedLevelStartMarker true if this augmenting code
+     * section starts a nested level; false if it does not.
+     */
     public void setHasNestedLevelStartMarker(boolean hasNestedLevelStartMarker) {
         this.hasNestedLevelStartMarker = hasNestedLevelStartMarker;
     }
@@ -195,6 +293,12 @@ public class AugmentingCode {
         return hasNestedLevelEndMarker;
     }
 
+    /**
+     * Sets the property that identifies an augmenting code section as
+     * an end to the current nested level.
+     * @param hasNestedLevelEndMarker true if this augmenting code section
+     * ends current nested level; false if it does not.
+     */
     public void setHasNestedLevelEndMarker(boolean hasNestedLevelEndMarker) {
         this.hasNestedLevelEndMarker = hasNestedLevelEndMarker;
     }
@@ -203,6 +307,16 @@ public class AugmentingCode {
         return matchingNestedLevelStartMarkerIndex;
     }
 
+    /**
+     * This property is applicable only to augmenting code sections which
+     * have nested level end markers. It provides convenience to 
+     * processing stage by setting the index of the corresponding
+     * augmenting code section in containing file which started the nested level that is
+     * being ended.
+     * @param matchingNestedLevelStartMarkerIndex index of augmenting code section
+     * in the same file which started the nested level this object is ending;
+     * null if not applicable.
+     */
     public void setMatchingNestedLevelStartMarkerIndex(Integer matchingNestedLevelStartMarkerIndex) {
         this.matchingNestedLevelStartMarkerIndex = matchingNestedLevelStartMarkerIndex;
     }
@@ -211,6 +325,16 @@ public class AugmentingCode {
         return matchingNestedLevelEndMarkerIndex;
     }
 
+    /**
+     * This property is applicable only to augmenting code sections which
+     * have nested level start markers. It provides convenience to 
+     * processing stage by setting the index of the corresponding
+     * augmenting code section in containing file which ends the nested level that has
+     * being started.
+     * @param matchingNestedLevelEndMarkerIndex index of augmenting code section
+     * in the same file which ends the nested level this object is starting;
+     * null if not applicable.
+     */
     public void setMatchingNestedLevelEndMarkerIndex(Integer matchingNestedLevelEndMarkerIndex) {
         this.matchingNestedLevelEndMarkerIndex = matchingNestedLevelEndMarkerIndex;
     }
@@ -219,8 +343,29 @@ public class AugmentingCode {
         return externalNestedContent;
     }
 
+    /**
+     * Sets the portion of the file this augmenting code section belongs to
+     * from the end of this augmenting code, to just before the start of the augmenting
+     * code section which ends the nested level started by this object.
+     * For other objects not starting a nested level, set to null.
+     * @param externalNestedContent
+     */
     public void setExternalNestedContent(String externalNestedContent) {
         this.externalNestedContent = externalNestedContent;
+    }
+
+    public String getGenCodeIndent() {
+        return genCodeIndent;
+    }
+
+    /**
+     * Sets the whitespace prefix of the lines of the generated code section corresponding
+     * to an augmenting code section which has the shortest length. If augmenting code
+     * section does not currently have a generated code section, set to null.
+     * @param genCodeIndent
+     */
+    public void setGenCodeIndent(String genCodeIndent) {
+        this.genCodeIndent = genCodeIndent;
     }
 
     @Override
@@ -231,6 +376,7 @@ public class AugmentingCode {
         result = prime * result + ((blocks == null) ? 0 : blocks.hashCode());
         result = prime * result + ((directiveMarker == null) ? 0 : directiveMarker.hashCode());
         result = prime * result + ((externalNestedContent == null) ? 0 : externalNestedContent.hashCode());
+        result = prime * result + ((genCodeIndent == null) ? 0 : genCodeIndent.hashCode());
         result = prime * result + (hasNestedLevelEndMarker ? 1231 : 1237);
         result = prime * result + (hasNestedLevelStartMarker ? 1231 : 1237);
         result = prime * result + id;
@@ -275,6 +421,11 @@ public class AugmentingCode {
                 return false;
         } else if (!externalNestedContent.equals(other.externalNestedContent))
             return false;
+        if (genCodeIndent == null) {
+            if (other.genCodeIndent != null)
+                return false;
+        } else if (!genCodeIndent.equals(other.genCodeIndent))
+            return false;
         if (hasNestedLevelEndMarker != other.hasNestedLevelEndMarker)
             return false;
         if (hasNestedLevelStartMarker != other.hasNestedLevelStartMarker)
@@ -313,11 +464,12 @@ public class AugmentingCode {
     @Override
     public String toString() {
         return "AugmentingCode{args=" + args + ", blocks=" + blocks + ", directiveMarker=" + directiveMarker
-                + ", externalNestedContent=" + externalNestedContent + ", hasNestedLevelEndMarker="
-                + hasNestedLevelEndMarker + ", hasNestedLevelStartMarker=" + hasNestedLevelStartMarker + ", id=" + id
-                + ", indent=" + indent + ", lineNumber=" + lineNumber + ", lineSeparator=" + lineSeparator
-                + ", matchingNestedLevelEndMarkerIndex=" + matchingNestedLevelEndMarkerIndex
-                + ", matchingNestedLevelStartMarkerIndex=" + matchingNestedLevelStartMarkerIndex
-                + ", nestedLevelNumber=" + nestedLevelNumber + ", processed=" + processed + "}";
+                + ", externalNestedContent=" + externalNestedContent + ", genCodeIndent=" + genCodeIndent
+                + ", hasNestedLevelEndMarker=" + hasNestedLevelEndMarker + ", hasNestedLevelStartMarker="
+                + hasNestedLevelStartMarker + ", id=" + id + ", indent=" + indent + ", lineNumber=" + lineNumber
+                + ", lineSeparator=" + lineSeparator + ", matchingNestedLevelEndMarkerIndex="
+                + matchingNestedLevelEndMarkerIndex + ", matchingNestedLevelStartMarkerIndex="
+                + matchingNestedLevelStartMarkerIndex + ", nestedLevelNumber=" + nestedLevelNumber + ", processed="
+                + processed + "}";
     }
 }

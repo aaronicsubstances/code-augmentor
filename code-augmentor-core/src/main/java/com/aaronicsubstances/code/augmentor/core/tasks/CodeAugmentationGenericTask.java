@@ -192,7 +192,7 @@ public class CodeAugmentationGenericTask {
                 CodeGenerationResponseProcessor.repairSplitCrLfs(genCode.getContentParts());
 
                 // format content parts to consititute replacement text if possible.
-                String indent = CodeGenerationResponseProcessor.getEffectiveIndent(augCodeDescriptor, genCode);
+                String indent = CodeGenerationResponseProcessor.getEffectiveIndent(snippetDescriptor, genCode);
                 if (!indent.isEmpty()) {
                     CodeGenerationResponseProcessor.indentCode(genCode.getContentParts(), indent);
                 }

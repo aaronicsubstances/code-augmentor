@@ -200,6 +200,9 @@ public class PersistenceTest {
                                 codeSnippet.setMatchingNestedLevelEndMarkerIndex(
                                     TestResourceLoader.RAND_GEN.nextInt());
                             }
+                            if (TestResourceLoader.RAND_GEN.nextBoolean()) {
+                                codeSnippet.setGenCodeIndent(generateRandomString(false));
+                            }
                             
                             int blockCount = TestResourceLoader.RAND_GEN.nextInt(5);
                             for (int k = 0; k < blockCount; k++) {

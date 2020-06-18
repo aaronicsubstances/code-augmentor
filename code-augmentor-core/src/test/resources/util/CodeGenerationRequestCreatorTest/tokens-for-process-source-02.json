@@ -6,7 +6,8 @@
         "startPos": 0,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 29
+        "endPos": 29,
+        "indent": ""
     },
     {
         "text": "{\r\n",
@@ -15,7 +16,8 @@
         "startPos": 29,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 32
+        "endPos": 32,
+        "indent": ""
     },
     {
         "text": "\tString driverClass = \"oracle.jdbc.driver.OracleDriver\";\r\n",
@@ -24,7 +26,8 @@
         "startPos": 32,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 90
+        "endPos": 90,
+        "indent": "\t"
     },
     {
         "text": "\r\n",
@@ -42,7 +45,8 @@
         "startPos": 92,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 110
+        "endPos": 110,
+        "indent": "\t"
     },
     {
         "text": "\t\r\n",
@@ -60,7 +64,8 @@
         "startPos": 113,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 232
+        "endPos": 232,
+        "indent": "\t"
     },
     {
         "text": "\t{\r\n",
@@ -69,7 +74,8 @@
         "startPos": 232,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 236
+        "endPos": 236,
+        "indent": "\t"
     },
     {
         "text": "\t\tProperties props = new Properties();\r\n",
@@ -78,7 +84,8 @@
         "startPos": 236,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 276
+        "endPos": 276,
+        "indent": "\t\t"
     },
     {
         "text": "\t\tprops.load(fs);\r\n",
@@ -87,7 +94,8 @@
         "startPos": 276,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 295
+        "endPos": 295,
+        "indent": "\t\t"
     },
     {
         "text": "\t\tString url = props.getProperty(\"db.url\");\r\n",
@@ -96,7 +104,8 @@
         "startPos": 295,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 340
+        "endPos": 340,
+        "indent": "\t\t"
     },
     {
         "text": "\t\tString userName = props.getProperty(\"db.user\");\r\n",
@@ -105,7 +114,8 @@
         "startPos": 340,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 391
+        "endPos": 391,
+        "indent": "\t\t"
     },
     {
         "text": "\t\tString password = props.getProperty(\"db.password\");\r\n",
@@ -114,7 +124,8 @@
         "startPos": 391,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 446
+        "endPos": 446,
+        "indent": "\t\t"
     },
     {
         "text": "\t\tClass.forName(driverClass);\r\n",
@@ -123,7 +134,8 @@
         "startPos": 446,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 477
+        "endPos": 477,
+        "indent": "\t\t"
     },
     {
         "text": "\r\n",
@@ -141,7 +153,8 @@
         "startPos": 479,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 540
+        "endPos": 540,
+        "indent": "\t\t"
     },
     {
         "text": "\t}\r\n",
@@ -150,7 +163,8 @@
         "startPos": 540,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 544
+        "endPos": 544,
+        "indent": "\t"
     },
     {
         "text": "\t\r\n",
@@ -168,7 +182,8 @@
         "startPos": 547,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 602
+        "endPos": 602,
+        "indent": "\t"
     },
     {
         "text": "\t{\r\n",
@@ -177,7 +192,8 @@
         "startPos": 602,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 606
+        "endPos": 606,
+        "indent": "\t"
     },
     {
         "text": "\t\tPreparedStatement ps = con.prepareStatement(\"select SYSDATE from dual\");\r\n",
@@ -186,7 +202,8 @@
         "startPos": 606,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 682
+        "endPos": 682,
+        "indent": "\t\t"
     },
     {
         "text": "\t\tResultSet rs = ps.executeQuery();\r\n",
@@ -195,7 +212,8 @@
         "startPos": 682,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 719
+        "endPos": 719,
+        "indent": "\t\t"
     },
     {
         "text": "\t\t\r\n",
@@ -213,7 +231,8 @@
         "startPos": 723,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 744
+        "endPos": 744,
+        "indent": "\t\t"
     },
     {
         "text": "\t\t{\r\n",
@@ -222,7 +241,8 @@
         "startPos": 744,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 749
+        "endPos": 749,
+        "indent": "\t\t"
     },
     {
         "text": "\t\t\t// do the thing you do\r\n",
@@ -231,7 +251,8 @@
         "startPos": 749,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 776
+        "endPos": 776,
+        "indent": "\t\t\t"
     },
     {
         "text": "\t\t}\r\n",
@@ -240,7 +261,8 @@
         "startPos": 776,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 781
+        "endPos": 781,
+        "indent": "\t\t"
     },
     {
         "text": "\t\trs.close();\r\n",
@@ -249,7 +271,8 @@
         "startPos": 781,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 796
+        "endPos": 796,
+        "indent": "\t\t"
     },
     {
         "text": "\t\tps.close();\r\n",
@@ -258,7 +281,8 @@
         "startPos": 796,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 811
+        "endPos": 811,
+        "indent": "\t\t"
     },
     {
         "text": "\t}\r\n",
@@ -267,7 +291,8 @@
         "startPos": 811,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 815
+        "endPos": 815,
+        "indent": "\t"
     },
     {
         "text": "\r\n",
@@ -285,7 +310,8 @@
         "startPos": 817,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 859
+        "endPos": 859,
+        "indent": "\t"
     },
     {
         "text": "\t{\r\n",
@@ -294,7 +320,8 @@
         "startPos": 859,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 863
+        "endPos": 863,
+        "indent": "\t"
     },
     {
         "text": "\t\tOracleJdbcTest test = new OracleJdbcTest();\r\n",
@@ -303,7 +330,8 @@
         "startPos": 863,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 910
+        "endPos": 910,
+        "indent": "\t\t"
     },
     {
         "text": "\t\ttest.init();\r\n",
@@ -312,7 +340,8 @@
         "startPos": 910,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 926
+        "endPos": 926,
+        "indent": "\t\t"
     },
     {
         "text": "\t\ttest.fetch();\r\n",
@@ -321,7 +350,8 @@
         "startPos": 926,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 943
+        "endPos": 943,
+        "indent": "\t\t"
     },
     {
         "text": "\t}\r\n",
@@ -330,7 +360,8 @@
         "startPos": 943,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 947
+        "endPos": 947,
+        "indent": "\t"
     },
     {
         "text": "}\r\n",
@@ -339,6 +370,7 @@
         "startPos": 947,
         "type": 50,
         "newline": "\r\n",
-        "endPos": 950
+        "endPos": 950,
+        "indent": ""
     }
 ]

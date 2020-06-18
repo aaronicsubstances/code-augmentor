@@ -27,7 +27,8 @@
 				"startDirectiveStartPos" : 1084,
 				"startDirectiveEndPos" : 1094,
 				"endDirectiveStartPos" : 1150,
-				"endDirectiveEndPos" : 1157
+				"endDirectiveEndPos" : 1157,
+                "indent": "        "
 			}
 		},
 		{

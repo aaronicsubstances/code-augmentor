@@ -53,7 +53,7 @@ public class CodeGenerationResponseProcessorTest {
                 false, false, null), 
             new CodeSnippetDescriptor(
                 new AugmentingCodeDescriptor(1, 0, 12, null, 1, "\n"),
-                new GeneratedCodeDescriptor(32, 38, 40, 50, false)),
+                new GeneratedCodeDescriptor(32, 38, 40, 50, "", false)),
             new int[]{ 38, 40 }  },
 
             //0011
@@ -61,7 +61,7 @@ public class CodeGenerationResponseProcessorTest {
                 false, false, null), 
             new CodeSnippetDescriptor(
                 new AugmentingCodeDescriptor(1, 0, 12, null, 1, "\n"),
-                new GeneratedCodeDescriptor(32, 38, 40, 50, true)),
+                new GeneratedCodeDescriptor(32, 38, 40, 50, "", true)),
             new int[]{ 32, 50 }  },
 
             //0100
@@ -77,7 +77,7 @@ public class CodeGenerationResponseProcessorTest {
                 false, true, null), 
             new CodeSnippetDescriptor(
                 new AugmentingCodeDescriptor(1, 10, 12, null, 1, "\n"),
-                new GeneratedCodeDescriptor(32, 38, 40, 50, false)),
+                new GeneratedCodeDescriptor(32, 38, 40, 50, "", false)),
             new int[]{ 12, 50 }  },
 
             //0111
@@ -85,7 +85,7 @@ public class CodeGenerationResponseProcessorTest {
                 false, true, null), 
             new CodeSnippetDescriptor(
                 new AugmentingCodeDescriptor(1, 10, 12, null, 1, "\n"),
-                new GeneratedCodeDescriptor(32, 38, 40, 50, true)),
+                new GeneratedCodeDescriptor(32, 38, 40, 50, "", true)),
             new int[]{ 12, 50 }  },
             
             //1000
@@ -101,7 +101,7 @@ public class CodeGenerationResponseProcessorTest {
                 true, false, null), 
             new CodeSnippetDescriptor(
                 new AugmentingCodeDescriptor(1, 0, 12, null, 1, "\n"),
-                new GeneratedCodeDescriptor(32, 38, 40, 50, false)),
+                new GeneratedCodeDescriptor(32, 38, 40, 50, "", false)),
             new int[]{ 0, 12 }  },
 
             //1011
@@ -109,7 +109,7 @@ public class CodeGenerationResponseProcessorTest {
                 true, false, null), 
             new CodeSnippetDescriptor(
                 new AugmentingCodeDescriptor(1, 10, 12, null, 1, "\n"),
-                new GeneratedCodeDescriptor(32, 38, 40, 50, true)),
+                new GeneratedCodeDescriptor(32, 38, 40, 50, "", true)),
             new int[]{ 10, 12 }  },
 
             //1100
@@ -125,7 +125,7 @@ public class CodeGenerationResponseProcessorTest {
                 true, true, null), 
             new CodeSnippetDescriptor(
                 new AugmentingCodeDescriptor(1, 10, 12, null, 1, "\n"),
-                new GeneratedCodeDescriptor(32, 38, 40, 50, false)),
+                new GeneratedCodeDescriptor(32, 38, 40, 50, "", false)),
             new int[]{ 10, 50 }  },
 
             //1111
@@ -133,7 +133,7 @@ public class CodeGenerationResponseProcessorTest {
                 true, true, null), 
             new CodeSnippetDescriptor(
                 new AugmentingCodeDescriptor(1, 10, 12, null, 1, "\n"),
-                new GeneratedCodeDescriptor(32, 38, 40, 50, true)),
+                new GeneratedCodeDescriptor(32, 38, 40, 50, "", true)),
             new int[]{ 10, 50 }  }
         };
     }
@@ -165,13 +165,13 @@ public class CodeGenerationResponseProcessorTest {
             //0010
             { new GeneratedCode(1, false, null, false, 
                 false, false, null), 
-            new GeneratedCodeDescriptor(32, 38, 40, 50, false),
+            new GeneratedCodeDescriptor(32, 38, 40, 50, "", false),
             false  },
 
             //0011
             { new GeneratedCode(1, false, null, false, 
                 false, false, null), 
-            new GeneratedCodeDescriptor(32, 38, 40, 50, true),
+            new GeneratedCodeDescriptor(32, 38, 40, 50, "", true),
             true  },
 
             //0100
@@ -183,13 +183,13 @@ public class CodeGenerationResponseProcessorTest {
             //0110
             { new GeneratedCode(1, false, null, false, 
                 false, true, null), 
-            new GeneratedCodeDescriptor(32, 38, 40, 50, false),
+            new GeneratedCodeDescriptor(32, 38, 40, 50, "", false),
             false  },
 
             //0111
             { new GeneratedCode(1, false, null, false, 
                 false, true, null), 
-            new GeneratedCodeDescriptor(32, 38, 40, 50, true),
+            new GeneratedCodeDescriptor(32, 38, 40, 50, "", true),
             false  },
             
             //1000
@@ -201,13 +201,13 @@ public class CodeGenerationResponseProcessorTest {
             //1010
             { new GeneratedCode(1, false, null, false, 
                 true, false, null), 
-            new GeneratedCodeDescriptor(32, 38, 40, 50, false),
+            new GeneratedCodeDescriptor(32, 38, 40, 50, "", false),
             false },
 
             //1011
             { new GeneratedCode(1, false, null, false, 
                 true, false, null), 
-            new GeneratedCodeDescriptor(32, 38, 40, 50, true),
+            new GeneratedCodeDescriptor(32, 38, 40, 50, "", true),
             false  },
 
             //1100
@@ -219,13 +219,13 @@ public class CodeGenerationResponseProcessorTest {
             //1110
             { new GeneratedCode(1, false, null, false, 
                 true, true, null), 
-            new GeneratedCodeDescriptor(32, 38, 40, 50, false),
+            new GeneratedCodeDescriptor(32, 38, 40, 50, "", false),
             false  },
 
             //1111
             { new GeneratedCode(1, false, null, false, 
                 true, true, null), 
-            new GeneratedCodeDescriptor(32, 38, 40, 50, true),
+            new GeneratedCodeDescriptor(32, 38, 40, 50, "", true),
             false  }
         };
     }
@@ -269,8 +269,11 @@ public class CodeGenerationResponseProcessorTest {
 
     @Test(dataProvider = "createTestEffectiveIndentData")
     public void testGetEffectiveIndent(GeneratedCode genCode, 
-            AugmentingCodeDescriptor augCodeDescriptor, String expected) {
-        String actual = CodeGenerationResponseProcessor.getEffectiveIndent(augCodeDescriptor, genCode);
+            AugmentingCodeDescriptor augCodeDescriptor,
+            GeneratedCodeDescriptor genCodeDescriptor,
+            String expected) {
+        String actual = CodeGenerationResponseProcessor.getEffectiveIndent(
+            new CodeSnippetDescriptor(augCodeDescriptor, genCodeDescriptor), genCode);
         assertEquals(actual, expected);
     }
 
@@ -280,57 +283,80 @@ public class CodeGenerationResponseProcessorTest {
             { 
                 new GeneratedCode(0, true, " ", false, false, false, null),
                 new AugmentingCodeDescriptor(0, 0, 0, "", 0, null),
+                null,
                 " " 
             },
             { 
                 new GeneratedCode(0, true, null, false, false, false, null),
                 new AugmentingCodeDescriptor(0, 0, 0, "\t", 0, null),
+                null,
                 "\t" 
             },
             { 
                 new GeneratedCode(0, true, null, true, false, true, null),
                 new AugmentingCodeDescriptor(0, 0, 0, "\t", 0, null),
+                null,
                 "" 
             },
             { 
                 new GeneratedCode(0, false, " ", false, false, false, null),
                 new AugmentingCodeDescriptor(0, 0, 0, "", 0, null),
+                null,
                 " " 
             },
             { 
                 new GeneratedCode(0, false, "\t\t", false, false, false, null),
                 new AugmentingCodeDescriptor(0, 0, 0, "\t", 0, null),
+                null,
                 "\t\t" 
             },
             { 
                 new GeneratedCode(0, false, "", false, false, false, null),
                 new AugmentingCodeDescriptor(0, 0, 0, " ", 0, null),
+                null,
                 "" 
             },
             { 
                 new GeneratedCode(0, false, null, false, false, false, null),
                 new AugmentingCodeDescriptor(0, 0, 0, "", 0, null),
+                null,
                 ""
             },
             { 
                 new GeneratedCode(0, false, null, false, false, false, null),
                 new AugmentingCodeDescriptor(0, 0, 0, "\t", 0, null),
+                null,
                 "\t"
             },
             { 
                 new GeneratedCode(0, false, null, false, true, false, null),
                 new AugmentingCodeDescriptor(0, 0, 0, "\t", 0, null),
+                new GeneratedCodeDescriptor(),
                 ""
             },
             { 
                 new GeneratedCode(0, false, null, false, true, true, null),
                 new AugmentingCodeDescriptor(0, 0, 0, "\t", 0, null),
+                new GeneratedCodeDescriptor(),
                 ""
             },
             { 
                 new GeneratedCode(0, false, " ", false, true, true, null),
                 new AugmentingCodeDescriptor(0, 0, 0, "\t", 0, null),
+                null,
                 " "
+            },
+            { 
+                new GeneratedCode(0, false, null, false, false, false, null),
+                new AugmentingCodeDescriptor(0, 0, 0, "\t", 0, null),
+                new GeneratedCodeDescriptor(0, 0, 0, 0, "  ", false),
+                "  "
+            },
+            { 
+                new GeneratedCode(0, false, null, false, false, false, null),
+                new AugmentingCodeDescriptor(0, 0, 0, "  ", 0, null),
+                new GeneratedCodeDescriptor(0, 0, 0, 0, null, true),
+                "  "
             }
         };
     }

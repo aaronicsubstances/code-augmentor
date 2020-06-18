@@ -213,13 +213,13 @@
         "text": "//GS"
     },
     {
-        "text": "public Object//GS"
+        "text": "    public Object"
     },
     {
         "text": "    getUpdateConfig()"
     },
     {
-        "text": "//-+"
+        "text": "   r"
     },
     {
         "text": "//GE*/ "
