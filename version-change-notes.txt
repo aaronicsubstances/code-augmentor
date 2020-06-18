@@ -12,4 +12,3 @@ process-aug-code-tests/groovyw.bat:12
 gson deps:
 process-aug-code-tests/tests.groovy
 code-augmentor-app/src/test/projects/basic/main.groovy
-code-augmentor-app/src/test/projects/basic/tests.groovy

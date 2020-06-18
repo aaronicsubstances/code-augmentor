@@ -1,5 +1,7 @@
-parentTask.execute({ functionName, augCode, context ->
-    binding.codeAugmentorVariable_augCode = augCode
-    binding.codeAugmentorVariable_context = context
-    evaluate(functionName + '(codeAugmentorVariable_augCode, codeAugmentorVariable_context)')
-})
+parentTask.validationCallback = { functionName, augCode, context -> null }
+parentTask.evalFunction = { functionName, augCode, context ->
+    binding.augCode = augCode
+    binding.context = context
+    evaluate(functionName + '(augCode, context)')
+}
+parentTask.execute()
