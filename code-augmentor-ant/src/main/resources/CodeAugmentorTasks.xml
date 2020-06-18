@@ -2,5 +2,4 @@
 <antlib>
     <typedef name="code_aug_prepare" classname="com.aaronicsubstances.code.augmentor.ant.PrepareTask"/>
     <typedef name="code_aug_complete" classname="com.aaronicsubstances.code.augmentor.ant.CompletionTask"/>
-    <typedef name="code_aug_run" classname="com.aaronicsubstances.code.augmentor.ant.CodeAugmentorTask"/>
 </antlib>

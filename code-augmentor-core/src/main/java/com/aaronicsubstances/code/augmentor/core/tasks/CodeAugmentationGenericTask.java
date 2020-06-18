@@ -228,10 +228,9 @@ public class CodeAugmentationGenericTask {
                 continue;
             }
 
-            // If there are no code generation requests, or all code generation requests 
-            // for aug codes in file were skipped, don't generate file even if code change 
-            // detection is disabled.
-            if (skipCount == sourceFileDescriptor.getCodeSnippets().size()) {
+            // If all code generation requests for aug codes in file were skipped, 
+            // don't generate file even if code change detection is disabled.
+            if (skipCount > 0 && skipCount == sourceFileDescriptor.getCodeSnippets().size()) {
                 continue;
             }
 
