@@ -5,6 +5,10 @@ import java.util.List;
 import com.aaronicsubstances.code.augmentor.core.util.PersistenceUtil;
 import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 
+/**
+ * Represents a group of augmenting codes in a file identified by one set of augmenting
+ * code directives.
+ */
 public class SourceFileAugmentingCode {
     private int fileId;
     private String dir;
@@ -22,6 +26,11 @@ public class SourceFileAugmentingCode {
         return fileId;
     }
 
+    /**
+     * Sets positive integer id which uniquely identifies file among all files passed to
+     * preparation stage of Code Augmentor.
+     * @param fileId
+     */
     public void setFileId(int fileId) {
         this.fileId = fileId;
     }
@@ -30,6 +39,10 @@ public class SourceFileAugmentingCode {
         return dir;
     }
 
+    /**
+     * Sets the base directory of the file set a file of augmenting codes belongs to.
+     * @param dir
+     */
     public void setDir(String dir) {
         this.dir = dir;
     }
@@ -38,6 +51,11 @@ public class SourceFileAugmentingCode {
         return relativePath;
     }
 
+    /**
+     * Sets the path of a file of augmenting codes relative to base directory as defined by
+     * {@link #getDir()}
+     * @param relativePath
+     */
     public void setRelativePath(String relativePath) {
         this.relativePath = relativePath;
     }
@@ -46,6 +64,10 @@ public class SourceFileAugmentingCode {
         return augmentingCodes;
     }
 
+    /**
+     * Sets the augmenting codes of a file.
+     * @param augmentingCodes
+     */
     public void setAugmentingCodes(List<AugmentingCode> augmentingCodes) {
         this.augmentingCodes = augmentingCodes;
     }

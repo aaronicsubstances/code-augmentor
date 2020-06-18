@@ -2,8 +2,20 @@ package com.aaronicsubstances.code.augmentor.core.models;
 
 import java.util.List;
 
+/**
+ * Represents generated code objects which constitutes the contents of
+ * the output file of the processing stage.
+ */
 public class GeneratedCode {
 
+    /**
+     * Represents a section of generated code content. The purpose of this
+     * class is to be able to specify sections of generated code content which
+     * should remain intact and not be changed during indentation of code
+     * in completion stage of Code Augmentor. This is because 
+     * during indentation a leading indent may be inserted in a section of
+     * generated code.
+     */
     public static class ContentPart {
         private String content;
         private boolean exactMatch;
@@ -29,6 +41,12 @@ public class GeneratedCode {
             return exactMatch;
         }
 
+        /**
+         * Sets property which exempts content from any kind of permissible
+         * modification such as by indentation.
+         * @param exactMatch true to exempt content from indentation; 
+         * false to let the possibility of applying leading indent remain.
+         */
         public void setExactMatch(boolean exactMatch) {
             this.exactMatch = exactMatch;
         }
@@ -99,6 +117,11 @@ public class GeneratedCode {
         return id;
     }
 
+    /**
+     * Sets the id of the augmenting code object to which this generated code
+     * object corresponds.
+     * @param id
+     */
     public void setId(int id) {
         this.id = id;
     }
@@ -107,6 +130,14 @@ public class GeneratedCode {
         return indent;
     }
 
+    /**
+     * Sets the indent to apply to the generated code object. If empty string,
+     * then no indentation will be applied. If null, then by default generated code section's
+     * indent will be applied if that section exists with an indent. 
+     * If no indent could be found from a generated code section, then
+     * as a last resort indent of augmenting code section will be used.
+     * @param indent
+     */
     public void setIndent(String indent) {
         this.indent = indent;
     }
@@ -115,6 +146,13 @@ public class GeneratedCode {
         return disableEnsureEndingNewline;
     }
 
+    /**
+     * Sets the property which prevents appending newline to generated code
+     * content not ending with one. By default completion stage ensures a 
+     * generated code ends with a newline by adding one when no trailing newline
+     * is found.
+     * @param disableEnsureEndingNewline
+     */
     public void setDisableEnsureEndingNewline(boolean disableEnsureEndingNewline) {
         this.disableEnsureEndingNewline = disableEnsureEndingNewline;
     }
@@ -123,6 +161,15 @@ public class GeneratedCode {
         return skipped;
     }
 
+    /**
+     * Sets the property which communicates to completion stage that it should skip
+     * getting and merging generated code for an augmenting code section. If
+     * a file has augmenting codes, and all of them are skipped, then completion stage
+     * will never generate a file for it even if code change detection is disabled. This
+     * feature enables one to supply non-source files such as config files to processing stage,
+     * to set up global and file scopes of helper context object and perform some initialization.
+     * @param skipped
+     */
     public void setSkipped(boolean skipped) {
         this.skipped = skipped;
     }
@@ -131,6 +178,13 @@ public class GeneratedCode {
         return replaceAugCodeDirectives;
     }
 
+    /**
+     * Sets property which directs completion stage to include augmenting code
+     * section itself in the range of source file to be replaced by generated
+     * code section. By default only generated code sections are targeted for
+     * replacement.
+     * @param replaceAugCodeDirectives
+     */
     public void setReplaceAugCodeDirectives(boolean replaceAugCodeDirectives) {
         this.replaceAugCodeDirectives = replaceAugCodeDirectives;
     }
@@ -139,6 +193,22 @@ public class GeneratedCode {
         return replaceGenCodeDirectives;
     }
 
+    /**
+     * Sets property which directs completion stage to include generated code
+     * section itself in the range of source file to be replaced by generated
+     * code section. This resembles the default in which only generated code sections are
+     * targeted for replacement. It is different in the following way.
+     * <ul>
+     *  <li>It can however be combined with {@link #setReplaceAugCodeDirectives()}.
+     *  <li>It can also be used to prevent default wrapping of generated code content with
+     * generated code start/end directives. If using inline generated code directives,
+     * then this is the property that must be used to allow processing stage to dictate
+     * how generated code should wrapped.
+     *  <li>The range implied by this property includes the blank lines allowable between
+     * an augmenting code section and its generated code section.
+     * </ul>
+     * @param replaceGenCodeDirectives
+     */
     public void setReplaceGenCodeDirectives(boolean replaceGenCodeDirectives) {
         this.replaceGenCodeDirectives = replaceGenCodeDirectives;
     }
@@ -147,10 +217,17 @@ public class GeneratedCode {
         return contentParts;
     }
 
+    /**
+     * Sets the parts of a generated code content.
+     */
     public void setContentParts(List<ContentPart> contentParts) {
         this.contentParts = contentParts;
     }
 
+    /**
+     * Gets generated content concatenated from content parts.
+     * @return combined generated code content
+     */
 	public String getWholeContent() {
         StringBuilder wholeContent = new StringBuilder();
         for (ContentPart part : contentParts) {

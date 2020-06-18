@@ -117,8 +117,7 @@ public class CodeGenerationResponseProcessor {
      * that the carriage return character ends a content part, and the following content part
      * starts with the line feed character. 
      * <p>
-     * The {@link #indentCode(List, String)} method and the similarity algorithm
-     * implemented by {@link GeneratedCodeSimilarityChecker} both depend on the absence of 
+     * The {@link #indentCode(List, String)} method depend on the absence of 
      * split CR-LFs.
      * 
      * @param contentParts content parts to be modified.

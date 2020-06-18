@@ -93,29 +93,6 @@ task('codeChangePresentButPass', type: JavaExec) {
     enableAssertions = true
 }
 
-task('groovyBasedTests', type: Exec) {
-    final boolean isRunningOnWindows = System.getProperty("os.name") =~ /(?i)windows/
-
-    def fsep = File.separator
-    workingDir "src${fsep}test${fsep}projects${fsep}basic"
-
-    def groovyCp = isRunningOnWindows ? "\"" : "'"
-    groovyCp += file("../code-augmentor-core/build/libs/code-augmentor-core-${version}.jar")
-    groovyCp += File.pathSeparator
-    groovyCp += file("../code-augmentor-ant/build/libs/code-augmentor-ant-${version}.jar")
-    groovyCp += (isRunningOnWindows ? "\"" : "'")
-
-    def cmdPlusArgs = []
-    if (isRunningOnWindows) {
-        cmdPlusArgs << 'cmd' << '/c'
-    }
-    cmdPlusArgs << 'groovy'
-    cmdPlusArgs << '-cp'
-    cmdPlusArgs << groovyCp
-    cmdPlusArgs << 'tests.groovy'
-    commandLine cmdPlusArgs
-}
-
 def createAntCallArgs(antTarget) {
     def fsep = File.separator
     def args = [ "-f", "src${fsep}test${fsep}projects${fsep}basic${fsep}build.xml" ]
@@ -125,12 +102,8 @@ def createAntCallArgs(antTarget) {
     return args
 }
 
-// let groovy run after at least one of the ant tasks so that grapes cache is refreshed for use.
-groovyBasedTests.mustRunAfter doNotDetectCodeChange
-
 task('testant', dependsOn: ['compileJava', 'publishProjectDependencies',
-        'doNotDetectCodeChange', 'codeChangeAbsent', 'codeChangePresentSoFail', 'codeChangePresentButPass',
-        'groovyBasedTests'])
+        'doNotDetectCodeChange', 'codeChangeAbsent', 'codeChangePresentSoFail', 'codeChangePresentButPass'])
 testant.mustRunAfter publishProjectDependencies
 
 task('alltests', dependsOn: [ 'build', 'testant'])

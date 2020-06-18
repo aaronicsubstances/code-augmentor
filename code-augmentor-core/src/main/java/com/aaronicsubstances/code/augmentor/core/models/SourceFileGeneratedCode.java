@@ -5,6 +5,10 @@ import java.util.List;
 import com.aaronicsubstances.code.augmentor.core.util.PersistenceUtil;
 import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 
+/**
+ * Represents collection of generated codes for a source code file during
+ * processing stage.
+ */
 public class SourceFileGeneratedCode {
     private int fileId;
     private List<GeneratedCode> generatedCodes;
@@ -21,6 +25,11 @@ public class SourceFileGeneratedCode {
         return fileId;
     }
 
+    /**
+     * Sets the identifier of the source file whose augmenting codes led to
+     * the generated codes contained in this object.
+     * @param fileId
+     */
     public void setFileId(int fileId) {
         this.fileId = fileId;
     }
@@ -29,6 +38,11 @@ public class SourceFileGeneratedCode {
         return generatedCodes;
     }
 
+    /**
+     * Sets the generated codes corresponding to augmenting codes
+     * of a source file.
+     * @param generatedCodes
+     */
     public void setGeneratedCodes(List<GeneratedCode> generatedCodes) {
         this.generatedCodes = generatedCodes;
     }

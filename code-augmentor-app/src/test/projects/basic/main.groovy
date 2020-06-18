@@ -37,16 +37,18 @@ parentTask.jsonParseFunction = {
     return jsonParser.parseText(it)
 }
 final FUNCTION_NAME_REGEX = /^((Snippets|Worker)\.)[a-zA-Z]\w*$/
-parentTask.execute({ functionName, augCode, context ->
+parentTask.validationCallback = { functionName, augCode, context ->
+    if (functionName ==~ FUNCTION_NAME_REGEX) {
+        return null
+    }
+    return "Invalid/Unsupported function name: " + functionName
+}
+parentTask.evalFunction = { functionName, augCode, context ->
     binding.augCode = augCode
     binding.context = context
-    if (functionName ==~ FUNCTION_NAME_REGEX) {
-        return evaluate(functionName + '(augCode, context)')
-    }
-    else {
-        throw new RuntimeException("Invalid/Unsupported function name: " + functionName)
-    }
-})
+    return evaluate(functionName + '(augCode, context)')
+}
+parentTask.execute()
 if (parentTask.allErrors) {
     String errMsg = PluginUtils.stringifyPossibleScriptErrors(parentTask.allErrors, true,
         [ getClass().name ], null)

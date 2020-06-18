@@ -380,7 +380,7 @@ public class CodeAugmentationGenericTask {
      * Sets this property with the prepFile output of the prepare stage.
      * @param prepFile
      * 
-     * @see {@link PreCodeAugmentationGenericTask#setPrepFile(File)}
+     * @see PreCodeAugmentationGenericTask#setPrepFile(File)
      */
     public void setPrepFile(File prepFile) {
         this.prepFile = prepFile;
@@ -396,7 +396,7 @@ public class CodeAugmentationGenericTask {
      * output files from the processing stage.
      * @param generatedCodeFiles
      * 
-     * @see {@link ProcessCodeGenericTask#setOutputFile(File)}
+     * @see ProcessCodeGenericTask#setOutputFile(File)
      */
     public void setGeneratedCodeFiles(List<File> generatedCodeFiles) {
         this.generatedCodeFiles = generatedCodeFiles;

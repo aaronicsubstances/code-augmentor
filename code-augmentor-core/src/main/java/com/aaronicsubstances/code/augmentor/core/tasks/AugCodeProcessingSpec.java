@@ -28,7 +28,7 @@ public class AugCodeProcessingSpec {
      * instance's directives. This will be used as input to the processing stage.
      * @param destFile
      * 
-     * @see {@link ProcessCodeGenericTask#setInputFile(File)}
+     * @see ProcessCodeGenericTask#setInputFile(File)
      */
     public void setDestFile(File destFile) {
         this.destFile = destFile;

@@ -15,6 +15,9 @@ import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.core.util.PersistenceUtil;
 
+/**
+ * Represents output file of processing stage of Code Augmentor.
+ */
 public class CodeGenerationResponse {
 
     static class Header {

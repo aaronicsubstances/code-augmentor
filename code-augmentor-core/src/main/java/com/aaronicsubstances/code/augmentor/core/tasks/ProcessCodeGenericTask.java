@@ -93,7 +93,7 @@ public class ProcessCodeGenericTask {
     private File outputFile;
     private JsonParseFunction jsonParseFunction;
     private ValidationCallback validationCallback;
-    private final ValidationCallback defaultValidationCallback;
+    private ValidationCallback defaultValidationCallback;
     private EvalFunction evalFunction;
 
     // output properties
@@ -222,12 +222,19 @@ public class ProcessCodeGenericTask {
             String functionName, AugmentingCode augCode, ProcessCodeContext context, 
             List<Throwable> errors) {
         try {
-            String validationError = (validationCallback != null ?
-                    validationCallback : defaultValidationCallback).validate(functionName, 
-                augCode, context);
+            String validationError = null;
+            boolean validByDefault = false;
+            if (defaultValidationCallback != null) {
+                validationError = defaultValidationCallback.validate(functionName,
+                    augCode, context);
+                validByDefault = validationError == null;
+            }
+            if (!validByDefault) { 
+                validationError = validationCallback.validate(functionName, 
+                    augCode, context);
+            }
             if (validationError != null) {                    
-                GenericTaskException evalEx = createException(context,
-                    "Invalid arguments to evalFunction: " + validationError, null);
+                GenericTaskException evalEx = createException(context, validationError, null);
                 errors.add(evalEx);
                 return Arrays.asList();
             }
@@ -388,13 +395,12 @@ public class ProcessCodeGenericTask {
         this.validationCallback = validationCallback;
     }
 
-    /**
-     * Gets default validation callback which will be used if none is set with
-     * {@link #setValidationCallback(ValidationCallback)}
-     * @return
-     */
     public ValidationCallback getDefaultValidationCallback() {
         return defaultValidationCallback;
+    }
+
+    public void setDefaultValidationCallback(ValidationCallback defaultValidationCallback) {
+        this.defaultValidationCallback = defaultValidationCallback;
     }
 
     public EvalFunction getEvalFunction() {

@@ -15,6 +15,9 @@ import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.core.util.PersistenceUtil;
 
+/**
+ * Represents input file to processing stage of Code Augmentor.
+ */
 public class CodeGenerationRequest {
 
     static class Header {
@@ -47,6 +50,12 @@ public class CodeGenerationRequest {
         return genCodeStartDirective;
     }
 
+    /**
+     * Sets in {@link com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeContext#getHeader()}
+     * the first of generated code start directives used to configure preparation stage. Set to 
+     * null if no such directives were provided.
+     * @param genCodeStartDirective
+     */
     public void setGenCodeStartDirective(String genCodeStartDirective) {
         this.genCodeStartDirective = genCodeStartDirective;
     }
@@ -55,6 +64,12 @@ public class CodeGenerationRequest {
         return genCodeEndDirective;
     }
 
+    /**
+     * Sets in {@link com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeContext#getHeader()}
+     * the first of generated code end directives used to configure preparation stage. Set to 
+     * null if no such directives were provided.
+     * @param genCodeEndDirective
+     */
     public void setGenCodeEndDirective(String genCodeEndDirective) {
         this.genCodeEndDirective = genCodeEndDirective;
     }
@@ -63,6 +78,12 @@ public class CodeGenerationRequest {
         return embeddedStringDirective;
     }
 
+    /**
+     * Sets in {@link com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeContext#getHeader()}
+     * the first of embedded string directives used to configure preparation stage. Set to 
+     * null if no such directives were provided.
+     * @param embeddedStringDirective
+     */
     public void setEmbeddedStringDirective(String embeddedStringDirective) {
         this.embeddedStringDirective = embeddedStringDirective;
     }
@@ -71,6 +92,12 @@ public class CodeGenerationRequest {
         return embeddedJsonDirective;
     }
 
+    /**
+     * Sets in {@link com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeContext#getHeader()}
+     * the first of embedded JSON directives used to configure preparation stage. Set to 
+     * null if no such directives were provided.
+     * @param embeddedJsonDirective
+     */
     public void setEmbeddedJsonDirective(String embeddedJsonDirective) {
         this.embeddedJsonDirective = embeddedJsonDirective;
     }
@@ -79,6 +106,12 @@ public class CodeGenerationRequest {
         return skipCodeStartDirective;
     }
 
+    /**
+     * Sets in {@link com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeContext#getHeader()}
+     * the first of skip start directives used to configure preparation stage. Set to 
+     * null if no such directives were provided.
+     * @param skipCodeStartDirective
+     */
     public void setSkipCodeStartDirective(String skipCodeStartDirective) {
         this.skipCodeStartDirective = skipCodeStartDirective;
     }
@@ -87,6 +120,12 @@ public class CodeGenerationRequest {
         return skipCodeEndDirective;
     }
 
+    /**
+     * Sets in {@link com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeContext#getHeader()}
+     * the first of skip end directives used to configure preparation stage. Set to 
+     * null if no such directives were provided.
+     * @param skipCodeEndDirective
+     */
     public void setSkipCodeEndDirective(String skipCodeEndDirective) {
         this.skipCodeEndDirective = skipCodeEndDirective;
     }
@@ -95,6 +134,13 @@ public class CodeGenerationRequest {
         return augCodeDirective;
     }
 
+    /**
+     * Sets in {@link com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeContext#getHeader()}
+     * the first of aug code directives used to configure preparation stage and
+     * associated with this code generation request. Set to 
+     * null if no such directives were provided.
+     * @param augCodeDirective
+     */
     public void setAugCodeDirective(String augCodeDirective) {
         this.augCodeDirective = augCodeDirective;
     }
@@ -103,6 +149,12 @@ public class CodeGenerationRequest {
         return inlineGenCodeDirective;
     }
 
+    /**
+     * Sets in {@link com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeContext#getHeader()}
+     * the first of inline generated code directives used to configure preparation stage. Set to 
+     * null if no such directives were provided.
+     * @param inlineGenCodeDirective
+     */
     public void setInlineGenCodeDirective(String inlineGenCodeDirective) {
         this.inlineGenCodeDirective = inlineGenCodeDirective;
     }
@@ -111,6 +163,12 @@ public class CodeGenerationRequest {
         return nestedLevelStartMarker;
     }
 
+    /**
+     * Sets in {@link com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeContext#getHeader()}
+     * the first of nested level start markers used to configure preparation stage. Set to 
+     * null if no such directives were provided.
+     * @param nestedLevelStartMarker
+     */
     public void setNestedLevelStartMarker(String nestedLevelStartMarker) {
         this.nestedLevelStartMarker = nestedLevelStartMarker;
     }
@@ -119,6 +177,12 @@ public class CodeGenerationRequest {
         return nestedLevelEndMarker;
     }
 
+    /**
+     * Sets in {@link com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeContext#getHeader()}
+     * the first of nested level end markers used to configure preparation stage. Set to 
+     * null if no such directives were provided.
+     * @param nestedLevelEndMarker
+     */
     public void setNestedLevelEndMarker(String nestedLevelEndMarker) {
         this.nestedLevelEndMarker = nestedLevelEndMarker;
     }

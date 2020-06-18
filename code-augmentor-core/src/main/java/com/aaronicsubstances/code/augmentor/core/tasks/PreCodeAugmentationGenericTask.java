@@ -320,7 +320,7 @@ public class PreCodeAugmentationGenericTask {
      * previous line as the last line of a generated code section.
      * @param genCodeEndDirectives
      * 
-     * @see {@link #setGenCodeStartDirectives(List)}
+     * @see #setGenCodeStartDirectives(List)
      */
     public void setGenCodeEndDirectives(List<String> genCodeEndDirectives) {
         this.genCodeEndDirectives = genCodeEndDirectives;
@@ -341,7 +341,7 @@ public class PreCodeAugmentationGenericTask {
      * A contiguous set of such lines will be treated together as one embedded string.
      * @param embeddedStringDirectives
      * 
-     * @see {@link #setAugCodeProcessingSpecs(List)}
+     * @see #setAugCodeProcessingSpecs(List)
      */
     public void setEmbeddedStringDirectives(List<String> embeddedStringDirectives) {
         this.embeddedStringDirectives = embeddedStringDirectives;
@@ -362,7 +362,7 @@ public class PreCodeAugmentationGenericTask {
      * A contiguous set of such lines will be treated together as one embedded JSON value.
      * @param embeddedJsonDirectives
      * 
-     * @see {@link #setAugCodeProcessingSpecs(List)}
+     * @see #setAugCodeProcessingSpecs(List)
      */
 	public void setEmbeddedJsonDirectives(List<String> embeddedJsonDirectives) {
         this.embeddedJsonDirectives = embeddedJsonDirectives;
@@ -396,7 +396,7 @@ public class PreCodeAugmentationGenericTask {
      * sections again.
      * @param skipCodeEndDirectives
      * 
-     * @see {@link #skipCodeStartDirectives}
+     * @see #setSkipCodeStartDirectives(List)
      */
     public void setSkipCodeEndDirectives(List<String> skipCodeEndDirectives) {
         this.skipCodeEndDirectives = skipCodeEndDirectives;
@@ -437,7 +437,7 @@ public class PreCodeAugmentationGenericTask {
      * be used to end the nested level with 0 or an error occurs.
      * @param nestedLevelStartMarkers
      * 
-     * @see {@link #setAugCodeProcessingSpecs(List)}
+     * @see #setAugCodeProcessingSpecs(List)
      */
     public void setNestedLevelStartMarkers(List<String> nestedLevelStartMarkers) {
         this.nestedLevelStartMarkers = nestedLevelStartMarkers;
@@ -461,7 +461,7 @@ public class PreCodeAugmentationGenericTask {
      * that a corresponding nested level start marker was not previously seen.
      * @param nestedLevelEndMarkers
      * 
-     * @see {@link #setAugCodeProcessingSpecs(List)}
+     * @see #setAugCodeProcessingSpecs(List)
      */
     public void setNestedLevelEndMarkers(List<String> nestedLevelEndMarkers) {
         this.nestedLevelEndMarkers = nestedLevelEndMarkers;

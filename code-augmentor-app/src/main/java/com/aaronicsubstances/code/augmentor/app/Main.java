@@ -2,7 +2,6 @@ package com.aaronicsubstances.code.augmentor.app;
 
 import java.io.File;
 
-import com.aaronicsubstances.code.augmentor.ant.CodeAugmentorTask;
 import com.aaronicsubstances.code.augmentor.ant.CompletionTask;
 import com.aaronicsubstances.code.augmentor.ant.PrepareTask;
 
@@ -98,7 +97,6 @@ public class Main {
     }
 
     private static void setUpTaskDefinitions(Project antProject) {
-        antProject.addTaskDefinition("code_aug_run", CodeAugmentorTask.class);
         antProject.addTaskDefinition("code_aug_prepare", PrepareTask.class);
         antProject.addTaskDefinition("code_aug_complete", CompletionTask.class);
     }
