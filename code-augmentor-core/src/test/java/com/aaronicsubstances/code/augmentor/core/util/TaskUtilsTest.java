@@ -70,7 +70,7 @@ public class TaskUtilsTest {
 
     @Test(dataProvider = "createTestSplitIntoLinesData")
     public void testSplitIntoLines(String text, List<String> expected) {
-        List<String> actual = TaskUtils.splitIntoLines(text);
+        List<String> actual = TaskUtils.splitIntoLines(text, true);
         assertEquals(actual, expected);
     }
 
@@ -82,6 +82,23 @@ public class TaskUtilsTest {
             { "abc", Arrays.asList("abc", null) },
             { "ab\nc", Arrays.asList("ab", "\n", "c", null) } ,
             { "ab\nc\r\n", Arrays.asList("ab", "\n", "c", "\r\n") },
+        };
+    }
+
+    @Test(dataProvider = "createTestSplitIntoLinesCompactData")
+    public void testSplitIntoLinesCompact(String text, List<String> expected) {
+        List<String> actual = TaskUtils.splitIntoLines(text, false);
+        assertEquals(actual, expected);
+    }
+
+    @DataProvider 
+    public Object[][] createTestSplitIntoLinesCompactData() {
+        return new Object[][]{
+            { "", Arrays.asList() },
+            { "\n", Arrays.asList("\n") },
+            { "abc", Arrays.asList("abc") },
+            { "ab\nc", Arrays.asList("ab\n", "c") } ,
+            { "ab\nc\r\n", Arrays.asList("ab\n", "c\r\n") },
         };
     }
 

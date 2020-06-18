@@ -1,8 +1,11 @@
 package com.aaronicsubstances.code.augmentor.core.tasks;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.time.Duration;
 import java.time.Instant;
@@ -22,6 +25,7 @@ import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode;
 import com.aaronicsubstances.code.augmentor.core.models.PreCodeAugmentationResult;
 import com.aaronicsubstances.code.augmentor.core.models.SourceFileDescriptor;
 import com.aaronicsubstances.code.augmentor.core.util.CodeGenerationResponseProcessor;
+import com.aaronicsubstances.code.augmentor.core.util.Diff;
 import com.aaronicsubstances.code.augmentor.core.util.GeneratedCodeFetcher;
 import com.aaronicsubstances.code.augmentor.core.util.SourceCodeTransformer;
 import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
@@ -35,6 +39,11 @@ public class CodeAugmentationGenericTask {
      * Name of file used to store generated files when code change detection is enabled.
      */
     public static final String CHANGE_SUMMARY_FILE_NAME = "CHANGE-SUMMARY.txt";
+    
+    /**
+     * Name of file used to store diff of generated files when code change detection is enabled.
+     */
+    public static final String CHANGE_DETAILS_FILE_NAME = "CHANGE-DETAILS.txt";
 
     /**
      * Name of file used to store generated files when code change detection is disabled.
@@ -57,8 +66,9 @@ public class CodeAugmentationGenericTask {
     // output properties
     private final List<Throwable> allErrors = new ArrayList<>();
     private File changeSummaryFile;
+    private File changeDetailsFile;
     private boolean codeChangeDetected;
-    
+
     /**
      * Runs completion stage. Will be successful only if allErrors property
      * is empty after completion. If code change detection is enabled,
@@ -94,6 +104,14 @@ public class CodeAugmentationGenericTask {
             WITHOUT_CHANGE_DETECTION_SUMMARY_FILE_NAME : CHANGE_SUMMARY_FILE_NAME);
         CodeChangeSummary resultChangeSummary = new CodeChangeSummary();
         Object resultChangeSummaryWriter = resultChangeSummary.beginSerialize(changeSummaryFile);
+
+        BufferedWriter changeDiffWriter = null;
+        changeDetailsFile = null;
+        if (!codeChangeDetectionDisabled) {
+            changeDetailsFile = new File(destDir, CHANGE_DETAILS_FILE_NAME);
+            changeDiffWriter = new BufferedWriter(new OutputStreamWriter(
+                new FileOutputStream(changeDetailsFile), charset));
+        }
 
         SourceFileDescriptor sourceFileDescriptor;
         while ((sourceFileDescriptor = SourceFileDescriptor.deserialize(resultReader)) != null) {
@@ -251,12 +269,26 @@ public class CodeAugmentationGenericTask {
 
                 // write out change summary.
                 // normalize file paths for intended shell scripts.
+                File normalizedSourceDir = new File(sourceFileDescriptor.getDir()).getCanonicalFile();
                 new CodeChangeSummary.ChangedFile(sourceFileDescriptor.getRelativePath(),
-                    new File(sourceFileDescriptor.getDir()).getCanonicalPath(),
+                    normalizedSourceDir.getPath(),
                     destSubDir.getCanonicalPath()).serialize(resultChangeSummaryWriter);
 
                 if (srcFileHasChanged) {
                     codeChangeDetected = true;
+
+                    // write out Unix normal diff of code changes.
+                    List<String> original = TaskUtils.splitIntoLines(sourceCode, false);
+                    List<String> revised = TaskUtils.splitIntoLines(transformedCode, false);
+                    String unixLikeRelativePath = sourceFileDescriptor.getRelativePath()
+                        .replace('\\', '/');
+                    String sourceDirName = normalizedSourceDir.getName();
+                    String diffHeader = String.format("%n--- %1$s/%3$s%n+++ %4$s/%2$s/%3$s%n",
+                        sourceDirName, destSubDir.getName(), unixLikeRelativePath,
+                        destDir.getName());
+                    changeDiffWriter.write(diffHeader);
+                    Diff.printNormalDiff(original, revised, changeDiffWriter);
+
                     TaskUtils.logInfo(logAppender, "Changes needed for %s successfully written to\n %s", srcFile, destFile);
                 }
             }
@@ -278,6 +310,8 @@ public class CodeAugmentationGenericTask {
 
         // generate shell scripts for effecting code changes.
         if (!codeChangeDetectionDisabled) {
+            changeDiffWriter.close();
+            
             InputStream shellScriptRes = getClass().getResourceAsStream("windows-copy-batch-file.bat");
             ByteArrayOutputStream outStream = new ByteArrayOutputStream();
             TaskUtils.copyStream(shellScriptRes, outStream);
@@ -421,6 +455,15 @@ public class CodeAugmentationGenericTask {
      */
     public File getChangeSummaryFile() {
         return changeSummaryFile;
+    }
+
+    /**
+     * Name of file with details of code changes detected in Unix diff normal format. 
+     * @return file with details of code changes or null if
+     * code change detection is disabled.
+     */
+    public File getChangeDetailsFile() {
+        return changeDetailsFile;
     }
 
     /**

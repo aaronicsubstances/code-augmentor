@@ -195,7 +195,7 @@ public class CodeGenerationResponseProcessor {
         for (int i = 0; i < contentParts.size(); i++) {
             ContentPart code = contentParts.get(i);
             boolean startsOnNewline = doesPartBeginOnNewline(contentParts, i);
-            List<String> splitCode = TaskUtils.splitIntoLines(code.getContent());
+            List<String> splitCode = TaskUtils.splitIntoLines(code.getContent(), true);
             StringBuilder codeBuffer = new StringBuilder();
             for (int j = 0; j < splitCode.size(); j+=2) {
                 String line = splitCode.get(j);

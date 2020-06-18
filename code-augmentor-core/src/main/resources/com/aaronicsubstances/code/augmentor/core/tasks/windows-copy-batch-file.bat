@@ -93,11 +93,11 @@ if defined confirmed (
     echo    ASCII encoding^)
     echo. 
     echo 4. Can use
-    echo       %CMDNAME% git diff --no-index
+    echo       %CMDNAME% git diff
     echo    to view file differences with Git and get coloured console output.
     echo. 
     echo 5. Can use
-    echo       %CMDNAME% git --no-pager diff --no-index ^> diff.txt
+    echo       %CMDNAME% git --no-pager diff ^> diff.txt
     echo    to save file differences with Git.
     echo.
     echo 6. Can use

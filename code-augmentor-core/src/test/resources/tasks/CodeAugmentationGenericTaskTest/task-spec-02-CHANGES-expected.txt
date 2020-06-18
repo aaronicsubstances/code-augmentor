@@ -1,0 +1,7 @@
+
+--- com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest/task-spec-02-0.java
++++ dest-02/com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest/task-spec-02-0.java
+55c55
+<         return 
+---
+> 	 char f;

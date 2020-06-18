@@ -1,0 +1,67 @@
+
+--- com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest/task-spec-04-0.java
++++ dest-04/com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest/task-spec-04-0.java
+1a2,5
+>   //GS
+>   // Copyright Aaronic Substances 2020.
+>   // All rights reserved.
+>   //GE
+4a9,23
+> //GS
+> import javax.persistence.Entity;
+> @Entity
+> public class C0 {
+>     private long id;
+> 
+>     public long getId() {
+>         return id;
+>     }
+> 
+>     public void setId() {
+>         this.id = id;
+>     }
+> }
+> //GE
+
+--- com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest/task-spec-04-1.java
++++ dest-04/com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest/task-spec-04-1.java
+1,4c1,6
+<     //:A:Project.licenseHeader
+<     
+< //*G?* Copyright Aaronic Substances 2020.
+< //*G?* All rights reserved.
+---
+> // Copyright Aaronic Substances 2020.
+> // All rights reserved.
+> import javax.persistence.Entity;
+> @Entity
+> public class C1 {
+>     private long id;
+6,7c8,15
+<     //:A:EntityUtil.tableSchema
+<     //:STR:C1
+---
+>     public long getId() {
+>         return id;
+>     }
+> 
+>     public void setId() {
+>         this.id = id;
+>     }
+> }
+\ No newline at end of file
+
+--- com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest/task-spec-04-2.java
++++ dest-04/com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest/task-spec-04-2.java
+15c15
+<     
+---
+> 
+17c17
+<             return id;
+---
+>         return id;
+20c20
+<     public    void setId() {
+---
+>     public void setId() {

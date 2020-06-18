@@ -226,7 +226,7 @@ public class SourceCodeTokenizer {
      * @return tokens.
      */
     public List<Token> tokenizeSource(String source) {
-        List<String> splitSource = TaskUtils.splitIntoLines(source);
+        List<String> splitSource = TaskUtils.splitIntoLines(source, true);
         List<Token> tokens = new ArrayList<>();
         int startPos = 0;
         for (int i = 0; i < splitSource.size(); i+=2) {

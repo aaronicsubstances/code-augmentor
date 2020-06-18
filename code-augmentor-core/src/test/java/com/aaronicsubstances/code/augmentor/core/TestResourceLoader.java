@@ -2,6 +2,7 @@ package com.aaronicsubstances.code.augmentor.core;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,6 +26,11 @@ public class TestResourceLoader {
     public static final Pattern NEW_LINE_REGEX = Pattern.compile("\r\n|\r|\n");
 
     public static String loadResource(String path, Class<?> cls) {
+        return loadResourceWithEncoding(path, cls, StandardCharsets.UTF_8);
+    }
+
+    public static String loadResourceWithEncoding(String path, Class<?> cls,
+            Charset encoding) {
         String pathPrefix = "";
         if (cls != null) {
             int pkgNameLength = TestResourceLoader.class.getPackage().getName().length();
@@ -40,7 +46,7 @@ public class TestResourceLoader {
             throw new RuntimeException("Could not classpath resource " + eventualPath);
         }
         try (InputStream dummy = resourceStream) {
-            return IOUtils.toString(dummy, StandardCharsets.UTF_8);
+            return IOUtils.toString(dummy, encoding);
         }
         catch (IOException ex) {
             throw new RuntimeException(ex);
@@ -50,6 +56,12 @@ public class TestResourceLoader {
     public static String loadResourceNewlinesNormalized(String path,
             Class<?> cls, String newLine) {
         String text = loadResource(path, cls);
+        return NEW_LINE_REGEX.matcher(text).replaceAll(newLine);
+    }
+
+    public static String loadResourceNewlinesNormalizedWithEncoding(String path,
+            Class<?> cls, String newLine, Charset encoding) {
+        String text = loadResourceWithEncoding(path, cls, encoding);
         return NEW_LINE_REGEX.matcher(text).replaceAll(newLine);
     }
 

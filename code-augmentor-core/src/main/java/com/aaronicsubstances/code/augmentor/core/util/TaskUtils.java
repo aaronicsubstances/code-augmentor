@@ -34,12 +34,19 @@ public class TaskUtils {
     public static final Pattern NEW_LINE_REGEX = Pattern.compile("\r\n|\r|\n");
 
     /**
-     * Splits a string into lines.
-     * @param text string to split.
-     * @return list of lines without line terminators, alternating in pairs with their line terminators.
+     * Splits a string into lines. The list of lines can either be without line terminators, 
+     * alternating in pairs with their line terminators.
      * If text doesn't end with a new line, then the last item is null.
+     * <p>
+     * Alternatively lines can have their terminators as suffixes, in which the size of 
+     * return value will the same as the number of lines in text.
+     * @param text string to split.
+     * @param separateTerminators false to have lines include their terminators; true
+     * to add line terminator as separate item in collection result
+     * @return list of lines and terminators, with terminators included or excluded from lines
+     * as determined by separateTerminators parameter.
      */
-    public static List<String> splitIntoLines(String text) {
+    public static List<String> splitIntoLines(String text, boolean separateTerminators) {
         List<String> splitText = new ArrayList<>();
         int lastEndIdx = 0;
         int[] temp = new int[2];
@@ -51,15 +58,23 @@ public class TaskUtils {
             }
             int newlineLen = temp[1];
             int endIdx = idx + newlineLen;
-            String precedingLine = text.substring(lastEndIdx, idx);
-            String terminatingNewline = text.substring(idx, endIdx);
-            splitText.add(precedingLine);
-            splitText.add(terminatingNewline);
+            if (separateTerminators) {
+                String precedingLine = text.substring(lastEndIdx, idx);
+                String terminatingNewline = text.substring(idx, endIdx);
+                splitText.add(precedingLine);
+                splitText.add(terminatingNewline);
+            }
+            else {
+                String precedingLine = text.substring(lastEndIdx, endIdx);
+                splitText.add(precedingLine);
+            }
             lastEndIdx = endIdx;
         }
         if (lastEndIdx < text.length()) {
             splitText.add(text.substring(lastEndIdx));
-            splitText.add(null);
+            if (separateTerminators) {
+                splitText.add(null);
+            }
         }
         return splitText;
     }

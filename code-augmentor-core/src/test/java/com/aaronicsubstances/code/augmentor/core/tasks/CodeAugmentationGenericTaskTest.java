@@ -101,22 +101,26 @@ public class CodeAugmentationGenericTaskTest {
         final Charset taskCharset = Charset.forName(prepResult.getEncoding());
         CodeAugmentationGenericTask task = completeDeserialize(taskSpec, prepFile, 
             taskCharset, newline);
+        String expectedChanges = null;
+        if (!task.isCodeChangeDetectionDisabled()) {
+            expectedChanges = loadChanges(jsonPath);
+        }
         List<String> expectedGeneratedCodes = new ArrayList<>();
         // transfer class path resources for original source files to
         // temp directory.
         for (int i = 0; i < prepResult.getFileDescriptors().size(); i++) {
             SourceFileDescriptor f = prepResult.getFileDescriptors().get(i);
             assertNotNull(f.getDir());
-            String contents = TestResourceLoader.loadResourceNewlinesNormalized(
-                f.getRelativePath(), getClass(), newline);
+            String contents = TestResourceLoader.loadResourceNewlinesNormalizedWithEncoding(
+                f.getRelativePath(), getClass(), newline, taskCharset);
             FileUtils.write(new File(f.getDir(), f.getRelativePath()), contents, taskCharset);
 
             // fetch expected generated codes.
             if (expectedChangeSetIndices.contains(i)) {
                 String baseName = FilenameUtils.getBaseName(f.getRelativePath());
                 String ext = FilenameUtils.getExtension(f.getRelativePath());
-                String expGenGode = TestResourceLoader.loadResourceNewlinesNormalized(
-                    baseName + "-expected." + ext, getClass(), newline);
+                String expGenGode = TestResourceLoader.loadResourceNewlinesNormalizedWithEncoding(
+                    baseName + "-expected." + ext, getClass(), newline, taskCharset);
                 expectedGeneratedCodes.add(expGenGode);
             }
         }
@@ -138,6 +142,15 @@ public class CodeAugmentationGenericTaskTest {
             File f = new File(cf.getDestDir(), cf.getRelativePath());
             String actual = FileUtils.readFileToString(f, taskCharset);            
             assertEquals(actual, expected, "Unexpected contents found in " + f);
+        }
+        if (task.isCodeChangeDetectionDisabled()) {
+            assertNull(task.getChangeDetailsFile());
+        }
+        else {
+            assertNotNull(task.getChangeDetailsFile());
+            String actualChanges = FileUtils.readFileToString(task.getChangeDetailsFile(),
+                taskCharset);
+            assertEquals(actualChanges, expectedChanges);
         }
     }
 
@@ -170,8 +183,8 @@ public class CodeAugmentationGenericTaskTest {
         for (int i = 0; i < prepResult.getFileDescriptors().size(); i++) {
             SourceFileDescriptor f = prepResult.getFileDescriptors().get(i);
             assertNotNull(f.getDir());
-            String contents = TestResourceLoader.loadResourceNewlinesNormalized(
-                f.getRelativePath(), getClass(), newline);
+            String contents = TestResourceLoader.loadResourceNewlinesNormalizedWithEncoding(
+                f.getRelativePath(), getClass(), newline, taskCharset);
             FileUtils.write(new File(f.getDir(), f.getRelativePath()), contents, taskCharset);
         }
         task.execute();
@@ -200,12 +213,21 @@ public class CodeAugmentationGenericTaskTest {
             new Object[] { "task-spec-06.json", "\r\n", Arrays.asList(2, 1, null, 2) }
         };
     }
+    
+    private String loadChanges(String diffPath) throws Exception {
+        String changesPath = diffPath.replace(".json", "-CHANGES-expected.txt");
+        String contents = TestResourceLoader.loadResourceNewlinesNormalized(changesPath, getClass(),
+            System.lineSeparator());
+        return contents;
+    }
 
     private String transformWithVars(String contents) {
         // replace any %TEMP_DIR% variable with temp dir
-        contents = contents.replace("%LINE_SEPARATOR%", File.separator
+        contents = contents.replace("%FILE_SEPARATOR%", File.separator
             .replace("\\", "\\\\"));
         contents = contents.replace("%TEMP_DIR%", TEMP_GEN_DIR.getPath()
+            .replace("\\", "\\\\"));
+        contents = contents.replace("%TEMP_DIR_NAME%", TEMP_GEN_DIR.getName()
             .replace("\\", "\\\\"));
         return contents;
     }

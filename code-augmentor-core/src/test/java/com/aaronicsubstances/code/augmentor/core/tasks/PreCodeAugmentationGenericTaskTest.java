@@ -61,8 +61,8 @@ public class PreCodeAugmentationGenericTaskTest {
         // copy files to temp dir.
         tempDir.mkdir();
         for (String relativePath : taskSpec.relativePaths) {
-            String contents = TestResourceLoader.loadResourceNewlinesNormalized(relativePath, 
-                PreCodeAugmentationGenericTaskTest.class, newline);
+            String contents = TestResourceLoader.loadResourceNewlinesNormalizedWithEncoding(relativePath, 
+                PreCodeAugmentationGenericTaskTest.class, newline, task.getCharset());
             FileUtils.write(new File(tempDir, relativePath), contents, task.getCharset());
             task.getRelativePaths().add(relativePath);
             task.getBaseDirs().add(tempDir);
