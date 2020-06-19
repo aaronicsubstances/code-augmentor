@@ -24,7 +24,7 @@ exports.generateGetter = function(augCode, context) {
     const type = augCode.args[0].type;
     const nameCapitalized = name.charAt(0).toUpperCase() + name.slice(1);
     let s = `public ${type} get${nameCapitalized}() {${augCode.lineSeparator}`;
-    s += `    return ${name};${augCode.lineSeparator}`;
+    s += `${context.getScopeVar('codeAugmentor_indent')}return ${name};${augCode.lineSeparator}`;
     s += '}';
     return context.newContent(s);
 }
@@ -86,4 +86,13 @@ exports.testHeader = function(augCode, context) {
     assert.equal('[', context.header.nestedLevelStartMarker);
     assert.equal(']', context.header.nestedLevelEndMarker);
     return '';
+}
+
+exports.testUseOfGetScopeVar = function(augCode, c) {
+    assert.equal(c.getScopeVar("address"), "NewTown");
+    assert.equal(c.getScopeVar("serviceType"), "ICT");
+    assert.equal(c.getScopeVar("allServiceTypes"), "ICT,Agric");
+    assert.equal(c.globalScope["address"], "OldTown");
+    assert.equal(c.getScopeVar("codeAugmentor_indent"), "    ");
+    return c.newSkipGenCode();
 }

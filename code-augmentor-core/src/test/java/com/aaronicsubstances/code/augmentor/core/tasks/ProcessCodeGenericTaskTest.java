@@ -8,6 +8,7 @@ import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.aaronicsubstances.code.augmentor.core.TestResourceLoader;
@@ -29,7 +30,8 @@ import org.testng.annotations.Test;
 public class ProcessCodeGenericTaskTest {
     
     @Test(dataProvider = "createTestExecuteData")
-    public void testExecute(int index, String inputPath, EvalFunction evalFunction,
+    public void testExecute(int index, String inputPath, 
+            boolean useJsonParseFunction, EvalFunction evalFunction,
             String expectedOutputPath, int expectedErrorCount) throws Exception {
         // transfer class path resources for original source files to
         // temp directory.
@@ -54,12 +56,15 @@ public class ProcessCodeGenericTaskTest {
         }
     
         ProcessCodeGenericTask task = new ProcessCodeGenericTask();
-        task.setJsonParseFunction(s -> null);
+        if (useJsonParseFunction) {
+            task.setJsonParseFunction(s -> TestResourceLoader.GSON_INST.fromJson(s, Map.class));
+        }
+        else {
+            task.setJsonParseFunction(s -> null);
+        }
         task.setInputFile(inputFile);
         task.setOutputFile(actualOutputFile);
-        task.setEvalFunction(evalFunction);
-        task.setValidationCallback((f, a, c) -> null);
-        task.execute();
+        task.execute(evalFunction);
         if (!task.getAllErrors().isEmpty()) {
             String stringifiedErrors = PluginUtils.stringifyPossibleScriptErrors(
                 task.getAllErrors().stream().map(x -> (Throwable) x).collect(Collectors.toList()), 
@@ -94,7 +99,7 @@ public class ProcessCodeGenericTaskTest {
             return Arrays.asList(genCode);
         };
         EvalFunction productionEvaler = (f, a, c) -> {
-            int periodIndex = f.indexOf(".");
+            int periodIndex = f.lastIndexOf(".");
             String className = f.substring(0, periodIndex);
             String methodName = f.substring(periodIndex + 1);
             Class<?> cls = Class.forName(className);
@@ -102,13 +107,26 @@ public class ProcessCodeGenericTaskTest {
             return method.invoke(null, a, c);
         };
         EvalFunction evalerWithoutReturn = (f, a, c) -> null;
+        EvalFunction contextScopeMethodAccessEvaler = (f, a, c) -> {
+            if (!f.equals("\"testUseOfGetScopeVar\"")) {
+                return productionEvaler.apply(f, a, c);
+            }
+            assert "NewTown".equals(c.getScopeVar("address"));
+            assert "ICT".equals(c.getScopeVar("serviceType"));
+            assert "ICT,Agric".equals(c.getScopeVar("allServiceTypes"));
+            assert "OldTown".equals(c.getGlobalScope().get("address"));
+            assert "    ".equals(c.getGlobalScope().get("codeAugmentor_indent"));
+            return c.newSkipGenCode();
+        };
         int count = 0;
         return new Object[][] {
-            { count++, "aug_codes-00.json", evaler, "expected_gen_codes.json", 0 },
-            { count++, "aug_codes-00.json", evalerProducingUnsetIds, null, 2 },
-            { count++, "aug_codes-01.json", evalerProducingDuplicateIds, null, 1 },
-            { count++, "aug_codes-01.json", productionEvaler, null, 2 },            
-            { count++, "aug_codes-01.json", evalerWithoutReturn, null, 1 }
+            { count++, "aug_codes-00.json", false, evaler, "expected_gen_codes-00.json", 0 },
+            { count++, "aug_codes-00.json", false, evalerProducingUnsetIds, null, 2 },
+            { count++, "aug_codes-01.json", false, evalerProducingDuplicateIds, null, 1 },
+            { count++, "aug_codes-01.json", false, productionEvaler, null, 2 },            
+            { count++, "aug_codes-01.json", false, evalerWithoutReturn, null, 1 },
+            { count++, "aug_codes-02.json", true, contextScopeMethodAccessEvaler, 
+                "expected_gen_codes-02.json", 0 },
         };
     }
 }

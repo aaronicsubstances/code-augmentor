@@ -23,7 +23,7 @@ public class Snippets {
         def type = augCode.args[0].type;
         def nameCapitalized = '' + name.charAt(0).toUpperCase() + name.substring(1);
         def s = "public ${type} get${nameCapitalized}() {${augCode.lineSeparator}";
-        s += "    return ${name};${augCode.lineSeparator}";
+        s += "${context.getScopeVar('codeAugmentor_indent')}return ${name};${augCode.lineSeparator}";
         s += '}';
         return context.newContent(s);
     }
@@ -85,5 +85,14 @@ public class Snippets {
         assert '[' == context.header.nestedLevelStartMarker
         assert ']' == context.header.nestedLevelEndMarker
         return ''
+    }
+
+    static testUseOfGetScopeVar(augCode, c) {
+        assert c.getScopeVar("address") == "NewTown"
+        assert c.getScopeVar("serviceType") == "ICT"
+        assert c.getScopeVar("allServiceTypes") == "ICT,Agric"
+        assert c.globalScope["address"] == "OldTown"
+        assert c.getScopeVar("codeAugmentor_indent") == "    "
+        return c.newSkipGenCode()
     }
 }

@@ -136,9 +136,8 @@ public class CodeGenerationRequest {
 
     /**
      * Sets in {@link com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeContext#getHeader()}
-     * the first of aug code directives used to configure preparation stage and
-     * associated with this code generation request. Set to 
-     * null if no such directives were provided.
+     * the first of aug code directives used to configure preparation stage and is
+     * associated with this code generation request.
      * @param augCodeDirective
      */
     public void setAugCodeDirective(String augCodeDirective) {

@@ -36,19 +36,16 @@ def jsonParser = new JsonSlurper()
 parentTask.jsonParseFunction = {
     return jsonParser.parseText(it)
 }
-final FUNCTION_NAME_REGEX = /^((Snippets|Worker)\.)[a-zA-Z]\w*$/
-parentTask.validationCallback = { functionName, augCode, context ->
+// Worker script is used here, Snippets script is used by process-aug-code-tests
+final FUNCTION_NAME_REGEX = /^(((.*CodeAugmentorFunctions)|Worker|Snippets)\.)[a-zA-Z]\w*$/
+parentTask.execute({ functionName, augCode, context ->
     if (functionName ==~ FUNCTION_NAME_REGEX) {
-        return null
+        binding.augCode = augCode
+        binding.context = context
+        return evaluate(functionName + '(augCode, context)')
     }
-    return "Invalid/Unsupported function name: " + functionName
-}
-parentTask.evalFunction = { functionName, augCode, context ->
-    binding.augCode = augCode
-    binding.context = context
-    return evaluate(functionName + '(augCode, context)')
-}
-parentTask.execute()
+    throw new RuntimeException("Invalid/Unsupported function name: " + functionName)
+})
 if (parentTask.allErrors) {
     String errMsg = PluginUtils.stringifyPossibleScriptErrors(parentTask.allErrors, true,
         [ getClass().name ], null)

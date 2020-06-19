@@ -1,3 +1,3 @@
-{"contentStreamingEnabled":true}
+{}
 {"fileId":1,"generatedCodes":[{"id":1,"contentParts":[{"content":"Received: println(\"Hello World from JS-star\")\r\n var i \u003d 3 + new Date(); \r\n ...etc*/(1, ProcessCodeContext)","exactMatch":false}]}]}
 {"fileId":2,"generatedCodes":[{"id":1,"contentParts":[{"content":"Received: println(\"World\")(1, ProcessCodeContext)","exactMatch":false}]}]}

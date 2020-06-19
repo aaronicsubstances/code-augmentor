@@ -1,9 +1,8 @@
-const assert = require('assert').strict;
-
 const code_aug_support = require('./build/nodejs/index.js');
+const CodeAugmentorFunctions = require('./build/nodejs/CodeAugmentorFunctions.js');
 const Snippets = require('./Snippets.js');
 
-const FUNCTION_NAME_REGEX = /^((Snippets|Worker)\.)[a-zA-Z]\w*$/;
+const FUNCTION_NAME_REGEX = /^(((.*CodeAugmentorFunctions)|Snippets|Worker)\.)[a-zA-Z]\w*$/;
 function callUserFunction(functionName, augCode, context) {
     // validate name.
     if (!FUNCTION_NAME_REGEX.test(functionName)) {
@@ -15,20 +14,17 @@ function callUserFunction(functionName, augCode, context) {
     return result;
 }
 
-const config = {
-    inputFile: process.argv[2],
-    outputFile: process.argv[3],
-    verbose: !!process.argv[4]
-};
-assert.ok(config.inputFile);
-assert.ok(config.outputFile);
-code_aug_support.execute(config, callUserFunction, err => {
+const task = new code_aug_support.ProcessCodeTask();
+task.inputFile = process.argv[2];
+task.outputFile = process.argv[3];
+task.verbose = !!process.argv[4];
+task.execute(callUserFunction, err => {
     if (err) {
         throw err;
     }
-    if (config.allErrors.length) {
-        console.error(config.allErrors.length + " error(s) found.\n");
-        for (errMsg of config.allErrors) {
+    if (task.allErrors.length) {
+        console.error(task.allErrors.length + " error(s) found.\n");
+        for (errMsg of task.allErrors) {
             console.error(errMsg);
         }
         process.exit(1);

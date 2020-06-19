@@ -9,8 +9,9 @@ if dirPath:
     dirPath += '/'
 sys.path.append(dirPath + 'build')
 from python3.tasks import ProcessCodeTask
+from python3.models import CodeAugmentorFunctions
 
-FUNCTION_NAME_REGEX = re.compile(r'^((Snippets|Worker)\.)[a-zA-Z]\w*$')
+FUNCTION_NAME_REGEX = re.compile(r'^(((.*CodeAugmentorFunctions)|Snippets|Worker)\.)[a-zA-Z]\w*$')
 def callUserFunction(functionName, augCode, context):
     # validate name.
     if not FUNCTION_NAME_REGEX.search(functionName):

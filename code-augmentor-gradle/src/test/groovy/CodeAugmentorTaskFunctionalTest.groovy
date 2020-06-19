@@ -23,13 +23,11 @@ class CodeAugmentorTaskFunctionalTest extends Specification {
         scriptDir = testProjectDir.newFolder("scripts")
         File entryFile = new File(scriptDir, "main.groovy")
         entryFile << """
-        parentTask.validationCallback = { functionName, augCode, context -> null }
-        parentTask.evalFunction = { functionName, augCode, context ->
+        parentTask.execute({ functionName, augCode, context ->
             binding.augCode = augCode
             binding.context = context
             evaluate(functionName + '(augCode, context)')
-        }
-        parentTask.execute()
+        })
         """
         File workerFile = new File(scriptDir, "Worker.groovy")
         workerFile << '''static generateMainClass(augCode, c) {

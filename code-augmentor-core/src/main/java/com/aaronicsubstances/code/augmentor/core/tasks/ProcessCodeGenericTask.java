@@ -71,42 +71,14 @@ public class ProcessCodeGenericTask {
             ProcessCodeContext context) throws Exception;
     }
 
-    /**
-     * Used to validate arguments passed to {@link EvalFunction}
-     */
-    public interface ValidationCallback {
-        /**
-         * Validates arguments of {@link EvalFunction#apply(String, AugmentingCode, ProcessCodeContext)}
-         * @param functionName
-         * @param augCode
-         * @param context
-         * @return validation error message or null to signal validation success
-         * @throws Exception
-         */
-        String validate(String functionName, AugmentingCode augCode,
-            ProcessCodeContext context) throws Exception;
-    }
-
     // input properties
     private BiConsumer<GenericTaskLogLevel, Supplier<String>> logAppender;
     private File inputFile;
     private File outputFile;
     private JsonParseFunction jsonParseFunction;
-    private ValidationCallback validationCallback;
-    private ValidationCallback defaultValidationCallback;
-    private EvalFunction evalFunction;
 
     // output properties
     private final List<Throwable> allErrors = new ArrayList<>();
-
-    public ProcessCodeGenericTask() {
-        defaultValidationCallback = (f, a, c) -> {
-            if (f.startsWith("context.")) {
-                return null;
-            }
-            return "Expected method call on context helper object, but got: " + f;
-        };
-    }
 
     /**
      * Executes processing stage of Code Augmentor. Augmenting code objects
@@ -115,15 +87,15 @@ public class ProcessCodeGenericTask {
      * to output file.
      * <p>
      * Success of this operation depends on emptiness of allErrors property.
+     * @param evalFunction interface to a JVM language's code evaluation
+     * facility.
      * @throws Exception
      */
-    public void execute() throws Exception {
-        // validate input properties
+    public void execute(EvalFunction evalFunction) throws Exception {
         Objects.requireNonNull(inputFile, "inputFile property is not set");
         Objects.requireNonNull(outputFile, "outputFile property is not set");
         Objects.requireNonNull(jsonParseFunction, "jsonParseFunction property is not set");
-        Objects.requireNonNull(validationCallback, "validationCallback property is not set");
-        Objects.requireNonNull(evalFunction, "evalFunction property is not set");
+        Objects.requireNonNull(evalFunction);
 
         allErrors.clear();
         // ensure dir exists for outputFile
@@ -131,9 +103,7 @@ public class ProcessCodeGenericTask {
             outputFile.getParentFile().mkdirs();
         }
 
-        // create a context for sharing variables needed when
-        // an aug code section is used more than once in a file, or
-        // even throughout file sets.
+        // create a context for sharing variables.
         ProcessCodeContext context = new ProcessCodeContext();
 
         CodeGenerationRequest codeGenRequest = new CodeGenerationRequest();
@@ -182,10 +152,10 @@ public class ProcessCodeGenericTask {
                     if (augCode.isProcessed()) {
                         continue;
                     }
-                    String functionName = augCode.getBlocks().get(0).getContent().trim();
+                    String functionName = retrieveFunctionName(augCode);
                     context.setAugCodeIndex(i);
-                    List<GeneratedCode> genCodes = processAugCode(functionName, augCode, context,
-                            allErrors);
+                    List<GeneratedCode> genCodes = processAugCode(evalFunction, 
+                        functionName, augCode, context, allErrors);
                     fileGenCodes.getGeneratedCodes().addAll(genCodes);
                 }
 
@@ -217,28 +187,20 @@ public class ProcessCodeGenericTask {
         }
     }
 
+    private static String retrieveFunctionName(AugmentingCode augCode) {
+        String functionName = augCode.getBlocks().get(0).getContent().trim();
+        if (functionName.startsWith(CodeAugmentorFunctions.class.getSimpleName())) {
+            functionName = CodeAugmentorFunctions.class.getPackage().getName() + "." +
+                functionName;
+        }
+        return functionName;
+    }
+
     @SuppressWarnings("unchecked")
-    List<GeneratedCode> processAugCode(
+    List<GeneratedCode> processAugCode(EvalFunction evalFunction,
             String functionName, AugmentingCode augCode, ProcessCodeContext context, 
             List<Throwable> errors) {
         try {
-            String validationError = null;
-            boolean validByDefault = false;
-            if (defaultValidationCallback != null) {
-                validationError = defaultValidationCallback.validate(functionName,
-                    augCode, context);
-                validByDefault = validationError == null;
-            }
-            if (!validByDefault) { 
-                validationError = validationCallback.validate(functionName, 
-                    augCode, context);
-            }
-            if (validationError != null) {                    
-                GenericTaskException evalEx = createException(context, validationError, null);
-                errors.add(evalEx);
-                return Arrays.asList();
-            }
-
             Object result = evalFunction.apply(functionName, augCode, context);
     
             // Convert various alternative representations of List<GeneratedCode>     
@@ -380,41 +342,6 @@ public class ProcessCodeGenericTask {
      */
     public void setJsonParseFunction(JsonParseFunction jsonParseFunction) {
         this.jsonParseFunction = jsonParseFunction;
-    }
-
-    public ValidationCallback getValidationCallback() {
-        return validationCallback;
-    }
-
-    /**
-     * Sets procedure which will be used to validate function names before 
-     * script evaluation.
-     * @param validationCallback
-     */
-    public void setValidationCallback(ValidationCallback validationCallback) {
-        this.validationCallback = validationCallback;
-    }
-
-    public ValidationCallback getDefaultValidationCallback() {
-        return defaultValidationCallback;
-    }
-
-    public void setDefaultValidationCallback(ValidationCallback defaultValidationCallback) {
-        this.defaultValidationCallback = defaultValidationCallback;
-    }
-
-    public EvalFunction getEvalFunction() {
-        return evalFunction;
-    }
-
-    /**
-     * Sets interface into a script's code evaluation
-     * facility which will be called to produce generated code objects corresponding
-     * to augmenting code objects in input file.
-     * @param evalFunction
-     */
-    public void setEvalFunction(EvalFunction evalFunction) {
-        this.evalFunction = evalFunction;
     }
 
     /**

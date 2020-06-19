@@ -18,7 +18,7 @@ def generateGetter(augCode, context):
     nameCapitalized = name.capitalize()
     lineSep = augCode.lineSeparator
     s = f'public {getterType} get{nameCapitalized}() {{{lineSep}'
-    s += f'    return {name};{lineSep}'
+    s += f'{context.getScopeVar("codeAugmentor_indent")}return {name};{lineSep}'
     s += '}'
     return context.newContent(s)
 
@@ -77,3 +77,11 @@ def testHeader(augCode, context):
     assert '[' == context.header.nestedLevelStartMarker
     assert ']' == context.header.nestedLevelEndMarker
     return ''
+
+def testUseOfGetScopeVar(a, c):
+    assert c.getScopeVar("address") == "NewTown"
+    assert c.getScopeVar("serviceType") == "ICT"
+    assert c.getScopeVar("allServiceTypes") == "ICT,Agric"
+    assert c.globalScope["address"] == "OldTown"
+    assert c.getScopeVar("codeAugmentor_indent") == "    "
+    return c.newSkipGenCode()

@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 require_once 'build/php7/ProcessCodeTask.php';
 require_once 'build/php7/ProcessCodeContext.php';
+require_once 'build/php7/CodeAugmentorFunctions.php';
 require_once 'Snippets.php';
 
 $instance = new \aaronicsubstances\code_augmentor_support\ProcessCodeTask();
@@ -9,10 +10,8 @@ $instance->outputFile = $argv[2];
 if ($argc > 3) {
     $instance->verbose = !!$argv[3];
 }
-assert(!!$instance->inputFile);
-assert(!!$instance->outputFile);
 
-$FUNCTION_NAME_REGEX = '/^((Snippets|Worker)\\.)[a-zA-Z]\\w*$/';
+$FUNCTION_NAME_REGEX = '/^(((.*CodeAugmentorFunctions)|Snippets|Worker)\\.)[a-zA-Z]\\w*$/';
 $instance->execute(function($functionName, $augCode, $context) use ($FUNCTION_NAME_REGEX) {
     // validate name.
     if (!preg_match($FUNCTION_NAME_REGEX, $functionName)) {

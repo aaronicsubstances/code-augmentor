@@ -24,7 +24,9 @@ class MyTestCase {
         ant.delete(dir: buildDir)
 
         // set up nodejs scripts.
-        ant.copy(todir: "$buildDir/nodejs", file: "$LocalConfig.NODEJS_REPO_PATH/index.js")
+        ant.copy(todir: "$buildDir/nodejs") {
+            fileset(dir: "$LocalConfig.NODEJS_REPO_PATH/src")
+        }
 
         // set up python scripts.
         ant.copy(todir: "$buildDir/python3") {
@@ -75,6 +77,11 @@ class MyTestCase {
     @Test
     void testProcessCodeTasks6() {
         testSingleRun("augCodes-06.json", 0, 0, "genCodes-06.json")
+    }
+    
+    @Test
+    void testProcessCodeTasks7() {
+        testSingleRun("augCodes-07.json", 0, 0, "genCodes-07.json")
     }
 
     void testSingleRun(String inputFileName, int successExitCode, int expectedErrorCount,

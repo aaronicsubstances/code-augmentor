@@ -27,7 +27,8 @@ class Snippets {
         $nameCapitalized = ucfirst($name);
         $lineSep = $augCode->lineSeparator;
         $s = "public {$type} get{$nameCapitalized}() {{$lineSep}";
-        $s .= "    return $name;$lineSep";
+        $indentVar = $context->getScopeVar('codeAugmentor_indent');
+        $s .= "{$indentVar}return $name;$lineSep";
         $s .= "}";
         return $context->newContent($s);
     }
@@ -91,5 +92,14 @@ class Snippets {
         assert('[' == $context->{'header'}->nestedLevelStartMarker);
         assert(']' == $context->{'header'}->nestedLevelEndMarker);
         return '';
+    }
+    
+    public static function testUseOfGetScopeVar($augCode, $c) {
+        assert("NewTown" == $c->getScopeVar("address"));
+        assert("ICT" == $c->getScopeVar("serviceType"));
+        assert("ICT,Agric" == $c->getScopeVar("allServiceTypes"));
+        assert("OldTown" == $c->globalScope["address"]);
+        assert("    " == $c->getScopeVar("codeAugmentor_indent"));
+        return $c->newSkipGenCode();
     }
 }
