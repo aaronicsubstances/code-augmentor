@@ -25,9 +25,6 @@ public class CodeGenerationRequest {
      * {@link com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeContext#getHeader()}
      */
     public static class Header {
-        // Only used to determine how to read file augmenting codes. Ignored
-        // during equality comparisons.
-        private Boolean contentStreamingEnabled;
 
         private String genCodeStartDirective;
         private String genCodeEndDirective;
@@ -262,7 +259,13 @@ public class CodeGenerationRequest {
         }
     }
 
-    private Header header;
+    static class TestHeader extends Header {        
+        // Only used to determine how to read file augmenting codes. Ignored
+        // during equality comparisons.
+        private Boolean contentStreamingEnabled;
+    }
+
+    private TestHeader header;
     private List<SourceFileAugmentingCode> sourceFileAugmentingCodes;
 
     public CodeGenerationRequest() {
@@ -271,7 +274,7 @@ public class CodeGenerationRequest {
 
     public CodeGenerationRequest(List<SourceFileAugmentingCode> sourceFileAugmentingCodes) {
         this.sourceFileAugmentingCodes = sourceFileAugmentingCodes;
-        header = new Header();
+        header = new TestHeader();
     }
 
     public Header getHeader() {
@@ -304,12 +307,15 @@ public class CodeGenerationRequest {
 
     private void printHeader(PersistenceUtil persistenceUtil, boolean contentStreamEnabled) 
             throws Exception {
-        // try not to set contentStreamEnabled to true since it's true by default.
-        header.contentStreamingEnabled = null;
-        if (!contentStreamEnabled) {
-            header.contentStreamingEnabled = false;
+        // do not set contentStreamEnabled to true since it's true by default.
+        String headerString;
+        if (contentStreamEnabled) {
+            headerString = PersistenceUtil.serializeCompactlyToJson(header, Header.class);
         }
-        String headerString = PersistenceUtil.serializeCompactlyToJson(header);
+        else {
+            header.contentStreamingEnabled = false;
+            headerString = PersistenceUtil.serializeCompactlyToJson(header);
+        }
         persistenceUtil.println(headerString);
     }
 
@@ -386,7 +392,7 @@ public class CodeGenerationRequest {
         if (headerLineReceiver != null) {
             headerLineReceiver.append(headerString);
         }
-        header = PersistenceUtil.deserializeFromJson(headerString, Header.class);
+        header = PersistenceUtil.deserializeFromJson(headerString, TestHeader.class);
         // enable content streaming by default.
         boolean contentStreamingEnabled = true;
         if (header.contentStreamingEnabled != null) {

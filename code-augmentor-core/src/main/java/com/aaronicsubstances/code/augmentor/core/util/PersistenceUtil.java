@@ -14,9 +14,13 @@ import com.google.gson.stream.JsonWriter;
  * Code Augmentor.
  */
 public class PersistenceUtil {
-    private static final Gson JSON_CONVERT = new GsonBuilder().setPrettyPrinting().create();
-    private static final Gson JSON_CONVERT_COMPACT = new Gson();
+    private static final Gson JSON_CONVERT_FORMATTED;
+    private static final Gson JSON_CONVERT_COMPACT;
 
+    static {
+        JSON_CONVERT_FORMATTED = new GsonBuilder().serializeNulls().setPrettyPrinting().create();
+        JSON_CONVERT_COMPACT = new GsonBuilder().serializeNulls().create();
+    }
     /***
      * Serializes object so that no newline is present.
      * @param obj object to serialize
@@ -27,20 +31,30 @@ public class PersistenceUtil {
     }
 
     /***
+     * Serializes object so that no newline is present.
+     * @param obj object to serialize
+     * @param cls superclass whose fields should be used.
+     * @return serialized object
+     */
+    public static String serializeCompactlyToJson(Object obj, Class<?> cls) {
+        return JSON_CONVERT_COMPACT.toJson(obj, cls);
+    }
+
+    /***
      * Serializes object with whitespace formatting so that during testing 
      * output files can be conveniently investigated.
      * @param obj object to serialize
      * @return serialized object
      */
     public static String serializeFormattedToJson(Object obj) {
-        return JSON_CONVERT.toJson(obj);
+        return JSON_CONVERT_FORMATTED.toJson(obj);
     }
 
     public static <T> T deserializeFromJson(String s, Class<T> cls) {
         if (TaskUtils.isBlank(s)) {
             throw new RuntimeException("Cannot parse blank string as JSON");
         }
-        return JSON_CONVERT.fromJson(s, cls);
+        return JSON_CONVERT_COMPACT.fromJson(s, cls);
     }
 
     private final BufferedReader bufferedReader;

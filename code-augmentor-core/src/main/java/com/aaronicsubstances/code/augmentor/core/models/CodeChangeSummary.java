@@ -14,8 +14,17 @@ import java.util.List;
 
 import com.aaronicsubstances.code.augmentor.core.util.PersistenceUtil;
 
+/**
+ * Represents contents of (OUTPUT|CHANGE)-SUMMARY.txt file contents in destination directory
+ * used during completion stage. The contents are written
+ * out using the default charset of the OS to make them accessible to OS shell scripts.
+ */
 public class CodeChangeSummary {
 
+    /**
+     * Represents group of 3 lines inside *-SUMMARY.txt file. Each line is a file
+     * path using the native OS file path separators.
+     */
     public static class ChangedFile {
         private String relativePath;
         private String srcDir;
@@ -35,6 +44,11 @@ public class CodeChangeSummary {
             return relativePath;
         }
 
+        /**
+         * Sets first of 3 lines for the common relative path of a source/generated file
+         * pair represented by this object. Does not start with a file separator.
+         * @param relativePath
+         */
         public void setRelativePath(String relativePath) {
             this.relativePath = relativePath;
         }
@@ -43,6 +57,12 @@ public class CodeChangeSummary {
             return srcDir;
         }
 
+        /**
+         * Sets the second of 3 lines for the absolute path to base directory of source file whose
+         * relative path is on the first line of the group of 3 lines represented by
+         * this object.
+         * @param srcDir
+         */
         public void setSrcDir(String srcDir) {
             this.srcDir = srcDir;
         }
@@ -51,6 +71,12 @@ public class CodeChangeSummary {
             return destDir;
         }
 
+        /**
+         * Sets the third of 3 lines for the absolute path to the base directory of generated file whose
+         * relative path is on the first line of the group of 3 lines represented by
+         * this object.
+         * @param destDir
+         */
         public void setDestDir(String destDir) {
             this.destDir = destDir;
         }

@@ -21,6 +21,9 @@ public class PreCodeAugmentationResult {
         String encoding;
         String genCodeStartDirective;
         String genCodeEndDirective;
+    }
+
+    static class TestHeader extends Header {
         Boolean contentStreamingEnabled;
     }
 
@@ -88,15 +91,19 @@ public class PreCodeAugmentationResult {
 
     private void printHeader(PersistenceUtil persistenceUtil, boolean contentStreamEnabled) 
             throws Exception {        
-        Header header = new Header();
+        TestHeader header = new TestHeader();
         header.encoding = encoding;
         header.genCodeStartDirective = genCodeStartDirective;
         header.genCodeEndDirective = genCodeEndDirective;
-        // try not to set contentStreamEnabled to true since it's true by default.
-        if (!contentStreamEnabled) {
-            header.contentStreamingEnabled = false;
+        // do not set contentStreamEnabled to true since it's true by default.
+        String headerString;
+        if (contentStreamEnabled) {
+            headerString = PersistenceUtil.serializeCompactlyToJson(header, Header.class);
         }
-        String headerString = PersistenceUtil.serializeCompactlyToJson(header);
+        else {
+            header.contentStreamingEnabled = false;
+            headerString = PersistenceUtil.serializeCompactlyToJson(header);
+        }
         persistenceUtil.println(headerString);
     }
 
@@ -157,7 +164,7 @@ public class PreCodeAugmentationResult {
 
     private boolean readHeader(PersistenceUtil persistenceUtil) throws Exception {
         String headerString = persistenceUtil.readLine();
-        Header header = PersistenceUtil.deserializeFromJson(headerString, Header.class);
+        TestHeader header = PersistenceUtil.deserializeFromJson(headerString, TestHeader.class);
         encoding = header.encoding;
         genCodeStartDirective = header.genCodeStartDirective;
         genCodeEndDirective = header.genCodeEndDirective;
