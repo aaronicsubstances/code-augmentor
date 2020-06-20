@@ -1,4 +1,4 @@
-@Grab('com.aaronicsubstances:code-augmentor-core:1.0')
+@Grab('com.aaronicsubstances:code-augmentor-core:2.0.0')
 
 // import scripts with functions.
 // fortunately in Groovy, we only have to do this for scripts
@@ -35,7 +35,7 @@ def jsonParser = new JsonSlurper()
 parentTask.jsonParseFunction = {
     return jsonParser.parseText(it)
 }
-final FUNCTION_NAME_REGEX = /^((MyFunctions|OtherFunctions)\.)[a-zA-Z]\w*$/
+final FUNCTION_NAME_REGEX = /^(((*CodeAugmentorFunctions)|MyFunctions|OtherFunctions)\.)[a-zA-Z]\w*$/
 parentTask.execute({ functionName, augCode, context ->
     binding.augCode = augCode
     binding.context = context

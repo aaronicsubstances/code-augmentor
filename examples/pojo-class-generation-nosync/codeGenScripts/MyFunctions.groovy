@@ -22,16 +22,17 @@ class MyFunctions {
 
     static generateClassProps(augCode, context) {
         def out = ''
+        final defaultIndent = context.getScopeVar('codeAugmentor_indent')
         for (propSpec in context.fileScope.theClassProps) {
             final capitalized = propSpec.name.capitalize();
             out += "public ${propSpec.type} get${capitalized}() {"
             out += augCode.lineSeparator
-            out += "${OtherFunctions.defaultIndent()}return ${propSpec.name};"
+            out += "${defaultIndent}return ${propSpec.name};"
             out += augCode.lineSeparator
             out += "}${augCode.lineSeparator}"
             out += "public void set${capitalized}(${propSpec.type} ${propSpec.name}) {"
             out += augCode.lineSeparator
-            out += "${OtherFunctions.defaultIndent()}this.${propSpec.name} = ${propSpec.name};"
+            out += "${defaultIndent}this.${propSpec.name} = ${propSpec.name};"
             out += augCode.lineSeparator
             out += "}${augCode.lineSeparator}"
             out += augCode.lineSeparator
@@ -50,23 +51,24 @@ class MyFunctions {
         }
         
         def out = '';
+        final defaultIndent = context.getScopeVar('codeAugmentor_indent')
         
         // generate equals() override
         out += "@Override${augCode.lineSeparator}"
         out += "public boolean equals(Object obj) {"
         out += augCode.lineSeparator
-        out += "${OtherFunctions.defaultIndent()}if (!(obj instanceof ${context.fileScope.theClassName})) {"
+        out += "${defaultIndent}if (!(obj instanceof ${context.fileScope.theClassName})) {"
         out += augCode.lineSeparator
-        out += "${OtherFunctions.defaultIndent()}${OtherFunctions.defaultIndent()}return false;"
+        out += "${defaultIndent}${defaultIndent}return false;"
         out += augCode.lineSeparator
-        out += "${OtherFunctions.defaultIndent()}" + '}'
+        out += "${defaultIndent}" + '}'
         out += augCode.lineSeparator
-        out += "${OtherFunctions.defaultIndent()}${context.fileScope.theClassName} other = (${context.fileScope.theClassName}) obj;"
+        out += "${defaultIndent}${context.fileScope.theClassName} other = (${context.fileScope.theClassName}) obj;"
         out += augCode.lineSeparator
         
         for (propSpec in context.fileScope.theClassProps) {
             if (Character.isUpperCase(propSpec.type[0] as char)) {
-                out += OtherFunctions.defaultIndent()
+                out += defaultIndent
                 out += 'if (!Objects.equals(this.'
                 out += propSpec.name;
                 out += ', other.' 
@@ -74,7 +76,7 @@ class MyFunctions {
                 out += ')) {'
             }
             else {
-                out += OtherFunctions.defaultIndent()
+                out += defaultIndent
                 out += 'if (this.'
                 out += propSpec.name;
                 out += ' != other.' 
@@ -82,13 +84,13 @@ class MyFunctions {
                 out += ') {'
             }
             out += augCode.lineSeparator
-            out += "${OtherFunctions.defaultIndent()}${OtherFunctions.defaultIndent()}return false;"
+            out += "${defaultIndent}${defaultIndent}return false;"
             out += augCode.lineSeparator
-            out += OtherFunctions.defaultIndent() + '}'
+            out += defaultIndent + '}'
             out += augCode.lineSeparator
         }
         
-        out += "${OtherFunctions.defaultIndent()}return true;${augCode.lineSeparator}"
+        out += "${defaultIndent}return true;${augCode.lineSeparator}"
         out += '}'
         out += augCode.lineSeparator
         out += augCode.lineSeparator
@@ -98,11 +100,11 @@ class MyFunctions {
         out += "public int hashCode() {"
         out += augCode.lineSeparator
         if (context.fileScope.theClassProps.size == 1) {
-            out += "${OtherFunctions.defaultIndent()}return Objects.hashCode("
+            out += "${defaultIndent}return Objects.hashCode("
             out += context.fileScope.theClassProps[0].name
         }
         else {
-            out += "${OtherFunctions.defaultIndent()}return Objects.hash("
+            out += "${defaultIndent}return Objects.hash("
             for (def i = 0; i < context.fileScope.theClassProps.size; i++) {
                 if (i > 0) {
                     out += ', '
@@ -121,11 +123,12 @@ class MyFunctions {
     }
 
     static generateToString(augCode, context) {
+        final defaultIndent = context.getScopeVar('codeAugmentor_indent')
         def out = '';
         out += "@Override${augCode.lineSeparator}"
         out += "public String toString() {"
         out += augCode.lineSeparator
-        out += "${OtherFunctions.defaultIndent()}return String.format(getClass().getSimpleName() + "
+        out += "${defaultIndent}return String.format(getClass().getSimpleName() + "
         def exactOut = '"{';
         def outArgs = '';
         for (def i = 0; i < context.fileScope.theClassProps.size; i++) {
@@ -144,8 +147,8 @@ class MyFunctions {
         if (outArgs) {
             out += ",";
             out += augCode.lineSeparator;
-            out += OtherFunctions.defaultIndent();
-            out += OtherFunctions.defaultIndent();
+            out += defaultIndent;
+            out += defaultIndent;
         }
         out += outArgs
         out += ");${augCode.lineSeparator}"

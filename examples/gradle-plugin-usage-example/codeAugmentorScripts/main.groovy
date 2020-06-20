@@ -2,7 +2,7 @@
 // fortunately in Groovy, we only have to do this for scripts
 // not in default package (just like this script).
 
-final FUNCTION_NAME_REGEX = /^((Snippets)\.)[a-zA-Z]\w*$/
+final FUNCTION_NAME_REGEX = /^(((*CodeAugmentorFunctions)|Snippets)\.)[a-zA-Z]\w*$/
 parentTask.execute({ functionName, augCode, context ->
     binding.augCode = augCode
     binding.context = context
