@@ -1,4 +1,4 @@
 #!/usr/bin/env sh
 
-coreCp=../code-augmentor-core/build/libs/code-augmentor-core-1.1.0-SNAPSHOT.jar
+coreCp=../code-augmentor-core/build/libs/code-augmentor-core-2.0.0.jar
 groovy -cp "$coreCp" "$@"
