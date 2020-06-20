@@ -1,8 +1,11 @@
 code-augmentor-ant/build.gradle:8
+code-augmentor-ant/README:top
 code-augmentor-app/build.gradle:7
 code-augmentor-core/build.gradle:8
 code-augmentor-gradle/build.gradle:9
+code-augmentor-gradle/README:top and down
 code-augmentor-maven/pom.xml:6,56
+code-augmentor-maven/README:top and down
 code-augmentor-maven/src/test/resources/projects/complete-mojo-project/pom.xml:17
 code-augmentor-maven/src/test/resources/projects/default-mojo-project/pom.xml:21
 code-augmentor-maven/src/test/resources/projects/prepare-mojo-project/pom.xml:17

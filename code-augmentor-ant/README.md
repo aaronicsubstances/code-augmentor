@@ -1,15 +1,27 @@
 # Ant Plugin Documentation
 
-The available ant tasks are
+## Plugin Specification
 
-   - code_aug_prepare
-   - code_aug_complete
+**NB:** *If running the ant plugin from code-augmentor-app, then the ant classpath and tasks are already setup, and this step can be skipped.*
 
-To load tasks, use
+The ant classpath needs to be manually set up with jars from Maven Central with the following coordinates:
+
+   * com.aaronicsubstances:code-augmentor-core:2.0.0
+   * com.aaronicsubstances:code-augmentor-ant:2.0.0
+   * com.google.code.gson:gson:2.8.6
+ 
+Then to load the tasks, use
 
 ```xml
 <taskdef resource="CodeAugmentorTasks.xml" onerror="failall" />
 ```
+
+## Plugin Tasks
+
+The available ant tasks are
+
+   - code_aug_prepare
+   - code_aug_complete
 
 The two tasks correspond to the preparation and completion stages of Code Augmentor. Use of [exec](https://ant.apache.org/manual/Tasks/exec.html) task or some other means is expected to carry out the intervening processing stage.
 

@@ -1,12 +1,14 @@
 # Gradle Plugin Documentation
 
-Plugin Specification
+## Plugin Specification
 
 ```
 plugins {
-    id 'com.aaronicsubstances.code-augmentor'
+    id 'com.aaronicsubstances.code-augmentor' version '2.0.0'
 }
 ```
+
+## Plugin Tasks
 
 Plugin adds the following tasks to a project:
 
@@ -136,7 +138,7 @@ This example demonstrates using a scripting platform other than Groovy, such as 
 ```groovy
 plugins {
     id 'java'
-    id 'com.aaronicsubstances.code-augmentor'
+    id 'com.aaronicsubstances.code-augmentor' version '2.0.0'
 }
 codeAugmentor {
     verbose = true

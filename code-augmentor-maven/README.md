@@ -1,15 +1,18 @@
 # Maven Plugin Documentation
 
-Plugin specification: 
+## Plugin specification
 
 ```xml
 <plugin>
     <groupId>com.aaronicsubstances</groupId>
     <artifactId>code-augmentor-maven-plugin</artifactId>
+    <version>2.0.0</version>
 </plugin>
 ```
 
-Goals:
+## Goals
+
+The plugin provides the following goals:
 
    * code-augmentor:prepare
    * code-augmentor:complete
@@ -257,7 +260,7 @@ mvn code-augmentor:prepare exec:exec code-augmentor:complete
       <plugin>
         <groupId>com.aaronicsubstances</groupId>
         <artifactId>code-augmentor-maven-plugin</artifactId>
-        <version>1.0</version>
+        <version>2.0.0</version>
         <configuration>
             <verbose>true</verbose>
             <fileSets>

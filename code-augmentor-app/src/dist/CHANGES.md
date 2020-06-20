@@ -29,7 +29,7 @@
    
    * Supporting Packages
        - CodeAugmentor reserves the text 'CodeAugmentor' for use in script functions and scope variables it can define. A function or scope variable cannot have 'CodeAugmentor' as its prefix.
-       - helper functions *setScopeVar()* and *setGlobalScope()* available via **CodeAugmentorFunctions** function name for use by processing scripts.
+       - helper functions *setScopeVar()* and *setGlobalScopeVar()* available via **CodeAugmentorFunctions** function name for use by processing scripts.
        - helper methods **newSkippedGenCode()** and **getScopeVar()** added on helper context object.
        - **codeAugmentor_indent** variable added by default to global scope with a value of four spaces.
 
