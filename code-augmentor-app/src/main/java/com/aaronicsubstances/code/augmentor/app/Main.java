@@ -21,8 +21,9 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         String APP_NAME = System.getProperty("app.name");
+        String APP_VERSION = System.getProperty("app.version");
         if (APP_NAME == null) {
-            APP_NAME = "codeaugmentor-app";
+            APP_NAME = "codeaugmentorapp";
         }
         Option fileOpt = Option.builder("f").longOpt("file").required()
                                 .argName( "ant build file" ).hasArg()
@@ -33,16 +34,25 @@ public class Main {
                                 .desc( "use given Ant build target" )
                                 .build();
         Option helpOpt = Option.builder("h").longOpt("help")
-                                .desc("help information")
+                                .desc("print help information and exit")
+                                .build();
+        Option versionOpt = Option.builder("v").longOpt("version")
+                                .desc("print version and exit")
                                 .build();
         Options options = new Options();
         options.addOption(fileOpt)
             .addOption(antTargetOpt)
-            .addOption(helpOpt);
+            .addOption(helpOpt)
+            .addOption(versionOpt);
 
-        if (hasHelp(helpOpt, args)) {
+        if (hasSingleOption(helpOpt, args)) {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp(APP_NAME, options, true);
+            return;
+        }
+
+        if (hasSingleOption(versionOpt, args)) {
+            System.out.format("%s %s%n", APP_NAME, APP_VERSION);
             return;
         }
 
@@ -62,16 +72,16 @@ public class Main {
         startAntBuild(new File(buildPath), cmd.getOptionValue(antTargetOpt.getOpt()));
     }
     
-    private static boolean hasHelp(Option help, String[] args) {
+    private static boolean hasSingleOption(Option singleOpt, String[] args) {
         Options options = new Options();
-        options.addOption(help);
+        options.addOption(singleOpt);
         CommandLineParser parser = new DefaultParser();
         try {
             CommandLine cmd = parser.parse(options, args);
             if (cmd.getOptions().length != 1) {
                 return false;
             }
-            return cmd.hasOption(help.getOpt());
+            return cmd.hasOption(singleOpt.getOpt());
         }
         catch (ParseException ignore) {
             return false;

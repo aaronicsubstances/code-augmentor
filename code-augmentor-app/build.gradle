@@ -19,7 +19,8 @@ ext {
 
 application {
     mainClassName = project.mainClassName
-    applicationDefaultJvmArgs = [ '-Dapp.name=' + applicationName ]
+    applicationDefaultJvmArgs = [ '-Dapp.name=' + applicationName,
+        '-Dapp.version=' + version ]
 }
 
 dependencies {

@@ -6,6 +6,10 @@ if "%DIRNAME%" == "" set DIRNAME=.
 
 set CMDNAME=%~n0
 
+if "%1" == "-h" (
+    goto help
+)
+
 if "%1" == "--rev" (
     set reverseFileNames=1
     shift
@@ -55,6 +59,8 @@ for /F "usebackq tokens=*" %%A in ("%DIRNAME%\CHANGE-SUMMARY.txt") do (
         set a=%%A
     )
 )
+
+:help
 if defined confirmed (
     echo.
     echo Done
@@ -62,9 +68,11 @@ if defined confirmed (
     rem Done
 ) else (
     echo.
-    echo Usage: %CMDNAME% [-f ^| [--rev] ^<arbitraryCommandWithArgs^>]
+    echo Usage: %CMDNAME% [-f ^| -h ^| [--rev] ^<arbitraryCommandWithArgs^>]
     echo where
     echo     -f                              use to actually copy and overwrite
+    echo.
+    echo     -h                              prints this help information and exits
     echo.
     echo     ^<arbitraryCommandWithArgs^>      use to specify a command which will be called iteratively 
     echo                                     with each source file and its corresponding generated file 
