@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
 
 /** 
  * Used to implement Unix diff for "normal" format, ie neither context format nor
@@ -53,11 +52,10 @@ public class Diff {
         int[] yLineRange = new int[]{0, 0};
         while (i < m && j < n) {
             if (x.get(i).equals(y.get(j))) {
-                if (!xLines.isEmpty() || !yLines.isEmpty()) {
-                    printDiffLines(writer, xLines, yLines, xLineRange, yLineRange);
-                    xLines.clear();
-                    yLines.clear();
-                }
+                printDiffLines(writer, xLines, yLines, xLineRange, yLineRange);
+                xLines.clear();
+                yLines.clear();
+                
                 xLineRange[0] = ++i;
                 yLineRange[0] = ++j;
             }
@@ -131,10 +129,9 @@ public class Diff {
     }
     
     private static void formatLine(String line, Writer writer) throws IOException {
-        Matcher m = TaskUtils.NEW_LINE_REGEX.matcher(line);
-        boolean endsWithNewlne = m.find();
-        if (endsWithNewlne) {
-            writer.write(line.substring(0, m.start()));
+        int newlineSuffixLen = findNewlineSuffixLen(line);
+        if (newlineSuffixLen > 0) {
+            writer.write(line, 0, line.length() - newlineSuffixLen);
             writer.write(System.lineSeparator());
         }
         else {
@@ -143,5 +140,15 @@ public class Diff {
             writer.write("\\ No newline at end of file");
             writer.write(System.lineSeparator());
         }
+    }
+
+    private static int findNewlineSuffixLen(String line) {
+        if (line.endsWith("\r\n")) {
+            return 2;
+        }
+        if (line.endsWith("\n") || line.endsWith("\r")) {
+            return 1;
+        }
+        return 0;
     }
 }

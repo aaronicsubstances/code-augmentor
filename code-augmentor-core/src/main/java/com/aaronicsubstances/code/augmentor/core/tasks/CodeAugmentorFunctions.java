@@ -5,11 +5,15 @@ import java.util.Map;
 import com.aaronicsubstances.code.augmentor.core.models.AugmentingCode;
 import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode;
 
+/**
+ * This class defines the helper functions supplied by the library
+ * for use by processing scripts written in JVM languages.
+ */
 public class CodeAugmentorFunctions {
 
     /**
-     * Sets/Replaces a variable in file scope.
-     * @param augCode
+     * Sets/Replaces variables in file scope.
+     * @param augCode variables are the keys of embedded data sections which must be JSON objects.
      * @param context
      * 
      * @return object indicating skipping code generation for augCode
@@ -20,8 +24,8 @@ public class CodeAugmentorFunctions {
     } 
 
     /**
-     * Sets/Replaces a variable in global scope.
-     * @param augCode
+     * Sets/Replaces variables in global scope.
+     * @param augCode variables are the keys of embedded data sections which must be JSON objects.
      * @param context
      * 
      * @return object indicating skipping code generation for augCode

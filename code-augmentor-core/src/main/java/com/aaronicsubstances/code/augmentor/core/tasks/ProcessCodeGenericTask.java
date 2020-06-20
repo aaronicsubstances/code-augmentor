@@ -24,8 +24,8 @@ import com.aaronicsubstances.code.augmentor.core.models.GeneratedCode.ContentPar
 import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 
 /**
- * Intended for use by plugins and scripts written in Groovy (and other JVM languages)
- * to implement processing stage of Code Augmentor.
+ * Implements processing stage of Code Augmentor.
+ * Intended for use by plugins and scripts written in Groovy (and other JVM languages).
  */
 public class ProcessCodeGenericTask {
 

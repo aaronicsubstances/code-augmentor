@@ -1,20 +1,14 @@
 package com.aaronicsubstances.code.augmentor.core.util;
 
-import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.StringReader;
-import java.io.Writer;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -229,7 +223,7 @@ public class TaskUtils {
 
     /**
      * Generates a name with a given prefix which is guaranteed to be absent in a given list. If 
-     * prefix is not in lists, then prefix is simply returned.
+     * prefix is not in the list in the first place, then prefix is simply returned.
      * @param names given list.
      * @param originalName given prefix.
      * @return a name which has originalName as a prefix and is not in names list.
@@ -249,31 +243,14 @@ public class TaskUtils {
         return modifiedName.toString();
     }
 
-    public static String readFile(File srcFile, Charset charset) throws IOException {
-        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-        try (InputStream inStream = new FileInputStream(srcFile)) {
-            copyStream(inStream, outStream);
-            outStream.flush();
-        }
-        byte[] buf = outStream.toByteArray();
-        String s = new String(buf, charset);
-        return s;
-    }
-
-    public static void writeFile(File destFile, Charset charset, String contents) throws IOException {
-        try (Writer writer = new OutputStreamWriter(new FileOutputStream(destFile), charset)) {
-            writer.write(contents);
-        }
-    }
-
     /**
      * Calculate MD5 hash of file 
      * @param contents file contents
      * @param charset file encoding
      * @return MD5 hash of file as hexadecimal (lowercase) string.
-     * @throws NoSuchAlgorithmException
+     * @throws Exception
      */
-    public static String calcHash(String contents, Charset charset) throws NoSuchAlgorithmException {
+    public static String calcHash(String contents, Charset charset) throws Exception {
         byte[] binaryContent = contents.getBytes(charset);
         MessageDigest md = MessageDigest.getInstance("MD5");
         md.update(binaryContent);
@@ -283,26 +260,22 @@ public class TaskUtils {
         return String.format("%0" + outputLen + "x", bigInteger);
     }
 
-    public static void copyStream(InputStream inStream, OutputStream outStream) throws IOException {
-        byte[] b  = new byte[8192];
-        int len;
-        while ((len = inStream.read(b)) > 0) {
-            outStream.write(b, 0, len);
-        }
-        outStream.flush();
+    public static String readFile(File srcFile, Charset charset) throws IOException {
+        byte[] buf = Files.readAllBytes(srcFile.toPath());
+        String s = new String(buf, charset);
+        return s;
+    }
+
+    public static void writeFile(File destFile, Charset charset, String contents) throws IOException {
+        Files.write(destFile.toPath(), contents.getBytes(charset));
     }
 
     public static void copyFile(File srcFile, File destFile) throws IOException {
-        try (InputStream inputStream = new FileInputStream(srcFile)) {
-            try (OutputStream outputStream = new FileOutputStream(destFile)) {
-                copyStream(inputStream, outputStream);
-            }
-        }
+        Files.copy(srcFile.toPath(), destFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
     }
 
     /**
-     * Deletes a directory recursively. Silently ignores any failure to delete any directory
-     * encountered.
+     * Deletes a directory recursively. Silently ignores any deletion failures.
      * @param dir directory to delete.
      */
 	public static void deleteDir(File dir) {

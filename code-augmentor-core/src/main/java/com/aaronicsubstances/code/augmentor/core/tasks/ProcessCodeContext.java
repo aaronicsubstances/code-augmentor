@@ -36,7 +36,8 @@ public class ProcessCodeContext {
     }
 
     /**
-     * Creates a new {@link GeneratedCode} with skipped property set to true.  
+     * Creates a new {@link GeneratedCode} with skipped property set to true and null
+     * content parts.  
      * @return new generated code object for skipping aug code section
      * during completion stage.
      */

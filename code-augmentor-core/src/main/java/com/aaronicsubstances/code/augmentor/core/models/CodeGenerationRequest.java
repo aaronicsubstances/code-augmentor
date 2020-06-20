@@ -20,179 +20,262 @@ import com.aaronicsubstances.code.augmentor.core.util.PersistenceUtil;
  */
 public class CodeGenerationRequest {
 
-    static class Header {
-        Boolean contentStreamingEnabled;
-
-        String genCodeStartDirective;
-        String genCodeEndDirective;
-        String embeddedStringDirective;
-        String embeddedJsonDirective;
-        String skipCodeStartDirective;
-        String skipCodeEndDirective;
-        String augCodeDirective;
-        String inlineGenCodeDirective;
-        String nestedLevelStartMarker;
-        String nestedLevelEndMarker;
-    }
-
-    private String genCodeStartDirective;
-    private String genCodeEndDirective;
-    private String embeddedStringDirective;
-    private String embeddedJsonDirective;
-    private String skipCodeStartDirective;
-    private String skipCodeEndDirective;
-    private String augCodeDirective;
-    private String inlineGenCodeDirective;
-    private String nestedLevelStartMarker;
-    private String nestedLevelEndMarker;
-
-    public String getGenCodeStartDirective() {
-        return genCodeStartDirective;
-    }
-
     /**
-     * Sets in {@link com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeContext#getHeader()}
-     * the first of generated code start directives used to configure preparation stage. Set to 
-     * null if no such directives were provided.
-     * @param genCodeStartDirective
+     * Represents the contents of 
+     * {@link com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeContext#getHeader()}
      */
-    public void setGenCodeStartDirective(String genCodeStartDirective) {
-        this.genCodeStartDirective = genCodeStartDirective;
+    public static class Header {
+        // Only used to determine how to read file augmenting codes. Ignored
+        // during equality comparisons.
+        private Boolean contentStreamingEnabled;
+
+        private String genCodeStartDirective;
+        private String genCodeEndDirective;
+        private String embeddedStringDirective;
+        private String embeddedJsonDirective;
+        private String skipCodeStartDirective;
+        private String skipCodeEndDirective;
+        private String augCodeDirective;
+        private String inlineGenCodeDirective;
+        private String nestedLevelStartMarker;
+        private String nestedLevelEndMarker;
+
+        public String getGenCodeStartDirective() {
+            return genCodeStartDirective;
+        }
+    
+        /**
+         * Sets the first of generated code start directives used to configure preparation stage. 
+         * Set to null if no such directives were provided.
+         * @param genCodeStartDirective
+         */
+        public void setGenCodeStartDirective(String genCodeStartDirective) {
+            this.genCodeStartDirective = genCodeStartDirective;
+        }
+    
+        public String getGenCodeEndDirective() {
+            return genCodeEndDirective;
+        }
+    
+        /**
+         * Sets the first of generated code end directives used to configure preparation stage. 
+         * Set to null if no such directives were provided.
+         * @param genCodeEndDirective
+         */
+        public void setGenCodeEndDirective(String genCodeEndDirective) {
+            this.genCodeEndDirective = genCodeEndDirective;
+        }
+    
+        public String getEmbeddedStringDirective() {
+            return embeddedStringDirective;
+        }
+    
+        /**
+         * Sets the first of embedded string directives used to configure preparation stage. 
+         * Set to null if no such directives were provided.
+         * @param embeddedStringDirective
+         */
+        public void setEmbeddedStringDirective(String embeddedStringDirective) {
+            this.embeddedStringDirective = embeddedStringDirective;
+        }
+    
+        public String getEmbeddedJsonDirective() {
+            return embeddedJsonDirective;
+        }
+    
+        /**
+         * Sets the first of embedded JSON directives used to configure preparation stage. 
+         * Set to null if no such directives were provided.
+         * @param embeddedJsonDirective
+         */
+        public void setEmbeddedJsonDirective(String embeddedJsonDirective) {
+            this.embeddedJsonDirective = embeddedJsonDirective;
+        }
+    
+        public String getSkipCodeStartDirective() {
+            return skipCodeStartDirective;
+        }
+    
+        /**
+         * Sets the first of skip start directives used to configure preparation stage. 
+         * Set to null if no such directives were provided.
+         * @param skipCodeStartDirective
+         */
+        public void setSkipCodeStartDirective(String skipCodeStartDirective) {
+            this.skipCodeStartDirective = skipCodeStartDirective;
+        }
+    
+        public String getSkipCodeEndDirective() {
+            return skipCodeEndDirective;
+        }
+    
+        /**
+         * Sets the first of skip end directives used to configure preparation stage.
+         * Set to null if no such directives were provided.
+         * @param skipCodeEndDirective
+         */
+        public void setSkipCodeEndDirective(String skipCodeEndDirective) {
+            this.skipCodeEndDirective = skipCodeEndDirective;
+        }
+    
+        public String getAugCodeDirective() {
+            return augCodeDirective;
+        }
+    
+        /**
+         * Sets the first of aug code directives used to configure preparation stage and is
+         * associated with this code generation request.
+         * @param augCodeDirective
+         */
+        public void setAugCodeDirective(String augCodeDirective) {
+            this.augCodeDirective = augCodeDirective;
+        }
+    
+        public String getInlineGenCodeDirective() {
+            return inlineGenCodeDirective;
+        }
+    
+        /**
+         * Sets the first of inline generated code directives used to configure preparation stage. 
+         * Set to null if no such directives were provided.
+         * @param inlineGenCodeDirective
+         */
+        public void setInlineGenCodeDirective(String inlineGenCodeDirective) {
+            this.inlineGenCodeDirective = inlineGenCodeDirective;
+        }
+    
+        public String getNestedLevelStartMarker() {
+            return nestedLevelStartMarker;
+        }
+    
+        /**
+         * Sets the first of nested level start markers used to configure preparation stage.
+         * Set to null if no such directives were provided.
+         * @param nestedLevelStartMarker
+         */
+        public void setNestedLevelStartMarker(String nestedLevelStartMarker) {
+            this.nestedLevelStartMarker = nestedLevelStartMarker;
+        }
+    
+        public String getNestedLevelEndMarker() {
+            return nestedLevelEndMarker;
+        }
+    
+        /**
+         * Sets the first of nested level end markers used to configure preparation stage.
+         * Set to null if no such directives were provided.
+         * @param nestedLevelEndMarker
+         */
+        public void setNestedLevelEndMarker(String nestedLevelEndMarker) {
+            this.nestedLevelEndMarker = nestedLevelEndMarker;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((augCodeDirective == null) ? 0 : augCodeDirective.hashCode());
+            result = prime * result + ((embeddedJsonDirective == null) ? 0 : embeddedJsonDirective.hashCode());
+            result = prime * result + ((embeddedStringDirective == null) ? 0 : embeddedStringDirective.hashCode());
+            result = prime * result + ((genCodeEndDirective == null) ? 0 : genCodeEndDirective.hashCode());
+            result = prime * result + ((genCodeStartDirective == null) ? 0 : genCodeStartDirective.hashCode());
+            result = prime * result + ((inlineGenCodeDirective == null) ? 0 : inlineGenCodeDirective.hashCode());
+            result = prime * result + ((nestedLevelEndMarker == null) ? 0 : nestedLevelEndMarker.hashCode());
+            result = prime * result + ((nestedLevelStartMarker == null) ? 0 : nestedLevelStartMarker.hashCode());
+            result = prime * result + ((skipCodeEndDirective == null) ? 0 : skipCodeEndDirective.hashCode());
+            result = prime * result + ((skipCodeStartDirective == null) ? 0 : skipCodeStartDirective.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            Header other = (Header) obj;
+            if (augCodeDirective == null) {
+                if (other.augCodeDirective != null)
+                    return false;
+            } else if (!augCodeDirective.equals(other.augCodeDirective))
+                return false;
+            if (embeddedJsonDirective == null) {
+                if (other.embeddedJsonDirective != null)
+                    return false;
+            } else if (!embeddedJsonDirective.equals(other.embeddedJsonDirective))
+                return false;
+            if (embeddedStringDirective == null) {
+                if (other.embeddedStringDirective != null)
+                    return false;
+            } else if (!embeddedStringDirective.equals(other.embeddedStringDirective))
+                return false;
+            if (genCodeEndDirective == null) {
+                if (other.genCodeEndDirective != null)
+                    return false;
+            } else if (!genCodeEndDirective.equals(other.genCodeEndDirective))
+                return false;
+            if (genCodeStartDirective == null) {
+                if (other.genCodeStartDirective != null)
+                    return false;
+            } else if (!genCodeStartDirective.equals(other.genCodeStartDirective))
+                return false;
+            if (inlineGenCodeDirective == null) {
+                if (other.inlineGenCodeDirective != null)
+                    return false;
+            } else if (!inlineGenCodeDirective.equals(other.inlineGenCodeDirective))
+                return false;
+            if (nestedLevelEndMarker == null) {
+                if (other.nestedLevelEndMarker != null)
+                    return false;
+            } else if (!nestedLevelEndMarker.equals(other.nestedLevelEndMarker))
+                return false;
+            if (nestedLevelStartMarker == null) {
+                if (other.nestedLevelStartMarker != null)
+                    return false;
+            } else if (!nestedLevelStartMarker.equals(other.nestedLevelStartMarker))
+                return false;
+            if (skipCodeEndDirective == null) {
+                if (other.skipCodeEndDirective != null)
+                    return false;
+            } else if (!skipCodeEndDirective.equals(other.skipCodeEndDirective))
+                return false;
+            if (skipCodeStartDirective == null) {
+                if (other.skipCodeStartDirective != null)
+                    return false;
+            } else if (!skipCodeStartDirective.equals(other.skipCodeStartDirective))
+                return false;
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            return "Header{augCodeDirective=" + augCodeDirective
+                    + ", embeddedJsonDirective=" + embeddedJsonDirective
+                    + ", embeddedStringDirective=" + embeddedStringDirective + ", genCodeEndDirective="
+                    + genCodeEndDirective + ", genCodeStartDirective=" + genCodeStartDirective
+                    + ", inlineGenCodeDirective=" + inlineGenCodeDirective + ", nestedLevelEndMarker="
+                    + nestedLevelEndMarker + ", nestedLevelStartMarker=" + nestedLevelStartMarker
+                    + ", skipCodeEndDirective=" + skipCodeEndDirective + ", skipCodeStartDirective="
+                    + skipCodeStartDirective + "}";
+        }
     }
 
-    public String getGenCodeEndDirective() {
-        return genCodeEndDirective;
-    }
-
-    /**
-     * Sets in {@link com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeContext#getHeader()}
-     * the first of generated code end directives used to configure preparation stage. Set to 
-     * null if no such directives were provided.
-     * @param genCodeEndDirective
-     */
-    public void setGenCodeEndDirective(String genCodeEndDirective) {
-        this.genCodeEndDirective = genCodeEndDirective;
-    }
-
-    public String getEmbeddedStringDirective() {
-        return embeddedStringDirective;
-    }
-
-    /**
-     * Sets in {@link com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeContext#getHeader()}
-     * the first of embedded string directives used to configure preparation stage. Set to 
-     * null if no such directives were provided.
-     * @param embeddedStringDirective
-     */
-    public void setEmbeddedStringDirective(String embeddedStringDirective) {
-        this.embeddedStringDirective = embeddedStringDirective;
-    }
-
-    public String getEmbeddedJsonDirective() {
-        return embeddedJsonDirective;
-    }
-
-    /**
-     * Sets in {@link com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeContext#getHeader()}
-     * the first of embedded JSON directives used to configure preparation stage. Set to 
-     * null if no such directives were provided.
-     * @param embeddedJsonDirective
-     */
-    public void setEmbeddedJsonDirective(String embeddedJsonDirective) {
-        this.embeddedJsonDirective = embeddedJsonDirective;
-    }
-
-    public String getSkipCodeStartDirective() {
-        return skipCodeStartDirective;
-    }
-
-    /**
-     * Sets in {@link com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeContext#getHeader()}
-     * the first of skip start directives used to configure preparation stage. Set to 
-     * null if no such directives were provided.
-     * @param skipCodeStartDirective
-     */
-    public void setSkipCodeStartDirective(String skipCodeStartDirective) {
-        this.skipCodeStartDirective = skipCodeStartDirective;
-    }
-
-    public String getSkipCodeEndDirective() {
-        return skipCodeEndDirective;
-    }
-
-    /**
-     * Sets in {@link com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeContext#getHeader()}
-     * the first of skip end directives used to configure preparation stage. Set to 
-     * null if no such directives were provided.
-     * @param skipCodeEndDirective
-     */
-    public void setSkipCodeEndDirective(String skipCodeEndDirective) {
-        this.skipCodeEndDirective = skipCodeEndDirective;
-    }
-
-    public String getAugCodeDirective() {
-        return augCodeDirective;
-    }
-
-    /**
-     * Sets in {@link com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeContext#getHeader()}
-     * the first of aug code directives used to configure preparation stage and is
-     * associated with this code generation request.
-     * @param augCodeDirective
-     */
-    public void setAugCodeDirective(String augCodeDirective) {
-        this.augCodeDirective = augCodeDirective;
-    }
-
-    public String getInlineGenCodeDirective() {
-        return inlineGenCodeDirective;
-    }
-
-    /**
-     * Sets in {@link com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeContext#getHeader()}
-     * the first of inline generated code directives used to configure preparation stage. Set to 
-     * null if no such directives were provided.
-     * @param inlineGenCodeDirective
-     */
-    public void setInlineGenCodeDirective(String inlineGenCodeDirective) {
-        this.inlineGenCodeDirective = inlineGenCodeDirective;
-    }
-
-    public String getNestedLevelStartMarker() {
-        return nestedLevelStartMarker;
-    }
-
-    /**
-     * Sets in {@link com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeContext#getHeader()}
-     * the first of nested level start markers used to configure preparation stage. Set to 
-     * null if no such directives were provided.
-     * @param nestedLevelStartMarker
-     */
-    public void setNestedLevelStartMarker(String nestedLevelStartMarker) {
-        this.nestedLevelStartMarker = nestedLevelStartMarker;
-    }
-
-    public String getNestedLevelEndMarker() {
-        return nestedLevelEndMarker;
-    }
-
-    /**
-     * Sets in {@link com.aaronicsubstances.code.augmentor.core.tasks.ProcessCodeContext#getHeader()}
-     * the first of nested level end markers used to configure preparation stage. Set to 
-     * null if no such directives were provided.
-     * @param nestedLevelEndMarker
-     */
-    public void setNestedLevelEndMarker(String nestedLevelEndMarker) {
-        this.nestedLevelEndMarker = nestedLevelEndMarker;
-    }
-
+    private Header header;
     private List<SourceFileAugmentingCode> sourceFileAugmentingCodes;
 
     public CodeGenerationRequest() {
+        this(null);
     }
 
     public CodeGenerationRequest(List<SourceFileAugmentingCode> sourceFileAugmentingCodes) {
         this.sourceFileAugmentingCodes = sourceFileAugmentingCodes;
+        header = new Header();
+    }
+
+    public Header getHeader() {
+        return header;
     }
 
     public List<SourceFileAugmentingCode> getSourceFileAugmentingCodes() {
@@ -221,18 +304,8 @@ public class CodeGenerationRequest {
 
     private void printHeader(PersistenceUtil persistenceUtil, boolean contentStreamEnabled) 
             throws Exception {
-        Header header = new Header();
-        header.genCodeStartDirective = genCodeStartDirective;
-        header.genCodeEndDirective = genCodeEndDirective;
-        header.skipCodeStartDirective = skipCodeStartDirective;
-        header.skipCodeEndDirective = skipCodeEndDirective;
-        header.embeddedStringDirective = embeddedStringDirective;
-        header.embeddedJsonDirective = embeddedJsonDirective;
-        header.augCodeDirective = augCodeDirective;
-        header.inlineGenCodeDirective = inlineGenCodeDirective;
-        header.nestedLevelStartMarker = nestedLevelStartMarker;
-        header.nestedLevelEndMarker = nestedLevelEndMarker;
         // try not to set contentStreamEnabled to true since it's true by default.
+        header.contentStreamingEnabled = null;
         if (!contentStreamEnabled) {
             header.contentStreamingEnabled = false;
         }
@@ -313,17 +386,7 @@ public class CodeGenerationRequest {
         if (headerLineReceiver != null) {
             headerLineReceiver.append(headerString);
         }
-        Header header = PersistenceUtil.deserializeFromJson(headerString, Header.class);
-        genCodeStartDirective = header.genCodeStartDirective;
-        genCodeEndDirective = header.genCodeEndDirective;
-        skipCodeStartDirective = header.skipCodeStartDirective;
-        skipCodeEndDirective = header.skipCodeEndDirective;
-        embeddedStringDirective = header.embeddedStringDirective;
-        embeddedJsonDirective = header.embeddedJsonDirective;
-        augCodeDirective = header.augCodeDirective;
-        inlineGenCodeDirective = header.inlineGenCodeDirective;
-        nestedLevelStartMarker = header.nestedLevelStartMarker;
-        nestedLevelEndMarker = header.nestedLevelEndMarker;
+        header = PersistenceUtil.deserializeFromJson(headerString, Header.class);
         // enable content streaming by default.
         boolean contentStreamingEnabled = true;
         if (header.contentStreamingEnabled != null) {
@@ -363,16 +426,7 @@ public class CodeGenerationRequest {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((augCodeDirective == null) ? 0 : augCodeDirective.hashCode());
-        result = prime * result + ((embeddedJsonDirective == null) ? 0 : embeddedJsonDirective.hashCode());
-        result = prime * result + ((embeddedStringDirective == null) ? 0 : embeddedStringDirective.hashCode());
-        result = prime * result + ((genCodeEndDirective == null) ? 0 : genCodeEndDirective.hashCode());
-        result = prime * result + ((genCodeStartDirective == null) ? 0 : genCodeStartDirective.hashCode());
-        result = prime * result + ((inlineGenCodeDirective == null) ? 0 : inlineGenCodeDirective.hashCode());
-        result = prime * result + ((nestedLevelEndMarker == null) ? 0 : nestedLevelEndMarker.hashCode());
-        result = prime * result + ((nestedLevelStartMarker == null) ? 0 : nestedLevelStartMarker.hashCode());
-        result = prime * result + ((skipCodeEndDirective == null) ? 0 : skipCodeEndDirective.hashCode());
-        result = prime * result + ((skipCodeStartDirective == null) ? 0 : skipCodeStartDirective.hashCode());
+        result = prime * result + ((header == null) ? 0 : header.hashCode());
         result = prime * result + ((sourceFileAugmentingCodes == null) ? 0 : sourceFileAugmentingCodes.hashCode());
         return result;
     }
@@ -386,55 +440,10 @@ public class CodeGenerationRequest {
         if (getClass() != obj.getClass())
             return false;
         CodeGenerationRequest other = (CodeGenerationRequest) obj;
-        if (augCodeDirective == null) {
-            if (other.augCodeDirective != null)
+        if (header == null) {
+            if (other.header != null)
                 return false;
-        } else if (!augCodeDirective.equals(other.augCodeDirective))
-            return false;
-        if (embeddedJsonDirective == null) {
-            if (other.embeddedJsonDirective != null)
-                return false;
-        } else if (!embeddedJsonDirective.equals(other.embeddedJsonDirective))
-            return false;
-        if (embeddedStringDirective == null) {
-            if (other.embeddedStringDirective != null)
-                return false;
-        } else if (!embeddedStringDirective.equals(other.embeddedStringDirective))
-            return false;
-        if (genCodeEndDirective == null) {
-            if (other.genCodeEndDirective != null)
-                return false;
-        } else if (!genCodeEndDirective.equals(other.genCodeEndDirective))
-            return false;
-        if (genCodeStartDirective == null) {
-            if (other.genCodeStartDirective != null)
-                return false;
-        } else if (!genCodeStartDirective.equals(other.genCodeStartDirective))
-            return false;
-        if (inlineGenCodeDirective == null) {
-            if (other.inlineGenCodeDirective != null)
-                return false;
-        } else if (!inlineGenCodeDirective.equals(other.inlineGenCodeDirective))
-            return false;
-        if (nestedLevelEndMarker == null) {
-            if (other.nestedLevelEndMarker != null)
-                return false;
-        } else if (!nestedLevelEndMarker.equals(other.nestedLevelEndMarker))
-            return false;
-        if (nestedLevelStartMarker == null) {
-            if (other.nestedLevelStartMarker != null)
-                return false;
-        } else if (!nestedLevelStartMarker.equals(other.nestedLevelStartMarker))
-            return false;
-        if (skipCodeEndDirective == null) {
-            if (other.skipCodeEndDirective != null)
-                return false;
-        } else if (!skipCodeEndDirective.equals(other.skipCodeEndDirective))
-            return false;
-        if (skipCodeStartDirective == null) {
-            if (other.skipCodeStartDirective != null)
-                return false;
-        } else if (!skipCodeStartDirective.equals(other.skipCodeStartDirective))
+        } else if (!header.equals(other.header))
             return false;
         if (sourceFileAugmentingCodes == null) {
             if (other.sourceFileAugmentingCodes != null)
@@ -446,12 +455,7 @@ public class CodeGenerationRequest {
 
     @Override
     public String toString() {
-        return "CodeGenerationRequest{augCodeDirective=" + augCodeDirective + ", embeddedJsonDirective="
-                + embeddedJsonDirective + ", embeddedStringDirective=" + embeddedStringDirective
-                + ", genCodeEndDirective=" + genCodeEndDirective + ", genCodeStartDirective=" + genCodeStartDirective
-                + ", inlineGenCodeDirective=" + inlineGenCodeDirective + ", nestedLevelEndMarker="
-                + nestedLevelEndMarker + ", nestedLevelStartMarker=" + nestedLevelStartMarker
-                + ", skipCodeEndDirective=" + skipCodeEndDirective + ", skipCodeStartDirective="
-                + skipCodeStartDirective + ", sourceFileAugmentingCodes=" + sourceFileAugmentingCodes + "}";
+        return "CodeGenerationRequest{header=" + header + ", sourceFileAugmentingCodes=" + 
+            sourceFileAugmentingCodes + "}";
     }
 }

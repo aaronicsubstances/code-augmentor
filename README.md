@@ -61,9 +61,9 @@ Further information helpful to script writers is available on related [wiki page
    Java HotSpot(TM) 64-Bit Server VM (build 25.152-b16, mixed mode)
    ```
 
-2. Download the latest release of [code-augmentor-app](https://github.com/aaronicsubstances/code-augmentor/releases), decompress/unarchive download, and place the *bin* folder containing the `code-augmentor-app` script in your system path. Alternatively you can always use the full path to call `code-augmentor-app` script directly. In the next steps it is assumed `code-augmentor-app` is in your system path.
+1. Download the latest release of [code-augmentor-app](https://github.com/aaronicsubstances/code-augmentor/releases), decompress/unarchive download, and place the *bin* folder containing the `code-augmentor-app` script in your system path. Alternatively you can always use the full path to call `code-augmentor-app` script directly. In the next steps it is assumed `code-augmentor-app` is in your system path.
 
-3. Verify ability to get help text of script by running `code-augmentor-app -h`, and should get an output resembling the following:
+1. Verify ability to get help text of script by running `code-augmentor-app -h`, and should get an output resembling the following:
 
    ```
    usage: code-augmentor-app -f <ant build file> [-h] [-t <ant target>]
@@ -72,11 +72,11 @@ Further information helpful to script writers is available on related [wiki page
     -t,--target <ant target>     use given Ant build target
    ```
 
-4. Decide on which scripting language you are going to employ for writing code generator scripts: [NodeJS](https://nodejs.org), [PHP 7](https://www.php.net), [Python 3](https://www.python.org), [Groovy](https://groovy-lang.org). Strictly speaking more than one language can be used, but the expected usual case is usage of one scripting language.
+1. Decide on which scripting language you are going to employ for writing code generator scripts: [NodeJS](https://nodejs.org), [PHP 7](https://www.php.net), [Python 3](https://www.python.org), [Groovy](https://groovy-lang.org). Strictly speaking more than one language can be used, but the expected usual case is usage of one scripting language.
 
-5. Sample projects are available for getting started: [NodeJS examples](https://github.com/aaronicsubstances/code-augmentor-nodejs/tree/master/examples), [PHP 7 examples](https://github.com/aaronicsubstances/code-augmentor-php/tree/master/examples) (requires [Composer](https://getcomposer.org)), [Python 3 examples](https://github.com/aaronicsubstances/code-augmentor-python/tree/master/examples) (requires [Poetry](https://python-poetry.org)), [Groovy examples](https://github.com/aaronicsubstances/code-augmentor/tree/master/examples). Download files in the example directory for the chosen scripting platform.
+1. Sample projects are available for getting started: [NodeJS examples](https://github.com/aaronicsubstances/code-augmentor-nodejs/tree/master/examples), [PHP 7 examples](https://github.com/aaronicsubstances/code-augmentor-php/tree/master/examples) (requires [Composer](https://getcomposer.org)), [Python 3 examples](https://github.com/aaronicsubstances/code-augmentor-python/tree/master/examples) (requires [Poetry](https://python-poetry.org)), [Groovy examples](https://github.com/aaronicsubstances/code-augmentor/tree/master/examples). Download files in the example directory for the chosen scripting platform.
 
-6. Each sample project has a build.xml which runs Code Augmentor on files of a `src` subdirectory beside build.xml. Assuming current directory is the directory containing the build.xml file, first run
+1. Each sample project has a build.xml which runs Code Augmentor on files of a `src` subdirectory beside build.xml. Assuming current directory is the directory containing the build.xml file, first run
 
    ```
    code-augmentor-app -f build.xml -t check-exec
@@ -91,33 +91,33 @@ Further information helpful to script writers is available on related [wiki page
    
    c. `check-exec` Ant target and `tempSrc` directory only exist for the purpose of this getting started tutorial, and are therefore not needed in real world usage of Code Augmentor. 
    
-7. Now launch full Code Augmentor operations by running
+1. Now launch full Code Augmentor operations by running
 
    ```
    code-augmentor-app -f build.xml
    ```
 
-7. By default Code Augmentor is configured to detect code changes in generated code sections. If `code_aug_complete` task in build.xml is configured to disable code change detection, like this:
+1. By default Code Augmentor is configured to detect code changes in generated code sections. If `code_aug_complete` task in build.xml is configured to disable code change detection, like this:
 
    ```xml
    <code_aug_complete codeChangeDetectionDisabled="true" />
    ```
    
-   then Code Augmentor operation ends, with files in `generated` subdirectory corresponding to files in `src` subdirectory (both directories are beside build.xml).
+   then Code Augmentor operation ends, with files in `generated` subdirectory (beside build.xml) corresponding to files in `src` subdirectory.
 
-7. Else Code Augmentor will complain/fail with (normal) error that files are now out of sync. Investigate `generated` subdirectory beside build.xml, and some text files and shell scripts should be present.
+1. Else Code Augmentor will complain/fail with (normal) error that files are now out of sync. Investigate `generated` subdirectory beside build.xml, and some text files and shell scripts should be present.
 
-   a. CHANGE-SUMMARY.txt - contains paths in `tempSrc` folder with out-of-sync changes.  If code change detection is disabled, then all paths in `src` folder will be present.
+   a. CHANGE-SUMMARY.txt - contains paths in `tempSrc` folder with out-of-sync changes.
    
-   b. CHANGE-DETAILS.json - contains location information on what actually changed.
+   b. CHANGE-DETAILS.txt - contains information on what actually changed in Unix diff normal format.
    
    c. EFFECT-CHANGES - shell script to run to update files in `tempSrc` with generated files.
    
    d. A directory will be present as well for each srcDir FileSet specified in build.xml
    
-7. Run `EFFECT-CHANGES -f` and observe that files in `tempSrc` subdirectory have been overwritten with corresponding files from `generated` subdirectory.
+1. Run `EFFECT-CHANGES -f` and observe that files in `tempSrc` subdirectory have been overwritten with corresponding files from `generated` subdirectory.
 
-7. Now rerun
+1. Now rerun
 
    ```
    code-augmentor-app -f build.xml
@@ -159,17 +159,15 @@ In practice it is desired to automate synchronization mechanism by setting up `c
 ## Build Instructions
 
    * Ensure the following are installed locally: JDK 8, Apache Maven, Groovy. Ensure JAVA_HOME and GROOVY_HOME environment variables are set up properly.
-   * Also ensure **java**, **mvn** and **groovy** executables are placed on the system path.
-   * Clone repository and run `gradlew alltests` from root of project. Can also run `gradlew clean alltests` instead (Gradle 5.6.4 will be downloaded and used by the commands). This builds and tests all the Java projects, and can take up to 6 minutes to complete.
+   * Also ensure **javac**, **java**, **mvn** and **groovy** executables are placed on the system path.
+   * Clone repository and run `gradlew alltests` from root of project. Can also run `gradlew clean alltests` instead (Gradle 5.6.4 will be downloaded and used by the commands). This tests and builds all the Java projects, and can take up to 6 minutes to complete.
 
 ### Tests Requiring Manual Inspection
 
 The following tests (currently all in the **code-augmentor-core** project) generate standard output/error messages which can be verified for correctness:
 
-   * core.cs_and_math.MathAlgorithmsTest.testShuffleList
-   * core.cs_and_math.parsing.LexerSupportTest.{testParseDecimalStringForError,testParseHexadecimalStringForError}
    * core.tasks.\*
-   * core.util.CodeGenerationRequestCreatorTest.{testValidateAugCodeSection,testIdentifyAugCodeSectionsForErrors
+   * core.util.CodeGenerationRequestCreatorTest.{testValidateAugCodeSection,testIdentifyAugCodeSectionsForErrors}
 
 ### Tests involving non-Java supported languages
 
@@ -178,6 +176,6 @@ In order to run further tests involving supported non-Java languages in the [pro
    * Ensure **node**, **python**/**python3** and **php** executables are placed on the system path.
    * Clone the repositories for each of the supported languages from their respective repositories.
    * In the **process-aug-code-tests** directory, make a copy of [LocalConfig.groovy.sample](https://github.com/aaronicsubstances/code-augmentor/blob/master/process-aug-code-tests/LocalConfig.groovy.sample) and name it *LocalConfig.groovy*. Edit the properties declared in it to match the locations of your supporting package project directories. Paths relative to Java repository can be used.
-   * (Optional) Run `gradlew :code-augmentor-core:build` from root of Java project. This can be skipped if Java projects have been built already.
+   * (Optional) Run `gradlew :code-augmentor-core:build` from root of Java project. This can be skipped if Java projects have been built recently.
    * Make [process-aug-code-tests](https://github.com/aaronicsubstances/code-augmentor/tree/master/process-aug-code-tests) the current directory from command line and use `groovyw tests.groovy` to run tests involving non-Java packages. If all tests pass, should see 0 failures.
 

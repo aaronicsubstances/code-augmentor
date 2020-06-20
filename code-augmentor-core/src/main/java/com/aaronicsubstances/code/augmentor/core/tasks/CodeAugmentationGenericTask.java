@@ -1,12 +1,13 @@
 package com.aaronicsubstances.code.augmentor.core.tasks;
 
 import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -33,6 +34,12 @@ import com.aaronicsubstances.code.augmentor.core.util.TaskUtils;
 /**
  * Implements completion stage of Code Augmentor, which is the third and final
  * stage.
+ * <p>
+ * If code changes are detected, then EFFECT-CHANGES OS shell script (in destination 
+ * directory of generated files) can be run with -f option to bring source files
+ * up to date with generated files by overwritig them. Running EFFECT-CHANGES
+ * without any command line option brings help information on how to use the
+ * command.
  */
 public class CodeAugmentationGenericTask {
     /**
@@ -87,6 +94,7 @@ public class CodeAugmentationGenericTask {
         
         allErrors.clear();
         codeChangeDetected = false;
+        changeDetailsFile = null;
 
         // clean destination directory.
         TaskUtils.deleteDir(destDir);
@@ -106,7 +114,6 @@ public class CodeAugmentationGenericTask {
         Object resultChangeSummaryWriter = resultChangeSummary.beginSerialize(changeSummaryFile);
 
         BufferedWriter changeDiffWriter = null;
-        changeDetailsFile = null;
         if (!codeChangeDetectionDisabled) {
             changeDetailsFile = new File(destDir, CHANGE_DETAILS_FILE_NAME);
             changeDiffWriter = new BufferedWriter(new OutputStreamWriter(
@@ -189,6 +196,7 @@ public class CodeAugmentationGenericTask {
                     lastContentPart.setContent(CodeGenerationResponseProcessor.
                         ensureEndingNewline(lastContentPart.getContent(), newline));
                 }
+
                 CodeGenerationResponseProcessor.repairSplitCrLfs(genCode.getContentParts());
 
                 // format content parts to consititute replacement text if possible.
@@ -311,19 +319,16 @@ public class CodeAugmentationGenericTask {
         if (!codeChangeDetectionDisabled) {
             changeDiffWriter.close();
             
-            InputStream shellScriptRes = getClass().getResourceAsStream("windows-copy-batch-file.bat");
-            ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-            TaskUtils.copyStream(shellScriptRes, outStream);
-            String contents = new String(outStream.toByteArray(), Charset.defaultCharset());
-            TaskUtils.writeFile(new File(destDir, SHELL_SCRIPT_PREFIX + ".bat"), 
-                Charset.defaultCharset(), contents);
-            
-            shellScriptRes = getClass().getResourceAsStream("unix-copy-bash-file.sh");
-            outStream = new ByteArrayOutputStream();
-            TaskUtils.copyStream(shellScriptRes, outStream);
-            contents = new String(outStream.toByteArray(), Charset.defaultCharset());
-            TaskUtils.writeFile(new File(destDir, SHELL_SCRIPT_PREFIX), 
-                Charset.defaultCharset(), contents);
+            try (InputStream shellScriptRes = 
+                    getClass().getResourceAsStream("windows-copy-batch-file.bat")) {
+                Files.copy(shellScriptRes, new File(destDir, SHELL_SCRIPT_PREFIX + ".bat").toPath(), 
+                    StandardCopyOption.REPLACE_EXISTING);
+            }
+            try (InputStream shellScriptRes = 
+                    getClass().getResourceAsStream("unix-copy-bash-file.sh")) {
+                Files.copy(shellScriptRes, new File(destDir, SHELL_SCRIPT_PREFIX).toPath(), 
+                    StandardCopyOption.REPLACE_EXISTING);
+            }
         }
     }
 
@@ -409,6 +414,12 @@ public class CodeAugmentationGenericTask {
     /**
      * Sets the destination directory for generated files. A folder will be
      * created in this directory for each file set passed to the preparation stage.
+     * <p>
+     * If code change detection is disabled, then OUTPUT-SUMMARY.txt will
+     * be present. Else instead of OUTPUT-SUMMARY.txt, the following files
+     * will be present:
+     * CHANGE-SUMMARY.txt, CHANGE-DETAILS.txt, EFFECT-CHANGES
+     *
      * @param destDir
      */
     public void setDestDir(File destDir) {
@@ -458,8 +469,7 @@ public class CodeAugmentationGenericTask {
 
     /**
      * Name of file with details of code changes detected in Unix diff normal format. 
-     * @return file with details of code changes or null if
-     * code change detection is disabled.
+     * @return file with details of code changes or null if code change detection is disabled.
      */
     public File getChangeDetailsFile() {
         return changeDetailsFile;

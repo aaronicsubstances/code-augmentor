@@ -84,7 +84,7 @@ public class Token {
     public int augCodeSpecIndex;
 
     /**
-     * Leading whitespace indent of token line.
+     * Leading whitespace indent of token line. Null if line consists of whitespace only.
      */
     public String indent;
 

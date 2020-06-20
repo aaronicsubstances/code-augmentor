@@ -86,32 +86,34 @@ public class PreCodeAugmentationGenericTask {
             CodeGenerationRequest codeGenRequest = new CodeGenerationRequest();
             codeGenRequests.add(codeGenRequest);
 
+            CodeGenerationRequest.Header header = codeGenRequest.getHeader();
+
             // initialize header.
-            codeGenRequest.setGenCodeStartDirective(prepResult.getGenCodeStartDirective());
-            codeGenRequest.setGenCodeEndDirective(prepResult.getGenCodeEndDirective());
+            header.setGenCodeStartDirective(prepResult.getGenCodeStartDirective());
+            header.setGenCodeEndDirective(prepResult.getGenCodeEndDirective());
             if (augCodeSpec.getDirectives() != null && !augCodeSpec.getDirectives().isEmpty()) {
-                codeGenRequest.setAugCodeDirective(augCodeSpec.getDirectives().get(0));
+                header.setAugCodeDirective(augCodeSpec.getDirectives().get(0));
             }
             if (embeddedStringDirectives != null && !embeddedStringDirectives.isEmpty()) {
-                codeGenRequest.setEmbeddedStringDirective(embeddedStringDirectives.get(0));
+                header.setEmbeddedStringDirective(embeddedStringDirectives.get(0));
             }
             if (embeddedJsonDirectives != null && !embeddedJsonDirectives.isEmpty()) {
-                codeGenRequest.setEmbeddedJsonDirective(embeddedJsonDirectives.get(0));
+                header.setEmbeddedJsonDirective(embeddedJsonDirectives.get(0));
             }
             if (skipCodeStartDirectives != null && !skipCodeStartDirectives.isEmpty()) {
-                codeGenRequest.setSkipCodeStartDirective(skipCodeStartDirectives.get(0));
+                header.setSkipCodeStartDirective(skipCodeStartDirectives.get(0));
             }
             if (skipCodeEndDirectives != null && !skipCodeEndDirectives.isEmpty()) {
-                codeGenRequest.setSkipCodeEndDirective(skipCodeEndDirectives.get(0));
+                header.setSkipCodeEndDirective(skipCodeEndDirectives.get(0));
             }
             if (inlineGenCodeDirectives != null && !inlineGenCodeDirectives.isEmpty()) {
-                codeGenRequest.setInlineGenCodeDirective(inlineGenCodeDirectives.get(0));
+                header.setInlineGenCodeDirective(inlineGenCodeDirectives.get(0));
             }
             if (nestedLevelStartMarkers != null && !nestedLevelStartMarkers.isEmpty()) {
-                codeGenRequest.setNestedLevelStartMarker(nestedLevelStartMarkers.get(0));
+                header.setNestedLevelStartMarker(nestedLevelStartMarkers.get(0));
             }
             if (nestedLevelEndMarkers != null && !nestedLevelEndMarkers.isEmpty()) {
-                codeGenRequest.setNestedLevelEndMarker(nestedLevelEndMarkers.get(0));
+                header.setNestedLevelEndMarker(nestedLevelEndMarkers.get(0));
             }
 
             // ensure dir exists for destFile

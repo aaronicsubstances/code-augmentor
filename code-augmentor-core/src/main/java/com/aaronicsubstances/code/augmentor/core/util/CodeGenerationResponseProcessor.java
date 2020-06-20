@@ -113,7 +113,7 @@ public class CodeGenerationResponseProcessor {
 
     /**
      * Modifies content parts to remove split CR-LFs, that is, a sequence of 
-     * carriage return and line feeds which are split across content parts, so
+     * carriage return and line feed which are split across content parts, so
      * that the carriage return character ends a content part, and the following content part
      * starts with the line feed character. 
      * <p>

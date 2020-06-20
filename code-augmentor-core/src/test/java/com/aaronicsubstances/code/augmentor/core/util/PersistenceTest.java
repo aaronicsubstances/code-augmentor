@@ -159,16 +159,16 @@ public class PersistenceTest {
             public Object[] next() {
                 List<SourceFileAugmentingCode> files = new ArrayList<>();
                 CodeGenerationRequest instance = new CodeGenerationRequest(files);
-                instance.setGenCodeStartDirective(generateRandomString(false));
-                instance.setGenCodeEndDirective(generateRandomString(false));
-                instance.setSkipCodeStartDirective(generateRandomString(false));
-                instance.setSkipCodeEndDirective(generateRandomString(false));
-                instance.setEmbeddedStringDirective(generateRandomString(false));
-                instance.setEmbeddedJsonDirective(generateRandomString(false));
-                instance.setAugCodeDirective(generateRandomString(false));
-                instance.setInlineGenCodeDirective(generateRandomString(false));
-                instance.setNestedLevelStartMarker(generateRandomString(false));
-                instance.setNestedLevelEndMarker(generateRandomString(false));
+                instance.getHeader().setGenCodeStartDirective(generateRandomString(false));
+                instance.getHeader().setGenCodeEndDirective(generateRandomString(false));
+                instance.getHeader().setSkipCodeStartDirective(generateRandomString(false));
+                instance.getHeader().setSkipCodeEndDirective(generateRandomString(false));
+                instance.getHeader().setEmbeddedStringDirective(generateRandomString(false));
+                instance.getHeader().setEmbeddedJsonDirective(generateRandomString(false));
+                instance.getHeader().setAugCodeDirective(generateRandomString(false));
+                instance.getHeader().setInlineGenCodeDirective(generateRandomString(false));
+                instance.getHeader().setNestedLevelStartMarker(generateRandomString(false));
+                instance.getHeader().setNestedLevelEndMarker(generateRandomString(false));
                 if (count > 0) {
                     int fileListSize = TestResourceLoader.RAND_GEN.nextInt(6);
                     for (int i = 0; i < fileListSize; i++) {

@@ -199,7 +199,7 @@ public class GeneratedCode {
      * code section. This resembles the default in which only generated code sections are
      * targeted for replacement. It is different in the following way.
      * <ul>
-     *  <li>It can however be combined with {@link #setReplaceAugCodeDirectives()}.
+     *  <li>It can however be combined with {@link #setReplaceAugCodeDirectives(boolean)}.
      *  <li>It can also be used to prevent default wrapping of generated code content with
      * generated code start/end directives. If using inline generated code directives,
      * then this is the property that must be used to allow processing stage to dictate
