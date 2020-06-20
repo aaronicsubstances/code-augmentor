@@ -15,6 +15,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
+    <gpgSignPhase>none</gpgSignPhase>
   </properties>
                 
   <licenses>
@@ -142,7 +143,7 @@
         <executions>
           <execution>
             <id>sign-artifacts</id>
-            <phase>none</phase>
+            <phase>${gpgSignPhase}</phase>
             <goals>
               <goal>sign</goal>
             </goals>

@@ -49,4 +49,3 @@ pluginBundle {
     vcsUrl = 'https://github.com/aaronicsubstances/code-augmentor.git' 
     tags = ['code-generation', 'data-driven', 'macro-processor', 'java'] 
 }
-

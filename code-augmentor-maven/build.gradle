@@ -33,6 +33,6 @@ task('publish', type: Exec) {
     if (System.getProperty("os.name") =~ /(?i)win/) {
         cmdPlusArgs << 'cmd' << '/c'
     }
-    cmdPlusArgs << 'mvn' << 'package' << 'gpg:sign' << 'deploy'
+    cmdPlusArgs << 'mvn' << '-DgpgSignPhase=verify' << 'clean' << 'deploy'
     commandLine cmdPlusArgs
 }
