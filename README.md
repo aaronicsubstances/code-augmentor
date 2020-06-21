@@ -1,5 +1,6 @@
 # Code Augmentor
 
+[![javadoc](https://javadoc.io/badge2/com.aaronicsubstances/code-augmentor-core/javadoc.svg)](https://javadoc.io/doc/com.aaronicsubstances/code-augmentor-core) 
 
 ## Description
 
@@ -14,7 +15,7 @@ The tool heavily relies on JSON as the standard data exchange format of choice.
 Operationally, the tool has two aspects: one part which resembles a preprocessor (such as the C/C++ preprocessor), and another part which resembles a linter (such as ESLint). However there are important differences: 
 
    * Like a C/C++ preprocessor, one part of *CodeAugmentor* is about code generation. In *CodeAugmentor* however, code generation is the main goal. It shares that same goal with C/C++ preproccessor macro exapansion facility, and thus with any general purpose macro processor (e.g m4). It is *not* about header file inclusion and conditional compilation which are offered by the C/C++ preprocessor.
-   * *CodeAugmentor* enables the programmer to employ JSON and a scripting language to generate code, removing the need to learn a dedicated macro processor language. In principle any scripting language can be employed with some small setup implementation required. However the following languages have been given priority by having their setup implementations implemented: Groovy (and other JVM languages), [NodeJS](https://github.com/aaronicsubstances/code-augmentor-nodejs), [Python 3](https://github.com/aaronicsubstances/code-augmentor-python) and [PHP 7](https://github.com/aaronicsubstances/code-augmentor-php).
+   * *CodeAugmentor* enables the programmer to employ JSON and a scripting language to generate code, removing the need to learn a dedicated macro processor language. In principle any scripting language can be employed with some small setup implementation required. However the following languages have been given priority by having their setup implementations implemented: [Groovy and other JVM languages](https://github.com/aaronicsubstances/code-augmentor/wiki/Support-Package-Documentation-for-JVM-Languages), [NodeJS](https://github.com/aaronicsubstances/code-augmentor-nodejs), [Python 3](https://github.com/aaronicsubstances/code-augmentor-python) and [PHP 7](https://github.com/aaronicsubstances/code-augmentor-php).
    * Unlike a C/C++ preprocessor which modifies code "under the hood", *CodeAugmentor* modifies the programmer's source code "in place" from external code generator scripts, and synchronizes the generated code with the scripts. Any changes to the scripts, or any tampering of generated code by programmer will trigger an out-of-sync error.
    * Like a linter, the other part of *CodeAugmentor* validates code without modifying it. This enables straightforward integration of this part with build tools, as hooking a custom step into most build tools is far easier if the step doesn't modify any source code.
 
@@ -31,6 +32,7 @@ The workflow of the programmer using this tool may be exemplified in the followi
    * Standalone command line application released [here](https://github.com/aaronicsubstances/code-augmentor/releases) for use with any programming language, with the requirement of Java 8 JDK or JRE.
    * Ant, Maven and Gradle plugins available on [Maven Central](https://search.maven.org/search?q=com.aaronicsubstances) and [Gradle plugin portal](https://plugins.gradle.org/plugin/com.aaronicsubstances.code-augmentor), for scripting with Groovy and for easier integration with Java and Android IDEs.
    * Packages for officially supported languages available for [NodeJS](https://www.npmjs.com/package/code-augmentor-support), [Python 3](https://pypi.org/project/code-augmentor-support/) and [PHP 7](https://packagist.org/packages/aaronicsubstances/code-augmentor-support).
+   * Javadoc available online for [code-augmentor-core](https://javadoc.io/doc/com.aaronicsubstances/code-augmentor-core/latest/index.html). 
 
    
 ## How It Works
