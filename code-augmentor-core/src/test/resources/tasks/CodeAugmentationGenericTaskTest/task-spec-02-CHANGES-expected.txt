@@ -1,6 +1,6 @@
 
---- com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest/task-spec-02-0.java
-+++ dest-02/com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest/task-spec-02-0.java
+--- com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest%FILE_SEPARATOR%task-spec-02-0.java
++++ dest-02%FILE_SEPARATOR%com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest%FILE_SEPARATOR%task-spec-02-0.java
 55c55
 <         return 
 ---

@@ -287,12 +287,10 @@ public class CodeAugmentationGenericTask {
                     // write out Unix normal diff of code changes.
                     List<String> original = TaskUtils.splitIntoLines(sourceCode, false);
                     List<String> revised = TaskUtils.splitIntoLines(transformedCode, false);
-                    String unixLikeRelativePath = sourceFileDescriptor.getRelativePath()
-                        .replace('\\', '/');
                     String sourceDirName = normalizedSourceDir.getName();
-                    String diffHeader = String.format("%n--- %1$s/%3$s%n+++ %4$s/%2$s/%3$s%n",
-                        sourceDirName, destSubDir.getName(), unixLikeRelativePath,
-                        destDir.getName());
+                    String diffHeader = String.format("%n--- %1$s%5$s%3$s%n+++ %4$s%5$s%2$s%5$s%3$s%n",
+                        sourceDirName, destSubDir.getName(), sourceFileDescriptor.getRelativePath(),
+                        destDir.getName(), File.separator);
                     changeDiffWriter.write(diffHeader);
                     Diff.printNormalDiff(original, revised, changeDiffWriter);
 

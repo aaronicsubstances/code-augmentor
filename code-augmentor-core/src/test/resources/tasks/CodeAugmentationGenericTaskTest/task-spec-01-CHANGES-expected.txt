@@ -1,13 +1,13 @@
 
---- com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest/task-spec-01-0.java
-+++ dest-01/com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest/task-spec-01-0.java
+--- com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest%FILE_SEPARATOR%task-spec-01-0.java
++++ dest-01%FILE_SEPARATOR%com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest%FILE_SEPARATOR%task-spec-01-0.java
 31a32,34
 > //GS
 > String tea; int foo;
 > //GE
 
---- com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest/task-spec-01-1.java
-+++ dest-01/com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest/task-spec-01-1.java
+--- com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest%FILE_SEPARATOR%task-spec-01-1.java
++++ dest-01%FILE_SEPARATOR%com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest%FILE_SEPARATOR%task-spec-01-1.java
 46,49c46,47
 <     public Object //JS println("Hello")
 < getSmsConfig()/*JS println("Hello World from JS-star")

@@ -218,17 +218,19 @@ public class CodeAugmentationGenericTaskTest {
         String changesPath = diffPath.replace(".json", "-CHANGES-expected.txt");
         String contents = TestResourceLoader.loadResourceNewlinesNormalized(changesPath, getClass(),
             System.lineSeparator());
+        contents = contents.replace("%FILE_SEPARATOR%", File.separator);
         return contents;
     }
 
-    private String transformWithVars(String contents) {
+    private String transformWithVars(String jsonContents) {
         // replace any %TEMP_DIR% variable with temp dir
-        contents = contents.replace("%FILE_SEPARATOR%", File.separator
+        // because contents are JSON, any backslash must be escaped.
+        jsonContents = jsonContents.replace("%FILE_SEPARATOR%", File.separator
             .replace("\\", "\\\\"));
-        contents = contents.replace("%TEMP_DIR%", TEMP_GEN_DIR.getPath()
+        jsonContents = jsonContents.replace("%TEMP_DIR%", TEMP_GEN_DIR.getPath()
             .replace("\\", "\\\\"));
-        contents = contents.replace("%TEMP_DIR_NAME%", TEMP_GEN_DIR.getName()
+        jsonContents = jsonContents.replace("%TEMP_DIR_NAME%", TEMP_GEN_DIR.getName()
             .replace("\\", "\\\\"));
-        return contents;
+        return jsonContents;
     }
 }

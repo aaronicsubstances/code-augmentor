@@ -1,6 +1,6 @@
 
---- com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest/task-spec-04-0.java
-+++ dest-04/com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest/task-spec-04-0.java
+--- com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest%FILE_SEPARATOR%task-spec-04-0.java
++++ dest-04%FILE_SEPARATOR%com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest%FILE_SEPARATOR%task-spec-04-0.java
 1a2,5
 >   //GS
 >   // Copyright Aaronic Substances 2020.
@@ -23,8 +23,8 @@
 > }
 > //GE
 
---- com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest/task-spec-04-1.java
-+++ dest-04/com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest/task-spec-04-1.java
+--- com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest%FILE_SEPARATOR%task-spec-04-1.java
++++ dest-04%FILE_SEPARATOR%com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest%FILE_SEPARATOR%task-spec-04-1.java
 1,4c1,6
 <     //:A:Project.licenseHeader
 <     
@@ -51,8 +51,8 @@
 > }
 \ No newline at end of file
 
---- com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest/task-spec-04-2.java
-+++ dest-04/com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest/task-spec-04-2.java
+--- com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest%FILE_SEPARATOR%task-spec-04-2.java
++++ dest-04%FILE_SEPARATOR%com.aaronicsubstances.code.augmentor.core.tasks.CodeAugmentationGenericTaskTest%FILE_SEPARATOR%task-spec-04-2.java
 15c15
 <     
 ---
