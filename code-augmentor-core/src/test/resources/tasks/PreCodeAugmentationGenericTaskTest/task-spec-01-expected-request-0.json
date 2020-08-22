@@ -9,6 +9,9 @@
 			"indent": "",
             "genCodeIndent": "",
             "lineNumber": 29,
+            "endLineNumber": 31,
+            "genCodeLineNumber": 34,
+            "genCodeEndLineNumber": 39,
             "lineSeparator": "\r\n",
 			"blocks" : [{
 				"stringify" : false,
@@ -24,6 +27,7 @@
 			"directiveMarker" : "//JS",
 			"indent": "",
             "lineNumber": 44,
+            "endLineNumber": 44,
             "lineSeparator": "\r\n",
 			"blocks" : [{
 				"stringify" : false,

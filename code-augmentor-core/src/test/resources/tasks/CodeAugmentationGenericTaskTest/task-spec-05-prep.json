@@ -51,7 +51,8 @@
 				"startDirectiveEndPos" : 52,
 				"endDirectiveStartPos" : 254,
 				"endDirectiveEndPos" : 260,
-                "inline": false
+                "inline": false,
+                "indent": ""
 			}
 		}]
 	},

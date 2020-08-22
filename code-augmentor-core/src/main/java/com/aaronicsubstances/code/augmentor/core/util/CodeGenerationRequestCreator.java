@@ -71,8 +71,9 @@ public class CodeGenerationRequestCreator {
             augCodeDescriptor.setIndent(indent);
 
             // b. create gen code descriptor.
+            int[] genCodeLineRange = new int[]{0, 0};
             GeneratedCodeDescriptor genCodeDescriptor = createGeneratedCodeDescriptor(tokens,
-                lastToken.index);
+                lastToken.index, genCodeLineRange);
 
             CodeSnippetDescriptor bodySnippet = new CodeSnippetDescriptor();
             bodySnippet.setAugmentingCodeDescriptor(augCodeDescriptor);
@@ -87,6 +88,7 @@ public class CodeGenerationRequestCreator {
             augmentingCode.setIndent(augCodeDescriptor.getIndent());
             augmentingCode.setDirectiveMarker(firstToken.directiveMarker);
             augmentingCode.setLineNumber(augCodeDescriptor.getLineNumber());
+            augmentingCode.setEndLineNumber(lastToken.lineNumber);
             augmentingCode.setLineSeparator(augCodeDescriptor.getLineSeparator());
             augmentingCode.setNestedLevelNumber(firstToken.nestedLevelNumber);
             augmentingCode.setHasNestedLevelStartMarker(firstToken.nestedLevelStartMarker != null);
@@ -94,6 +96,8 @@ public class CodeGenerationRequestCreator {
 
             if (genCodeDescriptor != null) {
                 augmentingCode.setGenCodeIndent(genCodeDescriptor.getIndent());
+                augmentingCode.setGenCodeLineNumber(genCodeLineRange[0]);
+                augmentingCode.setGenCodeEndLineNumber(genCodeLineRange[1]);
             }
             
             // d. set source file content external to aug code section
@@ -408,10 +412,12 @@ public class CodeGenerationRequestCreator {
      * 
      * @param sourceTokens
      * @param augCodeEndIndex
+     * @param genCodeLineRange receives the line numbers of the first and last
+     * lines of the gen code section found.
      * @return
      */
     static GeneratedCodeDescriptor createGeneratedCodeDescriptor(List<Token> sourceTokens,
-            int augCodeEndIndex) {
+            int augCodeEndIndex, int[] genCodeLineRange) {
         // search for gen code start.
         int startIndex = -1;
         for (int i = augCodeEndIndex + 1; i < sourceTokens.size(); i++) {
@@ -437,6 +443,7 @@ public class CodeGenerationRequestCreator {
         }
 
         Token st = sourceTokens.get(startIndex);
+        genCodeLineRange[0] = st.lineNumber;
 
         // depending on whether gen code directive is inline or section start,
         // proceed differently.
@@ -446,6 +453,7 @@ public class CodeGenerationRequestCreator {
             generatedCodeDescriptor.setEndDirectiveEndPos(st.endPos);
             generatedCodeDescriptor.setInline(true);
             generatedCodeDescriptor.setIndent(st.indent);
+            genCodeLineRange[1] = st.lineNumber;
             // look for tokens of the same type as inline gen code,
             // and consecutive in line numbers.
             int expectedLineNumber = st.lineNumber + 1;
@@ -453,6 +461,7 @@ public class CodeGenerationRequestCreator {
                 Token t = sourceTokens.get(i);
                 if (t.isInlineGeneratedCodeMarker && t.lineNumber == expectedLineNumber) {
                     generatedCodeDescriptor.setEndDirectiveEndPos(t.endPos);
+                    genCodeLineRange[1] = t.lineNumber;
                     if (t.indent.length() < generatedCodeDescriptor.getIndent().length()) {
                         generatedCodeDescriptor.setIndent(t.indent);
                     }
@@ -487,6 +496,7 @@ public class CodeGenerationRequestCreator {
                             minIndent = st.indent;
                         }
                     }
+                    genCodeLineRange[1] = t.lineNumber;
                     GeneratedCodeDescriptor generatedCodeDescriptor = new GeneratedCodeDescriptor(
                         st.startPos, st.endPos, t.startPos, t.endPos, minIndent, false);
                     return generatedCodeDescriptor;

@@ -8,6 +8,7 @@
 			"directiveMarker" : "#PHP7",
 			"indent": " ",
             "lineNumber": 1,
+            "endLineNumber": 4,
             "lineSeparator": "\n",
 			"blocks" : [{
 				"content" : " generate\n"
@@ -22,6 +23,7 @@
 			"directiveMarker" : "#PHP5",
 			"indent": "",
             "lineNumber": 10,
+            "endLineNumber": 11,
             "lineSeparator": "\n",
 			"hasNestedLevelStartMarker": true,
 			"matchingNestedLevelEndMarkerIndex": 2,
@@ -40,6 +42,7 @@
 			"directiveMarker" : "#PHP7",
 			"indent": "",
             "lineNumber": 13,
+            "endLineNumber": 14,
             "lineSeparator": "\n",
             "hasNestedLevelEndMarker": true,
 			"matchingNestedLevelStartMarkerIndex": 1,

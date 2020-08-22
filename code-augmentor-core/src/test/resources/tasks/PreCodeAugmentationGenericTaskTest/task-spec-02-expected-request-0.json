@@ -8,6 +8,7 @@
 			"directiveMarker" : "//JS",
 			"indent": " ",
             "lineNumber": 17,
+            "endLineNumber": 19,
             "lineSeparator": "\r\n",
 			"blocks" : [{
 				"content" : "*println(\"Hello World from JS-star\")\r\n*var i = 3 + new Date();\r\n*...etc"
@@ -19,6 +20,9 @@
 			"indent": "\t",
             "genCodeIndent": "        ",
             "lineNumber": 51,
+            "endLineNumber": 53,
+            "genCodeLineNumber": 55,
+            "genCodeEndLineNumber": 58,
             "lineSeparator": "\r\n",
 			"blocks" : [{
 				"content" : " println( "
@@ -36,6 +40,7 @@
 			"directiveMarker" : "//DD",
 			"indent": "\t",
             "lineNumber": 70,
+            "endLineNumber": 71,
             "lineSeparator": "\r\n",
 			"blocks" : [{
 				"content" : " print"

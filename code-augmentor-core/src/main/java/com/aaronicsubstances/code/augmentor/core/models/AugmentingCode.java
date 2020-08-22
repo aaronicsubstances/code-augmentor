@@ -126,6 +126,7 @@ public class AugmentingCode {
     private String directiveMarker;
     private String indent;
     private int lineNumber;
+    private int endLineNumber;
     private String lineSeparator;
     private int nestedLevelNumber;
     private boolean hasNestedLevelStartMarker;
@@ -134,6 +135,8 @@ public class AugmentingCode {
     private Integer matchingNestedLevelEndMarkerIndex;
     private String externalNestedContent;
     private String genCodeIndent;
+    private Integer genCodeLineNumber;
+    private Integer genCodeEndLineNumber;
 
     // used to attach results of processing aug codes.
     private transient List<Object> args;
@@ -208,6 +211,19 @@ public class AugmentingCode {
      */
     public void setLineNumber(int lineNumber) {
         this.lineNumber = lineNumber;
+    }
+
+    public int getEndLineNumber() {
+        return endLineNumber;
+    }
+
+    /**
+     * Sets the line number of the last line of an augmenting
+     * code section. Line numbers are positive.
+     * @param endLineNumber
+     */
+    public void setEndLineNumber(int endLineNumber) {
+        this.endLineNumber = endLineNumber;
     }
 
     public String getLineSeparator() {
@@ -368,6 +384,34 @@ public class AugmentingCode {
         this.genCodeIndent = genCodeIndent;
     }
 
+    public Integer getGenCodeLineNumber() {
+        return genCodeLineNumber;
+    }
+
+    /**
+     * Sets the line number of the first line of the generated code
+     * section existing for this augmenting code object. Set to null
+     * if no generated code section exists yet.
+     * @param genCodeLineNumber
+     */
+    public void setGenCodeLineNumber(Integer genCodeLineNumber) {
+        this.genCodeLineNumber = genCodeLineNumber;
+    }
+
+    public Integer getGenCodeEndLineNumber() {
+        return genCodeEndLineNumber;
+    }
+
+    /**
+     * Sets the line number of the last line of the generated code
+     * section existing for this augmenting code object. Set to null
+     * if no generated code section exists yet.
+     * @param genCodeEndLineNumber
+     */
+    public void setGenCodeEndLineNumber(Integer genCodeEndLineNumber) {
+        this.genCodeEndLineNumber = genCodeEndLineNumber;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -375,8 +419,11 @@ public class AugmentingCode {
         result = prime * result + ((args == null) ? 0 : args.hashCode());
         result = prime * result + ((blocks == null) ? 0 : blocks.hashCode());
         result = prime * result + ((directiveMarker == null) ? 0 : directiveMarker.hashCode());
+        result = prime * result + endLineNumber;
         result = prime * result + ((externalNestedContent == null) ? 0 : externalNestedContent.hashCode());
+        result = prime * result + ((genCodeEndLineNumber == null) ? 0 : genCodeEndLineNumber.hashCode());
         result = prime * result + ((genCodeIndent == null) ? 0 : genCodeIndent.hashCode());
+        result = prime * result + ((genCodeLineNumber == null) ? 0 : genCodeLineNumber.hashCode());
         result = prime * result + (hasNestedLevelEndMarker ? 1231 : 1237);
         result = prime * result + (hasNestedLevelStartMarker ? 1231 : 1237);
         result = prime * result + id;
@@ -416,15 +463,27 @@ public class AugmentingCode {
                 return false;
         } else if (!directiveMarker.equals(other.directiveMarker))
             return false;
+        if (endLineNumber != other.endLineNumber)
+            return false;
         if (externalNestedContent == null) {
             if (other.externalNestedContent != null)
                 return false;
         } else if (!externalNestedContent.equals(other.externalNestedContent))
             return false;
+        if (genCodeEndLineNumber == null) {
+            if (other.genCodeEndLineNumber != null)
+                return false;
+        } else if (!genCodeEndLineNumber.equals(other.genCodeEndLineNumber))
+            return false;
         if (genCodeIndent == null) {
             if (other.genCodeIndent != null)
                 return false;
         } else if (!genCodeIndent.equals(other.genCodeIndent))
+            return false;
+        if (genCodeLineNumber == null) {
+            if (other.genCodeLineNumber != null)
+                return false;
+        } else if (!genCodeLineNumber.equals(other.genCodeLineNumber))
             return false;
         if (hasNestedLevelEndMarker != other.hasNestedLevelEndMarker)
             return false;
@@ -464,12 +523,13 @@ public class AugmentingCode {
     @Override
     public String toString() {
         return "AugmentingCode{args=" + args + ", blocks=" + blocks + ", directiveMarker=" + directiveMarker
-                + ", externalNestedContent=" + externalNestedContent + ", genCodeIndent=" + genCodeIndent
-                + ", hasNestedLevelEndMarker=" + hasNestedLevelEndMarker + ", hasNestedLevelStartMarker="
-                + hasNestedLevelStartMarker + ", id=" + id + ", indent=" + indent + ", lineNumber=" + lineNumber
-                + ", lineSeparator=" + lineSeparator + ", matchingNestedLevelEndMarkerIndex="
-                + matchingNestedLevelEndMarkerIndex + ", matchingNestedLevelStartMarkerIndex="
-                + matchingNestedLevelStartMarkerIndex + ", nestedLevelNumber=" + nestedLevelNumber + ", processed="
-                + processed + "}";
+                + ", endLineNumber=" + endLineNumber + ", externalNestedContent=" + externalNestedContent
+                + ", genCodeEndLineNumber=" + genCodeEndLineNumber + ", genCodeIndent=" + genCodeIndent
+                + ", genCodeLineNumber=" + genCodeLineNumber + ", hasNestedLevelEndMarker=" + hasNestedLevelEndMarker
+                + ", hasNestedLevelStartMarker=" + hasNestedLevelStartMarker + ", id=" + id + ", indent=" + indent
+                + ", lineNumber=" + lineNumber + ", lineSeparator=" + lineSeparator
+                + ", matchingNestedLevelEndMarkerIndex=" + matchingNestedLevelEndMarkerIndex
+                + ", matchingNestedLevelStartMarkerIndex=" + matchingNestedLevelStartMarkerIndex
+                + ", nestedLevelNumber=" + nestedLevelNumber + ", processed=" + processed + "}";
     }
 }

@@ -188,7 +188,8 @@ public class PersistenceTest {
                             codeSnippet.setId(i);
                             codeSnippet.setDirectiveMarker(generateRandomString(false));
                             codeSnippet.setIndent(randomIndent());
-                            codeSnippet.setLineNumber(TestResourceLoader.RAND_GEN.nextInt());
+                            codeSnippet.setLineNumber(TestResourceLoader.RAND_GEN.nextInt());                            
+                            codeSnippet.setEndLineNumber(TestResourceLoader.RAND_GEN.nextInt());
                             codeSnippet.setNestedLevelNumber(TestResourceLoader.RAND_GEN.nextInt());
                             codeSnippet.setHasNestedLevelStartMarker(TestResourceLoader.RAND_GEN.nextBoolean());
                             codeSnippet.setHasNestedLevelEndMarker(TestResourceLoader.RAND_GEN.nextBoolean());
@@ -202,6 +203,10 @@ public class PersistenceTest {
                             }
                             if (TestResourceLoader.RAND_GEN.nextBoolean()) {
                                 codeSnippet.setGenCodeIndent(generateRandomString(false));
+                                codeSnippet.setGenCodeLineNumber(
+                                    TestResourceLoader.RAND_GEN.nextInt());
+                                codeSnippet.setGenCodeEndLineNumber(
+                                    TestResourceLoader.RAND_GEN.nextInt());
                             }
                             
                             int blockCount = TestResourceLoader.RAND_GEN.nextInt(5);

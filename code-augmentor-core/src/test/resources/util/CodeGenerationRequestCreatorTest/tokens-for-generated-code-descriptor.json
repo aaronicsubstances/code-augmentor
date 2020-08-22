@@ -246,6 +246,18 @@
         "text": "//GS    }"
     },
     {
+        "text": "//    }"
+    },
+    {
+        "text": "//GG    {"
+    },
+    {
+        "text": "//GG"
+    },
+    {
+        "text": "//GG    }"
+    },
+    {
         "text": "}",
         "noNewline": true
     }

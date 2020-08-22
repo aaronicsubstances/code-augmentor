@@ -42,7 +42,8 @@
 			"generatedCodeDescriptor": {
 				"startDirectiveStartPos" : 38,
 				"endDirectiveEndPos" : 110,
-                "inline": true
+                "inline": true,
+                "indent": ""
 			}
 		},{
 			"augmentingCodeDescriptor": {
@@ -74,7 +75,8 @@
 				"startDirectiveEndPos" : 40,
 				"endDirectiveStartPos" : 107,
 				"endDirectiveEndPos" : 115,
-                "inline": false
+                "inline": false,
+                "indent": ""
 			}
 		},{
 			"augmentingCodeDescriptor": {
@@ -90,7 +92,8 @@
 				"startDirectiveEndPos" : 167,
 				"endDirectiveStartPos" : 369,
 				"endDirectiveEndPos" : 375,
-                "inline": false
+                "inline": false,
+                "indent": ""
 			}
 		}]
 	}

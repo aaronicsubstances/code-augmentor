@@ -45,13 +45,14 @@ public class CodeGenerationRequestCreatorTest {
             new CodeSnippetDescriptor(createAugCodeDescriptor("\r\n", "", 2, 294, 301, 17), null)
         );
         List<AugmentingCode> augCodes20 = Arrays.asList(
-            createAugCode("\r\n", "  ", 1, "#PHP", 13,
+            createAugCode("\r\n", "  ", 1, "#PHP", new int[]{13, 15}, null,
                 new Block("", false, false),
                 new Block("", true, false),
                 new Block("[]", false, true))            
         );
         List<AugmentingCode> augCodes21 = Arrays.asList(
-            createAugCode("\r\n", "", 2, "#PHP7", 17, new Block("", false, false))
+            createAugCode("\r\n", "", 2, "#PHP7", new int[]{17, 17}, null, 
+                new Block("", false, false))
         );
         
         List<CodeSnippetDescriptor> bodySnippets4 = Arrays.asList(
@@ -60,13 +61,14 @@ public class CodeGenerationRequestCreatorTest {
                 new GeneratedCodeDescriptor(68, 73, 78, 83, "", false))
         );
         List<AugmentingCode> augCodes40 = Arrays.asList(
-            createAugCode("\r\n", "    ", 1, "#PHP", 2,
+            createAugCode("\r\n", "    ", 1, "#PHP", new int[]{2, 4}, null,
                 new Block("", false, false),
                 new Block("", true, false),
                 new Block("12", false, true))            
         );
         List<AugmentingCode> augCodes41 = Arrays.asList(
-            createAugCode("\r\n", "", 2, "#PHP7", 6, new Block("", false, false))
+            createAugCode("\r\n", "", 2, "#PHP7", new int[]{6, 6}, new int[]{7, 9},
+                new Block("", false, false))
         );
         augCodes41.get(0).setGenCodeIndent("");
         
@@ -79,20 +81,21 @@ public class CodeGenerationRequestCreatorTest {
             new CodeSnippetDescriptor(createAugCodeDescriptor("\n", "    ", 5, 146, 171, 16), null)
         );
         List<AugmentingCode> augCodes50 = Arrays.asList(
-            createAugCode("\n", "    ", 2, "#PHP", 6, new Block(" separate", false, false)),
-            createAugCode("\n", "    ", 5, "#PHP", 16,
+            createAugCode("\n", "    ", 2, "#PHP", new int[]{6, 6}, new int[]{8, 8}, 
+                new Block(" separate", false, false)),
+            createAugCode("\n", "    ", 5, "#PHP", new int[]{16, 16}, null,
                 new Block("  ------------", false, false))
         );
         List<AugmentingCode> augCodes51 = Arrays.asList(
-            createAugCode("\n", " ", 1, "#PHP7", 1,
+            createAugCode("\n", " ", 1, "#PHP7", new int[]{1, 4}, null,
                 new Block(" generate\n", false, false),
                 new Block(" [\n ]", false, true)),
             
-            createAugCode("\n", "", 3, "#PHP5", 10,
+            createAugCode("\n", "", 3, "#PHP5", new int[]{10, 11}, null,
                 new Block(" complete", false, false),
                 new Block(": tree", true, false)),
 
-            createAugCode("\n", "", 4, "#PHP7", 13, 
+            createAugCode("\n", "", 4, "#PHP7", new int[]{13, 14}, null, 
                 new Block("-----------", false, false),
                 new Block(" ending again", true, false))                
         );
@@ -129,13 +132,18 @@ public class CodeGenerationRequestCreatorTest {
 
     private static AugmentingCode createAugCode(String newline, String indent,
             int id, String directiveMarker,
-            int lineNumber, Block... blocks) {
+            int[] lineNumbers, int[] genCodeLineNumbers, Block... blocks) {
         AugmentingCode augCode = new AugmentingCode(Arrays.asList(blocks));
         augCode.setDirectiveMarker(directiveMarker);
         augCode.setId(id);
-        augCode.setLineNumber(lineNumber);
+        augCode.setLineNumber(lineNumbers[0]);
+        augCode.setEndLineNumber(lineNumbers[1]);
         augCode.setIndent(indent != null ? indent : "");
         augCode.setLineSeparator(newline);
+        if (genCodeLineNumbers != null) {
+            augCode.setGenCodeLineNumber(genCodeLineNumbers[0]);
+            augCode.setGenCodeEndLineNumber(genCodeLineNumbers[1]);
+        }
         return augCode;
     }
 
@@ -628,10 +636,14 @@ public class CodeGenerationRequestCreatorTest {
 
     @Test(dataProvider = "createTestCreateGeneratedCodeDescriptorData")
     public void testCreateGeneratedCodeDescriptor(TestArgWrapper sourceTokens, int startIndex, 
-            GeneratedCodeDescriptor expected) {
+            GeneratedCodeDescriptor expected, int[] expectedRange) {
+        int[] actualRange = new int[2];
         GeneratedCodeDescriptor actual = CodeGenerationRequestCreator.createGeneratedCodeDescriptor(
-            sourceTokens.tokens, startIndex);
+            sourceTokens.tokens, startIndex, actualRange);
         assertEquals(actual, expected);
+        if (expectedRange != null) {
+            assertEquals(actualRange, expectedRange);
+        }
     }
 
     @DataProvider
@@ -640,25 +652,34 @@ public class CodeGenerationRequestCreatorTest {
         List<Token> tokens = fetchTokens(sourceName);
         TestArgWrapper tokenSource = new TestArgWrapper(sourceName).wrapTokens(tokens);
         return new Object[][]{
-            { tokenSource, 0, null },
-            { tokenSource, 5, null },
-            { tokenSource, 9, new GeneratedCodeDescriptor(227, 234, 329, 335, "", false) },
-            { tokenSource, 10, null },
-            { tokenSource, 13, null },
-            { tokenSource, 19, new GeneratedCodeDescriptor(337, 343, 508, 514, "", false) },
-            { tokenSource, 20, null },
-            { tokenSource, 24, null },
-            { tokenSource, 30, null },
-            { tokenSource, 32, new GeneratedCodeDescriptor(574, 580, 663, 669, "", false) },
-            { tokenSource, 33, null },
-            { tokenSource, 40, null },
-            { tokenSource, 41, new GeneratedCodeDescriptor(723, 731, 1012, 1018, "", false) },
-            { tokenSource, 60, null },
-            { tokenSource, 62, new GeneratedCodeDescriptor(1095, 1101, 1172, 1178, "", false) },
-            { tokenSource, 67, null },
-            { tokenSource, 69, new GeneratedCodeDescriptor(1178, 1184, 1232, 1241, "   ", false) },
-            { tokenSource, 74, new GeneratedCodeDescriptor(1241, 1247, 1258, 1264, "", false) },
-            { tokenSource, 81, null } 
+            { tokenSource, 0, null, null },
+            { tokenSource, 5, null, null },
+            { tokenSource, 9, new GeneratedCodeDescriptor(227, 234, 329, 335, "", false),
+                new int[]{11, 19} },
+            { tokenSource, 10, null, null },
+            { tokenSource, 13, null, null },
+            { tokenSource, 19, new GeneratedCodeDescriptor(337, 343, 508, 514, "", false),
+            new int[]{21, 30} },
+            { tokenSource, 20, null, null },
+            { tokenSource, 24, null, null },
+            { tokenSource, 30, null, null },
+            { tokenSource, 32, new GeneratedCodeDescriptor(574, 580, 663, 669, "", false),
+                new int[]{34, 38} },
+            { tokenSource, 33, null, null },
+            { tokenSource, 40, null, null },
+            { tokenSource, 41, new GeneratedCodeDescriptor(723, 731, 1012, 1018, "", false),
+                new int[]{43, 57} },
+            { tokenSource, 60, null, null },
+            { tokenSource, 62, new GeneratedCodeDescriptor(1095, 1101, 1172, 1178, "", false),
+                new int[]{64, 70} },
+            { tokenSource, 67, null, null },
+            { tokenSource, 69, new GeneratedCodeDescriptor(1178, 1184, 1232, 1241, "   ", false),
+                new int[]{71, 75} },
+            { tokenSource, 74, new GeneratedCodeDescriptor(1241, 1247, 1258, 1264, "", false),
+                new int[]{76, 79} },
+            { tokenSource, 81, null, null },
+            { tokenSource, 82, new GeneratedCodeDescriptor(1384, 0, 0, 1412, "", true),
+                new int[]{84, 86} },
         };
     }
 
@@ -666,7 +687,7 @@ public class CodeGenerationRequestCreatorTest {
         expectedExceptions = RuntimeException.class)
     public void testCreateGeneratedCodeDescriptorForError(TestArgWrapper sourceTokens, int startIndex) {
         CodeGenerationRequestCreator.createGeneratedCodeDescriptor(
-            sourceTokens.tokens, startIndex);
+            sourceTokens.tokens, startIndex, new int[2]);
     }
 
     @DataProvider

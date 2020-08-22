@@ -9,6 +9,9 @@
 			"indent": " ",
             "genCodeIndent": "",
             "lineNumber": 3,
+            "endLineNumber": 6,
+            "genCodeLineNumber": 9,
+            "genCodeEndLineNumber": 11,
             "lineSeparator": "\n",
             
 			"blocks" : [{
@@ -25,6 +28,9 @@
 			"indent": "",
             "genCodeIndent": "",
             "lineNumber": 12,
+            "endLineNumber": 13,
+            "genCodeLineNumber": 15,
+            "genCodeEndLineNumber": 15,
             "lineSeparator": "\n",
             
 			"blocks" : [{

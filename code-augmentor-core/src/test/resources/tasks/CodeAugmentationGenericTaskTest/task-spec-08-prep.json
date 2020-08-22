@@ -17,7 +17,8 @@
 			"generatedCodeDescriptor": {
 				"startDirectiveStartPos" : 16,
 				"endDirectiveEndPos" : 35,
-                "inline": true
+                "inline": true,
+                "indent": ""
 			}
 		}]
     },
@@ -38,7 +39,8 @@
 			"generatedCodeDescriptor": {
 				"startDirectiveStartPos" : 16,
 				"endDirectiveEndPos" : 36,
-                "inline": true
+                "inline": true,
+                "indent": ""
 			}
 		}]
     }
