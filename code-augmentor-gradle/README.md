@@ -4,7 +4,7 @@
 
 ```
 plugins {
-    id 'com.aaronicsubstances.code-augmentor' version '2.0.0'
+    id 'com.aaronicsubstances.code-augmentor' version '2.1.0'
 }
 ```
 
@@ -113,7 +113,7 @@ Following are the properties of each task. Unless otherwise stated, the properti
 ```groovy
 plugins {
     id 'java'
-    id 'com.aaronicsubstances.code-augmentor'
+    id 'com.aaronicsubstances.code-augmentor' version '2.1.0'
 }
 codeAugmentor {
     verbose = true
@@ -138,7 +138,7 @@ This example demonstrates using a scripting platform other than Groovy, such as 
 ```groovy
 plugins {
     id 'java'
-    id 'com.aaronicsubstances.code-augmentor' version '2.0.0'
+    id 'com.aaronicsubstances.code-augmentor' version '2.1.0'
 }
 codeAugmentor {
     verbose = true

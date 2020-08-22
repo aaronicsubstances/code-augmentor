@@ -6,8 +6,8 @@
 
 The ant classpath needs to be manually set up with jars from Maven Central with the following coordinates:
 
-   * com.aaronicsubstances:code-augmentor-core:2.0.0
-   * com.aaronicsubstances:code-augmentor-ant:2.0.0
+   * com.aaronicsubstances:code-augmentor-core:2.1.0
+   * com.aaronicsubstances:code-augmentor-ant:2.1.0
    * com.google.code.gson:gson:2.8.6
  
 Then to load the tasks, use

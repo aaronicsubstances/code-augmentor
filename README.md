@@ -72,10 +72,11 @@ Further information helpful to script writers is available on related [wiki page
 1. Verify ability to get help text of script by running `code-augmentor-app -h`, and should get an output resembling the following:
 
    ```
-   usage: code-augmentor-app -f <ant build file> [-h] [-t <ant target>]
+   usage: code-augmentor-app -f <ant build file> [-h] [-t <ant target>] [-v]
     -f,--file <ant build file>   use given Ant build XML file
-    -h,--help                    help information
+    -h,--help                    print help information and exit
     -t,--target <ant target>     use given Ant build target
+    -v,--version                 print version and exit
    ```
 
 1. Decide on which scripting language you are going to employ for writing code generator scripts: [NodeJS](https://nodejs.org), [PHP 7](https://www.php.net), [Python 3](https://www.python.org), [Groovy](https://groovy-lang.org). Strictly speaking more than one language can be used, but the expected usual case is usage of one scripting language.

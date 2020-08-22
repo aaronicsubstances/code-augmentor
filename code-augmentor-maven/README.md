@@ -6,7 +6,7 @@
 <plugin>
     <groupId>com.aaronicsubstances</groupId>
     <artifactId>code-augmentor-maven-plugin</artifactId>
-    <version>2.0.0</version>
+    <version>2.1.0</version>
 </plugin>
 ```
 
@@ -201,7 +201,7 @@ Following are the configuration of each goal. Unless otherwise stated, configura
       <plugin>
         <groupId>com.aaronicsubstances</groupId>
         <artifactId>code-augmentor-maven-plugin</artifactId>
-        <version>1.0</version>
+        <version>2.1.0</version>
         <configuration>
             <verbose>false</verbose>
             <fileSets>
@@ -260,7 +260,7 @@ mvn code-augmentor:prepare exec:exec code-augmentor:complete
       <plugin>
         <groupId>com.aaronicsubstances</groupId>
         <artifactId>code-augmentor-maven-plugin</artifactId>
-        <version>2.0.0</version>
+        <version>2.1.0</version>
         <configuration>
             <verbose>true</verbose>
             <fileSets>
