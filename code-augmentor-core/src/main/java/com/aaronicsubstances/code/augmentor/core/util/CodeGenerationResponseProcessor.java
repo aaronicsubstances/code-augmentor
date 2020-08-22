@@ -153,17 +153,13 @@ public class CodeGenerationResponseProcessor {
         if (genCode.isReplaceAugCodeDirectives() || genCode.isReplaceGenCodeDirectives()) {
             return "";
         }
-        // by default use gen code descriptor's indent, and if it is not available use 
-        // aug code descriptor's indent.
+        // By default if gen code descriptor is present, use its indent.
+        // Else fallback to aug code descriptor's indent.
         GeneratedCodeDescriptor genCodeDescriptor = snippetDescriptor.getGeneratedCodeDescriptor();
-        String indent = null;
         if (genCodeDescriptor != null) {
-            indent = genCodeDescriptor.getIndent();
+            return genCodeDescriptor.getIndent();
         }
-        if (indent == null) {
-            indent = snippetDescriptor.getAugmentingCodeDescriptor().getIndent();
-        }
-        return indent;
+        return snippetDescriptor.getAugmentingCodeDescriptor().getIndent();
     }
 
     /**

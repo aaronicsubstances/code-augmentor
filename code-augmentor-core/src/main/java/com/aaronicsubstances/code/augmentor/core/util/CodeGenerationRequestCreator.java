@@ -398,6 +398,18 @@ public class CodeGenerationRequestCreator {
         }
     }
 
+    /**
+     * Fetches generated section existing if any, after a given position in
+     * sourceTokens which is the last token of an aug code section.
+     * <p>
+     * End user is allowed to tamper with generated code sections for two reasons: 
+     * to separate them from corresponding aug code sections with blank lines, AND
+     * to suggest the indentation to apply to generated code.
+     * 
+     * @param sourceTokens
+     * @param augCodeEndIndex
+     * @return
+     */
     static GeneratedCodeDescriptor createGeneratedCodeDescriptor(List<Token> sourceTokens,
             int augCodeEndIndex) {
         // search for gen code start.
@@ -454,6 +466,7 @@ public class CodeGenerationRequestCreator {
         }
         else {
             // search for gen code end.
+            // find minIndent initially by excluding start and end tokens.
             String minIndent = null;
             for (int i = startIndex + 1; i < sourceTokens.size(); i++) {
                 Token t = sourceTokens.get(i);
@@ -463,6 +476,16 @@ public class CodeGenerationRequestCreator {
                 if (t.type == Token.DIRECTIVE_TYPE_SKIP_CODE_END) {
                     if (!t.isGeneratedCodeMarker) {
                         break;
+                    }
+                    // if no content lines exist, and then use indentation of
+                    // start/end tokens.
+                    if (minIndent == null) {
+                        if (t.indent.length() < st.indent.length()) {
+                            minIndent = t.indent;
+                        }
+                        else {
+                            minIndent = st.indent;
+                        }
                     }
                     GeneratedCodeDescriptor generatedCodeDescriptor = new GeneratedCodeDescriptor(
                         st.startPos, st.endPos, t.startPos, t.endPos, minIndent, false);

@@ -354,8 +354,8 @@ public class CodeGenerationResponseProcessorTest {
             },
             { 
                 new GeneratedCode(0, false, null, false, false, false, null),
-                new AugmentingCodeDescriptor(0, 0, 0, "  ", 0, null),
-                new GeneratedCodeDescriptor(0, 0, 0, 0, null, true),
+                new AugmentingCodeDescriptor(0, 0, 0, " ", 0, null),
+                new GeneratedCodeDescriptor(0, 0, 0, 0, "  ", true),
                 "  "
             }
         };

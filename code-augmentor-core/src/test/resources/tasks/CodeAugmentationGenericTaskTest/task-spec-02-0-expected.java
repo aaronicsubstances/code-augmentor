@@ -52,7 +52,7 @@ Object getSmsConfig()/*GS*/ {
 	//ES:World
 		//JS )
 		//GS*/
-	 char f;
+		 char f;
 		//GE*/
 		smsConfigJson;
     }

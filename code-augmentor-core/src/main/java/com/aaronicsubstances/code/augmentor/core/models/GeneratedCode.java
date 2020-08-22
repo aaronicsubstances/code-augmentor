@@ -133,8 +133,8 @@ public class GeneratedCode {
     /**
      * Sets the indent to apply to the generated code object. If empty string,
      * then no indentation will be applied. If null, then by default generated code section's
-     * indent will be applied if that section exists with an indent. 
-     * If no indent could be found from a generated code section, then
+     * indent will be applied if that section exists. 
+     * If no generated code section is found, then
      * as a last resort indent of augmenting code section will be used.
      * @param indent
      */
