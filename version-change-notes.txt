@@ -17,6 +17,7 @@ examples/gradle-plugin-usage-example/sample-app/build.gradle:4
 examples/maven-plugin-usage-example/sample-app/pom.xml:40
 examples/pojo-class-generation-nosync/codeGenScripts/main.groovy:1
 examples/pojo-class-generation-with-sync/codeGenScripts/main.groovy:1
+Support Package Documentation for JVM Languages
 
 gson deps:
 process-aug-code-tests/tests.groovy
