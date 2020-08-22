@@ -1,3 +1,5 @@
+import org.apache.tools.ant.filters.*
+
 plugins {
 	id 'java'
     id 'application'
@@ -21,6 +23,11 @@ application {
     mainClassName = project.mainClassName
     applicationDefaultJvmArgs = [ '-Dapp.name=' + applicationName,
         '-Dapp.version=' + version ]
+    if (project.hasProperty("release")) {
+        applicationDistribution.from(file('../code-augmentor-core/build/docs/javadoc')) {
+            into('docs/javadocs-core')
+        }
+    }
 }
 
 dependencies {
@@ -37,6 +44,21 @@ dependencies {
 
 test {
 	useTestNG()
+}
+
+distZip {
+    eachFile {
+        if (it.file.parentFile == file('src/dist')) {
+            it.filter(FixCrLfFilter, eol: FixCrLfFilter.CrLf.newInstance("dos"))
+        }
+    }
+}
+distTar {
+    eachFile {
+        if (it.file.parentFile == file('src/dist')) {
+            it.filter(FixCrLfFilter, eol: FixCrLfFilter.CrLf.newInstance("unix"))
+        }
+    }
 }
 
 task('publishProjectDependencies', type: Exec) {

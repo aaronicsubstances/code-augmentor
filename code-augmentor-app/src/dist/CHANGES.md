@@ -1,3 +1,10 @@
+# 2.1.0
+
+  * New features of augmenting code objects
+      - **endLineNumber** field added
+      - **genCodeLineNumber** field added
+      - **genCodeEndLineNumber** field added
+
 # 2.0.0
 
    * Javadocs of core library is now included in app

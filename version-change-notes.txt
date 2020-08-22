@@ -9,9 +9,22 @@ code-augmentor-maven/README:top and down
 code-augmentor-maven/src/test/resources/projects/complete-mojo-project/pom.xml:17
 code-augmentor-maven/src/test/resources/projects/default-mojo-project/pom.xml:21
 code-augmentor-maven/src/test/resources/projects/prepare-mojo-project/pom.xml:17
+
 process-aug-code-tests/groovyw:3
 process-aug-code-tests/groovyw.bat:12
+
+examples/gradle-plugin-usage-example/sample-app/build.gradle:4
+examples/maven-plugin-usage-example/sample-app/pom.xml:40
+examples/pojo-class-generation-nosync/codeGenScripts/main.groovy:1
+examples/pojo-class-generation-with-sync/codeGenScripts/main.groovy:1
 
 gson deps:
 process-aug-code-tests/tests.groovy
 code-augmentor-app/src/test/projects/basic/main.groovy
+
+publish tasks:
+:code-augmentor-core:publish
+:code-augmentor-ant:publish
+:code-augmentor-maven:publish
+:code-augmentor-gradle:publishPlugins
+:code-augmentor-app:build -Prelease
