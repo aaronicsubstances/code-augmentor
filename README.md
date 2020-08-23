@@ -132,9 +132,9 @@ Further information helpful to script writers is available on related [wiki page
    
    and Code Augmentor should now end its operation successfully without any generated files, indicating that code generator scripts and files in `tempSrc` subdirectory are now in sync.
 
-#### Concluding Remarks
+1. One can at this stage experiment with the synchronization mechanism by editing augmenting code sections inside `tempSrc` of example project directories with `-sync` suffix, running code-augmentor-app to verify detection of changes, running EFFECT-CHANGES, and rerunning code-augmentor-app to verify synchronization.
 
-One can at this stage experiment with the synchronization mechanism by editing augmenting code sections inside `tempSrc` of example project directories with `-sync` suffix, running code-augmentor-app to verify detection of changes, running EFFECT-CHANGES, and rerunning code-augmentor-app to verify synchronization.
+## Automated Build Hook Points
 
 In practice it is desired to automate synchronization mechanism by setting up `code-augmentor-app -f build.xml` to be called just before the following common build steps, whichever is the earliest of compilation, transpilation or runtime initialization.
 
@@ -142,7 +142,21 @@ In practice it is desired to automate synchronization mechanism by setting up `c
    
    b. For Gradle, letting *compileJava* task depend on **codeAugmentorComplete** or **codeAugmentorRun** task will do.
    
-   c. In general clients of Code Augmentor have to discover for themselves suitable build hook points for automating synchronization mechanism.
+   c. In general clients of Code Augmentor have to discover for themselves suitable build hook points for automating synchronization mechanism. 
+
+Some guidance however is in order: Some build tools provide a pre-build hook point which may be all that is needed. Microsoft Visual Studio IDE for example provides pre-build events for such purposes. 
+
+One practical challenge is that some build tools do not invoke their pre-build stage if compiled/transpiled code is up to date with source code files (e.g. Microsoft Visual Studio). This is undesirable for *CodeAugmentor*, since code generator scripts can invalidate source code files at any time, with build tools completely unaware. 
+
+I suggest a generic solution to this problem by leveraging post-build hooks (in addition to the mandatory pre-build hooks) and a source file per project dedicated specifically for this purpose. Assuming that code generator scripts are going to be managed in a version control system like Git, then dedicated source code file can record the latest full commit identifier. Any time the code generator scripts change, a new commit can be made, making dedicated source code file contents out of date. Thus all that is needed is a post-build hook which can get the current commit identifier of the code generator scripts and compare it with the dedicated source code file contents.
+
+This repository provides working post-build hook scripts for Windows and Linux platforms in the [examples](https://github.com/aaronicsubstances/code-augmentor/tree/master/examples) directory.  The current scripts propose the following:
+
+   * Set up post build hook to pass dedicated source code file path as first command line argument. Also set working directory of script launch to directory of code generator scripts.
+   * Supply a command to run to get latest version information of the code generator scripts, such as commit identifier of the code generator scripts folder under version control.
+   * Supply lines of code which must surround the output from the configured command in order to make the dedicated source file contents valid, before and after the command output. Empty lines are currently not allowed due to Windows batch scripting limitations.
+
+With these in place it is expected that automating *CodeAugmentor* synchronization checks will be straightforward. The scripts are meant to be copied into individual projects and adapted accordingly for use in a wide range of scenarios.
 
 ## Documentation of Plugins
 
