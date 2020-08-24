@@ -13,6 +13,10 @@ class CodeAugmentorTaskFunctionalTest extends Specification {
     File srcFolder
     File undeletedWorkingDir, undeletedDestDir
 
+    static quoteRegex(p) {
+        return p.replace("/", "\\/")
+    }
+
     def setup() {
         buildFile = testProjectDir.newFile('build.gradle')
         buildFile << """
@@ -104,7 +108,7 @@ class CodeAugmentorTaskFunctionalTest extends Specification {
                     include '**/*.java'
                 })
                 groovyScriptDir = "${scriptDir.name}"
-                destDir = /${undeletedDestDir}/
+                destDir = /${quoteRegex(undeletedDestDir.toString())}/
                 codeChangeDetectionDisabled = true
             }
         """
@@ -127,7 +131,7 @@ class CodeAugmentorTaskFunctionalTest extends Specification {
                     include '**/*.java'
                 })
                 groovyScriptDir = "${scriptDir.name}"
-                destDir = /${undeletedDestDir}/
+                destDir = /${quoteRegex(undeletedDestDir.toString())}/
             }
         """
 
@@ -149,7 +153,7 @@ class CodeAugmentorTaskFunctionalTest extends Specification {
                     include '**/*.java'
                 })
                 groovyScriptDir = "${scriptDir.name}"
-                destDir = /${undeletedDestDir}/
+                destDir = /${quoteRegex(undeletedDestDir.toString())}/
                 failOnChanges = false
             }
         """
@@ -173,7 +177,7 @@ class CodeAugmentorTaskFunctionalTest extends Specification {
                     exclude 'com/Main2.java'
                 })
                 groovyScriptDir = "${scriptDir.name}"
-                destDir = /${undeletedDestDir}/
+                destDir = /${quoteRegex(undeletedDestDir.toString())}/
             }
         """
 

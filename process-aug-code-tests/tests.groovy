@@ -12,6 +12,8 @@ class MyTestCase {
     static scriptDir, buildDir
     static verboseLoggingEnabled = true
 
+    static launchCmdWithJvm = !(System.getProperty("os.name") =~ /(?i)win/)
+
     static final PRINT_OUT = "printOut"
     static final EXIT_RESULT = "exitResult"
 
@@ -134,7 +136,7 @@ class MyTestCase {
     def execOnNodeJs(inputFileName, outputFile) {
         def ant = new AntBuilder()
         ant.echo("execOnNodeJs with $inputFileName")
-        ant.exec(executable: 'node', vmlauncher: false, dir: scriptDir,
+        ant.exec(executable: 'node', vmlauncher: launchCmdWithJvm, dir: scriptDir,
                 errorproperty: PRINT_OUT, resultproperty: EXIT_RESULT) {
             arg(value: "main.js")
             arg(value: "resources/$inputFileName")
@@ -149,7 +151,7 @@ class MyTestCase {
     def execOnPHP(inputFileName, outputFile) {
         def ant = new AntBuilder()
         ant.echo("execOnPHP with $inputFileName")
-        ant.exec(executable: 'php', vmlauncher: false, dir: scriptDir,
+        ant.exec(executable: 'php', vmlauncher: launchCmdWithJvm, dir: scriptDir,
                 errorproperty: PRINT_OUT, resultproperty: EXIT_RESULT) {
             arg(value: "main.php")
             arg(value: "resources/$inputFileName")
@@ -164,7 +166,7 @@ class MyTestCase {
     def execOnPython3(inputFileName, outputFile) {
         def ant = new AntBuilder()
         ant.echo("execOnPython3 with $inputFileName")
-        ant.exec(executable: LocalConfig.PYTHON_EXEC, vmlauncher: false, dir: scriptDir,
+        ant.exec(executable: LocalConfig.PYTHON_EXEC, vmlauncher: launchCmdWithJvm, dir: scriptDir,
                 errorproperty: PRINT_OUT, resultproperty: EXIT_RESULT) {
             arg(value: "-B")
             arg(value: "main.py")
@@ -180,7 +182,7 @@ class MyTestCase {
     def execOnGroovy(inputFileName, outputFile) {        
         def ant = new AntBuilder()
         ant.echo("execOnGroovy with $inputFileName")
-        ant.exec(executable: 'groovyw', vmlauncher: false, dir: scriptDir,
+        ant.exec(executable: 'groovyw', vmlauncher: launchCmdWithJvm, dir: scriptDir,
                 errorproperty: PRINT_OUT, resultproperty: EXIT_RESULT) {
             arg(value: "build/java/main.groovy")
             arg(value: "resources/$inputFileName")

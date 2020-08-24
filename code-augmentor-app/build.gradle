@@ -65,8 +65,11 @@ task('publishProjectDependencies', type: Exec) {
     def cmdPlusArgs = []
     if (System.getProperty("os.name") =~ /(?i)win/) {
         cmdPlusArgs << 'cmd' << '/c'
+        cmdPlusArgs << 'gradlew'
     }
-    cmdPlusArgs << 'gradlew'
+    else {
+        cmdPlusArgs << './gradlew'
+    }
     cmdPlusArgs << ':code-augmentor-core:build'
     cmdPlusArgs << ':code-augmentor-core:publishToMavenLocal'
     cmdPlusArgs << ':code-augmentor-ant:build'

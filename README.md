@@ -59,7 +59,7 @@ Further information helpful to script writers is available on related [wiki page
 
 ## Getting Started with standalone command line application
 
-1. Ensure you have Java 8 JDK or JRE installed on your computer. Run `java -version` from command line to verify, and should get output resembling the following:
+1. Ensure you have Java 8 JDK or JRE installed on your computer, and that `java` command is on the system path. Run `java -version` from command line to verify, and should get output resembling the following:
 
    ```
    java version "1.8.0_152"
@@ -166,11 +166,12 @@ With these in place it is expected that automating *CodeAugmentor* synchronizati
 
 ## Development Environment
 
-   * Java 8 (1.8.0_152)
+   * Java 8 (Oracle Java SE 1.8.0\_152, AdoptOpenJDK 1.8.0\_265, Zulu 1.8.0\_252)
    * Apache Ant 1.10.1
    * Apache Maven 3.5.2
    * Gradle 5.6.4
    * Windows 10 Professional
+   * CentOS Linux 8
    * Visual Studio Code 1.42.0
    * Groovy 2.4.13
    * NodeJS v12.13.0

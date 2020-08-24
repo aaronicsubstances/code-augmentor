@@ -9,6 +9,10 @@
     <property name="genCode.file" location="${build.code-augmentor.dir}/genCodes.json" />
     <property name="multiProjectCodeBase.dir" location="${ant.basedir}/../../../../../.."/>
 
+    <condition property="launchCmdWithJvm" value="false" else="true">
+        <os family="windows"/>
+    </condition>
+
     <path id="groovy.scriptClasspath">
         <pathelement location="${multiProjectCodeBase.dir}/code-augmentor-core/build/libs/code-augmentor-core-${app.version}.jar"/>
         <pathelement location="${multiProjectCodeBase.dir}/code-augmentor-ant/build/libs/code-augmentor-ant-${app.version}.jar"/>
@@ -25,7 +29,7 @@
     </target>
     
     <target name="process" description="process code augmentor parse results">
-        <exec executable="groovy" failonerror="true" vmlauncher="false">
+        <exec executable="groovy" failonerror="true" vmlauncher="${launchCmdWithJvm}">
             <arg value="-cp" />
             <arg value="${toString:groovy.scriptClasspath}" />
             <arg value="main.groovy" />
