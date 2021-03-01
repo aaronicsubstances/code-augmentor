@@ -1,0 +1,19 @@
+-add license
+-inside ProcessCodeGenericTask
+
+ - add 4 listeners
+ -just after header is parsed - call beforeAllFiles(context)
+ -just after while loop ends - set fileAugCodes to null and callAfterAllFiles(context)
+ -just after context is reset per file, set augCodeIndex to -1 and call beforeFile(context)
+ -just after serialize of gen codes for file before while end brace, set augCodeIndex to length if there are no errors, and call afterFile(context) 
+ - any exception thrown by 4 listeners should be caught and recorded.
+ - inside createException,ignore srcFileSnippet additon if augCodeIndex is invalid, ie < 0 or >= length or fileAugCodes = null
+ 
+- port ProcessCodeGenericTask to dotnet standard
+
+- upgrade groovy to 3.0.7 across project
+
+demonstrate new abilities to keep files in sync with these new additions
+-fetch original file and compare md5 hash with local version
+-store unix diff of original file and locally updated version. that is in addition to local version. can use single line comments to do the storage if forced to save it as a compilable file per IDE/environment. then compare md5 hashes of unix diff file.
+-store git commit id in some file, and cross check the file with current commit id from online. can serve as simpler alternative to git submodule.
