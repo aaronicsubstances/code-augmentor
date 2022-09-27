@@ -128,9 +128,8 @@ describe('code_augmentor_support', function() {
 });
 
 function printErrors(task) {
-    for (ex of task.allErrors) {
-        console.log(ex);
-        //console.error(ex);
+    for (error of task.allErrors) {
+        console.log(task.generateStackTrace(error));
     }
 }
 

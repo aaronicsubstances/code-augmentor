@@ -4,6 +4,7 @@ const readline = require('readline');
 var endOfLine = require('os').EOL;
 const path = require('path');
 const stream = require('stream');
+const util = require('util');
 
 const ProcessCodeContext = require('./ProcessCodeContext');
 
@@ -87,6 +88,7 @@ ProcessCodeTask.prototype.executeAsync = async function(evalFunction) {
             context.fileAugCodes = fileAugCodes;
             context.fileScope = {};
             this.logVerbose(`Processing ${context.srcFile}`);
+            startInstant = new Date();
 
             let fileErrors = [];
             context.augCodeIndex = -1;
@@ -156,7 +158,9 @@ ProcessCodeTask.prototype.executeAsync = async function(evalFunction) {
                 this.allErrors.push(createOrWrapException(context, "afterFileHook error", e));
             } 
 
-            this.logInfo("Done processing " + context.srcFile);
+            endInstant = new Date();
+            timeElapsed = endInstant.getTime() - startInstant.getTime();
+            this.logInfo(`Done processing ${context.srcFile} in ${timeElapsed} ms`);
         }
 
         context.srcFile = null;
@@ -379,9 +383,18 @@ function createOrWrapException(context, message, cause) {
     const wrapperException = new Error(wrapperMessage, {
         cause: cause
     });
+    if (wrapperException.cause !== cause) {
+        wrapperException.cause = cause;
+    }
     return wrapperException;
 }
 
-exports.ProcessCodeTask = ProcessCodeTask;
-exports.CodeAugmentorFunctions = require('./CodeAugmentorFunctions');
-exports.ProcessCodeContext = ProcessCodeContext;
+ProcessCodeTask.prototype.generateStackTrace = function(error) {
+    return util.inspect(error);
+}
+
+module.exports = {
+    ProcessCodeTask,
+    ProcessCodeContext,
+    CodeAugmentorFunctions: require('./CodeAugmentorFunctions')
+};
