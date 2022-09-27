@@ -3,13 +3,21 @@ const fs = require('fs');
 const readline = require('readline');
 var endOfLine = require('os').EOL;
 const path = require('path');
+const stream = require('stream');
 
 const ProcessCodeContext = require('./ProcessCodeContext');
 
 // class constructor
 function ProcessCodeTask() {
+    this.inputFile = null;
+    this.outputFile = null;
     this.verbose = false;
-};
+    this.beforeAllFilesHook = null;
+    this.afterAllFilesHook = null;
+    this.beforeFileHook = null;
+    this.afterFileHook = null;
+    this.allErrors = [];
+}
 
 ProcessCodeTask.prototype.logVerbose = function(msg) {
     if (this.verbose) {
@@ -26,6 +34,14 @@ ProcessCodeTask.prototype.logWarn = function(msg) {
 };
 
 ProcessCodeTask.prototype.execute = function(evalFunction, cb=null) {
+    this.executeAsync(evalFunction).then(function() {
+        cb & cb(null);
+    }).catch(function(err) {
+        cb && cb(err);
+    });
+}
+
+ProcessCodeTask.prototype.executeAsync = async function(evalFunction) {
     // validate
     assert.ok(this.inputFile, "inputFile property is not set");
     assert.ok(this.outputFile, "outputFile property is not set");
@@ -43,23 +59,24 @@ ProcessCodeTask.prototype.execute = function(evalFunction, cb=null) {
 
     const context = new ProcessCodeContext();
 
-    // begin serialize by writing header to output 
-    const codeGenResponse = fs.createWriteStream(this.outputFile);
-    codeGenResponse.write(JSON.stringify({}, '') + endOfLine);
-
-    // begin reading input file.
+    let codeGenRequest;
+    let codeGenResponse;
     try {
+        codeGenRequest = fs.createReadStream(this.inputFile);
+        codeGenResponse = fs.createWriteStream(this.outputFile);
+
+        // begin serialize by writing header to output 
+        await writeStreamAsync(codeGenResponse, JSON.stringify({}, '') + endOfLine);
+
         let headerSeen = false;
-        const rl = readline.createInterface({
-            input: fs.createReadStream(this.inputFile),
-            crlfDelay: Infinity
-        });
-        rl.on('line', (line) => {
+        for await (const line of wrapInputStreamWithReadLines(codeGenRequest)) {
             // begin deserialize by reading header from input
             if (!headerSeen) {
                 context.header = JSON.parse(line);
                 headerSeen = true;
-                return;
+
+                await callBeforeAllFiles(this.beforeAllFilesHook, context); 
+                continue;
             }
             
             let fileAugCodes = JSON.parse(line);
@@ -71,75 +88,187 @@ ProcessCodeTask.prototype.execute = function(evalFunction, cb=null) {
             context.fileScope = {};
             this.logVerbose(`Processing ${context.srcFile}`);
 
-            // fetch arguments, and parse any json argument found.
-            for (augCode of fileAugCodes.augmentingCodes) {
-                augCode.processed = false;
-                augCode.args = [];
-                for (block of augCode.blocks) {
-                    if (block.jsonify) {
-                        const parsedArg = JSON.parse(block.content);
-                        augCode.args.push(parsedArg);
-                    }
-                    else if (block.stringify) {
-                        augCode.args.push(block.content);
-                    }
-                }
+            let fileErrors = [];
+            context.augCodeIndex = -1;
+            let fileGenCodes;
+            try {
+                fileGenCodes = await callBeforeFile(this.beforeFileHook, context);
             }
-            
-            // now begin aug code processing.
-            const fileGenCodes = { 
-                fileId: fileAugCodes.fileId,
-                generatedCodes: []
-            };
-            const beginErrorCount = this.allErrors.length;
-            for (let i = 0; i < fileAugCodes.augmentingCodes.length; i++) {
-                const augCode = fileAugCodes.augmentingCodes[i];
-                if (augCode.processed) {
-                    continue;
-                }
+            catch (e) {
+                fileErrors.push(createOrWrapException(context, "beforeFileHook error", e));
+            }
 
-                context.augCodeIndex = i;
-                const functionName = retrieveFunctionName(augCode);
-                const genCodes = this.processAugCode(evalFunction, functionName,
-                    augCode, context);
-                for (genCode of genCodes) {
-                    fileGenCodes.generatedCodes.push(genCode);
+            if (!fileGenCodes && !fileErrors.length) { 
+                // fetch arguments, and parse any json argument found.
+                for (augCode of fileAugCodes.augmentingCodes) {
+                    augCode.processed = false;
+                    augCode.args = [];
+                    for (block of augCode.blocks) {
+                        if (block.jsonify) {
+                            const parsedArg = JSON.parse(block.content);
+                            augCode.args.push(parsedArg);
+                        }
+                        else if (block.stringify) {
+                            augCode.args.push(block.content);
+                        }
+                    }
+                }
+                
+                // now begin aug code processing.
+                fileGenCodes = { 
+                    fileId: fileAugCodes.fileId,
+                    generatedCodes: []
+                };
+                for (let i = 0; i < fileAugCodes.augmentingCodes.length; i++) {
+                    const augCode = fileAugCodes.augmentingCodes[i];
+                    if (augCode.processed) {
+                        continue;
+                    }
+
+                    context.augCodeIndex = i;
+                    const functionName = retrieveFunctionName(augCode);
+                    const genCodes = processAugCode(evalFunction, functionName,
+                        augCode, context, fileErrors);
+                    for (genCode of genCodes) {
+                        fileGenCodes.generatedCodes.push(genCode);
+                    }
                 }
             }
-                        
-            validateGeneratedCodeIds(fileGenCodes.generatedCodes, context,
-                this.allErrors);
+
+            validateGeneratedCodeIds(fileGenCodes.generatedCodes, context, fileErrors);
             
-            if (this.allErrors.length > beginErrorCount) {
-                this.logWarn((this.allErrors.length - beginErrorCount) +
-                    " error(s) encountered in " + context.srcFile);
+            if (fileErrors.length) {
+                this.logWarn(fileErrors.length + " error(s) encountered in " + context.srcFile);
+            } 
+
+            if (!this.allErrors.length && !fileErrors.length) {
+                await writeStreamAsync(codeGenResponse, JSON.stringify(fileGenCodes, '') + endOfLine);
             }            
-
-            if (this.allErrors.length == 0) {
-                codeGenResponse.write(JSON.stringify(fileGenCodes, '') + endOfLine);
+            for (e of fileErrors) {
+                this.allErrors.push(e);
             }
+
+            context.augCodeIndex = fileAugCodes.augmentingCodes.length;
+            try {
+                await callAfterFile(this.afterFileHook, context, fileErrors);
+            }
+            catch (e) {
+                this.allErrors.push(createOrWrapException(context, "afterFileHook error", e));
+            } 
+
             this.logInfo("Done processing " + context.srcFile);
-        }).on('close', () => {
-            codeGenResponse.end();
-            cb && cb();
-        });
+        }
+
+        context.srcFile = null;
+        context.fileAugCodes = null;
+        context.fileScope = {};
+        await callAfterAllFiles(this.afterAllFilesHook, context);
     }
-    catch (err) {
-        if (cb) {
-            cb(err);
-        }
-        else {
-            throw err;
-        }
+    finally {
+        await endStreamAsync(codeGenResponse);
     }
 };
+
+function wrapInputStreamWithReadLines(input) {
+    const output = new stream.PassThrough({ objectMode: true });
+    const rl = readline.createInterface({ input: input, crlfDelay: Infinity });
+    rl.on("line", line => {
+        output.write(line);
+    });
+    rl.on("close", () => {
+        output.push(null);
+    });
+    return output;
+}
+
+function callBeforeAllFiles(hook, context) {
+    if (hook) {
+        return new Promise((resolve, reject) => {
+            hook(context, function(err) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+}
+    
+function callAfterAllFiles(hook, context) {
+    if (hook) {
+        return new Promise((resolve, reject) => {
+            hook(context, function(err) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+}
+    
+function callBeforeFile(hook, context) {
+    if (hook) {
+        return new Promise((resolve, reject) => {
+            hook(context, function(err, res) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(res);
+                }
+            });
+        });
+    }
+}
+
+function callAfterFile(hook, context, fileErrors) {
+    if (hook) {
+        return new Promise((resolve, reject) => {
+            hook(context, fileErrors, function(err) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+}
+
+function writeStreamAsync(streamInstance, data) {
+    return new Promise((resolve, reject) => {
+        streamInstance.write(data, function(err) {
+            if (err) {
+                reject(err);
+            } else {
+                resolve();
+            }
+        });
+    })
+}
+
+function endStreamAsync(streamInstance) {
+    if (streamInstance) {
+        return new Promise((resolve, reject) => {
+            streamInstance.end(function(err) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            })
+        });
+    }
+}
 
 function retrieveFunctionName(augCode) {
     let functionName = augCode.blocks[0].content.trim();
     return functionName;
 }
 
-ProcessCodeTask.prototype.processAugCode = function(evalFunction, functionName, augCode, context) {
+function processAugCode(evalFunction, functionName, augCode, context, errors) {
     try {
         let result = evalFunction(functionName, augCode, context);
         if (result === null || typeof result === 'undefined') {
@@ -169,7 +298,7 @@ ProcessCodeTask.prototype.processAugCode = function(evalFunction, functionName, 
         return converted;
     }
     catch (excObj) {
-        createException(context, null, excObj, this.allErrors);
+        errors.push(createOrWrapException(context, "", excObj));
         return [];
     }
 }
@@ -207,34 +336,50 @@ function convertGenCodeItem(item) {
     }
 }
 
-function validateGeneratedCodeIds(fileGenCodeList, context, allErrors) {
+function validateGeneratedCodeIds(fileGenCodeList, context, errors) {
+    if (!fileGenCodeList) {
+        return;
+    }
     let ids = fileGenCodeList.map(x => x.id);
     // Interpret use of -1 or negatives as intentional and skip
     // validating negative ids.
     if (ids.filter(x => !x).length > 0) {
-        createException(context, 'At least one generated code id was not set. Found: ' + ids,
-            null, allErrors);
+        errors.push(createOrWrapException(context, 'At least one generated code id was not set. Found: ' + ids,
+            null));
     }
     else {
         let duplicateIds = ids.filter(x => x > 0 && ids.filter(y => x == y).length > 1);
         if (duplicateIds.length > 0) {
-            createException(context, 'Valid generated code ids must be unique, but found duplicates: ' + ids,
-                null, allErrors);
+            errors.push(createOrWrapException(context, 'Valid generated code ids must be unique, but found duplicates: ' + ids,
+                null));
         }
     }
 }
 
-function createException(context, message, evalEx, allErrors) {
-    let lineMessage = '';
-    let stackTrace = '';
-    if (evalEx) {
-        let augCode = context.fileAugCodes.augmentingCodes[context.augCodeIndex];
-        lineMessage = ` at line ${augCode.lineNumber}`;
-        message = augCode.blocks[0].content + `: ${evalEx.name}: ${evalEx.message}`;        
-        stackTrace = '\n' + evalEx.stack;
+function createOrWrapException(context, message, cause) {
+    let wrapperMessage = '';
+    let srcFileSnippet = null;
+    if (context.srcFile) {
+        wrapperMessage += `in ${context.srcFile}`;
+        if (context.fileAugCodes.augmentingCodes) {
+            if (context.augCodeIndex >= 0 && context.augCodeIndex < context.fileAugCodes.augmentingCodes.length) {
+                let augCode = context.fileAugCodes.augmentingCodes[context.augCodeIndex];
+                wrapperMessage += ` at line ${augCode.lineNumber}`;
+                srcFileSnippet = augCode.blocks[0].content;
+            }    
+        }
     }
-    let exception = `in ${context.srcFile}${lineMessage}: ${message}${stackTrace}`;
-    allErrors.push(exception);
+    if (wrapperMessage) {
+        wrapperMessage += ": ";
+    }
+    wrapperMessage += message;
+    if (srcFileSnippet) {
+        wrapperMessage += `\n\n${srcFileSnippet}`;
+    }
+    const wrapperException = new Error(wrapperMessage, {
+        cause: cause
+    });
+    return wrapperException;
 }
 
 exports.ProcessCodeTask = ProcessCodeTask;
