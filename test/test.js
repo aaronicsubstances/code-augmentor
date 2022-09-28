@@ -26,12 +26,53 @@ describe('code_augmentor_support', function() {
         // existing output dir can be used successfully.
         rimraf.sync(buildDir);
         const task = new code_augmentor_support.ProcessCodeTask();
+
+        // test property accessors.
+        assert.equal(null, task.inputFile);
+        assert.equal(null, task.outputFile);
+        assert.equal(false, task.verbose);
+        assert.equal(null, task.beforeAllFilesHook);
+        assert.equal(null, task.afterAllFilesHook);
+        assert.equal(null, task.beforeFileHook);
+        assert.equal(null, task.afterFileHook);
+        assert.deepEqual(task.allErrors, []);
+
+        const hookLogs = [];
         task.inputFile = path.join(__dirname, 'resources', 'aug_codes-00.json');
         task.outputFile = path.join(buildDir, 'actual_gen_codes.json');
+        task.verbose = true;
+        task.beforeAllFilesHook = (context, cb) => {
+            hookLogs.push("beforeAllFiles");
+            cb();
+        };
+        task.afterAllFilesHook = (context, cb) => {
+            hookLogs.push("afterAllFiles");
+            cb();
+        };
+        task.beforeFileHook = (context, cb) => {
+            hookLogs.push("beforeFile");
+            cb();
+        };
+        task.afterFileHook = (context, fileErrors, cb) => {
+            hookLogs.push("afterFile:" + fileErrors.length);
+            cb();
+        };
+
+        // test property accessors again.
+        assert.ok(task.inputFile);
+        assert.ok(task.outputFile);
+        assert.equal(true, task.verbose);
+        assert.ok(task.beforeAllFilesHook);
+        assert.ok(task.afterAllFilesHook);
+        assert.ok(task.beforeFileHook);
+        assert.ok(task.afterFileHook);
+        assert.deepEqual(task.allErrors, []);
         
         task.execute(evaler, function(err) {
             done(err);
             printErrors(task);
+            assert.deepEqual(hookLogs, ["beforeAllFiles", "beforeFile",
+                "afterFile:0", "beforeFile", "afterFile:0", "afterAllFiles"])
             assert.ok(!task.allErrors.length);
         });
     });
