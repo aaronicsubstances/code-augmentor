@@ -76,6 +76,7 @@ ProcessCodeTask.prototype.executeAsync = async function(evalFunction) {
                 context.header = JSON.parse(line);
                 headerSeen = true;
 
+                context.augCodeIndex = -1;
                 await callBeforeAllFiles(this.beforeAllFilesHook, context); 
                 continue;
             }
@@ -100,7 +101,7 @@ ProcessCodeTask.prototype.executeAsync = async function(evalFunction) {
                 fileErrors.push(createOrWrapException(context, "beforeFileHook error", e));
             }
 
-            if (!fileGenCodes && !fileErrors.length) { 
+            if ((fileGenCodes === null || fileGenCodes === undefined) && !fileErrors.length) {
                 // fetch arguments, and parse any json argument found.
                 for (augCode of fileAugCodes.augmentingCodes) {
                     augCode.processed = false;
@@ -117,8 +118,8 @@ ProcessCodeTask.prototype.executeAsync = async function(evalFunction) {
                 }
                 
                 // now begin aug code processing.
-                fileGenCodes = { 
-                    fileId: fileAugCodes.fileId,
+                fileGenCodes = {
+                    fileId: 0, // declare here so as to provide deterministic position during tests
                     generatedCodes: []
                 };
                 for (let i = 0; i < fileAugCodes.augmentingCodes.length; i++) {
@@ -137,7 +138,15 @@ ProcessCodeTask.prototype.executeAsync = async function(evalFunction) {
                 }
             }
 
-            validateGeneratedCodeIds(fileGenCodes.generatedCodes, context, fileErrors);
+            if (fileGenCodes !== null && fileGenCodes !== undefined) {
+                try {
+                    fileGenCodes.fileId = fileAugCodes.fileId;
+                    validateGeneratedCodeIds(fileGenCodes.generatedCodes, context, fileErrors);
+                }
+                catch (e) {
+                    fileErrors.push(createOrWrapException(context, "validation error", e));
+                }
+            }
             
             if (fileErrors.length) {
                 this.logWarn(fileErrors.length + " error(s) encountered in " + context.srcFile);
@@ -145,7 +154,7 @@ ProcessCodeTask.prototype.executeAsync = async function(evalFunction) {
 
             if (!this.allErrors.length && !fileErrors.length) {
                 await writeStreamAsync(codeGenResponse, JSON.stringify(fileGenCodes, '') + endOfLine);
-            }            
+            }
             for (e of fileErrors) {
                 this.allErrors.push(e);
             }
@@ -166,6 +175,7 @@ ProcessCodeTask.prototype.executeAsync = async function(evalFunction) {
         context.srcFile = null;
         context.fileAugCodes = null;
         context.fileScope = {};
+        context.augCodeIndex = -1;
         await callAfterAllFiles(this.afterAllFilesHook, context);
     }
     finally {
@@ -380,10 +390,8 @@ function createOrWrapException(context, message, cause) {
     if (srcFileSnippet) {
         wrapperMessage += `\n\n${srcFileSnippet}`;
     }
-    const wrapperException = new Error(wrapperMessage, {
-        cause: cause
-    });
-    if (wrapperException.cause !== cause) {
+    const wrapperException = new Error(wrapperMessage);
+    if (cause) {
         wrapperException.cause = cause;
     }
     return wrapperException;

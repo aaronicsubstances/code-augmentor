@@ -39,7 +39,7 @@ describe('code_augmentor_support', function() {
 
         const hookLogs = [];
         task.inputFile = path.join(__dirname, 'resources', 'aug_codes-00.json');
-        task.outputFile = path.join(buildDir, 'actual_gen_codes.json');
+        task.outputFile = path.join(buildDir, 'genCodes-js-00.json');
         task.verbose = true;
         task.beforeAllFilesHook = (context, cb) => {
             hookLogs.push("beforeAllFiles");
@@ -146,7 +146,7 @@ describe('code_augmentor_support', function() {
     it('should pass testing of scope accesses and gen code skipping', function(done) {
         const task = new code_augmentor_support.ProcessCodeTask();
         task.inputFile = path.join(__dirname, 'resources', 'aug_codes-02.json');
-        task.outputFile = path.join(buildDir, 'genCodes-js-ignore.json');
+        task.outputFile = path.join(buildDir, 'actual-genCodes-02.json');
         
         task.execute(contextScopeMethodAccessEvaler, function(err) {
             if (err) {
@@ -164,6 +164,137 @@ describe('code_augmentor_support', function() {
                     '{"skipped":true,"id":3}]}\n'
                 );
             });
+        });
+    });
+});
+
+describe('code_augmentor_support', function() {
+    it('should pass testing of typical before file usage', function(done) {
+        const task = new code_augmentor_support.ProcessCodeTask();
+        task.inputFile = path.join(__dirname, 'resources', 'aug_codes-02.json');
+        task.outputFile = path.join(buildDir, 'genCodes-js-03.json');
+        task.beforeFileHook = function(context, cb) {
+            cb(null, {
+                skipped: true
+            });
+        };
+        
+        task.execute(shouldNotHaveRunEvaler, function(err) {
+            if (err) {
+                done(err);
+                return;
+            }
+            printErrors(task);
+            assert.ok(!task.allErrors.length);
+            fs.readFile(task.outputFile, 'utf8', function(err, data) {
+                done(err)
+                assert.equal(data.replace(/\r\n|\n|\r/g, "\n"), '{}\n' +
+                    '{"skipped":true,"fileId":1}\n'
+                );
+            });
+        });
+    });
+});
+
+describe('code_augmentor_support', function() {
+    it('should pass testing of validation error resulting from before file usage', function(done) {
+        const task = new code_augmentor_support.ProcessCodeTask();
+        task.inputFile = path.join(__dirname, 'resources', 'aug_codes-02.json');
+        task.outputFile = path.join(buildDir, 'genCodes-js-ignore.json');
+        task.beforeFileHook = function(context, cb) {
+            const obj  = {};
+            Object.defineProperty(obj, 'fileId', {
+                get() {
+                    return 0;
+                },
+                set(newValue) {
+                    if (newValue) {
+                        throw new Error("example setter error");
+                    }
+                }
+            });
+            cb(null, obj);
+        };
+        
+        task.execute(shouldNotHaveRunEvaler, function(err) {
+            done(err);
+            printErrors(task);
+            assert.equal(task.allErrors.length, 1);
+            console.log(`Expected ${task.allErrors.length} error(s)`);
+        });
+    });
+});
+
+describe('code_augmentor_support', function() {
+    it('should fail if before all files hook fails', function(done) {
+        const task = new code_augmentor_support.ProcessCodeTask();
+        task.inputFile = path.join(__dirname, 'resources', 'aug_codes-02.json');
+        task.outputFile = path.join(buildDir, 'genCodes-js-ignore.json');
+        task.beforeAllFilesHook = function(context, cb) {
+            cb(new Error("from beforeAllFiles hook"));
+        };
+        assert.rejects(task.executeAsync(evaler)
+                .then(() => printErrors(task)),
+                err => {
+                    assert(err instanceof Error);
+                    assert(/beforeAllFiles/.test(err));
+                    return true;
+                })
+            .then(() => done(), err => done(err));
+    });
+});
+
+describe('code_augmentor_support', function() {
+    it('should fail if after all files hook fails', function(done) {
+        const task = new code_augmentor_support.ProcessCodeTask();
+        task.inputFile = path.join(__dirname, 'resources', 'aug_codes-02.json');
+        task.outputFile = path.join(buildDir, 'genCodes-js-ignore.json');
+        task.afterAllFilesHook = function(context, cb) {
+            cb(new Error("from afterAllFiles hook"));
+        };
+        assert.rejects(task.executeAsync(evaler)
+                .then(() => printErrors(task)),
+                err => {
+                    assert(err instanceof Error);
+                    assert(/afterAllFiles/.test(err));
+                    return true;
+                })
+            .then(() => done(), err => done(err));
+    });
+});
+
+describe('code_augmentor_support', function() {
+    it('should pass testing of before file failure', function(done) {
+        const task = new code_augmentor_support.ProcessCodeTask();
+        task.inputFile = path.join(__dirname, 'resources', 'aug_codes-02.json');
+        task.outputFile = path.join(buildDir, 'genCodes-js-ignore.json');
+        task.beforeFileHook = function(context, cb) {
+            cb(new Error("from beforeFile hook"));
+        };
+        
+        task.execute(evaler, function(err) {
+            done(err);
+            printErrors(task);
+            assert.equal(task.allErrors.length, 1);
+            console.log(`Expected ${task.allErrors.length} error(s)`);
+        });
+    });
+});
+
+describe('code_augmentor_support', function() {
+    it('should pass testing of after file failure', function(done) {
+        const task = new code_augmentor_support.ProcessCodeTask();
+        task.inputFile = path.join(__dirname, 'resources', 'aug_codes-02.json');
+        task.outputFile = path.join(buildDir, 'genCodes-js-ignore.json');
+        task.afterFileHook = function(context, fileErrors, cb) {
+            cb(new Error("from afterFile hook"));
+        };
+        
+        task.execute(evaler, function(err) {
+            done(err);
+            printErrors(task);
+            assert.equal(task.allErrors.length, 1);
+            console.log(`Expected ${task.allErrors.length} error(s)`);
         });
     });
 });
@@ -206,4 +337,8 @@ function contextScopeMethodAccessEvaler(f, a, c) {
     assert.equal(c.globalScope["address"], "OldTown");
     assert.equal(c.getScopeVar("codeAugmentor_indent"), "    ");
     return c.newSkipGenCode();
+}
+
+function shouldNotHaveRunEvaler(f, a, c) {
+    throw new Error("should not have run");
 }
