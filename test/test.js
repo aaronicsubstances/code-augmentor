@@ -53,8 +53,8 @@ describe('code_augmentor_support', function() {
             hookLogs.push("beforeFile");
             cb();
         };
-        task.afterFileHook = (context, fileErrors, cb) => {
-            hookLogs.push("afterFile:" + fileErrors.length);
+        task.afterFileHook = (context, cb) => {
+            hookLogs.push("afterFile");
             cb();
         };
 
@@ -72,7 +72,7 @@ describe('code_augmentor_support', function() {
             done(err);
             printErrors(task);
             assert.deepEqual(hookLogs, ["beforeAllFiles", "beforeFile",
-                "afterFile:0", "beforeFile", "afterFile:0", "afterAllFiles"])
+                "afterFile", "beforeFile", "afterFile", "afterAllFiles"])
             assert.ok(!task.allErrors.length);
         });
     });
@@ -89,22 +89,6 @@ describe('code_augmentor_support', function() {
             done(err);
             printErrors(task);
             assert.equal(task.allErrors.length, 2);
-            console.log(`Expected ${task.allErrors.length} error(s)`);
-        });
-    });
-});
-
-describe('code_augmentor_support', function() {
-    it('should fail due to duplicate ids', function(done) {
-        const task = new code_augmentor_support.ProcessCodeTask();
-        task.inputFile = path.join(__dirname, 'resources', 'aug_codes-01.json');
-        task.outputFile = path.join(buildDir, 'genCodes-js-ignore.json');
-        task.verbose = true;
-        
-        task.execute(evalerProducingDuplicateIds, function(err) {
-            done(err);
-            printErrors(task);
-            assert.equal(task.allErrors.length, 1);
             console.log(`Expected ${task.allErrors.length} error(s)`);
         });
     });
@@ -226,76 +210,96 @@ describe('code_augmentor_support', function() {
 });
 
 describe('code_augmentor_support', function() {
-    it('should fail if before all files hook fails', function(done) {
+    it('should fail if before all files hook fails', async function() {
         const task = new code_augmentor_support.ProcessCodeTask();
+        const hookLogs = [];
         task.inputFile = path.join(__dirname, 'resources', 'aug_codes-02.json');
         task.outputFile = path.join(buildDir, 'genCodes-js-ignore.json');
         task.beforeAllFilesHook = function(context, cb) {
+            hookLogs.push("beforeAllFiles");
             cb(new Error("from beforeAllFiles hook"));
         };
-        assert.rejects(task.executeAsync(evaler)
-                .then(() => printErrors(task)),
+        task.afterAllFilesHook = function(context, cb) {
+            hookLogs.push("afterAllFiles");
+            cb();
+        };
+        await assert.rejects(async function() {
+                    try {
+                        await task.executeAsync(evaler);
+                        printErrors(task);
+                    }
+                    catch (e) {
+                        assert.deepEqual(hookLogs, ["beforeAllFiles", "afterAllFiles"]);
+                        throw e;
+                    }
+                },
                 err => {
                     assert(err instanceof Error);
                     assert(/beforeAllFiles/.test(err));
                     return true;
-                })
-            .then(() => done(), err => done(err));
+                });
     });
 });
 
 describe('code_augmentor_support', function() {
-    it('should fail if after all files hook fails', function(done) {
+    it('should fail if after all files hook fails', async function() {
         const task = new code_augmentor_support.ProcessCodeTask();
         task.inputFile = path.join(__dirname, 'resources', 'aug_codes-02.json');
         task.outputFile = path.join(buildDir, 'genCodes-js-ignore.json');
         task.afterAllFilesHook = function(context, cb) {
             cb(new Error("from afterAllFiles hook"));
         };
-        assert.rejects(task.executeAsync(evaler)
+        await assert.rejects(task.executeAsync(evaler)
                 .then(() => printErrors(task)),
                 err => {
                     assert(err instanceof Error);
                     assert(/afterAllFiles/.test(err));
                     return true;
-                })
-            .then(() => done(), err => done(err));
+                });
     });
 });
 
 describe('code_augmentor_support', function() {
-    it('should pass testing of before file failure', function(done) {
+    it('should pass testing of before file failure and context add error', async function() {
         const task = new code_augmentor_support.ProcessCodeTask();
+        const hookLogs = [];
         task.inputFile = path.join(__dirname, 'resources', 'aug_codes-02.json');
         task.outputFile = path.join(buildDir, 'genCodes-js-ignore.json');
         task.beforeFileHook = function(context, cb) {
+            hookLogs.push("beforeFile");
+            context.addError("test addError");
             cb(new Error("from beforeFile hook"));
         };
+        task.afterAllFilesHook = function(context, cb) {
+            hookLogs.push("afterAllFiles");
+            cb();
+        };
+        task.afterFileHook = function(context, cb) {
+            hookLogs.push("afterFile");
+            cb();
+        };
         
-        task.execute(evaler, function(err) {
-            done(err);
-            printErrors(task);
-            assert.equal(task.allErrors.length, 1);
-            console.log(`Expected ${task.allErrors.length} error(s)`);
-        });
+        await task.executeAsync(evaler);
+        printErrors(task);
+        assert.equal(task.allErrors.length, 2);
+        assert.deepEqual(hookLogs, ["beforeFile", "afterFile", "afterAllFiles"]);
+        console.log(`Expected ${task.allErrors.length} error(s)`);
     });
 });
 
 describe('code_augmentor_support', function() {
-    it('should pass testing of after file failure', function(done) {
+    it('should pass testing of after file failure', async function() {
         const task = new code_augmentor_support.ProcessCodeTask();
         task.inputFile = path.join(__dirname, 'resources', 'aug_codes-02.json');
         task.outputFile = path.join(buildDir, 'genCodes-js-ignore.json');
-        task.afterFileHook = function(context, fileErrors, cb) {
+        task.afterFileHook = function(context, cb) {
             cb(new Error("from afterFile hook"));
         };
         
-        task.execute(evaler, function(err) {
-            done(err);
-            printErrors(task);
-            assert.equal(task.allErrors.length, 1);
-            console.log(`Expected ${task.allErrors.length} error(s)`);
-        });
+        await task.executeAsync(evaler);
+        printErrors(task);
+        assert.equal(task.allErrors.length, 1);
+        console.log(`Expected ${task.allErrors.length} error(s)`);
     });
 });
 

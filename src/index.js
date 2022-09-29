@@ -43,140 +43,90 @@ ProcessCodeTask.prototype.execute = function(evalFunction, cb=null) {
 }
 
 ProcessCodeTask.prototype.executeAsync = async function(evalFunction) {
+    // save properties before use.
+    const inputFile = this.inputFile;
+    const outputFile = this.outputFile;
+    const beforeFileHook = this.beforeFileHook;
+    const afterFileHook = this.afterFileHook;
+    
     // validate
-    assert.ok(this.inputFile, "inputFile property is not set");
-    assert.ok(this.outputFile, "outputFile property is not set");
+    assert.ok(inputFile, "inputFile property is not set");
+    assert.ok(outputFile, "outputFile property is not set");
     assert.ok(evalFunction);
 
-    this.allErrors = [];
+    const allErrors = [];
         
     // ensure dir exists for outputFile.
-    const outputDir = path.dirname(this.outputFile)
+    const outputDir = path.dirname(outputFile)
     if (outputDir) {
         fs.mkdirSync(outputDir, {
             recursive: true // also ensures no error is thrown if dir already exists
         });
     }
 
-    const context = new ProcessCodeContext();
+    const context = new ProcessCodeContext((message, e) => {
+        allErrors.push(createOrWrapException(context, message, e));
+    });
 
     let codeGenRequest;
     let codeGenResponse;
     try {
-        codeGenRequest = fs.createReadStream(this.inputFile);
-        codeGenResponse = fs.createWriteStream(this.outputFile);
+        codeGenRequest = fs.createReadStream(inputFile);
+        codeGenResponse = fs.createWriteStream(outputFile);
 
         // begin serialize by writing header to output 
         await writeStreamAsync(codeGenResponse, JSON.stringify({}, '') + endOfLine);
 
         let headerSeen = false;
-        for await (const line of wrapInputStreamWithReadLines(codeGenRequest)) {
-            // begin deserialize by reading header from input
-            if (!headerSeen) {
-                context.header = JSON.parse(line);
-                headerSeen = true;
+        try {
+            for await (const line of wrapInputStreamWithReadLines(codeGenRequest)) {
+                // begin deserialize by reading header from input
+                if (!headerSeen) {
+                    context.header = JSON.parse(line);
+                    headerSeen = true;
 
-                context.augCodeIndex = -1;
-                await callBeforeAllFiles(this.beforeAllFilesHook, context); 
-                continue;
-            }
-            
-            let fileAugCodes = JSON.parse(line);
-
-            // set up context.
-            context.srcFile = path.join(fileAugCodes.dir,
-                fileAugCodes.relativePath);
-            context.fileAugCodes = fileAugCodes;
-            context.fileScope = {};
-            this.logVerbose(`Processing ${context.srcFile}`);
-            startInstant = new Date();
-
-            let fileErrors = [];
-            context.augCodeIndex = -1;
-            let fileGenCodes;
-            try {
-                fileGenCodes = await callBeforeFile(this.beforeFileHook, context);
-            }
-            catch (e) {
-                fileErrors.push(createOrWrapException(context, "beforeFileHook error", e));
-            }
-
-            if ((fileGenCodes === null || fileGenCodes === undefined) && !fileErrors.length) {
-                // fetch arguments, and parse any json argument found.
-                for (augCode of fileAugCodes.augmentingCodes) {
-                    augCode.processed = false;
-                    augCode.args = [];
-                    for (block of augCode.blocks) {
-                        if (block.jsonify) {
-                            const parsedArg = JSON.parse(block.content);
-                            augCode.args.push(parsedArg);
-                        }
-                        else if (block.stringify) {
-                            augCode.args.push(block.content);
-                        }
-                    }
+                    prepareContextForHookCall(context, true, null, null, -1);
+                    await callHook1(this.beforeAllFilesHook, context);
+                    continue;
                 }
                 
-                // now begin aug code processing.
-                fileGenCodes = {
-                    fileId: 0, // declare here so as to provide deterministic position during tests
-                    generatedCodes: []
-                };
-                for (let i = 0; i < fileAugCodes.augmentingCodes.length; i++) {
-                    const augCode = fileAugCodes.augmentingCodes[i];
-                    if (augCode.processed) {
-                        continue;
-                    }
+                const fileAugCodes = JSON.parse(line);
+                const srcFile = path.join(fileAugCodes.dir,
+                    fileAugCodes.relativePath);
+                this.logVerbose(`Processing ${srcFile}`);
+                startInstant = new Date();
 
-                    context.augCodeIndex = i;
-                    const functionName = retrieveFunctionName(augCode);
-                    const genCodes = processAugCode(evalFunction, functionName,
-                        augCode, context, fileErrors);
-                    for (genCode of genCodes) {
-                        fileGenCodes.generatedCodes.push(genCode);
-                    }
-                }
-            }
-
-            if (fileGenCodes !== null && fileGenCodes !== undefined) {
+                const beginErrorCount  = allErrors.length;
+                let fileGenCodes;
                 try {
-                    fileGenCodes.fileId = fileAugCodes.fileId;
-                    validateGeneratedCodeIds(fileGenCodes.generatedCodes, context, fileErrors);
+                    fileGenCodes = await processFileOfAugCodes(context, evalFunction,
+                        beforeFileHook, afterFileHook, srcFile,
+                        fileAugCodes, allErrors)
                 }
                 catch (e) {
-                    fileErrors.push(createOrWrapException(context, "validation error", e));
+                    allErrors.push(createOrWrapException(context, "processing error", e));
                 }
-            }
-            
-            if (fileErrors.length) {
-                this.logWarn(fileErrors.length + " error(s) encountered in " + context.srcFile);
-            } 
+                
+                if (allErrors.length > beginErrorCount) {
+                    this.logWarn((allErrors.length - beginErrorCount) + " error(s) encountered in " + srcFile);
+                }
 
-            if (!this.allErrors.length && !fileErrors.length) {
-                await writeStreamAsync(codeGenResponse, JSON.stringify(fileGenCodes, '') + endOfLine);
-            }
-            for (e of fileErrors) {
-                this.allErrors.push(e);
-            }
+                if (!allErrors.length) {
+                    await writeStreamAsync(codeGenResponse, JSON.stringify(fileGenCodes, '') + endOfLine);
+                }
 
-            context.augCodeIndex = fileAugCodes.augmentingCodes.length;
-            try {
-                await callAfterFile(this.afterFileHook, context, fileErrors);
+                endInstant = new Date();
+                timeElapsed = endInstant.getTime() - startInstant.getTime();
+                this.logInfo(`Done processing ${srcFile} in ${timeElapsed} ms`);            
             }
-            catch (e) {
-                this.allErrors.push(createOrWrapException(context, "afterFileHook error", e));
-            } 
-
-            endInstant = new Date();
-            timeElapsed = endInstant.getTime() - startInstant.getTime();
-            this.logInfo(`Done processing ${context.srcFile} in ${timeElapsed} ms`);
         }
-
-        context.srcFile = null;
-        context.fileAugCodes = null;
-        context.fileScope = {};
-        context.augCodeIndex = -1;
-        await callAfterAllFiles(this.afterAllFilesHook, context);
+        finally {
+            this.allErrors = allErrors;
+            if (headerSeen) {
+                prepareContextForHookCall(context, false, null, null, -1);
+                await callHook1(this.afterAllFilesHook, context);
+            }
+        }
     }
     finally {
         await endStreamAsync(codeGenResponse);
@@ -193,62 +143,6 @@ function wrapInputStreamWithReadLines(input) {
         output.push(null);
     });
     return output;
-}
-
-function callBeforeAllFiles(hook, context) {
-    if (hook) {
-        return new Promise((resolve, reject) => {
-            hook(context, function(err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve();
-                }
-            });
-        });
-    }
-}
-    
-function callAfterAllFiles(hook, context) {
-    if (hook) {
-        return new Promise((resolve, reject) => {
-            hook(context, function(err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve();
-                }
-            });
-        });
-    }
-}
-    
-function callBeforeFile(hook, context) {
-    if (hook) {
-        return new Promise((resolve, reject) => {
-            hook(context, function(err, res) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(res);
-                }
-            });
-        });
-    }
-}
-
-function callAfterFile(hook, context, fileErrors) {
-    if (hook) {
-        return new Promise((resolve, reject) => {
-            hook(context, fileErrors, function(err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve();
-                }
-            });
-        });
-    }
 }
 
 function writeStreamAsync(streamInstance, data) {
@@ -277,14 +171,126 @@ function endStreamAsync(streamInstance) {
     }
 }
 
+function callHook1(hook, context) {
+    if (hook) {
+        return new Promise((resolve, reject) => {
+            hook(context, function(err) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+}
+    
+function callHook2(hook, context) {
+    if (hook) {
+        return new Promise((resolve, reject) => {
+            hook(context, function(err, res) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(res);
+                }
+            });
+        });
+    }
+}
+
+function prepareContextForHookCall(context,
+        clearFileScope, srcFile, fileAugCodes, augCodeIndex) {
+    if (clearFileScope) {
+        context.fileScope = {};
+    }
+    context.srcFile = srcFile;
+    context.fileAugCodes = fileAugCodes;
+    context.augCodeIndex = augCodeIndex;
+}
+
+async function processFileOfAugCodes(context, evalFunction,
+        beforeFileHook, afterFileHook, srcFile, fileAugCodes, errors) {
+    let fileGenCodes;
+    try {
+        try {
+            prepareContextForHookCall(context, true, srcFile,
+                fileAugCodes, -1);
+            fileGenCodes = await callHook2(beforeFileHook, context);
+        }
+        catch(e) {
+            errors.push(createOrWrapException(context,
+                "beforeFileHook error", e));
+            return;
+        }
+        if (fileGenCodes === null || fileGenCodes === undefined) {
+            // fetch arguments, and parse any json argument found.
+            for (augCode of fileAugCodes.augmentingCodes) {
+                augCode.processed = false;
+                augCode.args = [];
+                for (block of augCode.blocks) {
+                    if (block.jsonify) {
+                        const parsedArg = JSON.parse(block.content);
+                        augCode.args.push(parsedArg);
+                    }
+                    else if (block.stringify) {
+                        augCode.args.push(block.content);
+                    }
+                }
+            }
+            
+            // now begin aug code processing.
+            fileGenCodes = {
+                fileId: 0, // declare here so as to provide deterministic position during tests
+                generatedCodes: []
+            };
+            for (let i = 0; i < fileAugCodes.augmentingCodes.length; i++) {
+                const augCode = fileAugCodes.augmentingCodes[i];
+                if (augCode.processed) {
+                    continue;
+                }
+
+                context.augCodeIndex = i;
+                const functionName = retrieveFunctionName(augCode);
+                const genCodes = await processAugCode(evalFunction, functionName,
+                    augCode, context, errors);
+                for (genCode of genCodes) {
+                    fileGenCodes.generatedCodes.push(genCode);
+                }
+            }
+        }
+        
+        try {
+            fileGenCodes.fileId = fileAugCodes.fileId;
+            validateGeneratedCodeIds(fileGenCodes.generatedCodes, context, errors);
+        }
+        catch (e) {
+            errors.push(createOrWrapException(context, "validation error", e));
+            return;
+        }
+    }
+    finally {
+        try {
+            prepareContextForHookCall(context, false, srcFile, fileAugCodes, -1);
+            await callHook1(afterFileHook, context);
+        }
+        catch (e) {
+            errors.push(createOrWrapException(context,
+                "afterFileHook error", e));
+            return;
+        }
+    }
+    return fileGenCodes;
+}
+
 function retrieveFunctionName(augCode) {
     let functionName = augCode.blocks[0].content.trim();
     return functionName;
 }
 
-function processAugCode(evalFunction, functionName, augCode, context, errors) {
+async function processAugCode(evalFunction, functionName, augCode, context, errors) {
     try {
-        let result = evalFunction(functionName, augCode, context);
+        let result = await evalFunction(functionName, augCode, context);
         if (result === null || typeof result === 'undefined') {
             return [ convertGenCodeItem(null) ];
         }
@@ -361,32 +367,30 @@ function validateGeneratedCodeIds(fileGenCodeList, context, errors) {
         errors.push(createOrWrapException(context, 'At least one generated code id was not set. Found: ' + ids,
             null));
     }
-    else {
-        let duplicateIds = ids.filter(x => x > 0 && ids.filter(y => x == y).length > 1);
-        if (duplicateIds.length > 0) {
-            errors.push(createOrWrapException(context, 'Valid generated code ids must be unique, but found duplicates: ' + ids,
-                null));
-        }
-    }
 }
 
 function createOrWrapException(context, message, cause) {
     let wrapperMessage = '';
     let srcFileSnippet = null;
-    if (context.srcFile) {
-        wrapperMessage += `in ${context.srcFile}`;
-        if (context.fileAugCodes.augmentingCodes) {
-            if (context.augCodeIndex >= 0 && context.augCodeIndex < context.fileAugCodes.augmentingCodes.length) {
-                let augCode = context.fileAugCodes.augmentingCodes[context.augCodeIndex];
-                wrapperMessage += ` at line ${augCode.lineNumber}`;
-                srcFileSnippet = augCode.blocks[0].content;
-            }    
+    try {
+        if (context.srcFile) {
+            wrapperMessage += `in ${context.srcFile}`;
+            if (context.fileAugCodes.augmentingCodes) {
+                if (context.augCodeIndex >= 0 && context.augCodeIndex < context.fileAugCodes.augmentingCodes.length) {
+                    let augCode = context.fileAugCodes.augmentingCodes[context.augCodeIndex];
+                    wrapperMessage += ` at line ${augCode.lineNumber}`;
+                    srcFileSnippet = augCode.blocks[0].content;
+                }    
+            }
         }
     }
+    catch (ignore) {}
     if (wrapperMessage) {
         wrapperMessage += ": ";
     }
-    wrapperMessage += message;
+    if (message !== null && message !== undefined) {
+        wrapperMessage += message;
+    }
     if (srcFileSnippet) {
         wrapperMessage += `\n\n${srcFileSnippet}`;
     }
