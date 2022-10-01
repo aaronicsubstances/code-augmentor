@@ -1,14 +1,24 @@
 // Class constructor.
-function ProcessCodeContext() {
+function ProcessCodeContext(errorAccumulator) {
+    this.header = null;
     this.globalScope = {
-        'codeAugmentor_indent': '    '
+        'code_indent': '    '
     };
+    this.fileScope = {};
+    this.fileAugCodes = null;
+    this.augCodeIndex = 0;
+    this.srcFile = null;
+    this.errorAccumulator = errorAccumulator;
 }
 
-ProcessCodeContext.prototype.newGenCode = function() {
+ProcessCodeContext.prototype.addError = function(message, cause) {
+    this.errorAccumulator(message, cause);
+};
+
+ProcessCodeContext.prototype.newGenCode = function(errorAccumulator) {
     return {
         id: 0,
-        contentParts: []   
+        contentParts: []
     }
 };
 
