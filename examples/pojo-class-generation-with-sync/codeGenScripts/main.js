@@ -25,8 +25,8 @@ task.execute(callUserFunction, err => {
     }
     if (task.allErrors.length) {
         console.error(task.allErrors.length + " error(s) found.\n");
-        for (errMsg of task.allErrors) {
-            console.error(errMsg);
+        for (error of task.allErrors) {
+            console.error(task.generateStackTrace(error));
         }
         process.exit(1);
     }
