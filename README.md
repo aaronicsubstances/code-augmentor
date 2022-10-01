@@ -149,10 +149,11 @@ Instances of `ProcessCodeTask` have the following properties and methods:
    * `verbose` - boolean property which can be used with default verbose logging mechansim to enable printing of verbose mesages to standard output.
    * `beforeAllFilesHook` - optional function that will be called once, before any file of aug codes is read for processing. Called with two arguments: a context object (described below) and a standard NodeJS completion callback function.
    * `afterAllFilesHook` - optional function that will be called once, after all files of aug codes are read and processed. Called with two arguments: a context object and a standard NodeJS completion callback function.
-   * `beforeFileHook` - optional function that will be called every time just after a file of aug codes (even if empty) has been read, before the aug codes are processed. Called with two arguments: a context object and a standard NodeJS completion callback function.
+   * `beforeFileHook` - optional function that will be called every time just after a file of aug codes (even if empty) has been read, before the aug codes are processed. Called with two arguments: a context object and a standard NodeJS completion callback function which takes a 2nd argument. That second argument can be an object of generated codes which if not null, will be written to the output file instead of processing the current file of aug codes.
    * `afterFileHook` - optional function that will be called every time just after all aug codes (even if empty) of a file have been processed. Called with two arguments: a context object and a standard NodeJS completion callback function.
    * `allErrors` - output array which contains any errors encountered during execution.
-   * `generateStackTrace` - takes an error object and returns a string stack trace of it and any nested cause error objects.
+   * `executeAsync(evalFunction)` - alternative version of "execute" method which returns  a JS promise.
+   * `generateStackTrace(e)` - takes an error object and returns a string stack trace of it and any nested cause error objects.
    
 These methods can be overriden in a subclass:
    * `logVerbose`, `logInfo`, `logWarn` - methods which are called with a format string, *args, and **kwargs, when a verbose message, normal message, or warning message is issued. By default all normal and warning messages are printed to standard output, and verbose messages are ignored.
