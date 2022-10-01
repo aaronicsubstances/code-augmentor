@@ -142,7 +142,7 @@ exports.stringify = function(augCode, context) {
 
 The library's functionality is contained in the method `execute` (or `executeAsync`) of the class `ProcessCodeTask` in the main module of this package. The `execute` method takes a function object used for evaluating code generation requests and producing generated code snippets.
 
-Instances of `ProcessCodeTask` have the following properties:
+Instances of `ProcessCodeTask` have the following properties and methods:
 
    * `inputFile` - path to the code generation request. Must be the aug code file result of running the *code_aug_prepare* Ant task.
    * `outputFile` - path for writing out code generation response. Will be used as the gen code file input to the *code_aug_complete* Ant task.
@@ -151,7 +151,8 @@ Instances of `ProcessCodeTask` have the following properties:
    * `afterAllFilesHook` - optional function that will be called once, after all files of aug codes are read and processed. Called with two arguments: a context object and a standard NodeJS completion callback function.
    * `beforeFileHook` - optional function that will be called every time just after a file of aug codes (even if empty) has been read, before the aug codes are processed. Called with two arguments: a context object and a standard NodeJS completion callback function.
    * `afterFileHook` - optional function that will be called every time just after all aug codes (even if empty) of a file have been processed. Called with two arguments: a context object and a standard NodeJS completion callback function.
-   * `allErrors` - array which contains any errors encountered during execution.
+   * `allErrors` - output array which contains any errors encountered during execution.
+   * `generateStackTrace` - takes an error object and returns a string stack trace of it and any nested cause error objects.
    
 These methods can be overriden in a subclass:
    * `logVerbose`, `logInfo`, `logWarn` - methods which are called with a format string, *args, and **kwargs, when a verbose message, normal message, or warning message is issued. By default all normal and warning messages are printed to standard output, and verbose messages are ignored.
