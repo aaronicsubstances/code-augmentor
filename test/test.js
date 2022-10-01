@@ -339,7 +339,7 @@ function contextScopeMethodAccessEvaler(f, a, c) {
     assert.equal(c.getScopeVar("serviceType"), "ICT");
     assert.equal(c.getScopeVar("allServiceTypes"), "ICT,Agric");
     assert.equal(c.globalScope["address"], "OldTown");
-    assert.equal(c.getScopeVar("codeAugmentor_indent"), "    ");
+    assert.equal(c.getScopeVar("code_indent"), "    ");
     return c.newSkipGenCode();
 }
 

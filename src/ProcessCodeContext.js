@@ -2,7 +2,7 @@
 function ProcessCodeContext(errorAccumulator) {
     this.header = null;
     this.globalScope = {
-        'codeAugmentor_indent': '    '
+        'code_indent': '    '
     };
     this.fileScope = {};
     this.fileAugCodes = null;

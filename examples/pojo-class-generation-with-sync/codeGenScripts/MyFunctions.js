@@ -15,7 +15,7 @@ exports.theClassProps = function(augCode, context) {
 
 exports.generateClassProps = function(augCode, context) {
     let out = ''
-    const defaultIndent = context.getScopeVar('codeAugmentor_indent');
+    const defaultIndent = context.getScopeVar('code_indent');
     for (propSpec of context.fileScope.theClassProps) {
         const capitalized = OtherFunctions.capitalize(propSpec.name);
         out += `public ${propSpec.type} get${capitalized}() {`
@@ -40,7 +40,7 @@ exports.generateEqualsAndHashCode = function(augCode, context) {
     }
     
     let out = '';
-    const defaultIndent = context.getScopeVar('codeAugmentor_indent');
+    const defaultIndent = context.getScopeVar('code_indent');
     
     // generate equals() override
     out += `@Override${augCode.lineSeparator}`
@@ -108,7 +108,7 @@ exports.generateEqualsAndHashCode = function(augCode, context) {
 }
 
 exports.generateToString = function(augCode, context) {
-    const defaultIndent = context.getScopeVar('codeAugmentor_indent');
+    const defaultIndent = context.getScopeVar('code_indent');
     let out = '';
     out += `@Override${augCode.lineSeparator}`
     out += `public String toString() {`
