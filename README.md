@@ -177,7 +177,7 @@ As an alternative to callback-based `execute`, `executeAsync` is provided too, w
    * *augCodeIndex* - index of `augCode` parameter in `fileAugCodes.augmentingCodes` array. Can be equal to -1 if called in a situation (e.g. inside hooks) where there is no augmenting code object in focus.
    * *newGenCode()* - convenience function available to clients for creating a generated code object with empty `contentParts` array property.
    * *newContent(content, exactMatch=false)* - convenience function available to clients for creating a new content part object with properties set with arguments supplied to the function.
-   * *newSkipGenCode(augCodeId)* - convenience method to modify current fileGenCodes object to ensure an augmenting code section with a given id is skipped at completion stage. Returns an empty array.
+   * *newSkipGenCode(augCodeId)* - convenience method to modify current `fileGenCodes` object to ensure an augmenting code section with a given id is skipped at completion stage. Returns an empty array.
    * *getScopeVar(name)* - gets a variable from fileScope array with given name, or from globalScope array if not found in fileScope.
    * *addError(message, e)* - used for adding to pending list of errors during aug code processing. First parameter is an error message which will be augmented with the current state of the context object. The second parameter is an optional error object which will become the cause property of the error to be created and added to the list of pending errors.
 
