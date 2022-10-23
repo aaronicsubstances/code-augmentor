@@ -1,21 +1,22 @@
 // Class constructor.
-function ProcessCodeContext(errorAccumulator) {
+function ProcessCodeContext() {
     this.header = null;
     this.globalScope = {
         'code_indent': '    '
     };
     this.fileScope = {};
     this.fileAugCodes = null;
+    this.fileGenCodes = null;
     this.augCodeIndex = 0;
     this.srcFile = null;
-    this.errorAccumulator = errorAccumulator;
+    this.errorAccumulator = null;
 }
 
 ProcessCodeContext.prototype.addError = function(message, cause) {
     this.errorAccumulator(message, cause);
 };
 
-ProcessCodeContext.prototype.newGenCode = function(errorAccumulator) {
+ProcessCodeContext.prototype.newGenCode = function() {
     return {
         id: 0,
         contentParts: []
@@ -28,10 +29,13 @@ ProcessCodeContext.prototype.newContent = function(content, exactMatch=false) {
     };
 };
 
-ProcessCodeContext.prototype.newSkipGenCode = function() {
-    return {
-        skipped: true
-    };
+ProcessCodeContext.prototype.newSkipGenCode = function(augCodeId) {
+    if (this.fileGenCodes.augCodeIdsToSkip === null ||
+        this.fileGenCodes.augCodeIdsToSkip === undefined) {
+        this.fileGenCodes.augCodeIdsToSkip = [];
+    }
+    this.fileGenCodes.augCodeIdsToSkip.push(augCodeId);
+    return [];
 }
 
 ProcessCodeContext.prototype.getScopeVar = function(name) {

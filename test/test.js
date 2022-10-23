@@ -7,7 +7,7 @@ const tempDirectory = require('temp-dir');
 
 const code_augmentor_support = require('../src/index');
 
-// pre-import for use by scripts.
+// pre-import for use by scripts in testing of scope accesses...
 const CodeAugmentorFunctions = require('../src/CodeAugmentorFunctions');
 
 let buildDir = path.join(tempDirectory, "code-augmentor-support-nodejs");
@@ -142,10 +142,8 @@ describe('code_augmentor_support', function() {
             fs.readFile(task.outputFile, 'utf8', function(err, data) {
                 done(err)
                 assert.equal(data.replace(/\r\n|\n|\r/g, "\n"), '{}\n' +
-                    '{"fileId":1,"generatedCodes":[' +
-                    '{"skipped":true,"id":1},' +
-                    '{"skipped":true,"id":2},' +
-                    '{"skipped":true,"id":3}]}\n'
+                    '{"fileId":1,"generatedCodes":[],' +
+                    '"augCodeIdsToSkip":[1,2,3]}\n'
                 );
             });
         });
@@ -229,7 +227,7 @@ describe('code_augmentor_support', function() {
                         printErrors(task);
                     }
                     catch (e) {
-                        assert.deepEqual(hookLogs, ["beforeAllFiles", "afterAllFiles"]);
+                        assert.deepEqual(hookLogs, ["beforeAllFiles"]);
                         throw e;
                     }
                 },
@@ -282,7 +280,7 @@ describe('code_augmentor_support', function() {
         await task.executeAsync(evaler);
         printErrors(task);
         assert.equal(task.allErrors.length, 2);
-        assert.deepEqual(hookLogs, ["beforeFile", "afterFile", "afterAllFiles"]);
+        assert.deepEqual(hookLogs, ["beforeFile", "afterAllFiles"]);
         console.log(`Expected ${task.allErrors.length} error(s)`);
     });
 });
@@ -320,13 +318,6 @@ function evalerProducingUnsetIds(functionName, augCode, context) {
     return [ genCode ];
 }
 
-function evalerProducingDuplicateIds(functionName, augCode, context) {
-    let genCode = context.newGenCode();
-    genCode.id = 1;
-    genCode.contentParts.push(context.newContent(`Received: ${functionName}`));
-    return [ genCode ];
-}
-
 function productionEvaler(functionName, augCode, context) {
     return eval(functionName + '(augCode, context)');
 }
@@ -340,7 +331,7 @@ function contextScopeMethodAccessEvaler(f, a, c) {
     assert.equal(c.getScopeVar("allServiceTypes"), "ICT,Agric");
     assert.equal(c.globalScope["address"], "OldTown");
     assert.equal(c.getScopeVar("code_indent"), "    ");
-    return c.newSkipGenCode();
+    return c.newSkipGenCode(a.id);
 }
 
 function shouldNotHaveRunEvaler(f, a, c) {

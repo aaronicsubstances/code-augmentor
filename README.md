@@ -123,13 +123,13 @@ exports.stringify = function(augCode, context) {
 ### test-augCodes.json (sample input file)
 
 ```json
-{ "genCodeStartDirective": "//:GS:", "genCodeEndDirective": "//:GE:", "embeddedStringDirective": "//:STR:", "embeddedJsonDirective": "//:JSON:", "skipCodeStartDirective": "//:SS:", "skipCodeEndDirective": "//:SE:", "augCodeDirective": "//:AUG_CODE:", "inlineGenCodeDirective": "//:GG:", "nestedLevelStartMarker": "[", "nestedLevelEndMarker": "]" }
-{"fileId":1,"dir":"src","relativePath":"A1.py","augmentingCodes":[{"id":1,"directiveMarker":"//:AUG_CODE:","indent":"","lineNumber":1,"lineSeparator":"\n","nestedLevelNumber":0,"hasNestedLevelStartMarker":false,"hasNestedLevelEndMarker":false,"blocks":[{"stringify":false,"jsonify":false,"content":" Snippets.generateSerialVersionUID "}]}]}
-{"fileId":2,"dir":"src","relativePath":"B2.py","augmentingCodes":[{"id":1,"directiveMarker":"//:AUG_CODE:","indent":"","lineNumber":1,"lineSeparator":"\n","nestedLevelNumber":0,"hasNestedLevelStartMarker":false,"hasNestedLevelEndMarker":false,"blocks":[{"stringify":false,"jsonify":false,"content":" Worker.stringify "},{"stringify":true,"jsonify":false,"content":" SELECT * FROM contacts "},{"stringify":true,"jsonify":false,"content":" WHERE contacts.id = ? "}]},{"id":2,"directiveMarker":"//:AUG_CODE:","indent":"","lineNumber":19,"lineSeparator":"\n","nestedLevelNumber":0,"hasNestedLevelStartMarker":false,"hasNestedLevelEndMarker":false,"blocks":[{"stringify":false,"jsonify":false,"content":" Snippets.generateSerialVersionUID "},{"stringify":false,"jsonify":true,"content":"{ \"name\": \"expired\", \"type\": \"boolean\" } "}]}]}
+{ "genCodeStartMarker": "//:GS:", "genCodeEndMarker": "//:GE:", "embeddedStringMarker": "//:STR:", "embeddedJsonMarker": "//:JSON:", "skipCodeStartMarker": "//:SS:", "skipCodeEndMarker": "//:SE:", "augCodeMarker": "//:AUG:", "inlineGenCodeMarker": "//:GG:", "nestedLevelStartMarker": "//:AUG_S:", "nestedLevelEndMarker": "//:AUG_E:" }
+{"fileId":1,"dir":"src","relativePath":"A1.py","augmentingCodes":[{"id":1,"augCodeTokenType":6,"indent":"","lineNumber":1,"lineSeparator":"\n","blocks":[{"stringify":false,"jsonify":false,"content":" Snippets.generateSerialVersionUID "}]}]}
+{"fileId":2,"dir":"src","relativePath":"B2.py","augmentingCodes":[{"id":1,"augCodeTokenType":6,"indent":"","lineNumber":1,"lineSeparator":"\n","blocks":[{"stringify":false,"jsonify":false,"content":" Worker.stringify "},{"stringify":true,"jsonify":false,"content":" SELECT * FROM contacts "},{"stringify":true,"jsonify":false,"content":" WHERE contacts.id = ? "}]},{"id":2,"augCodeTokenType":6,"indent":"","lineNumber":19,"lineSeparator":"\n","blocks":[{"stringify":false,"jsonify":false,"content":" Snippets.generateSerialVersionUID "},{"stringify":false,"jsonify":true,"content":"{ \"name\": \"expired\", \"type\": \"boolean\" } "}]}]}
 
 ```
 
-### expected.json (expected output file)
+### actual.json (sample output file)
 
 ```json
 {}
@@ -172,11 +172,12 @@ As an alternative to callback-based `execute`, `executeAsync` is provided too, w
    * *header* - JSON object resulting from parsing first line of input file.
    * *globalScope* - an object/map/dictionary provided for use by clients which remains throughout parsing of entire input file.
    * *fileScope* - an object/map/dictionary provided for use by clients which is reset at the start of processing every line of input file.
-   * *fileAugCodes* - JSON object resulting of parsing current line of input file other than first line.
-   * *augCodeIndex* - index of `augCode` parameter in `fileAugCodes.augmentingCodes` array
+   * *fileAugCodes* - object with propery of an array of augmenting code objects for the file currently being processed.
+   * *fileGenCodes* - object with property of an array of generated code objects for the file currently being processed.
+   * *augCodeIndex* - index of `augCode` parameter in `fileAugCodes.augmentingCodes` array. Can be equal to -1 if called in a situation (e.g. inside hooks) where there is no augmenting code object in focus.
    * *newGenCode()* - convenience function available to clients for creating a generated code object with empty `contentParts` array property.
    * *newContent(content, exactMatch=false)* - convenience function available to clients for creating a new content part object with properties set with arguments supplied to the function.
-   * *newSkipGenCode()* - convenience method to create a generated code object indicating skipping of aug code section. Will have null content parts.
+   * *newSkipGenCode(augCodeId)* - convenience method to modify current fileGenCodes object to ensure an augmenting code section with a given id is skipped at completion stage. Returns an empty array.
    * *getScopeVar(name)* - gets a variable from fileScope array with given name, or from globalScope array if not found in fileScope.
    * *addError(message, e)* - used for adding to pending list of errors during aug code processing. First parameter is an error message which will be augmented with the current state of the context object. The second parameter is an optional error object which will become the cause property of the error to be created and added to the list of pending errors.
 
