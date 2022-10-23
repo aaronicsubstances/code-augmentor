@@ -249,7 +249,6 @@ async function processFileOfAugCodes(context, evalFunction,
                 continue;
             }
 
-            context.augCodeIndex = i;
             const functionName = retrieveFunctionName(augCode);
             prepareContextForHookCall(context, false, srcFile, fileAugCodes,
                 fileGenCodes, i);
