@@ -24,11 +24,10 @@ node main.js test-augCodes.json actual.json
 
 ```js
 const code_aug_support = require('code-augmentor-support');
-const CodeAugmentorFunctions = code_aug_support.CodeAugmentorFunctions;
 const Snippets = require('./Snippets.js');
 const Worker = require('./Worker.js');
 
-const FUNCTION_NAME_REGEX = /^(((.*CodeAugmentorFunctions)|Snippets|Worker)\.)[a-zA-Z]\w*$/;
+const FUNCTION_NAME_REGEX = /^((Snippets|Worker)\.)[a-zA-Z]\w*$/;
 function callUserFunction(functionName, augCode, context) {
     // validate name.
     if (!FUNCTION_NAME_REGEX.test(functionName)) {
@@ -61,11 +60,10 @@ task.execute(callUserFunction, err => {
 Alternatively, one can use JS-promises.
 ```js
 const code_aug_support = require('code-augmentor-support');
-const CodeAugmentorFunctions = code_aug_support.CodeAugmentorFunctions;
 const Snippets = require('./Snippets.js');
 const Worker = require('./Worker.js');
 
-const FUNCTION_NAME_REGEX = /^(((.*CodeAugmentorFunctions)|Snippets|Worker)\.)[a-zA-Z]\w*$/;
+const FUNCTION_NAME_REGEX = /^((Snippets|Worker)\.)[a-zA-Z]\w*$/;
 function callUserFunction(functionName, augCode, context) {
     // validate name.
     if (!FUNCTION_NAME_REGEX.test(functionName)) {
@@ -149,7 +147,7 @@ Instances of `ProcessCodeTask` have the following properties and methods:
    * `verbose` - boolean property which can be used with default verbose logging mechansim to enable printing of verbose mesages to standard output.
    * `beforeAllFilesHook` - optional function that will be called once, before any file of aug codes is read for processing. Called with two arguments: a context object (described below) and a standard NodeJS completion callback function.
    * `afterAllFilesHook` - optional function that will be called once, after all files of aug codes are read and processed. Called with two arguments: a context object and a standard NodeJS completion callback function.
-   * `beforeFileHook` - optional function that will be called every time just after a file of aug codes (even if empty) has been read, before the aug codes are processed. Called with two arguments: a context object and a standard NodeJS completion callback function which takes a 2nd argument. That second argument can be an object of generated codes which if not null, will be written to the output file instead of processing the current file of aug codes.
+   * `beforeFileHook` - optional function that will be called every time just after a file of aug codes (even if empty) has been read, before the aug codes are processed. Called with two arguments: a context object and a standard NodeJS completion callback function.
    * `afterFileHook` - optional function that will be called every time just after all aug codes (even if empty) of a file have been processed. Called with two arguments: a context object and a standard NodeJS completion callback function.
    * `allErrors` - output array which contains any errors encountered during execution.
    * `executeAsync(evalFunction)` - alternative version of "execute" method which returns  a JS promise.
@@ -170,15 +168,16 @@ As an alternative to callback-based `execute`, `executeAsync` is provided too, w
 ### Properties and Methods of `ProcessCodeContext` instances
 
    * *header* - JSON object resulting from parsing first line of input file.
-   * *globalScope* - an object/map/dictionary provided for use by clients which remains throughout parsing of entire input file.
-   * *fileScope* - an object/map/dictionary provided for use by clients which is reset at the start of processing every line of input file.
+   * *globalScope* - a JS Map instance provided for use by clients which remains throughout parsing of entire input file.
+   * *fileScope* - a JS Map instance provided for use by clients which is reset at the start of processing every line of input file.
    * *fileAugCodes* - object with propery of an array of augmenting code objects for the file currently being processed.
    * *fileGenCodes* - object with property of an array of generated code objects for the file currently being processed.
    * *augCodeIndex* - index of `augCode` parameter in `fileAugCodes.augmentingCodes` array. Can be equal to -1 if called in a situation (e.g. inside hooks) where there is no augmenting code object in focus.
    * *newGenCode()* - convenience function available to clients for creating a generated code object with empty `contentParts` array property.
    * *newContent(content, exactMatch=false)* - convenience function available to clients for creating a new content part object with properties set with arguments supplied to the function.
-   * *newSkipGenCode(augCodeId)* - convenience method to modify current `fileGenCodes` object to ensure an augmenting code section with a given id is skipped at completion stage. Returns an empty array.
    * *getScopeVar(name)* - gets a variable from fileScope array with given name, or from globalScope array if not found in fileScope.
+   * *setScopeVar(name, value)* - sets/replaces a variable in `fileScope` map with given name.
+   * *setGlobalScopeVar(name, value)* - sets/replaces a variable in `globalScope` map with given name.
    * *addError(message, e)* - used for adding to pending list of errors during aug code processing. First parameter is an error message which will be augmented with the current state of the context object. The second parameter is an optional error object which will become the cause property of the error to be created and added to the list of pending errors.
 
 ### Reserved 'code' Prefix
@@ -189,10 +188,6 @@ The following variables are provided by default in context globalScope:
 
    * *code_indent* - set with value of four spaces.
 
-The following functions are provided by **CodeAugmentorFunctions** module exported by main module of this package for use to process aug codes:
-
-   * *CodeAugmentorFunctions.setScopeVar* - requires each embedded data in augmenting code section to be a JSON object. For each such object, every property of the object is used to set a variable in context fileScope whose value is the value of the property in the JSON object.
-   * *CodeAugmentorFunctions.setGlobalScopeVar* - same as setScopeVar, but rather sets variables in context globalScope.
 
 ## Further Information
 

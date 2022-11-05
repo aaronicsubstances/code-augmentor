@@ -7,17 +7,7 @@ const tempDirectory = require('temp-dir');
 
 const code_augmentor_support = require('../src/index');
 
-// pre-import for use by scripts in testing of scope accesses...
-const CodeAugmentorFunctions = require('../src/CodeAugmentorFunctions');
-
 let buildDir = path.join(tempDirectory, "code-augmentor-support-nodejs");
-
-/**
- * Main purpose of tests in this project is to test
- * error cases and the formatting of thrown exceptions.
- * More thorough testing of success case scenerios is dealt with outside this
- * project.
- */
 
 describe('code_augmentor_support', function() {
     it('should execute basic usage successfully', function(done) {
@@ -127,7 +117,27 @@ describe('code_augmentor_support', function() {
 });
 
 describe('code_augmentor_support', function() {
-    it('should pass testing of scope accesses and gen code skipping', function(done) {
+    it('should pass testing of scope accesses', function() {
+        // arrange
+        const c = new code_augmentor_support.ProcessCodeContext();
+
+        // act
+        c.setScopeVar("address", "NewTown");
+        c.setScopeVar("serviceType", "ICT");
+        c.setGlobalScopeVar("allServiceTypes", "ICT,Agric");
+        c.setGlobalScopeVar("address", "OldTown");
+
+        // assert
+        assert.equal(c.getScopeVar("code_indent"), "    ");
+        assert.equal(c.getScopeVar("address"), "NewTown");
+        assert.equal(c.getScopeVar("serviceType"), "ICT");
+        assert.equal(c.getScopeVar("allServiceTypes"), "ICT,Agric");
+        assert.equal(c.globalScope.get("address"), "OldTown");
+    });
+});
+
+describe('code_augmentor_support', function() {
+    it('should pass gen code skipping', function(done) {
         const task = new code_augmentor_support.ProcessCodeTask();
         task.inputFile = path.join(__dirname, 'resources', 'aug_codes-02.json');
         task.outputFile = path.join(buildDir, 'actual-genCodes-02.json');
@@ -142,7 +152,7 @@ describe('code_augmentor_support', function() {
             fs.readFile(task.outputFile, 'utf8', function(err, data) {
                 done(err)
                 assert.equal(data.replace(/\r\n|\n|\r/g, "\n"), '{}\n' +
-                    '{"fileId":1,"generatedCodes":[],' +
+                    '{"fileId":1,"generatedCodes":[],"augCodeIdsToRemove":[],' +
                     '"augCodeIdsToSkip":[1,2,3]}\n'
                 );
             });
@@ -156,9 +166,11 @@ describe('code_augmentor_support', function() {
         task.inputFile = path.join(__dirname, 'resources', 'aug_codes-02.json');
         task.outputFile = path.join(buildDir, 'genCodes-js-03.json');
         task.beforeFileHook = function(context, cb) {
-            cb(null, {
-                skipped: true
+            context.fileAugCodes.augmentingCodes.forEach(a => {
+                a.processed = true;
             });
+            context.fileGenCodes.skipped = true;
+            cb();
         };
         
         task.execute(shouldNotHaveRunEvaler, function(err) {
@@ -171,38 +183,9 @@ describe('code_augmentor_support', function() {
             fs.readFile(task.outputFile, 'utf8', function(err, data) {
                 done(err)
                 assert.equal(data.replace(/\r\n|\n|\r/g, "\n"), '{}\n' +
-                    '{"skipped":true,"fileId":1}\n'
+                    '{"fileId":1,"generatedCodes":[],"augCodeIdsToRemove":[],"augCodeIdsToSkip":[],"skipped":true}\n'
                 );
             });
-        });
-    });
-});
-
-describe('code_augmentor_support', function() {
-    it('should pass testing of validation error resulting from before file usage', function(done) {
-        const task = new code_augmentor_support.ProcessCodeTask();
-        task.inputFile = path.join(__dirname, 'resources', 'aug_codes-02.json');
-        task.outputFile = path.join(buildDir, 'genCodes-js-ignore.json');
-        task.beforeFileHook = function(context, cb) {
-            const obj  = {};
-            Object.defineProperty(obj, 'fileId', {
-                get() {
-                    return 0;
-                },
-                set(newValue) {
-                    if (newValue) {
-                        throw new Error("example setter error");
-                    }
-                }
-            });
-            cb(null, obj);
-        };
-        
-        task.execute(shouldNotHaveRunEvaler, function(err) {
-            done(err);
-            printErrors(task);
-            assert.equal(task.allErrors.length, 1);
-            console.log(`Expected ${task.allErrors.length} error(s)`);
         });
     });
 });
@@ -323,15 +306,8 @@ function productionEvaler(functionName, augCode, context) {
 }
 
 function contextScopeMethodAccessEvaler(f, a, c) {
-    if (f != "\"testUseOfGetScopeVar\"") {
-        return productionEvaler(f, a, c);
-    }
-    assert.equal(c.getScopeVar("address"), "NewTown");
-    assert.equal(c.getScopeVar("serviceType"), "ICT");
-    assert.equal(c.getScopeVar("allServiceTypes"), "ICT,Agric");
-    assert.equal(c.globalScope["address"], "OldTown");
-    assert.equal(c.getScopeVar("code_indent"), "    ");
-    return c.newSkipGenCode(a.id);
+    c.fileGenCodes.augCodeIdsToSkip.push(a.id);
+    return [];
 }
 
 function shouldNotHaveRunEvaler(f, a, c) {
