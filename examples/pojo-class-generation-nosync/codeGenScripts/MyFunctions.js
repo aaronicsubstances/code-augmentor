@@ -12,7 +12,7 @@ exports.theClassProps = function(augCode, context) {
     }
     const g = context.newGenCode()
     g.contentParts.push(context.newContent(out))
-    g.replaceAugCodeDirectives = true
+    context.fileGenCodes.augCodeIdsToRemove.push(augCode.id)
     g.indent = augCode.indent
     return g
 }
@@ -36,7 +36,7 @@ exports.generateClassProps = function(augCode, context) {
     }
     const g = context.newGenCode()
     g.contentParts.push(context.newContent(out))
-    g.replaceAugCodeDirectives = true
+    context.fileGenCodes.augCodeIdsToRemove.push(augCode.id)
     g.indent = augCode.indent
     return g
 }
@@ -114,7 +114,7 @@ exports.generateEqualsAndHashCode = function(augCode, context) {
     out += augCode.lineSeparator
     const g = context.newGenCode()
     g.contentParts.push(context.newContent(out))
-    g.replaceAugCodeDirectives = true
+    context.fileGenCodes.augCodeIdsToRemove.push(augCode.id)
     g.indent = augCode.indent
     return g
 }
@@ -152,7 +152,7 @@ exports.generateToString = function(augCode, context) {
     out += '}'
     out += augCode.lineSeparator
     g.contentParts.push(context.newContent(out))
-    g.replaceAugCodeDirectives = true
+    context.fileGenCodes.augCodeIdsToRemove.push(augCode.id)
     g.indent = augCode.indent
     return g
 }

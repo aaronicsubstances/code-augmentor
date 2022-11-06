@@ -29,12 +29,12 @@
             <srcDir dir="${src.dir}">
                 <include name="*.java" />
             </srcDir>
-            <!--disable directives not needed aside augmenting code ones-->
-            <genCodeStartDirective value="" />
-            <genCodeEndDirective value="" />
-            <skipCodeStartDirective value="" />
-            <skipCodeEndDirective value="" />
-            <inlineGenCodeDirective value="" />
+            <!--disable markers not needed aside augmenting code ones-->
+            <genCodeStartMarker value="" />
+            <genCodeEndMarker value="" />
+            <skipCodeStartMarker value="" />
+            <skipCodeEndMarker value="" />
+            <inlineGenCodeMarker value="" />
         </code_aug_prepare>
     
         <exec executable="${script.executable.path}" failonerror="true" vmlauncher="false" dir="${codeGenScripts.dir}">

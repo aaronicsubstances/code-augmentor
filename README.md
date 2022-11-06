@@ -169,13 +169,13 @@ As an alternative to callback-based `execute`, `executeAsync` is provided too, w
 
    * *header* - JSON object resulting from parsing first line of input file.
    * *globalScope* - a JS Map instance provided for use by clients which remains throughout parsing of entire input file.
-   * *fileScope* - a JS Map instance provided for use by clients which is reset at the start of processing every line of input file.
+   * *fileScope* - a JS Map instance provided for use by clients which is recreated at the start of processing every line of input file.
    * *fileAugCodes* - object with propery of an array of augmenting code objects for the file currently being processed.
    * *fileGenCodes* - object with property of an array of generated code objects for the file currently being processed.
    * *augCodeIndex* - index of `augCode` parameter in `fileAugCodes.augmentingCodes` array. Can be equal to -1 if called in a situation (e.g. inside hooks) where there is no augmenting code object in focus.
    * *newGenCode()* - convenience function available to clients for creating a generated code object with empty `contentParts` array property.
    * *newContent(content, exactMatch=false)* - convenience function available to clients for creating a new content part object with properties set with arguments supplied to the function.
-   * *getScopeVar(name)* - gets a variable from fileScope array with given name, or from globalScope array if not found in fileScope.
+   * *getScopeVar(name)* - gets a variable from `fileScope` map with given name, or from `globalScope` map if not found in `fileScope`.
    * *setScopeVar(name, value)* - sets/replaces a variable in `fileScope` map with given name.
    * *setGlobalScopeVar(name, value)* - sets/replaces a variable in `globalScope` map with given name.
    * *addError(message, e)* - used for adding to pending list of errors during aug code processing. First parameter is an error message which will be augmented with the current state of the context object. The second parameter is an optional error object which will become the cause property of the error to be created and added to the list of pending errors.
@@ -184,7 +184,7 @@ As an alternative to callback-based `execute`, `executeAsync` is provided too, w
 
 CodeAugmentor supplies utility functions and variables by reserving the **code** prefix. As such scripts should avoid naming aug code processing functions and variables in fileScope/globalScope with that prefix.
 
-The following variables are provided by default in context globalScope:
+The following variables are provided by default in `context.globalScope`:
 
    * *code_indent* - set with value of four spaces.
 

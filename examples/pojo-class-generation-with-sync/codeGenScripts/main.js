@@ -1,9 +1,8 @@
 const code_aug_support = require('code-augmentor-support');
-const CodeAugmentorFunctions = code_aug_support.CodeAugmentorFunctions;
 const MyFunctions = require('./MyFunctions.js');
 const OtherFunctions = require('./OtherFunctions.js');
 
-const FUNCTION_NAME_REGEX = /^(((.*CodeAugmentorFunctions)|MyFunctions|OtherFunctions)\.)[a-zA-Z]\w*$/;
+const FUNCTION_NAME_REGEX = /^((MyFunctions|OtherFunctions)\.)[a-zA-Z]\w*$/;
 function callUserFunction(functionName, augCode, context) {
     // validate name.
     if (!FUNCTION_NAME_REGEX.test(functionName)) {

@@ -1,6 +1,6 @@
 {
   "name": "code-augmentor-support",
-  "version": "3.0.0",
+  "version": "2.3.0",
   "description": "Enables the use of NodeJS to write code generation scripts for Code Augmentor",
   "main": "src/index.js",
   "scripts": {
