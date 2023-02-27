@@ -1,28 +1,42 @@
 {
   "name": "code-augmentor-support",
-  "version": "2.3.0",
-  "description": "Enables the use of NodeJS to write code generation scripts for Code Augmentor",
-  "main": "src/index.js",
+  "version": "3.0.0",
+  "description": "Provides markup language for typical source code language files, and demonstrates its potential to implement code generation with change detection",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "test": "mocha"
+    "generate-types": "tsc --declaration --emitDeclarationOnly",
+    "compile": "tsc --noEmit && babel src --out-dir dist --extensions .ts",
+    "test": "mocha",
+    "build": "npm run generate-types && npm test && npm run compile"
   },
+  "repository": "github:aaronicsubstances/code-augmentor-nodejs",
   "keywords": [
-    "code-generation",
-    "data-driven",
-    "macro-processor"
+    "code",
+    "markup",
+    "generation",
+    "change detection"
   ],
   "author": "Aaron Baffour-Awuah <aaronbaffourawuah@gmail.com> (https://github.com/aaronicsubstances)",
-  "license": "MIT",
-  "devDependencies": {
-    "mocha": "^10.0.0",
-    "rimraf": "^3.0.2",
-    "temp-dir": "^2.0.0"
-  },
-  "homepage": "https://github.com/aaronicsubstances/code-augmentor#readme",
-  "repository": "github:aaronicsubstances/code-augmentor-nodejs",
+  "license": "MPL-2.0",
   "bugs": "https://github.com/aaronicsubstances/code-augmentor-nodejs/issues",
-  "files": [
-    "src",
-    "test"
-  ]
+  "homepage": "https://github.com/aaronicsubstances/code-augmentor#readme",
+  "devDependencies": {
+    "@babel/cli": "^7.21.0",
+    "@babel/core": "^7.21.0",
+    "@babel/preset-env": "^7.20.2",
+    "@babel/preset-typescript": "^7.21.0",
+    "@babel/register": "^7.21.0",
+    "@types/chai": "^4.3.4",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "^18.14.2",
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0",
+    "rimraf": "^4.1.2",
+    "temp-dir": "^3.0.0",
+    "typescript": "^4.9.5"
+  }
 }

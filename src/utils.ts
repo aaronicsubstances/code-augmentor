@@ -1,7 +1,7 @@
 const BLANK_START_PATTERN = new RegExp("^\\s*");
 
-function splitIntoLines(text, separateTerminators) {
-    const splitText = [];
+export function splitIntoLines(text: string, separateTerminators: boolean) {
+    const splitText = new Array<string>();
     let lastEndIdx = 0;
     const temp = [0, 0];
     while (true) {
@@ -33,7 +33,7 @@ function splitIntoLines(text, separateTerminators) {
     return splitText;
 }
 
-function locateNewline(content, start, receipt) {
+function locateNewline(content: string, start: number, receipt: number[]) {
     let winLn = false;
     let idx = content.indexOf("\r\n", start);
     if (idx != -1) {
@@ -61,16 +61,79 @@ function locateNewline(content, start, receipt) {
     receipt[1] = winLn ? 2 : 1;
 }
 
-function isBlank(s) {
+export function isBlank(s: string) {
     if (!s) {
         return true;
     }
     return determineIndent(s).length == s.length;
 }
 
-function determineIndent(value) {
+export function determineIndent(value: string): string {
     const m = BLANK_START_PATTERN.exec(value);
-    return m[0];
+    return m![0];
+}
+
+/**
+ * Generates a name with a given prefix which is guaranteed to be absent in a given list. If 
+ * prefix is not in the list in the first place, then prefix is simply returned.
+ * @param names given list.
+ * @param originalName given prefix.
+ * @returns a name which has originalName as a prefix and is not in names list.
+ */
+export function modifyNameToBeAbsent(names: string[], originalName: string) {
+    if (!names.includes(originalName)) {
+        return originalName;
+    }
+    let index = 1;
+    let modifiedName = originalName + "-" + index;
+    while (names.includes(modifiedName)) {
+        if (index < 9) {
+            index++;
+            modifiedName = originalName + "-" + index;
+        }
+        else {
+            // out of desperation try appending random integers containing 8 digits.
+            modifiedName = originalName + "-" + getRndInteger(10000000, 100000000);
+        }
+    }
+    return modifiedName;
+}
+
+/**
+     * Generates a name with a given prefix which is guaranteed to be absent in a given list of strings. If 
+     * prefix is not in any of the strings in the first place, then prefix is simply returned.
+     * @param target given list.
+     * @param originalText given prefix.
+     * @returns a name which has originalText as a prefix and is not a substring of any string in target strings.
+     */
+export function modifyTextToBeAbsent(target: string[], originalText: string) {
+    if (!target.some(x => x.indexOf(originalText) != -1)) {
+        return originalText;
+    }
+    let index = 1;
+    let modifiedName = originalText + "-" + index;
+    while (target.some(x => x.indexOf(modifiedName) != -1)) {
+        if (index < 9) {
+            index++;
+            modifiedName = originalText + "-" + index;
+        }
+        else {
+            // out of desperation try appending random integers containing 8 digits.
+            modifiedName = originalText + "-" + getRndInteger(10000000, 100000000);
+        }
+    }
+    return modifiedName;
+}
+
+/**
+ * This JavaScript function always returns a random number between min (included) and max (excluded).
+ * (copied from https://www.w3schools.com/js/js_random.asp).
+ * @param min 
+ * @param max 
+ * @returns 
+ */
+function getRndInteger(min: number, max: number) {
+    return Math.floor(Math.random() * (max - min) ) + min;
 }
 
 /**
@@ -80,7 +143,7 @@ function determineIndent(value) {
  * @param y lines in revised file. Each line should include its terminator.
  * @returns Unix normal diff
  */
-function printNormalDiff(x, y) {
+export function printNormalDiff(x: string[], y: string[]) {
     /*
      * The following resources were used for implementation:
      * <ul>
@@ -90,7 +153,7 @@ function printNormalDiff(x, y) {
      *   <li>https://www.gnu.org/software/diffutils/manual/html_node/Detailed-Normal.html
      * </ul>
      */
-    const diffCollector = [];
+    const diffCollector = new Array<any>();
 
     // number of lines of each file
     const m = x.length;
@@ -98,9 +161,9 @@ function printNormalDiff(x, y) {
 
     // opt[i][j] = length of LCS of x[i..m] and y[j..n]
     //int[][] opt = new int[m+1][n+1];
-    const opt = [];
+    const opt: number[][] = [];
     for (let i = 0; i < m + 1; i++) {
-        const optChild = [];
+        const optChild: number[] = [];
         opt.push(optChild);
         for (let j = 0; j < n + 1; j++) {
             optChild.push(0);
@@ -156,8 +219,8 @@ function printNormalDiff(x, y) {
     return diffCollector.join("");
 }
 
-function printDiffLines(diffCollector, xLines, yLines,
-        xLineRange, yLineRange) {
+function printDiffLines(diffCollector: any[], xLines: string[], yLines: string[],
+        xLineRange: number[], yLineRange: number[]) {
     if (!xLines.length && !yLines.length) {
         return;
     }
@@ -201,7 +264,7 @@ function printDiffLines(diffCollector, xLines, yLines,
     }
 }
 
-function stringifyRange(range, diffCollector) {
+function stringifyRange(range: number[], diffCollector: any[]) {
     if (range[0] === range[1]) {
         diffCollector.push(range[0] + 1);
     }
@@ -212,10 +275,10 @@ function stringifyRange(range, diffCollector) {
     }
 }
 
-function formatLine(line, diffCollector) {
+function formatLine(line: string, diffCollector: any[]) {
     const newlineSuffixLen = findNewlineSuffixLen(line);
     if (newlineSuffixLen > 0) {
-        diffCollector.push(line.substring(0, line.length() - newlineSuffixLen));
+        diffCollector.push(line.substring(0, line.length - newlineSuffixLen));
         diffCollector.push("\n");
     }
     else {
@@ -226,7 +289,7 @@ function formatLine(line, diffCollector) {
     }
 }
 
-function findNewlineSuffixLen(line) {
+function findNewlineSuffixLen(line: string): number {
     if (line.endsWith("\r\n")) {
         return 2;
     }
@@ -235,10 +298,3 @@ function findNewlineSuffixLen(line) {
     }
     return 0;
 }
-
-module.exports = {
-    splitIntoLines,
-    isBlank,
-    determineIndent,
-    printNormalDiff
-};
