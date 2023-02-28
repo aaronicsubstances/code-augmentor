@@ -12,11 +12,6 @@ export default class AstBuilder {
     escapedBlockEndMarkers: string[] | null = null;
     nestedBlockStartMarkers :string[] | null = null;
     nestedBlockEndMarkers: string[] | null = null;
-    _decoratedLinePattern: RegExp | null = null;
-    _escapedBlockStartPattern: RegExp | null = null;
-    _escapedBlockEndPattern: RegExp | null = null;
-    _nestedBlockStartPattern: RegExp | null = null;
-    _nestedBlockEndPattern: RegExp | null = null;
     _nodes = new Array<any>();
     _peekIdx = -1;
     _srcPath: string | null = null;
@@ -31,29 +26,42 @@ export default class AstBuilder {
         return marker && !utils.determineIndent(marker);
     }
 
-    static selectSuitableMarkers(markers: string[] | null) {
+    static _findMarkerMatch(markers: string[] | null, n: any) {
         if (!markers) {
-            return [];
+            return null;
         }
-        return markers.filter(AstBuilder.isMarkerSuitable);
+        let latestFind = '';
+        for (const marker of markers) {
+            if (!marker) {
+                continue;
+            }
+            // don't bother checking if indent+marker exceeds text bounds.
+            if (n.indent.length + marker.length > n.text.length) {
+                continue;
+            }
+            let matchFound = true;
+            for (let i = 0; i < marker.length; i++) {
+                const a = marker[i];
+                const b = n.text[n.indent.length + i];
+                if (a !== b) {
+                    matchFound = false;
+                    break;
+                }
+            }
+            if (matchFound) {
+                // pick the longest match, and if multiple candidates are found.
+                // pick the earliest of them.
+                if (marker.length > latestFind.length) {
+                    latestFind = marker;
+                }
+            }
+        }
+        if (!latestFind) {
+            return null;
+        }
+        return new Array<string>(latestFind, n.text.substring(n.indent.length + latestFind.length));
     }
-
-    reset() {
-        this.decoratedLineMarkers = AstBuilder.selectSuitableMarkers(this.decoratedLineMarkers);
-        this._decoratedLinePattern = constructMarkerRegex(this.decoratedLineMarkers);
     
-        this.escapedBlockStartMarkers = AstBuilder.selectSuitableMarkers(this.escapedBlockStartMarkers);
-        this._escapedBlockStartPattern = constructMarkerRegex(this.escapedBlockStartMarkers);
-    
-        this.escapedBlockEndMarkers = AstBuilder.selectSuitableMarkers(this.escapedBlockEndMarkers);
-        this._escapedBlockEndPattern = constructMarkerRegex(this.escapedBlockEndMarkers);
-    
-        this.nestedBlockStartMarkers = AstBuilder.selectSuitableMarkers(this.nestedBlockStartMarkers);
-        this._nestedBlockStartPattern = constructMarkerRegex(this.nestedBlockStartMarkers);
-    
-        this.nestedBlockEndMarkers = AstBuilder.selectSuitableMarkers(this.nestedBlockEndMarkers);
-        this._nestedBlockEndPattern = constructMarkerRegex(this.nestedBlockEndMarkers);
-    }
 
     parse(source: string, srcPath: string) {
         // reset.
@@ -119,8 +127,7 @@ export default class AstBuilder {
         if (!n) {
             return null;
         }
-        if (findRegexMatch(this._nestedBlockEndPattern, n.text.substring(
-                n.indent.length))) {
+        if (AstBuilder._findMarkerMatch(this.nestedBlockEndMarkers, n)) {
             throw this._abort(this._peekIdx + 1, "encountered complex end tag without " +
                 "matching start tag");
         }
@@ -139,8 +146,7 @@ export default class AstBuilder {
 
     _matchNestedBlock() {
         let n = this._peek();
-        let valueMinusIndent = n.text.substring(n.indent.length);
-        let m = findRegexMatch(this._nestedBlockStartPattern, valueMinusIndent);
+        let m = AstBuilder._findMarkerMatch(this.nestedBlockStartMarkers, n);
         if (!m) {
             return null;
         }
@@ -148,18 +154,17 @@ export default class AstBuilder {
         const parentNodeLineNum = this._peekIdx;
         const parent = n as NestedBlockAstNode;
         parent.type = AstBuilder.TYPE_NESTED_BLOCK;
-        parent.marker = m[1];
-        parent.markerAftermath = valueMinusIndent.substring(m[0].length);
+        parent.marker = m[0];
+        parent.markerAftermath = m[1];
         parent.children = [];
         while (n = this._peek()) {
-            valueMinusIndent = n.text.substring(n.indent.length);
-            m = findRegexMatch(this._nestedBlockEndPattern, valueMinusIndent);
+            m = AstBuilder._findMarkerMatch(this.nestedBlockEndMarkers, n);
             if (m) {
                 this._consumeAsDecoratedLine();
                 parent.endIndent = n.indent;
                 parent.endLineSep = n.lineSep;
-                parent.endMarker = m[1];
-                parent.endMarkerAftermath = valueMinusIndent.substring(m[0].length);
+                parent.endMarker = m[0];
+                parent.endMarkerAftermath = m[1];
                 break;
             }
             else {
@@ -174,8 +179,7 @@ export default class AstBuilder {
 
     _matchEscapedBlock() {
         let n = this._peek();
-        let valueMinusIndent = n.text.substring(n.indent.length);
-        let m = findRegexMatch(this._escapedBlockStartPattern, valueMinusIndent);
+        let m = AstBuilder._findMarkerMatch(this.escapedBlockStartMarkers, n);
         if (!m) {
             return null;
         }
@@ -183,17 +187,16 @@ export default class AstBuilder {
         const parentNodeLineNum = this._peekIdx;
         const parent = n as EscapedBlockAstNode;
         parent.type = AstBuilder.TYPE_ESCAPED_BLOCK;
-        parent.marker = m[1];
-        parent.markerAftermath = valueMinusIndent.substring(m[0].length);
+        parent.marker = m[0];
+        parent.markerAftermath = m[0];
         parent.children = [];
         while (n = this._peek()) {
-            valueMinusIndent = n.text.substring(n.indent.length);
-            m = findRegexMatch(this._escapedBlockEndPattern, valueMinusIndent);
-            if (m && valueMinusIndent.substring(m[0].length) === parent.markerAftermath) {
+            m = AstBuilder._findMarkerMatch(this.escapedBlockEndMarkers, n);
+            if (m && m[1] === parent.markerAftermath) {
                 this._consumeAsDecoratedLine();
                 parent.endIndent = n.indent;
                 parent.endLineSep = n.lineSep;
-                parent.endMarker = m[1];
+                parent.endMarker = m[0];
                 break;
             }
             else {
@@ -209,36 +212,15 @@ export default class AstBuilder {
 
     _matchDecoratedLine() {
         const n = this._peek();
-        const valueMinusIndent = n.text.substring(n.indent.length);
-        const m = findRegexMatch(this._decoratedLinePattern, valueMinusIndent);
+        const m = AstBuilder._findMarkerMatch(this.decoratedLineMarkers, n);
         if (!m) {
             return null;
         }
         this._consumeAsDecoratedLine();
         const typedNode = n as DecoratedLineAstNode;
         typedNode.type = AstBuilder.TYPE_DECORATED_LINE;
-        typedNode.marker = m[1];
-        typedNode.markerAftermath = valueMinusIndent.substring(m[0].length);
+        typedNode.marker = m[0];
+        typedNode.markerAftermath = m[1];
         return typedNode;
     }
-}
-
-function constructMarkerRegex(markers: string[] | null) {
-    if (!markers || !markers.length) {
-        return null;
-    }
-    // escape markers.
-    markers = markers.map(m => m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-    // let longer strings appear first to ensure if a marker is a prefix
-    // of another, the latter and longer one is chosen.
-    markers.sort((x, y) => y.length - x.length);
-    const lexerRegexBuilder = markers.join("|");
-    return new RegExp("^(" + lexerRegexBuilder + ")");
-}
-
-function findRegexMatch(p: RegExp | null, s: string) {
-    if (p) {
-        return p.exec(s);
-    }
-    return null;
 }

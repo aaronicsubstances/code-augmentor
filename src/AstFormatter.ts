@@ -9,7 +9,7 @@ import {
 
 function stringify(n: any) {
     const out = new Array<string>();
-    if (n.type == AstBuilder.TYPE_SOURCE_CODE) {
+    if (n.type === AstBuilder.TYPE_SOURCE_CODE) {
         const typedNode = n as SourceCodeAst;
         if (typedNode.children) {
             typedNode.children.forEach(x => formatAny(x, out));
@@ -25,9 +25,6 @@ function stringify(n: any) {
 }
 
 function formatAny(n: any, out: string[]) {
-    if (!n) {
-        return;
-    }
     switch (n.type) {
         case AstBuilder.TYPE_UNDECORATED_LINE:
             printUndecoratedLine(n as UndecoratedLineAstNode, out);
