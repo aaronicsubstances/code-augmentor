@@ -1,6 +1,9 @@
 import os from "os";
+import path from "path";
+import { SourceFileLocation } from "./types";
 
 const BLANK_START_PATTERN = new RegExp("^\\s*");
+const INVALID_FILE_NAME_CHAR_REGEX = new RegExp(/[^a-zA-Z0-9_-]/g);
 
 export function splitIntoLines(text: string, separateTerminators: boolean) {
     const splitText = new Array<string>();
@@ -136,6 +139,72 @@ export function modifyTextToBeAbsent(target: string[], originalText: string) {
  */
 function getRndInteger(min: number, max: number) {
     return Math.floor(Math.random() * (max - min) ) + min;
+}
+
+export function generateValidFileName(p: string) {
+    let trimmed = "";
+    if (p) {
+        // use last path segment
+        const name = path.basename(p);
+        trimmed = name.replace(INVALID_FILE_NAME_CHAR_REGEX, "");
+    }
+    if (!trimmed) {
+        return "c";
+    }
+    return trimmed;
+}
+
+export function normalizeSrcFileLoc(baseDir: string | null, relativePath: string) {
+    if (!relativePath) {
+        throw new Error("no relative (or absolute) path provided");
+    }
+    let fullPath;
+    if (baseDir) {
+        baseDir = path.resolve(baseDir);
+        fullPath = path.resolve(baseDir, relativePath);
+    }
+    else {
+        fullPath = path.resolve(relativePath);
+    }
+    return _splitFilePath(fullPath, baseDir);
+}
+
+/**
+ * NB: exported for testing only.
+ * @param fullPath 
+ * @param baseDir 
+ * @returns 
+ */
+export function _splitFilePath(fullPath: string, baseDir: string | null) {
+    // ensure prescence of file separator.
+    let lastSlashIdx = fullPath.lastIndexOf("/");
+    if (lastSlashIdx === -1) {
+        lastSlashIdx = fullPath.lastIndexOf("\\");
+    }
+    if (lastSlashIdx === -1) {
+        throw new Error("missing slash in regular file path argument: " +
+            fullPath);
+    }
+    if (baseDir && fullPath.length > baseDir.length &&
+            fullPath.startsWith(baseDir)) {
+        // remove leading slash from relative path.
+        const relativePath = fullPath.substring(baseDir.length + 1);
+        const ret: SourceFileLocation = {
+            baseDir, relativePath
+        };
+        return ret;
+    }
+    else {
+        // construct new base dir but keep trailing slash in it,
+        // in order to cater for MS Windows case where root folders
+        // have trailing slashes (e.g. C:\, D:\).
+        baseDir  = fullPath.substring(0, lastSlashIdx + 1);
+        const relativePath = fullPath.substring(lastSlashIdx + 1);
+        const ret: SourceFileLocation = {
+            baseDir, relativePath
+        };
+        return ret;
+    }
 }
 
 /**

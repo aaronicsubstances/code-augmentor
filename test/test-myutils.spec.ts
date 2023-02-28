@@ -1,4 +1,5 @@
 import os from "os";
+import path from "path";
 
 import { assert } from "chai";
 
@@ -122,6 +123,104 @@ describe('myutils', function() {
                 "n-6n-7n-8n-9"];
             const actual = myutils.modifyTextToBeAbsent(target, "n");
             assert.equal(actual.length, 10);
+        });
+    });
+
+    describe('#generateValidFileName', function() {
+        let data = [
+            { p: "dk", expected: "dk" },
+            { p: "-._", expected: "-_" },
+            // omitted these since their results vary according to OS platform
+            //{ p: "c:\\", expected: "c" },
+            //{ p: "d:\\", expected: "d" },
+            { p: "..", expected: "c" },
+            { p: ":\\", expected: "c" },
+            { p: ".", expected: "c" },
+            { p: "", expected: "c" },
+            { p: "f/ck", expected: "ck" },
+            { p: "f/ck/", expected: "ck" },
+            { p: "var\\f\\k.txt", expected: "ktxt" }
+        ];
+        data.forEach(({ p, expected }, i) => {
+            it(`should pass with input ${i}`, function() {
+                const actual = myutils.generateValidFileName(p);
+                assert.deepEqual(actual, expected);
+            });
+        });
+    });
+
+    describe('#_splitFilePath', function() {
+        let data = [
+            { fullPath: "/dk/d", baseDir:"/dk",
+                expected: { baseDir:"/dk", relativePath: "d"} },
+            { fullPath: "d:\\k\\d", baseDir:"d:\\k",
+                expected: { baseDir:"d:\\k", relativePath: "d"} },
+            { fullPath: "/dk/ef/fg/d", baseDir:"/dk/ef",
+                expected: { baseDir:"/dk/ef", relativePath: "fg/d"} },
+            { fullPath: "d:\\k\\ef\\fgh\\d", baseDir:"d:\\k\\ef",
+                expected: { baseDir:"d:\\k\\ef", relativePath: "fgh\\d"} },
+            { fullPath: "/u/i/o", baseDir:"/u/c/t",
+                expected: { baseDir:"/u/i/", relativePath: "o"} },
+            { fullPath: "c:\\users\\paa", baseDir:"c:\\users\\nii",
+                expected: { baseDir:"c:\\users\\", relativePath: "paa"} },
+            { fullPath: "c:\\users\\paa", baseDir: null,
+                expected: { baseDir:"c:\\users\\", relativePath: "paa"} },
+            { fullPath: "/home/users/akwasi/docs", baseDir: null,
+                expected: { baseDir:"/home/users/akwasi/", relativePath: "docs"} },
+        ];
+        data.forEach(({ fullPath, baseDir, expected }, i) => {
+            it(`should pass with input ${i}`, function() {
+                const actual = myutils._splitFilePath(fullPath, baseDir);
+                assert.deepEqual(actual, expected);
+            });
+        });
+        it('should fail', function() {
+            assert.throws(function() {
+                myutils._splitFilePath("dlll", "tea");
+            });
+        });
+    });
+
+    describe('#normalizeSrcFileLoc', function() {
+        it('should pass with baseDir absent', function() {
+            const baseDir = "";
+            const relativePath = "c";
+            const cwd = process.cwd();
+            const expected = {
+                baseDir: cwd + "/",
+                relativePath: "c"
+            };
+            const slashRegex = new RegExp("/|\\\\", "g");
+            const expectedBaseDir1 = expected.baseDir.replace(slashRegex, "/");
+            const expectedBaseDir2 = expected.baseDir.replace(slashRegex, "\\");
+            const expectedRelativePath1 = expected.relativePath.replace(slashRegex, "/");
+            const expectedRelativePath2 = expected.relativePath.replace(slashRegex, "\\");
+            const actual = myutils.normalizeSrcFileLoc(baseDir, relativePath);
+            assert.deepInclude([
+                { baseDir: expectedBaseDir1, relativePath: expectedRelativePath1 },
+                { baseDir: expectedBaseDir2, relativePath: expectedRelativePath2 }], actual);
+        });
+        it('should pass with baseDir present', function() {
+            const cwd = process.cwd();
+            const cwdParent = path.dirname(cwd);
+            if (!cwdParent) {
+                return;
+            }
+            const baseDir = cwd;
+            const relativePath = "../75ef072a-51e9-4950-b0ad-c183c5146a2c/d/e/f";
+            const expected = {
+                baseDir: cwdParent + "/75ef072a-51e9-4950-b0ad-c183c5146a2c/d/e/",
+                relativePath: "f"
+            };
+            const slashRegex = new RegExp("/|\\\\", "g");
+            const expectedBaseDir1 = expected.baseDir.replace(slashRegex, "/");
+            const expectedBaseDir2 = expected.baseDir.replace(slashRegex, "\\");
+            const expectedRelativePath1 = expected.relativePath.replace(slashRegex, "/");
+            const expectedRelativePath2 = expected.relativePath.replace(slashRegex, "\\");
+            const actual = myutils.normalizeSrcFileLoc(baseDir, relativePath);
+            assert.deepInclude([
+                { baseDir: expectedBaseDir1, relativePath: expectedRelativePath1 },
+                { baseDir: expectedBaseDir2, relativePath: expectedRelativePath2 }], actual);
         });
     });
 
