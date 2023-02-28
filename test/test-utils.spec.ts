@@ -22,9 +22,9 @@ describe('utils', function(){
             { text: "ab\nc\r\n", expected: ["ab", "\n", "c", "\r\n"]}
         ];
         data.forEach(({ text, expected }, i) => {
-            it(`should test splitIntoLines correctly - ${i}`, function() {
+            it(`should test splitIntoLines correctly with input[${i}]`, function() {
                 const actual = myutils.splitIntoLines(text, true);
-                assert.equal(actual, expected);
+                assert.deepEqual(actual, expected);
             });
         });
     })

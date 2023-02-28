@@ -66,7 +66,8 @@ function printEscapedBlock(n: EscapedBlockAstNode, out: string[]) {
     }
     out.push(n.endIndent);
     out.push(n.endMarker);
-    out.push(n.markerAftermath); // note resuse of same marker aftermath.
+    // reuse of same marker aftermath.
+    out.push(n.markerAftermath);
     out.push(n.endLineSep);
 }
 

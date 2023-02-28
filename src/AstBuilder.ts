@@ -30,9 +30,11 @@ export default class AstBuilder {
         if (!markers) {
             return null;
         }
+        // pick the longest match, and if multiple candidates are found.
+        // pick the earliest of them.
         let latestFind = '';
         for (const marker of markers) {
-            if (!marker) {
+            if (!marker || marker.length <= latestFind.length) {
                 continue;
             }
             // don't bother checking if indent+marker exceeds text bounds.
@@ -49,11 +51,7 @@ export default class AstBuilder {
                 }
             }
             if (matchFound) {
-                // pick the longest match, and if multiple candidates are found.
-                // pick the earliest of them.
-                if (marker.length > latestFind.length) {
-                    latestFind = marker;
-                }
+                latestFind = marker;
             }
         }
         if (!latestFind) {
@@ -61,14 +59,13 @@ export default class AstBuilder {
         }
         return new Array<string>(latestFind, n.text.substring(n.indent.length + latestFind.length));
     }
-    
 
     parse(source: string, srcPath: string) {
         // reset.
         this._srcPath = srcPath;
         this._nodes = [];
         this._peekIdx = 0;
-    
+
         const splitSource = utils.splitIntoLines(source, true);
         for (let i = 0; i < splitSource.length; i+=2) {
             const line = splitSource[i];
@@ -100,19 +97,19 @@ export default class AstBuilder {
         }
         return null;
     }
-    
+
     _consumeAsDecoratedLine() {
         const n = this._nodes[this._peekIdx++];
         delete n.text;
         return n;
     }
-    
+
     _consumeAsUndecoratedLine() {
         const n = this._nodes[this._peekIdx++];
         delete n.indent;
         return n;
     }
-    
+
     _abort(lineNum: number, msg: string) {
         let srcPathDesc = "";
         if (this._srcPath) {
@@ -121,15 +118,15 @@ export default class AstBuilder {
         const lineNumDesc = "at llne " + lineNum + " ";
         throw new Error(srcPathDesc + lineNumDesc + msg);
     }
-    
+
     _matchAny() {
         let n = this._peek();
         if (!n) {
             return null;
         }
         if (AstBuilder._findMarkerMatch(this.nestedBlockEndMarkers, n)) {
-            throw this._abort(this._peekIdx + 1, "encountered complex end tag without " +
-                "matching start tag");
+            throw this._abort(this._peekIdx + 1, "encountered nested block end line without " +
+                "matching start line");
         }
         n = this._matchNestedBlock();
         if (!n) {
@@ -172,7 +169,7 @@ export default class AstBuilder {
             }
         }
         if (!n) {
-            throw this._abort(parentNodeLineNum, "matching nested block ending line not found");
+            throw this._abort(parentNodeLineNum, "matching nested block end line not found");
         }
         return parent;
     }
@@ -205,10 +202,10 @@ export default class AstBuilder {
             }
         }
         if (!n) {
-            throw this._abort(parentNodeLineNum, "matching escaped block ending line not found");
+            throw this._abort(parentNodeLineNum, "matching escaped block end line not found");
         }
         return parent;
-    }    
+    }
 
     _matchDecoratedLine() {
         const n = this._peek();
