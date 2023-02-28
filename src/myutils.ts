@@ -1,3 +1,5 @@
+import os from "os";
+
 const BLANK_START_PATTERN = new RegExp("^\\s*");
 
 export function splitIntoLines(text: string, separateTerminators: boolean) {
@@ -61,16 +63,16 @@ function locateNewline(content: string, start: number, receipt: number[]) {
     receipt[1] = winLn ? 2 : 1;
 }
 
-export function isBlank(s: string) {
+export function determineIndent(value: string): string {
+    const m = BLANK_START_PATTERN.exec(value);
+    return m![0];
+}
+
+export function isBlank(s: string | null) {
     if (!s) {
         return true;
     }
     return determineIndent(s).length == s.length;
-}
-
-export function determineIndent(value: string): string {
-    const m = BLANK_START_PATTERN.exec(value);
-    return m![0];
 }
 
 /**
@@ -229,7 +231,7 @@ function printDiffLines(diffCollector: any[], xLines: string[], yLines: string[]
         diffCollector.push(xLineRange[0]);
         diffCollector.push("a");
         stringifyRange(yLineRange, diffCollector);
-        diffCollector.push("\n");
+        diffCollector.push(os.EOL);
         for (const y of yLines) {
             diffCollector.push("> ");
             formatLine(y, diffCollector);
@@ -240,7 +242,7 @@ function printDiffLines(diffCollector: any[], xLines: string[], yLines: string[]
         stringifyRange(xLineRange, diffCollector);
         diffCollector.push("d");
         diffCollector.push(yLineRange[0]);
-        diffCollector.push("\n");
+        diffCollector.push(os.EOL);
         for (const x of xLines) {
             diffCollector.push("< ");
             formatLine(x, diffCollector);
@@ -251,12 +253,13 @@ function printDiffLines(diffCollector: any[], xLines: string[], yLines: string[]
         stringifyRange(xLineRange, diffCollector);
         diffCollector.push("c");
         stringifyRange(yLineRange, diffCollector);
-        diffCollector.push("\n");
+        diffCollector.push(os.EOL);
         for (const x of xLines) {
             diffCollector.push("< ");
             formatLine(x, diffCollector);
         }
-        diffCollector.push("---\n");
+        diffCollector.push("---");
+        diffCollector.push(os.EOL);
         for (const y of yLines) {
             diffCollector.push("> ");
             formatLine(y, diffCollector);
@@ -279,14 +282,13 @@ function formatLine(line: string, diffCollector: any[]) {
     const newlineSuffixLen = findNewlineSuffixLen(line);
     if (newlineSuffixLen > 0) {
         diffCollector.push(line.substring(0, line.length - newlineSuffixLen));
-        diffCollector.push("\n");
     }
     else {
         diffCollector.push(line);
-        diffCollector.push("\n");
+        diffCollector.push(os.EOL);
         diffCollector.push("\\ No newline at end of file");
-        diffCollector.push("\n");
     }
+    diffCollector.push(os.EOL);
 }
 
 function findNewlineSuffixLen(line: string): number {

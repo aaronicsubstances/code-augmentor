@@ -1,4 +1,4 @@
-import * as utils from "./utils";
+import * as myutils from "./myutils";
 import {
     SourceCodeAst,
     DecoratedLineAstNode,
@@ -23,7 +23,7 @@ export default class AstBuilder {
     static TYPE_NESTED_BLOCK = 5;
 
     static isMarkerSuitable(marker: string | null) {
-        return marker && !utils.determineIndent(marker);
+        return marker && !myutils.determineIndent(marker);
     }
 
     static _findMarkerMatch(markers: string[] | null, n: any) {
@@ -66,11 +66,11 @@ export default class AstBuilder {
         this._nodes = [];
         this._peekIdx = 0;
 
-        const splitSource = utils.splitIntoLines(source, true);
+        const splitSource = myutils.splitIntoLines(source, true);
         for (let i = 0; i < splitSource.length; i+=2) {
             const line = splitSource[i];
             const terminator = splitSource[i + 1];
-            const indent = utils.determineIndent(line);
+            const indent = myutils.determineIndent(line);
             const n = {
                 type: AstBuilder.TYPE_UNDECORATED_LINE,
                 text: line,
