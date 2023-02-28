@@ -60,7 +60,7 @@ export default class AstBuilder {
         return new Array<string>(latestFind, n.text.substring(n.indent.length + latestFind.length));
     }
 
-    parse(source: string, srcPath: string) {
+    parse(source: string, srcPath: string | null = null) {
         // reset.
         this._srcPath = srcPath;
         this._nodes = [];
@@ -190,7 +190,7 @@ export default class AstBuilder {
         const parent = n as EscapedBlockAstNode;
         parent.type = AstBuilder.TYPE_ESCAPED_BLOCK;
         parent.marker = m[0];
-        parent.markerAftermath = m[0];
+        parent.markerAftermath = m[1];
         parent.children = [];
         while (n = this._peek()) {
             m = AstBuilder._findMarkerMatch(this.escapedBlockEndMarkers, n);
