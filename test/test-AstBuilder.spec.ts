@@ -4,6 +4,44 @@ import { SourceCodeAst } from "../src/types";
 
 describe('AstBuilder', function() {
 
+    describe('#isMarkerSuitable', function() {
+        let data = [
+            { marker: "", expected: false },
+            { marker: "\t", expected: false },
+            { marker: "\n", expected: false },
+            { marker: "abc", expected: true },
+            { marker: "a", expected: true },
+            { marker: "abc\rd", expected: false },
+            { marker: "abc\r\n", expected: false },
+            { marker: "ab\tc n", expected: true }
+        ];
+        data.forEach(({ marker, expected }, i) => {
+            it(`should pass with input ${i}`, function() {
+                const actual = AstBuilder.isMarkerSuitable(marker);
+                assert.equal(actual, expected);
+            });
+        });
+    });
+
+    describe('#_findMarkerMatch', function() {
+        let data = [
+            { markers: [""], n: {text: '', indent: ''}, expected: null },
+            { markers: ["ab", "", "c"], n: {text: '', indent: ''}, expected: null },
+            { markers: ["ab", "", " ", "d\n", "   d"], n: {text: '   d', indent: '   '}, expected: null },
+            { markers: ["so", "som"], n: {text: 'some', indent: ''}, expected: ["som", "e"] },
+            { markers: ["abc"], n: {text: ' abc', indent: ' '}, expected: ["abc", ""] },
+            { markers: ["ab", "", "c"], n: {text: '\t\tcanoe', indent: '\t\t'}, expected: ["c", "anoe"] },
+            { markers: ["abc", "ab", "a"], n: {text: '.abcd', indent: ''}, expected: null },
+            { markers: ["abc", "ab", "a"], n: {text: 'abcd', indent: ''}, expected: ["abc", "d"] }
+        ];
+        data.forEach(({ markers, n, expected }, i) => {
+            it(`should pass with input ${i}`, function() {
+                const actual = AstBuilder._findMarkerMatch(markers, n);
+                assert.deepEqual(actual, expected);
+            });
+        });
+    });
+
     describe('#parse', function() {
         it(`should pass with input 0`, function() {
             const s =

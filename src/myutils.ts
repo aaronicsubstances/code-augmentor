@@ -3,7 +3,7 @@ import path from "path";
 import { SourceFileLocation } from "./types";
 
 const BLANK_START_PATTERN = new RegExp("^\\s*");
-const INVALID_FILE_NAME_CHAR_REGEX = new RegExp(/[^a-zA-Z0-9_-]/g);
+const FILE_NAME_VALIDITY_CHECK_REGEX = new RegExp(/[^a-zA-Z0-9_-]/g);
 
 export function splitIntoLines(text: string, separateTerminators: boolean) {
     const splitText = new Array<string>();
@@ -146,7 +146,7 @@ export function generateValidFileName(p: string) {
     if (p) {
         // use last path segment
         const name = path.basename(p);
-        trimmed = name.replace(INVALID_FILE_NAME_CHAR_REGEX, "");
+        trimmed = name.replace(FILE_NAME_VALIDITY_CHECK_REGEX, "");
     }
     if (!trimmed) {
         return "c";

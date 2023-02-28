@@ -6,6 +6,8 @@ import {
     NestedBlockAstNode
 } from "./types";
 
+const MARKER_SUITABILITY_REGEX = new RegExp(/^\s|\r|\n/);
+
 export default class AstBuilder {
     decoratedLineMarkers: string[] | null = null;
     escapedBlockStartMarkers: string[] | null = null;
@@ -23,7 +25,7 @@ export default class AstBuilder {
     static TYPE_NESTED_BLOCK = 5;
 
     static isMarkerSuitable(marker: string | null) {
-        return marker && !myutils.determineIndent(marker);
+        return marker && !MARKER_SUITABILITY_REGEX.exec(marker);
     }
 
     static _findMarkerMatch(markers: string[] | null, n: any) {
