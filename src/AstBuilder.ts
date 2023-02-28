@@ -128,6 +128,11 @@ export default class AstBuilder {
             throw this._abort(this._peekIdx + 1, "encountered nested block end line without " +
                 "matching start line");
         }
+        
+        // NB: similar check for escaped block end line is omitted, so as to
+        // allow for possibility of using the same markers in both start and end
+        // lines of escaped blocks.
+
         n = this._matchNestedBlock();
         if (!n) {
             n = this._matchEscapedBlock();

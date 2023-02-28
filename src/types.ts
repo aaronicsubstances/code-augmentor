@@ -35,11 +35,6 @@ export type SourceCodeAstNode =
     | EscapedBlockAstNode
     | NestedBlockAstNode;
 
-export interface SourceFileLocation {
-    baseDir: string | null;
-    relativePath: string | null;
-}
-
 export interface AugmentingCodeDescriptor {
     parentNode: SourceCodeAst | NestedBlockAstNode;
     idxInParentNode: number;
@@ -87,4 +82,17 @@ export interface DefaultAstTransformSpec {
     childToInsert: SourceCodeAstNode | null;
     replacementChild: SourceCodeAstNode | null;
     performDeletion: boolean;
+}
+
+export interface SourceFileLocation {
+    baseDir: string;
+    relativePath: string;
+}
+
+export interface SourceFileDescriptor {
+    baseDir: string | null;
+    relativePath: string;
+    content: string;
+    encoding: BufferEncoding | null;
+    binaryContent: Buffer | null;
 }
