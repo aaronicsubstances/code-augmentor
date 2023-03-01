@@ -11,7 +11,8 @@ import {
     GeneratedCodePart,
     GeneratedCodeSectionTransform,
     NestedBlockAstNode,
-    SourceCodeAst
+    SourceCodeAst,
+    SourceCodeAstNode
 } from "./types";
 import * as myutils from "./myutils";
 
@@ -25,14 +26,15 @@ export default class DefaultAstTransformer {
     defaultGenCodeStartMarker: string | null = null;
     defaultGenCodeEndMarker: string | null = null;
 
-    extractAugCodes(parentNode: SourceCodeAst) {
+    extractAugCodes(parentNode: SourceCodeAst, firstLineNumber = 1) {
         const augCodes = new Array<AugmentingCodeDescriptor>();
-        this._addAugCodes(parentNode, null, augCodes);
+        this._addAugCodes(parentNode, null, { consumedLineCount: firstLineNumber - 1 }, augCodes);
         return augCodes;
     }
 
     _addAugCodes(parentNode: SourceCodeAst | NestedBlockAstNode,
             parentAugCode: AugmentingCodeDescriptor | null,
+            lineCounter: { consumedLineCount: number },
             dest: AugmentingCodeDescriptor[]) {
         const src = parentNode.children;
         if (!src) {
@@ -43,15 +45,17 @@ export default class DefaultAstTransformer {
             if (n.type === AstBuilder.TYPE_NESTED_BLOCK) {
                 const typedNode = n as NestedBlockAstNode;
                 if (!findMarkerMatch(this.augCodeMarkers, typedNode.marker)) {
+                    lineCounter.consumedLineCount += getLineCount(n);
                     continue;
                 }
+                lineCounter.consumedLineCount++;
                 const augCodeArgs = this._extractAugCodeArgs(typedNode, 0);
                 const augCodeEndArgs= this._extractAugCodeArgs(parentNode, i + 1);
                 const augCode : AugmentingCodeDescriptor = {
                     parentNode: parentNode,
                     idxInParentNode: i,
                     nestedBlockUsed: true,
-                    lineNumber: 0,
+                    lineNumber: lineCounter.consumedLineCount,
                     functionName: typedNode.markerAftermath,
                     args: augCodeArgs.args,
                     argsExclEndIdxInParentNode: augCodeArgs.exclEndIdx,
@@ -67,9 +71,11 @@ export default class DefaultAstTransformer {
                     augCode.parentIndex = parentAugCode.index;
                     parentAugCode.childIndices.push(augCode.index);
                 }
-                this._addAugCodes(typedNode, augCode, dest);
+                this._addAugCodes(typedNode, augCode, lineCounter, dest);
+                lineCounter.consumedLineCount++;
             }
             else if (n.type === AstBuilder.TYPE_DECORATED_LINE) {
+                lineCounter.consumedLineCount++;
                 const typedNode = n as DecoratedLineAstNode;
                 if (!findMarkerMatch(this.augCodeMarkers, typedNode.marker)) {
                     continue;
@@ -79,7 +85,7 @@ export default class DefaultAstTransformer {
                     parentNode: parentNode,
                     idxInParentNode: i,
                     nestedBlockUsed: false,
-                    lineNumber: 0,
+                    lineNumber: lineCounter.consumedLineCount,
                     functionName: typedNode.markerAftermath,
                     args: augCodeArgs.args,
                     argsExclEndIdxInParentNode: augCodeArgs.exclEndIdx,
@@ -95,6 +101,9 @@ export default class DefaultAstTransformer {
                     augCode.parentIndex = parentAugCode.index;
                     parentAugCode.childIndices.push(augCode.index);
                 }
+            }
+            else {
+                lineCounter.consumedLineCount += getLineCount(n);
             }
         }
     }
@@ -798,4 +807,26 @@ function findMarkerMatch(markers: string[] | null, marker: any) {
         return markers.includes(marker);
     }
     return false;
+}
+
+function getLineCount(n: SourceCodeAstNode) {
+    if (n.type === AstBuilder.TYPE_DECORATED_LINE ||
+            n.type === AstBuilder.TYPE_UNDECORATED_LINE) {
+        return 1;
+    }
+    if (n.type === AstBuilder.TYPE_ESCAPED_BLOCK) {
+        const typedNode = n as EscapedBlockAstNode;
+        return 2 + (typedNode.children ? typedNode.children.length : 0);
+    }
+    if (n.type === AstBuilder.TYPE_NESTED_BLOCK) {
+        let count = 2;
+        const typedNode = n as NestedBlockAstNode;
+        if (typedNode.children) {
+            for (const child of typedNode.children) {
+                count += getLineCount(child);
+            }
+        }
+        return count;
+    }
+    throw new Error("unexpected node type: " + n.type);
 }
