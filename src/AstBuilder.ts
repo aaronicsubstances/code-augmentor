@@ -1,12 +1,16 @@
+import os from "os";
+
 import * as myutils from "./myutils";
 import {
     SourceCodeAst,
     DecoratedLineAstNode,
     EscapedBlockAstNode,
-    NestedBlockAstNode
+    NestedBlockAstNode,
+    SourceCodeAstNode
 } from "./types";
 
 const MARKER_SUITABILITY_REGEX = new RegExp(/^\s|\r|\n/);
+const UNNEEDED_MATCH_DETAILS_RESULT = new Array<string>();
 
 export default class AstBuilder {
     decoratedLineMarkers: string[] | null = null;
@@ -28,7 +32,7 @@ export default class AstBuilder {
         return marker && !MARKER_SUITABILITY_REGEX.exec(marker);
     }
 
-    static _findMarkerMatch(markers: string[] | null, n: any) {
+    static _findMarkerMatch(markers: string[] | null, n: any, matchDetailsNotNeeded = false) {
         if (!markers) {
             return null;
         }
@@ -58,6 +62,9 @@ export default class AstBuilder {
         }
         if (!latestFind) {
             return null;
+        }
+        else if (matchDetailsNotNeeded) {
+            return UNNEEDED_MATCH_DETAILS_RESULT;
         }
         return new Array<string>(latestFind, n.text.substring(n.indent.length + latestFind.length));
     }
@@ -130,11 +137,10 @@ export default class AstBuilder {
             throw this._abort(this._peekIdx + 1, "encountered nested block end line without " +
                 "matching start line");
         }
-        
-        // NB: similar check for escaped block end line is omitted, so as to
-        // allow for possibility of using the same markers in both start and end
-        // lines of escaped blocks.
-
+        if (AstBuilder._findMarkerMatch(this.escapedBlockEndMarkers, n)) {
+            throw this._abort(this._peekIdx + 1, "encountered escaped block end line without " +
+                "matching start line");
+        }
         n = this._matchNestedBlock();
         if (!n) {
             n = this._matchEscapedBlock();
@@ -164,6 +170,9 @@ export default class AstBuilder {
         while (n = this._peek()) {
             m = AstBuilder._findMarkerMatch(this.nestedBlockEndMarkers, n);
             if (m) {
+                if (!n.lineSep) {
+                    throw new Error("any line other than undecorated lines must end with a line separator");
+                }
                 this._consumeAsDecoratedLine();
                 parent.endIndent = n.indent;
                 parent.endLineSep = n.lineSep;
@@ -197,6 +206,9 @@ export default class AstBuilder {
         while (n = this._peek()) {
             m = AstBuilder._findMarkerMatch(this.escapedBlockEndMarkers, n);
             if (m && m[1] === parent.markerAftermath) {
+                if (!n.lineSep) {
+                    throw new Error("any line other than undecorated lines must end with a line separator");
+                }
                 this._consumeAsDecoratedLine();
                 parent.endIndent = n.indent;
                 parent.endLineSep = n.lineSep;
@@ -220,11 +232,142 @@ export default class AstBuilder {
         if (!m) {
             return null;
         }
+        if (!n.lineSep) {
+            throw new Error("any line other than undecorated lines must end with a line separator");
+        }
         this._consumeAsDecoratedLine();
         const typedNode = n as DecoratedLineAstNode;
         typedNode.type = AstBuilder.TYPE_DECORATED_LINE;
         typedNode.marker = m[0];
         typedNode.markerAftermath = m[1];
         return typedNode;
+    }
+
+    escapeText(s: string, attrs: any, forceEscapedNodeCreation: boolean) {
+        const nodes = [];
+        const splitSource = myutils.splitIntoLines(s, true);
+        for (let i = 0; i < splitSource.length; i+=2) {
+            const line = splitSource[i];
+            const terminator = splitSource[i + 1];
+            const indent = myutils.determineIndent(line);
+            const n = {
+                text: line,
+                lineSep: terminator,
+                indent
+            };
+            nodes.push(n);
+        }
+
+        if (!forceEscapedNodeCreation) {
+            forceEscapedNodeCreation = nodes.some(n => {
+                return AstBuilder._findMarkerMatch(this.decoratedLineMarkers, n, true) ||
+                    AstBuilder._findMarkerMatch(this.escapedBlockStartMarkers, n, true) ||
+                    AstBuilder._findMarkerMatch(this.escapedBlockEndMarkers, n, true) ||
+                    AstBuilder._findMarkerMatch(this.nestedBlockStartMarkers, n, true) ||
+                    AstBuilder._findMarkerMatch(this.nestedBlockEndMarkers, n, true);
+            });
+        }
+
+        // make new copy of attrs for use in setting defaults for lineSeps and indents.
+        attrs = Object.assign({}, attrs);
+        const dest = new Array<SourceCodeAstNode>();
+        if (forceEscapedNodeCreation) {
+            if (!attrs.lineSep) {
+                attrs.lineSep = os.EOL;
+            }
+            if (!attrs.endLineSep) {
+                attrs.endLineSep = os.EOL;
+            }
+            dest.push(AstBuilder.createEscapedNode(splitSource, attrs));
+        }
+        else {
+            for (const n of nodes) {
+                attrs.indent = n.indent;
+                attrs.lineSep = n.lineSep || os.EOL;
+                dest.push(AstBuilder.createDecoratedLineNode(n.text, attrs));
+            }
+        }
+        return dest;
+    }
+
+    static createDecoratedLineNode(line: string, attrs: any) {
+        if (!attrs) {
+            attrs = {};
+        }
+        if (!AstBuilder.isMarkerSuitable(attrs.marker)) {
+            throw new Error("received unsuitable marker: " + attrs.marker);
+        }
+        const n: any = {
+            type: AstBuilder.TYPE_DECORATED_LINE,
+            marker: attrs.marker,
+            markerAftermath: line,
+            indent: attrs.indent,
+            lineSep: attrs.lineSep
+        }
+
+        // validate indent and lineSep
+        if (!myutils.isBlank(n.indent)) {
+            throw new Error("received non-blank indent: " + n.indent);
+        }
+        if (n.lineSep !== '\r' && n.lineSep !== '\n') {
+            throw new Error("received invalid lineSep: " + n.lineSep);
+        }
+
+        return n as DecoratedLineAstNode;
+    }
+
+    static createEscapedNode(lines: string[], attrs: any) {
+        if (!attrs) {
+            attrs = {};
+        }
+        if (!AstBuilder.isMarkerSuitable(attrs.marker)) {
+            throw new Error("received unsuitable start marker: " + attrs.marker);
+        }
+        if (!AstBuilder.isMarkerSuitable(attrs.endMarker)) {
+            throw new Error("received unsuitable end marker: " + attrs.endMarker);
+        }
+        let markerAftermath = attrs.markerAftermath || "";
+        const uniqueEndMarkerPlus = myutils.modifyNameToBeAbsent(
+            lines, attrs.endMarker + markerAftermath);
+        markerAftermath = uniqueEndMarkerPlus.substring(attrs.endMarker.length);
+        
+        const n: any = {
+            type: AstBuilder.TYPE_ESCAPED_BLOCK,
+            marker: attrs.marker,
+            endMarker: attrs.endMarker,
+            markerAftermath: attrs.markerAftermath,
+            indent: attrs.indent,
+            endIndent: attrs.endIndent,
+            lineSep: attrs.lineSep,
+            endLineSep: attrs.endLineSep,
+            children: []
+        };
+
+        // validate indents and lineSeps
+        if (!myutils.isBlank(n.indent)) {
+            throw new Error("received non-blank indent: " + n.indent);
+        }
+        if (!myutils.isBlank(n.endIndent)) {
+            throw new Error("received non-blank end indent: " + n.endIndent);
+        }
+        if (n.lineSep !== '\r' && n.lineSep !== '\n') {
+            throw new Error("received invalid lineSep: " + n.lineSep);
+        }
+        if (n.endLineSep !== '\r' && n.endLineSep !== '\n') {
+            throw new Error("received invalid end lineSep: " + n.endLineSep);
+        }
+
+        for (let i = 0; i < lines.length; i+=2) {
+            const line = lines[i];
+            const terminator = lines[i + 1];
+
+            n.children.push({
+                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                text: line,
+                lineSep: terminator || os.EOL
+            });
+        }
+
+        return n as EscapedBlockAstNode;
     }
 }

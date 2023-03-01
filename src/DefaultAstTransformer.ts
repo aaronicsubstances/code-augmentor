@@ -260,7 +260,7 @@ export default class DefaultAstTransformer {
                 const genCodeLines = DefaultAstTransformer.extractLinesAndTerminators(
                     genCode.contentParts,
                     genCode.indent, genCodeLineSep);
-                const node = this.createGenCodeNode(genCodeLines,
+                const node = this._createGenCodeNode(genCodeLines,
                     genCode.useInlineMarker,
                     genCodeSection, genCodeIndent, genCodeLineSep);
                 transform.node = node;
@@ -282,7 +282,7 @@ export default class DefaultAstTransformer {
                 const genCodeLines = DefaultAstTransformer.extractLinesAndTerminators(
                     genCode.contentParts,
                     genCode.indent, defaultLineSep);
-                const node = this.createGenCodeNode(genCodeLines, genCode.useInlineMarker,
+                const node = this._createGenCodeNode(genCodeLines, genCode.useInlineMarker,
                     null, defaultIndent, defaultLineSep);
                 transform.node = node;
             }
@@ -432,7 +432,7 @@ export default class DefaultAstTransformer {
                     // don't apply any indent, but rather append to last line,
                     // and replace the empty terminator.
                     if (allLines[allLines.length - 1]) {
-                        throw new Error("algorithm failed. expected empty terminator");
+                        throw new Error("algorithm failed. expected empty terminator here");
                     }
                     allLines[allLines.length - 2] += line;
                     allLines[allLines.length - 1] = terminator;
@@ -447,12 +447,14 @@ export default class DefaultAstTransformer {
         if (contentParts.length > 0) {
             if (allLines.length === 0) {
                 allLines.push("");
-                allLines.push(lineSeparator || "");
+                allLines.push("");
             }
 
             // ensure ending terminator, but only if line separator was given,
             // so as to provide a way to skip appending of ending newlines.
-            if (lineSeparator && !allLines[allLines.length - 1]) {
+            const lastContentPart = contentParts.at(-1);
+            if (lineSeparator && !(lastContentPart && lastContentPart.exempt)
+                    && !allLines[allLines.length - 1]) {
                 allLines[allLines.length - 1] = lineSeparator;
             }
         }
@@ -636,7 +638,7 @@ export default class DefaultAstTransformer {
         }
     }
 
-    createGenCodeNode(genCodeLines: string[],
+    _createGenCodeNode(genCodeLines: string[],
             useInlineMarker: boolean,
             genCodeSection: GeneratedCodeDescriptor | null,
             defaultIndent: string | null,
@@ -644,7 +646,7 @@ export default class DefaultAstTransformer {
         if (useInlineMarker) {
             if (genCodeSection && !genCodeSection.nestedBlockUsed) {
                 const n = genCodeSection.parentNode.children[genCodeSection.idxInParentNode];
-                return DefaultAstTransformer.createDecoratedLineNode(
+                return AstBuilder.createDecoratedLineNode(
                     genCodeLines.at(0) || "", n);
             }
             else {
@@ -656,14 +658,14 @@ export default class DefaultAstTransformer {
                     lineSep: defaultLineSep,
                     marker: this.defaultGenCodeInlineMarker
                 };
-                return DefaultAstTransformer.createDecoratedLineNode(
+                return AstBuilder.createDecoratedLineNode(
                     genCodeLines.at(0) || "", attrs);
             }
         }
         else {
             if (genCodeSection && genCodeSection.nestedBlockUsed) {
                 const n = genCodeSection.parentNode.children[genCodeSection.idxInParentNode];
-                return DefaultAstTransformer.createEscapedNode(genCodeLines, n);
+                return AstBuilder.createEscapedNode(genCodeLines, n);
             }
             else {
                 if (!this.defaultGenCodeStartMarker) {
@@ -680,90 +682,9 @@ export default class DefaultAstTransformer {
                     endLineSep: defaultLineSep,
                     endMarker: this.defaultGenCodeEndMarker
                 };
-                return DefaultAstTransformer.createEscapedNode(genCodeLines, attrs);
+                return AstBuilder.createEscapedNode(genCodeLines, attrs);
             }
         }
-    }
-
-    static createDecoratedLineNode(line: string, attrs: any) {
-        if (!attrs) {
-            attrs = {};
-        }
-        if (!AstBuilder.isMarkerSuitable(attrs.marker)) {
-            throw new Error("received unsuitable marker: " + attrs.marker);
-        }
-        const n: any = {
-            type: AstBuilder.TYPE_DECORATED_LINE,
-            marker: attrs.marker,
-            markerAftermath: line,
-            indent: attrs.indent,
-            lineSep: attrs.lineSep
-        }
-
-        // supply defaults for unset props.
-        if (!n.indent) {
-            n.indent = "";
-        }
-        if (!n.lineSep) {
-            n.lineSep = os.EOL;
-        }
-
-        return n as DecoratedLineAstNode;
-    }
-
-    static createEscapedNode(lines: string[], attrs: any) {
-        if (!attrs) {
-            attrs = {};
-        }
-        if (!AstBuilder.isMarkerSuitable(attrs.marker)) {
-            throw new Error("received unsuitable start marker: " + attrs.marker);
-        }
-        if (!AstBuilder.isMarkerSuitable(attrs.endMarker)) {
-            throw new Error("received unsuitable end marker: " + attrs.endMarker);
-        }
-        let markerAftermath = attrs.markerAftermath || "";
-        const uniqueEndMarkerPlus = myutils.modifyNameToBeAbsent(
-            lines, attrs.endMarker + markerAftermath);
-        markerAftermath = uniqueEndMarkerPlus.substring(attrs.endMarker.length);
-        
-        const n: any = {
-            type: AstBuilder.TYPE_ESCAPED_BLOCK,
-            marker: attrs.marker,
-            endMarker: attrs.endMarker,
-            markerAftermath: attrs.markerAftermath,
-            indent: attrs.indent,
-            endIndent: attrs.endIndent,
-            lineSep: attrs.lineSep,
-            endLineSep: attrs.endLineSep,
-            children: []
-        };
-
-        // supply defaults for unset props.
-        if (!n.indent) {
-            n.indent = "";
-        }
-        if (!n.endIndent) {
-            n.endIndent = "";
-        }
-        if (!n.lineSep) {
-            n.lineSep = os.EOL;
-        }
-        if (!n.endLineSep) {
-            n.endLineSep = os.EOL;
-        }
-
-        for (let i = 0; i < lines.length; i+=2) {
-            const line = lines[i];
-            const terminator = lines[i + 1];
-
-            n.children.push({
-                type: AstBuilder.TYPE_UNDECORATED_LINE,
-                text: line,
-                lineSep: terminator || os.EOL
-            });
-        }
-
-        return n as EscapedBlockAstNode;
     }
 
     /**
