@@ -7,6 +7,10 @@
   "files": [
     "dist"
   ],
+  "bin": {
+    "effect-changes.ps1": "bin/windows-copy-batch-file.ps1",
+    "effect-changes": "bin/unix-copy-bash-file.sh"
+  },
   "scripts": {
     "generate-types": "tsc --declaration --emitDeclarationOnly",
     "compile": "tsc --noEmit && babel src --out-dir dist --extensions .ts",

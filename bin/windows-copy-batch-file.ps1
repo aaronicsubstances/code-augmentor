@@ -1,18 +1,12 @@
-#!/usr/bin/env sh
-
-DIRNAME=`dirname $0`
-if [ -z "$DIRNAME" ]; then DIRNAME=.; fi
-
-CMDNAME=`basename $0`
-
-printHelp() {
-    echo
+$CMDNAME = [System.IO.Path]::GetFileName($PSCommandPath)
+function printHelp {
+    echo ""
     echo "Usage: $CMDNAME [-f | -h | [--rev] <arbitraryCommandWithArgs>]"
     echo "where"
     echo "    -f                              use to actually copy and overwrite"
-    echo
+    echo ""
     echo "    -h                              prints this help information and exits"
-    echo
+    echo ""
     echo ""
     echo '    <arbitraryCommandWithArgs>      use to specify a command which will be called iteratively'
     echo "                                    with each source file and its corresponding generated file" 
@@ -28,86 +22,96 @@ printHelp() {
     echo ""
     echo "1. Use"
     echo "      $CMDNAME -f"
-    echo '   to overwrite each source file with its corresponding generated file to achieve synchronization'
-    echo '   goal of Code Augmentor.'
+    echo '   to overwrite each source file with its corresponding generated file.'
     echo ""
     echo '2. Can use'
     echo "      $CMDNAME echo"
     echo '   to view full paths of each changed source file and its corresponding generated file on a line.'
     echo ""
     echo '3. Can use'
-    echo "      $CMDNAME diff"
-    echo '   to use built-in diff program on Unix/Linux to view file differences'
+    echo "      $CMDNAME fc /n /t"
+    echo '   to use built-in File Compare program on Windows to view file differences'
     echo "" 
     echo '4. Can use'
-    echo "      $CMDNAME git diff"
+    echo "      $CMDNAME git diff --no-index"
     echo "   to view file differences with Git."
-    echo "" 
-    echo '5. Can use'
-    echo "      $CMDNAME git --no-pager diff > diff.txt"
-    echo '   to save file differences with Git.'
     echo ""
-    echo '6. Can use'
+    echo '5. Can use'
     echo "      $CMDNAME --rev cp -f -v"
     echo "   to achieve similar effect as $CMDNAME -f (but without error checking)"
     echo ""
 }
 
-if [ "$1" == "--rev" ]; then
-    reverseFileNames=1
-    shift
-fi
-
-arbitraryCommand="$@"
-
-if [ "$arbitraryCommand" == "-h" ] && [ -z "$reverseFileNames" ]; then
-    printHelp
+$arbitraryCommand = "$args"
+if ($args[0] -eq "--rev")
+{
+    $reverseFileNames = 1
+    $arbitraryCommand = "$args[1..-1]"
+}
+if ($arbitraryCommand -eq "-f" -and !$reverseFileNames)
+{
+    $confirmed = 1
+}
+if ($arbitraryCommand -eq "-h" -and !$reverseFileNames)
+{
+    PrintHelp
     exit
-fi
-
-if [ "$arbitraryCommand" == "-f" ] && [ -z "$reverseFileNames" ]; then
-    confirmed=1
-fi
-
-while IFS= read -r line
-do
-    if [ -n "$a" ]
-    then
-        b="$line"
-        b="${b//$'\r'/}" # remove any carriage return.
-        counter=`expr $counter + 1`
-        if [ -n "$confirmed" ]
-        then
-            echo "$counter. copying $b to $a"
-            cp -f "$b" "$a"
-            if [ $? -ne 0 ]; then
-                exit $?
-            fi
-        elif [ -n "$arbitraryCommand" ]
-        then
-            if [ -n "$reverseFileNames" ]; then
-                $arbitraryCommand "$b" "$a"
+}
+$counter = 0
+foreach ($line in $input)
+{
+    if ($a)
+    {
+        $b = $line
+        $counter = $counter + 1
+        if ($confirmed)
+        {
+            Write-Output "$counter. copying $b to $a"
+            Copy-Item -Path "$b" -Destination "$a" -Force -errorAction stop
+        }
+        elseif ($arbitraryCommand)
+        {
+            if ($reverseFileNames)
+            {
+                $eventualCmd = "$arbitraryCommand ""$b"" ""$a"""
+            }
             else
-                $arbitraryCommand "$a" "$b"
-            fi
+            {
+                $eventualCmd = "$arbitraryCommand ""$a"" ""$b"""
+            }
+            if ($IsLinux -or $IsMacOS)
+            {
+                sh $eventualCmd
+            }
+            else
+            {
+                CMD /c $eventualCmd
+            }
             # could not add this because diff programs set nonzero error statuses
             # upon encountering a difference.
-            # if [ $? -ne 0 ]; then
-                # exit $?
-            # fi
+            #if ($lastexitcode)
+            #{
+            #    exit $lastexitcode
+            #}
+        }
         else
+        {
             echo "$counter. $b"
-        fi
-        a=
-    else  
-        a="$line"
-        a="${a//$'\r'/}" # remove any carriage return.
-    fi
-done < "$DIRNAME/CHANGE-SUMMARY.txt"
+        }
+        $a = ""
+    }
+    else
+    {
+        $a = $line
+    }
+}
 
-if [ -n "$confirmed" ]; then
-    echo
+if ($confirmed)
+{
+    echo ""
     echo "Done"
-elif [ -z "$arbitraryCommand" ]; then
-    printHelp
-fi
+}
+elseif (!$arbitraryCommand)
+{
+    PrintHelp
+}
