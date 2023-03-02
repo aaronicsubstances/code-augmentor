@@ -46,9 +46,8 @@ export interface AugmentingCodeDescriptor {
     endFunctionName: string | null;
     endArgs: any[] | null;
     endArgsExclEndIdxInParentNode: number;
-    index: number;
-    parentIndex: number | null;
-    childIndices: number[];
+    parent: AugmentingCodeDescriptor | null;
+    children: AugmentingCodeDescriptor[];
 }
 
 export interface GeneratedCodeDescriptor {

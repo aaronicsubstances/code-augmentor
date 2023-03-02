@@ -35,8 +35,24 @@ describe('AstBuilder', function() {
             { markers: ["abc", "ab", "a"], n: {text: 'abcd', indent: ''}, expected: ["abc", "d"] }
         ];
         data.forEach(({ markers, n, expected }, i) => {
-            it(`should pass with input ${i}`, function() {
+            it(`should pass with match details requested, and with input ${i}`, function() {
                 const actual = AstBuilder._findMarkerMatch(markers, n);
+                assert.deepEqual(actual, expected);
+            });
+        });
+        data = [
+            { markers: [""], n: {text: '', indent: ''}, expected: null },
+            { markers: ["ab", "", "c"], n: {text: '', indent: ''}, expected: null },
+            { markers: ["ab", "", " ", "d\n", "   d"], n: {text: '   d', indent: '   '}, expected: null },
+            { markers: ["so", "som"], n: {text: 'some', indent: ''}, expected: [] },
+            { markers: ["abc"], n: {text: ' abc', indent: ' '}, expected: [] },
+            { markers: ["ab", "", "c"], n: {text: '\t\tcanoe', indent: '\t\t'}, expected: [] },
+            { markers: ["abc", "ab", "a"], n: {text: '.abcd', indent: ''}, expected: null },
+            { markers: ["abc", "ab", "a"], n: {text: 'abcd', indent: ''}, expected: [] }
+        ];
+        data.forEach(({ markers, n, expected }, i) => {
+            it(`should pass with match details ignored, and with input ${i}`, function() {
+                const actual = AstBuilder._findMarkerMatch(markers, n, true);
                 assert.deepEqual(actual, expected);
             });
         });
@@ -44,6 +60,55 @@ describe('AstBuilder', function() {
 
     describe('#parse', function() {
         it(`should pass with input 0`, function() {
+            const s = "";
+            const expected = {
+                type: AstBuilder.TYPE_SOURCE_CODE,
+                children: []
+            };
+            const instance = new AstBuilder();
+            instance.decoratedLineMarkers = ["d:", "2d:"];
+            instance.escapedBlockStartMarkers = ["g:"];
+            instance.escapedBlockEndMarkers = ["k:"];
+            instance.nestedBlockStartMarkers = ["d-"];
+            instance.nestedBlockEndMarkers = ["k-"];
+            const actual = instance.parse(s);
+            assert.deepEqual(actual, expected);
+        });
+        it(`should pass with input 1`, function() {
+            const s = "d:abc\r" +
+                " k:de\r\n" +
+                " d-ed f \n" +
+                "  k-hghi";
+            const expected = {
+                type: AstBuilder.TYPE_SOURCE_CODE,
+                children: [
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "d:abc",
+                        lineSep: "\r"
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: " k:de",
+                        lineSep: "\r\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: " d-ed f ",
+                        lineSep: "\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "  k-hghi",
+                        lineSep: ""
+                    }
+                ]
+            };
+            const instance = new AstBuilder();
+            const actual = instance.parse(s);
+            assert.deepEqual(actual, expected);
+        });
+        it(`should pass with input 2`, function() {
             const s =
                 "abc\n" +
                 "de\r\n" +
@@ -218,6 +283,172 @@ describe('AstBuilder', function() {
             instance.escapedBlockEndMarkers = ["k:"];
             instance.nestedBlockStartMarkers = ["d-"];
             instance.nestedBlockEndMarkers = ["k-"];
+            const actual = instance.parse(s);
+            assert.deepEqual(actual, expected);
+        });
+        it(`should pass with input 3`, function() {
+            const s =
+                "abc\n" +
+                "de\r\n" +
+                " d:oods\r\n" +
+                " (-ds\n" +
+                "5k-)\n" +
+                " (:oods\n" +
+                "0\n" +
+                "1\n" +
+                "2\n" +
+                "3\n" +
+                "4\n" +
+                ":)age\n" +
+                "<.oes\r\n" +
+                "0\n" +
+                "1\n" +
+                "2\n" +
+                "3\n" +
+                "4\n" +
+                "d:12\n" +
+                " 2d:32\n" +
+                "  d:4\n" +
+                "   d:5\n" +
+                "    2d:6\n" +
+                " >.oes\n";
+            const expected = {
+                type: AstBuilder.TYPE_SOURCE_CODE,
+                children: [
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "abc",
+                        lineSep: "\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "de",
+                        lineSep: "\r\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: " d:oods",
+                        lineSep: "\r\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_NESTED_BLOCK,
+                        indent: " ",
+                        marker: "(-",
+                        markerAftermath: "ds",
+                        lineSep: "\n",
+                        endIndent: "",
+                        endMarker: "5k-)",
+                        endLineSep: "\n",
+                        endMarkerAftermath: "",
+                        children: []
+                    },
+                    {
+                        type: AstBuilder.TYPE_NESTED_BLOCK,
+                        indent: " ",
+                        marker: "(:",
+                        markerAftermath: "oods",
+                        lineSep: "\n",
+                        endIndent: "",
+                        endMarker: ":)",
+                        endLineSep: "\n",
+                        endMarkerAftermath: "age",
+                        children: [
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: "0",
+                                lineSep: "\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: "1",
+                                lineSep: "\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: "2",
+                                lineSep: "\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: "3",
+                                lineSep: "\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: "4",
+                                lineSep: "\n"
+                            }
+                        ]
+                    },
+                    {
+                        type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                        indent: "",
+                        marker: "<.",
+                        markerAftermath: "oes",
+                        lineSep: "\r\n",
+                        endIndent: " ",
+                        endMarker: ">.",
+                        endLineSep: "\n",
+                        children: [
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: "0",
+                                lineSep: "\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: "1",
+                                lineSep: "\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: "2",
+                                lineSep: "\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: "3",
+                                lineSep: "\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: "4",
+                                lineSep: "\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: "d:12",
+                                lineSep: "\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: " 2d:32",
+                                lineSep: "\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: "  d:4",
+                                lineSep: "\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: "   d:5",
+                                lineSep: "\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: "    2d:6",
+                                lineSep: "\n"
+                            }
+                        ]
+                    }
+                ]
+            };
+            const instance = new AstBuilder();
+            instance.escapedBlockStartMarkers = ["<."];
+            instance.escapedBlockEndMarkers = [">."];
+            instance.nestedBlockStartMarkers = ["(-", "(:"];
+            instance.nestedBlockEndMarkers = ["5k-)", ":)"];
             const actual = instance.parse(s);
             assert.deepEqual(actual, expected);
         });

@@ -1,5 +1,3 @@
-import os from "os";
-
 import AstBuilder from "./AstBuilder";
 import {
     AugmentingCodeDescriptor,
@@ -62,16 +60,11 @@ export default class DefaultAstTransformer {
                     endFunctionName: typedNode.endMarkerAftermath,
                     endArgs: augCodeEndArgs.args,
                     endArgsExclEndIdxInParentNode: augCodeEndArgs.exclEndIdx,
-                    index: dest.length,
-                    parentIndex: -1,
-                    childIndices: []
+                    parent: parentAugCode,
+                    children: []
                 };
                 dest.push(augCode);
-                if (parentAugCode) {
-                    augCode.parentIndex = parentAugCode.index;
-                    parentAugCode.childIndices.push(augCode.index);
-                }
-                this._addAugCodes(typedNode, augCode, lineCounter, dest);
+                this._addAugCodes(typedNode, augCode, lineCounter, augCode.children);
                 lineCounter.consumedLineCount++;
             }
             else if (n.type === AstBuilder.TYPE_DECORATED_LINE) {
@@ -92,15 +85,10 @@ export default class DefaultAstTransformer {
                     endFunctionName: null,
                     endArgs: null,
                     endArgsExclEndIdxInParentNode: -1,
-                    index: dest.length,
-                    parentIndex: -1,
-                    childIndices: []
+                    parent: parentAugCode,
+                    children: []
                 };
                 dest.push(augCode);
-                if (parentAugCode) {
-                    augCode.parentIndex = parentAugCode.index;
-                    parentAugCode.childIndices.push(augCode.index);
-                }
             }
             else {
                 lineCounter.consumedLineCount += getLineCount(n);
@@ -194,14 +182,12 @@ export default class DefaultAstTransformer {
         return blocks;
     }
 
-    applyGeneratedCodes(augCodes: AugmentingCodeDescriptor[],
-            augCodeIndex: number,
+    applyGeneratedCodes(augCode: AugmentingCodeDescriptor,
             genCodes: GeneratedCode[]) {
-        const augCode = augCodes[augCodeIndex];
         const augCodeNode = augCode.parentNode.children[augCode.idxInParentNode] as 
             (NestedBlockAstNode | DecoratedLineAstNode);
         const genCodeTransforms = new Array<GeneratedCodeSectionTransform | null>();
-        const genCodeSections = this.extractGenCodeSections(augCodes, augCodeIndex);
+        const genCodeSections = this.extractGenCodeSections(augCode);
 
         // begin by processing all but the last gen code.
         let genCodeSectionReduction = 0;
@@ -228,7 +214,7 @@ export default class DefaultAstTransformer {
             genCodes.slice(-1),
             genCodeSections.slice(genCodeSections.length - genCodeSectionReduction),
             genCodeTransforms);
-        const augCodeTransforms = this.computeAugCodeTransforms(augCodes, augCodeIndex,
+        const augCodeTransforms = this.computeAugCodeTransforms(augCode,
             genCodeTransforms, genCodeSections);
         DefaultAstTransformer.performTransformations(augCodeTransforms);
     }
@@ -290,11 +276,10 @@ export default class DefaultAstTransformer {
         }
     }
 
-    extractGenCodeSections(augCodes: AugmentingCodeDescriptor[], augCodeIndex: number) {
+    extractGenCodeSections(augCode: AugmentingCodeDescriptor) {
         const genCodeSections = new Array<GeneratedCodeDescriptor>();
-        const augCode = augCodes[augCodeIndex];
         if (augCode.nestedBlockUsed) {
-            this._addNestedGenCodeSections(augCodes, augCodeIndex, genCodeSections);
+            this._addNestedGenCodeSections(augCode, genCodeSections);
         }
         const lastGenCodeSection = this._getLastGenCodeSection(augCode);
         if (lastGenCodeSection) {
@@ -303,15 +288,13 @@ export default class DefaultAstTransformer {
         return genCodeSections;
     }
 
-    _addNestedGenCodeSections(augCodes: AugmentingCodeDescriptor[],
-            augCodeIndex: number,
+    _addNestedGenCodeSections(augCode: AugmentingCodeDescriptor,
             genCodeSections: GeneratedCodeDescriptor[]) {
         // get all gen code nodes except those functioning as
         // last gen code sections for child aug codes.
-        const augCode = augCodes[augCodeIndex];
-        const exemptions = augCode.childIndices
-            .map(aIdx => {
-                const g = this._getLastGenCodeSection(augCodes[aIdx]);
+        const exemptions = augCode.children
+            .map(a => {
+                const g = this._getLastGenCodeSection(a);
                 if (g) {
                     return g.idxInParentNode;
                 }
@@ -505,14 +488,12 @@ export default class DefaultAstTransformer {
      * @returns
      */
     computeAugCodeTransforms(
-            augCodes: AugmentingCodeDescriptor[],
-            augCodeIndex: number,
+            augCode: AugmentingCodeDescriptor,
             genCodes: Array<GeneratedCodeSectionTransform | null>,
             genCodeSections: GeneratedCodeDescriptor[] | null) {
-        const augCode = augCodes[augCodeIndex];
         const augCodeNode = augCode.parentNode.children[augCode.idxInParentNode];
         if (!genCodeSections) {
-            genCodeSections = this.extractGenCodeSections(augCodes, augCodeIndex);
+            genCodeSections = this.extractGenCodeSections(augCode);
         }
         const transforms = new Array<DefaultAstTransformSpec>();
         const nestedGenCodeSections = new Array<GeneratedCodeDescriptor>();

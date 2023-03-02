@@ -36,6 +36,7 @@ export default class AstBuilder {
         if (!markers) {
             return null;
         }
+        // if match details are needed, then
         // pick the longest match, and if multiple candidates are found.
         // pick the earliest of them.
         let latestFind = '';
@@ -58,6 +59,9 @@ export default class AstBuilder {
             }
             if (matchFound) {
                 latestFind = marker;
+                if (matchDetailsNotNeeded) {
+                    break;
+                }
             }
         }
         if (!latestFind) {
@@ -253,7 +257,8 @@ export default class AstBuilder {
             const n = {
                 text: line,
                 lineSep: terminator,
-                indent
+                indent,
+                marker: ''
             };
             nodes.push(n);
         }
@@ -282,9 +287,11 @@ export default class AstBuilder {
         }
         else {
             for (const n of nodes) {
-                attrs.indent = n.indent;
-                attrs.lineSep = n.lineSep || os.EOL;
-                dest.push(AstBuilder.createDecoratedLineNode(n.text, attrs));
+                n.marker = attrs.marker;
+                if (!n.lineSep) {
+                    n.lineSep = attrs.lineSep || os.EOL;
+                }
+                dest.push(AstBuilder.createDecoratedLineNode(n.text, n));
             }
         }
         return dest;
@@ -364,7 +371,7 @@ export default class AstBuilder {
             n.children.push({
                 type: AstBuilder.TYPE_UNDECORATED_LINE,
                 text: line,
-                lineSep: terminator || os.EOL
+                lineSep: terminator || n.lineSep
             });
         }
 
