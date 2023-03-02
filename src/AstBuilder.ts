@@ -104,26 +104,26 @@ export default class AstBuilder {
         return root;
     }
 
-    _peek() {
+    private _peek() {
         if (this._peekIdx < this._nodes.length) {
             return this._nodes[this._peekIdx];
         }
         return null;
     }
 
-    _consumeAsDecoratedLine() {
+    private _consumeAsDecoratedLine() {
         const n = this._nodes[this._peekIdx++];
         delete n.text;
         return n;
     }
 
-    _consumeAsUndecoratedLine() {
+    private _consumeAsUndecoratedLine() {
         const n = this._nodes[this._peekIdx++];
         delete n.indent;
         return n;
     }
 
-    _abort(lineNum: number, msg: string) {
+    private _abort(lineNum: number, msg: string) {
         let srcPathDesc = "";
         if (this._srcPath) {
             srcPathDesc = "in " + this._srcPath + " ";
@@ -132,7 +132,7 @@ export default class AstBuilder {
         throw new Error(srcPathDesc + lineNumDesc + msg);
     }
 
-    _matchAny() {
+    private _matchAny() {
         let n = this._peek();
         if (!n) {
             return null;
@@ -158,7 +158,7 @@ export default class AstBuilder {
         return n;
     }
 
-    _matchNestedBlock() {
+    private _matchNestedBlock() {
         let n = this._peek();
         let m = AstBuilder._findMarkerMatch(this.nestedBlockStartMarkers, n);
         if (!m) {
@@ -194,7 +194,7 @@ export default class AstBuilder {
         return parent;
     }
 
-    _matchEscapedBlock() {
+    private _matchEscapedBlock() {
         let n = this._peek();
         let m = AstBuilder._findMarkerMatch(this.escapedBlockStartMarkers, n);
         if (!m) {
@@ -230,7 +230,7 @@ export default class AstBuilder {
         return parent;
     }
 
-    _matchDecoratedLine() {
+    private _matchDecoratedLine() {
         const n = this._peek();
         const m = AstBuilder._findMarkerMatch(this.decoratedLineMarkers, n);
         if (!m) {
@@ -250,19 +250,20 @@ export default class AstBuilder {
     escapeText(s: string, attrs: any, forceEscapedNodeCreation: boolean) {
         const nodes = [];
         const splitSource = myutils.splitIntoLines(s, true);
-        for (let i = 0; i < splitSource.length; i+=2) {
-            const line = splitSource[i];
-            const terminator = splitSource[i + 1];
-            const indent = forceEscapedNodeCreation ? '' : myutils.determineIndent(line);
-            const n: any = {
-                text: line,
-                lineSep: terminator,
-                indent
-            };
-            nodes.push(n);
-        }
-
         if (!forceEscapedNodeCreation) {
+            for (let i = 0; i < splitSource.length; i+=2) {
+                const line = splitSource[i];
+                const terminator = splitSource[i + 1];
+                const indent = myutils.determineIndent(line);
+                const n: any = {
+                    type: AstBuilder.TYPE_UNDECORATED_LINE,
+                    text: line,
+                    lineSep: terminator,
+                    indent
+                };
+                nodes.push(n);
+            }
+
             forceEscapedNodeCreation = nodes.some(n => {
                 return AstBuilder._findMarkerMatch(this.decoratedLineMarkers, n, true) ||
                     AstBuilder._findMarkerMatch(this.escapedBlockStartMarkers, n, true) ||
@@ -297,7 +298,7 @@ export default class AstBuilder {
                     }
                 }
             }
-            return nodes;
+            return nodes as SourceCodeAstNode[];
         }
     }
 

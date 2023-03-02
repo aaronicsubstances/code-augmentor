@@ -1,6 +1,6 @@
 import { assert } from "chai";
-import AstBuilder from "../src/AstBuilder";
 
+import AstBuilder from "../src/AstBuilder";
 import AstFormatter from "../src/AstFormatter";
 
 describe('AstFormatter', function() {

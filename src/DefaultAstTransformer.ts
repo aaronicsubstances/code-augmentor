@@ -30,7 +30,7 @@ export default class DefaultAstTransformer {
         return augCodes;
     }
 
-    _addAugCodes(parentNode: SourceCodeAst | NestedBlockAstNode,
+    private _addAugCodes(parentNode: SourceCodeAst | NestedBlockAstNode,
             parentAugCode: AugmentingCodeDescriptor | null,
             lineCounter: { consumedLineCount: number },
             dest: AugmentingCodeDescriptor[]) {
@@ -288,7 +288,7 @@ export default class DefaultAstTransformer {
         return genCodeSections;
     }
 
-    _addNestedGenCodeSections(augCode: AugmentingCodeDescriptor,
+    private _addNestedGenCodeSections(augCode: AugmentingCodeDescriptor,
             genCodeSections: GeneratedCodeDescriptor[]) {
         // get all gen code nodes except those functioning as
         // last gen code sections for child aug codes.
@@ -372,29 +372,31 @@ export default class DefaultAstTransformer {
         if (!contentParts) {
             return [];
         }
-        DefaultAstTransformer.repairSplitCrLfs(contentParts);
+        DefaultAstTransformer._repairSplitCrLfs(contentParts);
 
         const allLines = new Array<string>();
         let lastPartIsExemptAndEmpty = false;
         let lastPartEndedWithLineSep = true;
-        for (const code of contentParts) {
-            if (!code) {
+        let lastPartIsExempt = false;
+        for (const part of contentParts) {
+            if (!part) {
                 continue;
             }
-            if (!code.content) {
-                if (code.exempt) {
+            if (!part.content) {
+                if (part.exempt) {
                     lastPartIsExemptAndEmpty = true;
+                    lastPartIsExempt = true;
                 }
                 else {
                     // pass through value of previous lastPartEndedWithLineSep
                 }
                 continue;
             }
-            const splitCode = myutils.splitIntoLines(code.content, true);
+            const splitCode = myutils.splitIntoLines(part.content, true);
             for (let j = 0; j < splitCode.length; j+=2) {
                 const line = splitCode[j];
                 let terminator = splitCode[j + 1];
-                if (!(!lineSeparator || code.exempt)) {
+                if (terminator && lineSeparator && !part.exempt) {
                     terminator = lineSeparator;
                 }
                 if (j > 0 || lastPartEndedWithLineSep) {
@@ -402,7 +404,7 @@ export default class DefaultAstTransformer {
                     // as a policy don't indent blank lines, similar
                     // to what IDEs do.
                     let effectiveIndent = "";
-                    if (!(!indent || code.exempt || lastPartIsExemptAndEmpty ||
+                    if (!(!indent || part.exempt || lastPartIsExemptAndEmpty ||
                             myutils.isBlank(line))) {
                         effectiveIndent = indent;
                     }
@@ -421,6 +423,7 @@ export default class DefaultAstTransformer {
                     allLines[allLines.length - 1] = terminator;
                 }
             }
+            lastPartIsExempt = part.exempt;
             lastPartIsExemptAndEmpty = false;
             lastPartEndedWithLineSep = !!allLines[allLines.length - 1];
         }
@@ -435,9 +438,7 @@ export default class DefaultAstTransformer {
 
             // ensure ending terminator, but only if line separator was given,
             // so as to provide a way to skip appending of ending newlines.
-            const lastContentPart = contentParts.at(-1);
-            if (lineSeparator && !(lastContentPart && lastContentPart.exempt)
-                    && !allLines[allLines.length - 1]) {
+            if (lineSeparator && !lastPartIsExempt) {
                 allLines[allLines.length - 1] = lineSeparator;
             }
         }
@@ -450,12 +451,12 @@ export default class DefaultAstTransformer {
      * that the carriage return character ends a content part, and the following content part
      * starts with the line feed character. 
      * <p>
-     * The extractLinesAndTerminators method depend on the absence of 
+     * The extractLinesAndTerminators method depend on the absence of
      * split CR-LFs.
      * 
      * @param contentParts content parts to be modified.
      */
-    static repairSplitCrLfs(contentParts: GeneratedCodePart[]) {
+    static _repairSplitCrLfs(contentParts: GeneratedCodePart[]) {
         for (let i = 0; i < contentParts.length - 1; i++) {
             const curr = contentParts[i];
             if (!curr || !curr.content) {

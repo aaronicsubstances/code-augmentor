@@ -1,4 +1,5 @@
 import { assert } from "chai";
+
 import AstBuilder from "../src/AstBuilder";
 import { SourceCodeAst } from "../src/types";
 
@@ -473,7 +474,7 @@ describe('AstBuilder', function() {
         });
     });
 
-    describe("createDecoratedLineNode", function() {
+    describe("#createDecoratedLineNode", function() {
         const data = [
             {
                 line: "",
@@ -579,7 +580,7 @@ describe('AstBuilder', function() {
         });
     });
 
-    describe("createEscapedNode", function() {
+    describe("#createEscapedNode", function() {
         const data = [
             {
                 lines: ["c", "\r\n"],
