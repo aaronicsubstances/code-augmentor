@@ -253,12 +253,11 @@ export default class AstBuilder {
         for (let i = 0; i < splitSource.length; i+=2) {
             const line = splitSource[i];
             const terminator = splitSource[i + 1];
-            const indent = myutils.determineIndent(line);
-            const n = {
+            const indent = forceEscapedNodeCreation ? '' : myutils.determineIndent(line);
+            const n: any = {
                 text: line,
                 lineSep: terminator,
-                indent,
-                marker: ''
+                indent
             };
             nodes.push(n);
         }
@@ -273,9 +272,8 @@ export default class AstBuilder {
             });
         }
 
-        // make new copy of attrs for use in setting defaults for lineSeps and indents.
+        // make new copy of attrs for use in setting defaults for lineSeps.
         attrs = Object.assign({}, attrs);
-        const dest = new Array<SourceCodeAstNode>();
         if (forceEscapedNodeCreation) {
             if (!attrs.lineSep) {
                 attrs.lineSep = os.EOL;
@@ -283,18 +281,24 @@ export default class AstBuilder {
             if (!attrs.endLineSep) {
                 attrs.endLineSep = os.EOL;
             }
+            const dest = new Array<SourceCodeAstNode>();
             dest.push(AstBuilder.createEscapedNode(splitSource, attrs));
+            return dest;
         }
         else {
             for (const n of nodes) {
-                n.marker = attrs.marker;
-                if (!n.lineSep) {
-                    n.lineSep = attrs.lineSep || os.EOL;
+                // dispose off indent used to determine whether to
+                // forcefully create an escaped node.
+                delete n.indent;
+                if (!n.lineSep && attrs.lineSep) {
+                    n.lineSep = attrs.lineSep;
+                    if (n.lineSep !== '\r' && n.lineSep !== '\n' && n.lineSep !== '\r\n') {
+                        throw new Error("received invalid lineSep: " + n.lineSep);
+                    }
                 }
-                dest.push(AstBuilder.createDecoratedLineNode(n.text, n));
             }
+            return nodes;
         }
-        return dest;
     }
 
     static createDecoratedLineNode(line: string, attrs: any) {
@@ -316,7 +320,7 @@ export default class AstBuilder {
         if (!myutils.isBlank(n.indent)) {
             throw new Error("received non-blank indent: " + n.indent);
         }
-        if (n.lineSep !== '\r' && n.lineSep !== '\n') {
+        if (n.lineSep !== '\r' && n.lineSep !== '\n' && n.lineSep !== '\r\n') {
             throw new Error("received invalid lineSep: " + n.lineSep);
         }
 
@@ -334,15 +338,15 @@ export default class AstBuilder {
             throw new Error("received unsuitable end marker: " + attrs.endMarker);
         }
         let markerAftermath = attrs.markerAftermath || "";
-        const uniqueEndMarkerPlus = myutils.modifyNameToBeAbsent(
+        const uniqueEndMarkerPlus = myutils.modifyTextToBeAbsent(
             lines, attrs.endMarker + markerAftermath);
         markerAftermath = uniqueEndMarkerPlus.substring(attrs.endMarker.length);
-        
+
         const n: any = {
             type: AstBuilder.TYPE_ESCAPED_BLOCK,
             marker: attrs.marker,
             endMarker: attrs.endMarker,
-            markerAftermath: attrs.markerAftermath,
+            markerAftermath,
             indent: attrs.indent,
             endIndent: attrs.endIndent,
             lineSep: attrs.lineSep,
@@ -357,10 +361,10 @@ export default class AstBuilder {
         if (!myutils.isBlank(n.endIndent)) {
             throw new Error("received non-blank end indent: " + n.endIndent);
         }
-        if (n.lineSep !== '\r' && n.lineSep !== '\n') {
+        if (n.lineSep !== '\r' && n.lineSep !== '\n' && n.lineSep !== '\r\n') {
             throw new Error("received invalid lineSep: " + n.lineSep);
         }
-        if (n.endLineSep !== '\r' && n.endLineSep !== '\n') {
+        if (n.endLineSep !== '\r' && n.endLineSep !== '\n' && n.endLineSep !== '\r\n') {
             throw new Error("received invalid end lineSep: " + n.endLineSep);
         }
 
