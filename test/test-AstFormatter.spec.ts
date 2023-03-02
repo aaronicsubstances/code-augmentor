@@ -546,5 +546,30 @@ describe('AstFormatter', function() {
             const actual = AstFormatter.stringify(ast);
             assert.deepEqual(actual, expected);
         });
+        it('should fail with input 0', function() {
+            assert.throws(function() {
+                AstFormatter.stringify(null);
+            });
+        });
+        it('should fail with input 1', function() {
+            assert.throws(function() {
+                AstFormatter.stringify({});
+            }, "unexpected node type");
+        });
+        it('should fail with input 2', function() {
+            assert.throws(function() {
+                AstFormatter.stringify({
+                    type: AstBuilder.TYPE_SOURCE_CODE,
+                    children: [
+                        {
+                            type: AstBuilder.TYPE_NESTED_BLOCK,
+                            children: [{
+                                type: "1268-dabb"
+                            }]
+                        }
+                    ]
+                });
+            }, "1268-dabb");
+        });
     });
 });
