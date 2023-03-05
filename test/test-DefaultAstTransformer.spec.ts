@@ -1,7 +1,8 @@
 import { assert } from "chai";
+import AstBuilder from "../src/AstBuilder";
 
 import DefaultAstTransformer from "../src/DefaultAstTransformer";
-import { GeneratedCodePart } from "../src/types";
+import { GeneratedCodeDescriptor, GeneratedCodePart } from "../src/types";
 
 describe("DefaultAstTransformer", function() {
 
@@ -492,6 +493,54 @@ describe("DefaultAstTransformer", function() {
             assert.throws(function() {
                 DefaultAstTransformer._consolidateAugCodeArgs(args);
             });
+        });
+    });
+
+    describe("#_createGenCodeNode", function() {
+        it("should pass with input 0", function() {
+            const instance = new DefaultAstTransformer();
+            instance.defaultGenCodeInlineMarker = "g_inline";
+            instance.defaultGenCodeStartMarker = "g_start:";
+            instance.defaultGenCodeEndMarker = "g_end:";
+            const genCodeLines: string[] = [
+                "in", "\n",
+                " the ", "\r\n",
+                "beginning", "\r\n"
+            ];
+            const useInlineMarker: boolean = false;
+            const genCodeSection: GeneratedCodeDescriptor | null = null;
+            const defaultIndent: string | null = "\t";
+            const defaultLineSep: string | null = "\r";
+            const expected = {
+                type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                markerAftermath: "",
+                indent: "\t",
+                endIndent: "\t",
+                marker: "g_start:",
+                endMarker: "g_end:",
+                lineSep: "\r",
+                endLineSep: "\r",
+                children: [
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "in",
+                        lineSep: "\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: " the ",
+                        lineSep: "\r\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "beginning",
+                        lineSep: "\r\n"
+                    }
+                ]
+            };
+            const actual = instance._createGenCodeNode(genCodeLines, useInlineMarker,
+                genCodeSection, defaultIndent, defaultLineSep);
+            assert.deepEqual(actual, expected);
         });
     });
 });

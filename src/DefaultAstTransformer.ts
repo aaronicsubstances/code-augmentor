@@ -624,7 +624,7 @@ export default class DefaultAstTransformer {
             useInlineMarker: boolean,
             genCodeSection: GeneratedCodeDescriptor | null,
             defaultIndent: string | null,
-            defaultLineSep: string | null) {
+            defaultLineSep: string | null):  DecoratedLineAstNode | EscapedBlockAstNode {
         if (useInlineMarker) {
             if (genCodeSection && !genCodeSection.nestedBlockUsed) {
                 const n = genCodeSection.parentNode.children[genCodeSection.idxInParentNode];
