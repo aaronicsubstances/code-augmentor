@@ -192,7 +192,7 @@ export default class DefaultAstTransformer {
         // begin by processing all but the last gen code.
         let genCodeSectionReduction = 0;
         if (augCode.nestedBlockUsed) {
-            const lastGenCodeSection = genCodeSections.at(-1);
+            const lastGenCodeSection = getLast(genCodeSections);
             if (lastGenCodeSection && lastGenCodeSection.parentNode === augCode.parentNode) {
                 genCodeSectionReduction++;
             }
@@ -564,7 +564,7 @@ export default class DefaultAstTransformer {
         // then deal with gen code sections which have to be deleted.
         let ignoreRemainder = false;
         if (genCodes.length > 0 && genCodes.length < minCodeSectionsToDealWith) {
-            const g = genCodes.at(-1);
+            const g = getLast(genCodes);
             if (g) {
                 ignoreRemainder = g.ignoreRemainder;
             }
@@ -591,7 +591,7 @@ export default class DefaultAstTransformer {
                 continue;
             }
             if (targetIndexForInsertions == -1) {
-                const g = genCodeSections.at(-1);
+                const g = getLast(genCodeSections);
                 if (g) {
                     targetIndexForInsertions = g.idxInParentNode + 1;                    
                 }
@@ -629,7 +629,7 @@ export default class DefaultAstTransformer {
             if (genCodeSection && !genCodeSection.nestedBlockUsed) {
                 const n = genCodeSection.parentNode.children[genCodeSection.idxInParentNode];
                 return AstBuilder.createDecoratedLineNode(
-                    genCodeLines.at(0) || "", n);
+                    getFirst(genCodeLines) || "", n);
             }
             else {
                 if (!this.defaultGenCodeInlineMarker) {
@@ -641,7 +641,7 @@ export default class DefaultAstTransformer {
                     marker: this.defaultGenCodeInlineMarker
                 };
                 return AstBuilder.createDecoratedLineNode(
-                    genCodeLines.at(0) || "", attrs);
+                    getFirst(genCodeLines) || "", attrs);
             }
         }
         else {
@@ -742,4 +742,18 @@ function getLineCount(n: SourceCodeAstNode) {
         return count;
     }
     throw new Error("unexpected node type: " + n.type);
+}
+
+function getFirst<T>(a: T[] | null) {
+    if (a && a.length) {
+        return a[0];
+    }
+    return null;
+}
+
+function getLast<T>(a: T[] | null) {
+    if (a && a.length) {
+        return a[a.length - 1];
+    }
+    return null;
 }

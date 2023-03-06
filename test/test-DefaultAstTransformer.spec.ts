@@ -502,15 +502,15 @@ describe("DefaultAstTransformer", function() {
             instance.defaultGenCodeInlineMarker = "g_inline";
             instance.defaultGenCodeStartMarker = "g_start:";
             instance.defaultGenCodeEndMarker = "g_end:";
-            const genCodeLines: string[] = [
+            const genCodeLines = [
                 "in", "\n",
                 " the ", "\r\n",
                 "beginning", "\r\n"
             ];
-            const useInlineMarker: boolean = false;
+            const useInlineMarker = false;
             const genCodeSection: GeneratedCodeDescriptor | null = null;
-            const defaultIndent: string | null = "\t";
-            const defaultLineSep: string | null = "\r";
+            const defaultIndent = "\t";
+            const defaultLineSep = "\r";
             const expected = {
                 type: AstBuilder.TYPE_ESCAPED_BLOCK,
                 markerAftermath: "",
@@ -541,6 +541,256 @@ describe("DefaultAstTransformer", function() {
             const actual = instance._createGenCodeNode(genCodeLines, useInlineMarker,
                 genCodeSection, defaultIndent, defaultLineSep);
             assert.deepEqual(actual, expected);
+        });
+
+        it("should pass with input 1", function() {
+            const instance = new DefaultAstTransformer();
+            instance.defaultGenCodeStartMarker = "_start:";
+            instance.defaultGenCodeEndMarker = "_end:";
+            const genCodeLines: string[] = [
+                "in", "\n",
+                " the ", "\r\n",
+                "beginning", "\r\n"
+            ];
+            const useInlineMarker = false;
+            const genCodeSection: any = {
+                nestedBlockUsed: false
+            };
+            const defaultIndent = "";
+            const defaultLineSep = "\r\n";
+            const expected = {
+                type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                markerAftermath: "",
+                indent: "",
+                endIndent: "",
+                marker: "_start:",
+                endMarker: "_end:",
+                lineSep: "\r\n",
+                endLineSep: "\r\n",
+                children: [
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "in",
+                        lineSep: "\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: " the ",
+                        lineSep: "\r\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "beginning",
+                        lineSep: "\r\n"
+                    }
+                ]
+            };
+            const actual = instance._createGenCodeNode(genCodeLines, useInlineMarker,
+                genCodeSection, defaultIndent, defaultLineSep);
+            assert.deepEqual(actual, expected);
+        });
+
+        it("should pass with input 2", function() {
+            const instance = new DefaultAstTransformer();
+            instance.defaultGenCodeInlineMarker = "g_inline";
+            const genCodeLines = ["in", "\n"];
+            const useInlineMarker = true;
+            const genCodeSection: GeneratedCodeDescriptor | null = null;
+            const defaultIndent = "";
+            const defaultLineSep = "\r\n";
+            const expected = {
+                type: AstBuilder.TYPE_DECORATED_LINE,
+                indent: "",
+                marker: "g_inline",
+                markerAftermath: "in",
+                lineSep: "\r\n",
+            };
+            const actual = instance._createGenCodeNode(genCodeLines, useInlineMarker,
+                genCodeSection, defaultIndent, defaultLineSep);
+            assert.deepEqual(actual, expected);
+        });
+
+        it("should pass with input 3", function() {
+            const instance = new DefaultAstTransformer();
+            instance.defaultGenCodeInlineMarker = "_inline";
+            instance.defaultGenCodeStartMarker = "_start:";
+            instance.defaultGenCodeEndMarker = "_end:";
+            const genCodeLines = [
+                "in", "\n",
+                " the ", "\r\n",
+                "beginning", "\r\n"
+            ];
+            const useInlineMarker = true;
+            const genCodeSection: any = {
+                nestedBlockUsed: true
+            };
+            const defaultIndent = "\t\t";
+            const defaultLineSep = "\r";
+            const expected = {
+                type: AstBuilder.TYPE_DECORATED_LINE,
+                indent: "\t\t",
+                marker: "_inline",
+                markerAftermath: "in",
+                lineSep: "\r",
+            };
+            const actual = instance._createGenCodeNode(genCodeLines, useInlineMarker,
+                genCodeSection, defaultIndent, defaultLineSep);
+            assert.deepEqual(actual, expected);
+        });
+
+        it("should pass with input 4", function() {
+            const instance = new DefaultAstTransformer();
+            const genCodeLines= new Array<string>();
+            const useInlineMarker = true;
+            const genCodeSection: GeneratedCodeDescriptor = {
+                parentNode: {
+                    type: AstBuilder.TYPE_SOURCE_CODE,
+                    children: [
+                        {
+                            type: AstBuilder.TYPE_DECORATED_LINE,
+                            indent: " ",
+                            marker: "jui",
+                            markerAftermath: "ce",
+                            lineSep: "\n"
+                        }
+                    ]
+                },
+                idxInParentNode: 0,
+                nestedBlockUsed: false
+            };
+            const defaultIndent = null;
+            const defaultLineSep = null;
+            const expected = {
+                type: AstBuilder.TYPE_DECORATED_LINE,
+                indent: " ",
+                marker: "jui",
+                markerAftermath: "",
+                lineSep: "\n",
+            };
+            const actual = instance._createGenCodeNode(genCodeLines, useInlineMarker,
+                genCodeSection, defaultIndent, defaultLineSep);
+            assert.deepEqual(actual, expected);
+        });
+
+        it("should pass with input 5", function() {
+            const instance = new DefaultAstTransformer();
+            const genCodeLines = [
+                "in", "\n",
+                " the ", "\r\n",
+                "beginning", ""
+            ];
+            const useInlineMarker = false;
+            const genCodeSection: GeneratedCodeDescriptor = {
+                parentNode: {
+                    type: AstBuilder.TYPE_NESTED_BLOCK,
+                    children: [
+                        {
+                            type: AstBuilder.TYPE_DECORATED_LINE,
+                            indent: "",
+                            marker: "i",
+                            markerAftermath: "eb",
+                            lineSep: "\r"
+                        },
+                        {
+                            type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                            markerAftermath: "ce",
+                            indent: " ",
+                            marker: "jui",
+                            lineSep: "\n",
+                            endIndent: "\t",
+                            endMarker: "dri",
+                            endLineSep: "\r\n"
+                        }
+                    ]
+                },
+                idxInParentNode: 1,
+                nestedBlockUsed: true
+            };
+            const defaultIndent = null;
+            const defaultLineSep = null;
+            const expected = {
+                type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                markerAftermath: "ce",
+                indent: " ",
+                marker: "jui",
+                lineSep: "\n",
+                endIndent: "\t",
+                endMarker: "dri",
+                endLineSep: "\r\n",
+                children: [
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "in",
+                        lineSep: "\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: " the ",
+                        lineSep: "\r\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "beginning",
+                        lineSep: "\n"
+                    }
+                ]
+            };
+            const actual = instance._createGenCodeNode(genCodeLines, useInlineMarker,
+                genCodeSection, defaultIndent, defaultLineSep);
+            assert.deepEqual(actual, expected);
+        });
+
+        it("should fail due to missing default inline marker", function() {
+            const instance = new DefaultAstTransformer();
+            instance.defaultGenCodeStartMarker = "8";
+            instance.defaultGenCodeEndMarker = "d";
+            const genCodeLines = [];
+            const useInlineMarker = true;
+            const genCodeSection = null;
+            const defaultIndent = null;
+            const defaultLineSep = null;
+            assert.throws(function() {
+                instance._createGenCodeNode(genCodeLines, useInlineMarker,
+                    genCodeSection, defaultIndent, defaultLineSep);
+            }, "inline marker");
+        });
+
+        it("should fail due to missing default start marker", function() {
+            const instance = new DefaultAstTransformer();
+            instance.defaultGenCodeInlineMarker = "d";
+            instance.defaultGenCodeEndMarker = "8";
+            const genCodeLines = [
+                "in", "\n",
+                " the ", "\r\n",
+                "beginning", ""
+            ];
+            const useInlineMarker = false;
+            const genCodeSection = null;
+            const defaultIndent = null;
+            const defaultLineSep = null;
+            assert.throws(function() {
+                instance._createGenCodeNode(genCodeLines, useInlineMarker,
+                    genCodeSection, defaultIndent, defaultLineSep);
+            }, "start marker");
+        });
+
+        it("should fail due to missing default end marker", function() {
+            const instance = new DefaultAstTransformer();
+            instance.defaultGenCodeInlineMarker = "d";
+            instance.defaultGenCodeStartMarker = "8";
+            const genCodeLines = [
+                "in", "\n",
+                " the ", "\r\n",
+                "beginning", ""
+            ];
+            const useInlineMarker = false;
+            const genCodeSection = null;
+            const defaultIndent = null;
+            const defaultLineSep = null;
+            assert.throws(function() {
+                instance._createGenCodeNode(genCodeLines, useInlineMarker,
+                    genCodeSection, defaultIndent, defaultLineSep);
+            }, "end marker");
         });
     });
 
