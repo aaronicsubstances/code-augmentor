@@ -40,10 +40,10 @@ export interface AugmentingCodeDescriptor {
     idxInParentNode: number;
     nestedBlockUsed: boolean;
     lineNumber: number;
-    functionName: string;
+    markerAftermath: string;
     args: any[];
     argsExclEndIdxInParentNode: number;
-    endFunctionName: string | null;
+    endMarkerAftermath: string | null;
     endArgs: any[] | null;
     endArgsExclEndIdxInParentNode: number;
     parent: AugmentingCodeDescriptor | null;

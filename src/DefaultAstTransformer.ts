@@ -54,10 +54,10 @@ export default class DefaultAstTransformer {
                     idxInParentNode: i,
                     nestedBlockUsed: true,
                     lineNumber: lineCounter.consumedLineCount,
-                    functionName: typedNode.markerAftermath,
+                    markerAftermath: typedNode.markerAftermath,
                     args: augCodeArgs.args,
                     argsExclEndIdxInParentNode: augCodeArgs.exclEndIdx,
-                    endFunctionName: typedNode.endMarkerAftermath,
+                    endMarkerAftermath: typedNode.endMarkerAftermath,
                     endArgs: augCodeEndArgs.args,
                     endArgsExclEndIdxInParentNode: augCodeEndArgs.exclEndIdx,
                     parent: parentAugCode,
@@ -79,10 +79,10 @@ export default class DefaultAstTransformer {
                     idxInParentNode: i,
                     nestedBlockUsed: false,
                     lineNumber: lineCounter.consumedLineCount,
-                    functionName: typedNode.markerAftermath,
+                    markerAftermath: typedNode.markerAftermath,
                     args: augCodeArgs.args,
                     argsExclEndIdxInParentNode: augCodeArgs.exclEndIdx,
-                    endFunctionName: null,
+                    endMarkerAftermath: null,
                     endArgs: null,
                     endArgsExclEndIdxInParentNode: -1,
                     parent: parentAugCode,
@@ -102,7 +102,7 @@ export default class DefaultAstTransformer {
         const src = parentNode.children;
         if (!src) {
             return {
-                exclEndIdx: -1,
+                exclEndIdx: 0,
                 args: args
             };
         }
@@ -113,7 +113,10 @@ export default class DefaultAstTransformer {
                 break;
             }
             const typedNode = n as DecoratedLineAstNode;
-            if (findMarkerMatch(this.augCodeJsonArgMarkers, typedNode.marker)) {
+            if (findMarkerMatch(this.augCodeArgSepMarkers, typedNode.marker)) {
+                args.push(null);
+            }
+            else if (findMarkerMatch(this.augCodeJsonArgMarkers, typedNode.marker)) {
                 args.push(typedNode.markerAftermath);
                 args.push(typedNode.lineSep);
                 args.push(true);
@@ -122,9 +125,6 @@ export default class DefaultAstTransformer {
                 args.push(typedNode.markerAftermath);
                 args.push(typedNode.lineSep);
                 args.push(false);
-            }
-            else if (findMarkerMatch(this.augCodeArgSepMarkers, typedNode.marker)) {
-                args.push(null);
             }
             else {
                 break;
@@ -727,21 +727,18 @@ function getLineCount(n: SourceCodeAstNode) {
             n.type === AstBuilder.TYPE_UNDECORATED_LINE) {
         return 1;
     }
-    if (n.type === AstBuilder.TYPE_ESCAPED_BLOCK) {
-        const typedNode = n as EscapedBlockAstNode;
-        return 2 + (typedNode.children ? typedNode.children.length : 0);
+    if (n.type !== AstBuilder.TYPE_ESCAPED_BLOCK &&
+            n.type !== AstBuilder.TYPE_NESTED_BLOCK) {
+        throw new Error("unexpected node type: " + n.type);
     }
-    if (n.type === AstBuilder.TYPE_NESTED_BLOCK) {
-        let count = 2;
-        const typedNode = n as NestedBlockAstNode;
-        if (typedNode.children) {
-            for (const child of typedNode.children) {
-                count += getLineCount(child);
-            }
+    let count = 2;
+    const typedNode = n as (NestedBlockAstNode | EscapedBlockAstNode);
+    if (typedNode.children) {
+        for (const child of typedNode.children) {
+            count += getLineCount(child);
         }
-        return count;
     }
-    throw new Error("unexpected node type: " + n.type);
+    return count;
 }
 
 function getFirst<T>(a: T[] | null) {
