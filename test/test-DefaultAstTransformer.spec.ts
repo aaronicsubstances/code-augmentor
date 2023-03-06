@@ -2,7 +2,7 @@ import { assert } from "chai";
 import AstBuilder from "../src/AstBuilder";
 
 import DefaultAstTransformer from "../src/DefaultAstTransformer";
-import { GeneratedCodeDescriptor, GeneratedCodePart } from "../src/types";
+import { DefaultAstTransformSpec, GeneratedCodeDescriptor, GeneratedCodePart } from "../src/types";
 
 describe("DefaultAstTransformer", function() {
 
@@ -541,6 +541,295 @@ describe("DefaultAstTransformer", function() {
             const actual = instance._createGenCodeNode(genCodeLines, useInlineMarker,
                 genCodeSection, defaultIndent, defaultLineSep);
             assert.deepEqual(actual, expected);
+        });
+    });
+
+    describe("#performTransformations", function() {
+        it("it should pass with empty input", function() {
+            DefaultAstTransformer.performTransformations([]);
+        });
+        it("it should pass with no additions", function() {
+            const node1 = {
+                type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                children: [
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        indent: "",
+                        marker: "0",
+                        markerAftermath: "",
+                        lineSep: "\n",
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        indent: "",
+                        marker: "1",
+                        markerAftermath: "",
+                        lineSep: "\n",
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        indent: "",
+                        marker: "2",
+                        markerAftermath: "",
+                        lineSep: "\n",
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "3",
+                        lineSep: "\n",
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        indent: "",
+                        marker: "4",
+                        markerAftermath: "d",
+                        lineSep: "\n",
+                    }
+                ]
+            };
+            const transformSpecs: DefaultAstTransformSpec[] = [
+                {
+                    node: node1,
+                    childIndex: 0,
+                    childToInsert: null,
+                    replacementChild: null,
+                    performDeletion: true
+                },
+                {
+                    node: node1,
+                    childIndex: 2,
+                    childToInsert: null,
+                    replacementChild: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "a",
+                        lineSep: "\r\n"
+                    },
+                    performDeletion: false
+                },
+                {
+                    node: node1,
+                    childIndex: 3,
+                    childToInsert: null,
+                    replacementChild: null,
+                    performDeletion: true
+                },
+                {
+                    node: node1,
+                    childIndex: 4,
+                    childToInsert: null,
+                    replacementChild: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "b",
+                        lineSep: "\r\n"
+                    },
+                    performDeletion: false
+                },
+                {
+                    node: node1,
+                    childIndex: 4,
+                    childToInsert: null,
+                    replacementChild: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "c",
+                        lineSep: "\n"
+                    },
+                    performDeletion: false
+                }
+            ];
+            const expected = {
+                type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                children: [
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        indent: "",
+                        marker: "1",
+                        markerAftermath: "",
+                        lineSep: "\n",
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "a",
+                        lineSep: "\r\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "c",
+                        lineSep: "\n"
+                    }
+                ]
+            };
+            DefaultAstTransformer.performTransformations(transformSpecs);
+            assert.deepEqual(node1, expected);
+        });
+        it("it should pass with some additions", function() {
+            const node1 = {
+                type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                children: [
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        indent: "",
+                        marker: "0",
+                        markerAftermath: "",
+                        lineSep: "\n",
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        indent: "",
+                        marker: "1",
+                        markerAftermath: "",
+                        lineSep: "\n",
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        indent: "",
+                        marker: "2",
+                        markerAftermath: "",
+                        lineSep: "\n",
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "3",
+                        lineSep: "\n",
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        indent: "",
+                        marker: "4",
+                        markerAftermath: "d",
+                        lineSep: "\n",
+                    }
+                ]
+            };
+            const node2: any = {
+                type: AstBuilder.TYPE_NESTED_BLOCK
+            };
+            const transformSpecs: DefaultAstTransformSpec[] = [
+                {
+                    node: node1,
+                    childIndex: 0,
+                    childToInsert: null,
+                    replacementChild: null,
+                    performDeletion: true
+                },
+                {
+                    node: node1,
+                    childIndex: 2,
+                    childToInsert: null,
+                    replacementChild: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "a",
+                        lineSep: "\r\n"
+                    },
+                    performDeletion: false
+                },
+                {
+                    node: node1,
+                    childIndex: 3,
+                    childToInsert: null,
+                    replacementChild: null,
+                    performDeletion: true
+                },
+                {
+                    node: node1,
+                    childIndex: 4,
+                    childToInsert: null,
+                    replacementChild: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "b",
+                        lineSep: "\r\n"
+                    },
+                    performDeletion: false
+                },
+                {
+                    node: node1,
+                    childIndex: 4,
+                    childToInsert: null,
+                    replacementChild: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "c",
+                        lineSep: "\n"
+                    },
+                    performDeletion: false
+                },
+                {
+                    node: node1,
+                    childIndex: 5,
+                    childToInsert: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "j",
+                        lineSep: "\n"
+                    },
+                    replacementChild: null,
+                    performDeletion: false
+                },
+                {
+                    node: node1,
+                    childIndex: 5,
+                    childToInsert: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "m",
+                        lineSep: "\n"
+                    },
+                    replacementChild: null,
+                    performDeletion: false
+                },
+                {
+                    node: node2,
+                    childIndex: 0,
+                    childToInsert: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "n",
+                        lineSep: "\r\n"
+                    },
+                    replacementChild: null,
+                    performDeletion: false
+                }
+            ];
+            const expected1 = {
+                type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                children: [
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        indent: "",
+                        marker: "1",
+                        markerAftermath: "",
+                        lineSep: "\n",
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "a",
+                        lineSep: "\r\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "c",
+                        lineSep: "\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "j",
+                        lineSep: "\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "m",
+                        lineSep: "\n"
+                    },
+                ]
+            };
+            const expected2 = {
+                type: AstBuilder.TYPE_NESTED_BLOCK,
+                children: [
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "n",
+                        lineSep: "\r\n"
+                    },
+                ]
+            };
+            DefaultAstTransformer.performTransformations(transformSpecs);
+            assert.deepEqual(node1, expected1);
+            assert.deepEqual(node2, expected2);
         });
     });
 });

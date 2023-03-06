@@ -675,7 +675,7 @@ export default class DefaultAstTransformer {
      * This method requires the following of its transformSpecs arg to
      * guarantee correct operation:
      * <ul>
-     * <li>indices per node (ie parent or child) should be arranged in ascending order.</li>
+     * <li>indices per node should be arranged in ascending order.</li>
      * <li>each index to be deleted should not be specified more than once.</li>
      * <li>any inserts should appear towards the end, i.e. once an insert is specified,
      * no other transform type should be specified afterwards.</li>
@@ -683,22 +683,32 @@ export default class DefaultAstTransformer {
      * @param transformSpecs
      */
     static performTransformations(transformSpecs: DefaultAstTransformSpec[]) {
-        // due to nature of deletions and insertions shifting indices,
-        // transform from last to first.
+        // since updates don't move indices and need to be applied in order,
+        // work on them first.
+        for (const transformSpec of transformSpecs) {
+            if (transformSpec.performDeletion) {
+                continue;
+            }
+            let nodes = transformSpec.node.children;
+            if (transformSpec.replacementChild) {
+                nodes[transformSpec.childIndex] = transformSpec.replacementChild;
+            }
+        }
+        // due to nature of deletions and insertions, apply them from last to first.
         for (let i = transformSpecs.length - 1; i >= 0; i--) {
             const transformSpec = transformSpecs[i];
             let nodes = transformSpec.node.children;
-            if (!nodes) {
-                nodes = [];
-                transformSpec.node.children = nodes;
-            }
             if (transformSpec.performDeletion) {
                 nodes.splice(transformSpec.childIndex, 1);
             }
             else if (transformSpec.replacementChild) {
-                nodes[transformSpec.childIndex] = transformSpec.replacementChild;
+                continue;
             }
-            else if (transformSpec.childToInsert) {
+            else if (transformSpec.childToInsert) {                
+                if (!nodes) {
+                    nodes = [];
+                    transformSpec.node.children = nodes;
+                }
                 nodes.splice(transformSpec.childIndex, 0, transformSpec.childToInsert);
             }
         }
