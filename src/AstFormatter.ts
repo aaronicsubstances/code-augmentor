@@ -4,10 +4,11 @@ import {
     EscapedBlockAstNode,
     NestedBlockAstNode,
     SourceCodeAst,
+    SourceCodeAstNode,
     UndecoratedLineAstNode
 } from "./types";
 
-function stringify(n: any) {
+function stringify(n: SourceCodeAstNode | SourceCodeAst) {
     const out = new Array<string>();
     if (n.type === AstBuilder.TYPE_SOURCE_CODE) {
         const typedNode = n as SourceCodeAst;

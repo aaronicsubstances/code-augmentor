@@ -23,7 +23,6 @@ const CHANGE_SUMMARY_FILE_NAME = "CHANGE-SUMMARY.txt";
 const CHANGE_DETAILS_FILE_NAME = "CHANGE-DETAILS.txt";
 
 export default class CodeChangeDetective {
-    // input properties
     codeChangeSupplier: (() => Promise<SourceFileDescriptor | null>) | null = null;
     codeChangeProcessingErrorLog: ((e: any, m: string) => Promise<void>) | null = null;
     destDir = '';
@@ -80,13 +79,13 @@ export default class CodeChangeDetective {
         let codeChangeDetected = false;
 
         try {
-            if (!outputSummaryPath) {
+            if (outputSummaryPath) {
                 outputSummaryWriter = await fs.open(outputSummaryPath, "w");
             }
-            if (!changeSummaryPath) {
+            if (changeSummaryPath) {
                 changeSummaryWriter = await fs.open(changeSummaryPath, "w");
             }
-            if (!changeDetailsPath) {
+            if (changeDetailsPath) {
                 changeDiffWriter = await fs.open(changeDetailsPath, "w");
             }
 

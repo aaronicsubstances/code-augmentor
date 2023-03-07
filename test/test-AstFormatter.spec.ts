@@ -2,6 +2,7 @@ import { assert } from "chai";
 
 import AstBuilder from "../src/AstBuilder";
 import AstFormatter from "../src/AstFormatter";
+import { SourceCodeAst, UndecoratedLineAstNode } from "../src/types";
 
 describe('AstFormatter', function() {
 
@@ -11,7 +12,7 @@ describe('AstFormatter', function() {
                 type: AstBuilder.TYPE_SOURCE_CODE
             };
             const expected = "";
-            const actual = AstFormatter.stringify(ast);
+            const actual = AstFormatter.stringify(ast as SourceCodeAst);
             assert.deepEqual(actual, expected);
         });
         it(`should pass with input 1`, function() {
@@ -362,7 +363,7 @@ describe('AstFormatter', function() {
                 type: AstBuilder.TYPE_UNDECORATED_LINE
             };
             const expected = "";
-            const actual = AstFormatter.stringify(ast);
+            const actual = AstFormatter.stringify(ast as UndecoratedLineAstNode);
             assert.deepEqual(actual, expected);
         });
         it(`should pass with input 4`, function() {
@@ -548,12 +549,12 @@ describe('AstFormatter', function() {
         });
         it('should fail with input 0', function() {
             assert.throws(function() {
-                AstFormatter.stringify(null);
+                AstFormatter.stringify(null as any);
             });
         });
         it('should fail with input 1', function() {
             assert.throws(function() {
-                AstFormatter.stringify({});
+                AstFormatter.stringify({} as any);
             }, "unexpected node type");
         });
         it('should fail with input 2', function() {
@@ -568,7 +569,7 @@ describe('AstFormatter', function() {
                             }]
                         }
                     ]
-                });
+                } as any);
             }, "1268-dabb");
         });
     });
