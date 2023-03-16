@@ -7,6 +7,7 @@ import {
     DefaultAstTransformSpec,
     GeneratedCodeDescriptor,
     GeneratedCodePart,
+    NestedBlockAstNode,
     SourceCodeAst
 } from "../src/types";
 
@@ -996,6 +997,706 @@ describe("DefaultAstTransformer", function() {
             assert.throws(function() {
                 DefaultAstTransformer._consolidateAugCodeArgs(args);
             });
+        });
+    });
+
+    describe("#_getLastGenCodeSection", function() {
+        const parentNode = {
+            type: AstBuilder.TYPE_NESTED_BLOCK,
+            indent: "  ",
+            marker: "beig",
+            markerAftermath: "",
+            lineSep: "\n",
+            endIndent: "",
+            endMarker: "es",
+            endMarkerAftermath: "kop",
+            endLineSep: "\r\n",
+            children: [
+                {
+                    type: AstBuilder.TYPE_DECORATED_LINE,
+                    indent: "",
+                    marker: "beig",
+                    markerAftermath: "0",
+                    lineSep: "\r\n"
+                },
+                {
+                    type: AstBuilder.TYPE_UNDECORATED_LINE,
+                    text: "c::",
+                    lineSep: "\n"
+                },
+                {
+                    type: AstBuilder.TYPE_DECORATED_LINE,
+                    indent: "\t",
+                    marker: "notation",
+                    markerAftermath: "2",
+                    lineSep: "\n"
+                },
+                {
+                    type: AstBuilder.TYPE_UNDECORATED_LINE,
+                    text: "ad",
+                    lineSep: "\n"
+                },
+                {
+                    type: AstBuilder.TYPE_DECORATED_LINE,
+                    indent: " ",
+                    marker: "[[!",
+                    markerAftermath: "4",
+                    lineSep: "\r\n"
+                },
+                {
+                    type: AstBuilder.TYPE_DECORATED_LINE,
+                    indent: " ",
+                    marker: "indu",
+                    markerAftermath: "5",
+                    lineSep: "\r\n"
+                },
+                {
+                    type: AstBuilder.TYPE_UNDECORATED_LINE,
+                    text: "o",
+                    lineSep: "\r\n"
+                },
+                {
+                    type: AstBuilder.TYPE_DECORATED_LINE,
+                    indent: "",
+                    marker: "input_arg",
+                    markerAftermath: "7",
+                    lineSep: "\r\n"
+                },
+                {
+                    type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                    markerAftermath: "8",
+                    indent: "",
+                    marker: "{{",
+                    lineSep: "\n",
+                    endIndent: "\t",
+                    endMarker: "p",
+                    endLineSep: "\r\n",
+                    children: []
+                },
+                {
+                    type: AstBuilder.TYPE_DECORATED_LINE,
+                    indent: "",
+                    marker: "beig",
+                    markerAftermath: "9",
+                    lineSep: "\n"
+                },
+                {
+                    type: AstBuilder.TYPE_UNDECORATED_LINE,
+                    text: "larop",
+                    lineSep: "\r\n"
+                },
+                {
+                    type: AstBuilder.TYPE_DECORATED_LINE,
+                    indent: "\t\t",
+                    marker: "sep,,",
+                    markerAftermath: "11",
+                    lineSep: "\r\n"
+                },
+                {
+                    type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                    markerAftermath: "12",
+                    indent: "",
+                    marker: "[[!",
+                    lineSep: "\n",
+                    endIndent: "",
+                    endMarker: "gof",
+                    endLineSep: "\n",
+                    children: []
+                },
+                {
+                    type: AstBuilder.TYPE_DECORATED_LINE,
+                    indent: "",
+                    marker: "indu",
+                    markerAftermath: "13",
+                    lineSep: "\n"
+                },
+                {
+                    type: AstBuilder.TYPE_UNDECORATED_LINE,
+                    text: "larop",
+                    lineSep: "\r\n"
+                },
+                {
+                    type: AstBuilder.TYPE_NESTED_BLOCK,
+                    markerAftermath: "15",
+                    endMarkerAftermath: "v",
+                    indent: "",
+                    marker: "indu",
+                    lineSep: "\n",
+                    endIndent: "",
+                    endMarker: "gof",
+                    endLineSep: "\n",
+                    children: [
+                        {
+                            type: AstBuilder.TYPE_UNDECORATED_LINE,
+                            text: "o",
+                            lineSep: "\r\n"
+                        },
+                        {
+                            type: AstBuilder.TYPE_DECORATED_LINE,
+                            indent: " ",
+                            marker: "indu",
+                            markerAftermath: "1",
+                            lineSep: "\r\n"
+                        },
+                        {
+                            type: AstBuilder.TYPE_UNDECORATED_LINE,
+                            text: "o",
+                            lineSep: "\r\n"
+                        },
+                        {
+                            type: AstBuilder.TYPE_DECORATED_LINE,
+                            indent: "",
+                            marker: "{{",
+                            markerAftermath: "3",
+                            lineSep: "\r\n"
+                        },
+                        {
+                            type: AstBuilder.TYPE_UNDECORATED_LINE,
+                            text: "o",
+                            lineSep: "\r\n"
+                        }]
+                },
+                {
+                    type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                    markerAftermath: "16",
+                    indent: "",
+                    marker: "[[!",
+                    lineSep: "\n",
+                    endIndent: "",
+                    endMarker: "gof",
+                    endLineSep: "\n",
+                    children: []
+                },
+            ]
+        };
+        const instance = new DefaultAstTransformer();
+        instance.augCodeMarkers = ["indu", "beig"];
+        instance.augCodeJsonArgMarkers = ["notation"];
+        instance.augCodeArgSepMarkers = ["sep,,"];
+        instance.augCodeArgMarkers = ["input_arg"];
+        instance.genCodeMarkers = ["[[!", "{{"];
+        it("should pass with input 0", function() {
+            const augCode: any = {
+                parentNode: parentNode,
+                idxInParentNode: 0,
+                nestedBlockUsed: false,
+                argsExclEndIdxInParentNode: 1,
+                endArgsExclEndIdxInParentNode: -1
+            };
+            const expected = null;
+            const actual = instance._getLastGenCodeSection(augCode);
+            assert.deepEqual(actual, expected);
+        });
+        it("should pass with input 1", function() {
+            const augCode: any = {
+                parentNode: parentNode,
+                idxInParentNode: 5,
+                nestedBlockUsed: false,
+                argsExclEndIdxInParentNode: 6,
+                endArgsExclEndIdxInParentNode: -1
+            };
+            const expected = null;
+            const actual = instance._getLastGenCodeSection(augCode);
+            assert.deepEqual(actual, expected);
+        });
+        it("should pass with input 2", function() {
+            const augCode: any = {
+                parentNode: parentNode,
+                idxInParentNode: 9,
+                nestedBlockUsed: false,
+                argsExclEndIdxInParentNode: 10,
+                endArgsExclEndIdxInParentNode: -1
+            };
+            const expected = null;
+            const actual = instance._getLastGenCodeSection(augCode);
+            assert.deepEqual(actual, expected);
+        });
+        it("should pass with input 3", function() {
+            const augCode: any = {
+                parentNode: parentNode,
+                idxInParentNode: 13,
+                nestedBlockUsed: false,
+                argsExclEndIdxInParentNode: 14,
+                endArgsExclEndIdxInParentNode: -1
+            };
+            const expected = null;
+            const actual = instance._getLastGenCodeSection(augCode);
+            assert.deepEqual(actual, expected);
+        });
+        it("should pass with input 4", function() {
+            const augCode: any = {
+                parentNode: parentNode,
+                idxInParentNode: 15,
+                nestedBlockUsed: true,
+                argsExclEndIdxInParentNode: 0,
+                endArgsExclEndIdxInParentNode: 16
+            };
+            const expected = {
+                parentNode: parentNode,
+                idxInParentNode: 16,
+                nestedBlockUsed: true
+            };
+            const actual = instance._getLastGenCodeSection(augCode);
+            assert.deepEqual(actual, expected);
+        });
+        it("should pass with input 5", function() {
+            const augCode: any = {
+                parentNode: parentNode.children[15],
+                idxInParentNode: 1,
+                nestedBlockUsed: false,
+                argsExclEndIdxInParentNode: 2,
+                endArgsExclEndIdxInParentNode: -1
+            };
+            const expected: any = {
+                parentNode: parentNode.children[15],
+                idxInParentNode: 3,
+                nestedBlockUsed: false
+            };
+            const actual = instance._getLastGenCodeSection(augCode);
+            assert.deepEqual(actual, expected);
+        });
+    });
+
+    describe("#extractGenCodeSections", function() {
+        it("should pass with input 0", function() {
+            const parentNode: SourceCodeAst | NestedBlockAstNode = {
+                type: AstBuilder.TYPE_SOURCE_CODE,
+                children: [{
+                    type: AstBuilder.TYPE_DECORATED_LINE,
+                    indent: "",
+                    marker: "js",
+                    markerAftermath: "",
+                    lineSep: "\n"
+                }]
+            };
+            const augCode: any = {
+                parentNode: parentNode,
+                idxInParentNode: 0,
+                nestedBlockUsed: false,
+                argsExclEndIdxInParentNode: 1,
+                endArgsExclEndIdxInParentNode: -1
+            };
+            const expected = [];
+            const instance = new DefaultAstTransformer();
+            const actual = instance.extractGenCodeSections(augCode);
+            assert.deepEqual(actual, expected);
+        });
+
+        it("should pass with input 1", function() {
+            const parentNode: SourceCodeAst | NestedBlockAstNode = {
+                type: AstBuilder.TYPE_SOURCE_CODE,
+                children: [{
+                    type: AstBuilder.TYPE_DECORATED_LINE,
+                    indent: "",
+                    marker: "js",
+                    markerAftermath: "",
+                    lineSep: "\n"
+                }, {
+                    type: AstBuilder.TYPE_DECORATED_LINE,
+                    indent: "",
+                    marker: "g:",
+                    markerAftermath: "",
+                    lineSep: "\n"
+                }]
+            };
+            const augCode: any = {
+                parentNode: parentNode,
+                idxInParentNode: 0,
+                nestedBlockUsed: false,
+                argsExclEndIdxInParentNode: 1,
+                endArgsExclEndIdxInParentNode: -1
+            };
+            const expected = [{
+                parentNode: parentNode,
+                idxInParentNode: 1,
+                nestedBlockUsed: false
+            }];
+            const instance = new DefaultAstTransformer();
+            instance.genCodeMarkers = ["g:"];
+            const actual = instance.extractGenCodeSections(augCode);
+            assert.deepEqual(actual, expected);
+        });
+
+        it("should pass with input 2", function() {
+            const parentNode: SourceCodeAst | NestedBlockAstNode = {
+                type: AstBuilder.TYPE_SOURCE_CODE,
+                children: [{
+                    type: AstBuilder.TYPE_DECORATED_LINE,
+                    indent: "",
+                    marker: "js",
+                    markerAftermath: "",
+                    lineSep: "\n"
+                }, {
+                    type: AstBuilder.TYPE_DECORATED_LINE,
+                    indent: "",
+                    marker: "g:",
+                    markerAftermath: "",
+                    lineSep: "\n"
+                }, {
+                    type: AstBuilder.TYPE_DECORATED_LINE,
+                    indent: "",
+                    marker: "g8",
+                    markerAftermath: "",
+                    lineSep: "\n"
+                }]
+            };
+            const augCode: any = {
+                parentNode: parentNode,
+                idxInParentNode: 0,
+                nestedBlockUsed: false,
+                argsExclEndIdxInParentNode: 1,
+                endArgsExclEndIdxInParentNode: -1
+            };
+            const expected = [];
+            const instance = new DefaultAstTransformer();
+            instance.augCodeMarkers = ["a8"];
+            instance.augCodeJsonArgMarkers = ["j>"];
+            instance.augCodeArgSepMarkers = ["g:"];
+            instance.augCodeArgMarkers = ["a:"];
+            instance.genCodeMarkers = ["g8", "g:"];
+            const actual = instance.extractGenCodeSections(augCode);
+            assert.deepEqual(actual, expected);
+        });
+
+        it("should pass with input 3", function() {
+            const parentNode: SourceCodeAst | NestedBlockAstNode = {
+                type: AstBuilder.TYPE_SOURCE_CODE,
+                children: [{
+                    type: AstBuilder.TYPE_UNDECORATED_LINE,
+                    text: "",
+                    lineSep: "\n"
+                }, {
+                    type: AstBuilder.TYPE_DECORATED_LINE,
+                    indent: "",
+                    marker: "js",
+                    markerAftermath: "",
+                    lineSep: "\n"
+                }, {
+                    type: AstBuilder.TYPE_UNDECORATED_LINE,
+                    text: "i",
+                    lineSep: "\n"
+                }, {
+                    type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                    markerAftermath: "",
+                    indent: "",
+                    marker: "g8",
+                    lineSep: "\n",
+                    endIndent: "",
+                    endMarker: "p8",
+                    endLineSep: "\n",
+                    children: [
+                        {
+                            type: AstBuilder.TYPE_UNDECORATED_LINE,
+                            text: "ef",
+                            lineSep: "\n"
+                        },
+                        {
+                            type: AstBuilder.TYPE_UNDECORATED_LINE,
+                            text: "cd",
+                            lineSep: "\n"
+                        }
+                    ]
+                }, {
+                    type: AstBuilder.TYPE_UNDECORATED_LINE,
+                    text: "ooods",
+                    lineSep: "\n"
+                }, {
+                    type: AstBuilder.TYPE_DECORATED_LINE,
+                    indent: "",
+                    marker: "g:",
+                    markerAftermath: "",
+                    lineSep: "\n"
+                }]
+            };
+            const augCode: any = {
+                parentNode: parentNode,
+                idxInParentNode: 1,
+                nestedBlockUsed: false,
+                argsExclEndIdxInParentNode: 2,
+                endArgsExclEndIdxInParentNode: -1
+            };
+            const expected = [{
+                parentNode: parentNode,
+                idxInParentNode: 3,
+                nestedBlockUsed: true
+            }];
+            const instance = new DefaultAstTransformer();
+            instance.augCodeMarkers = ["js"];
+            instance.augCodeJsonArgMarkers = ["j>"];
+            instance.augCodeArgSepMarkers = ["g:"];
+            instance.augCodeArgMarkers = ["a:"];
+            instance.genCodeMarkers = ["g8", "g:"];
+            const actual = instance.extractGenCodeSections(augCode);
+            assert.deepEqual(actual, expected);
+        });
+
+        it("should pass with input 4", function() {
+            const childNode1 = {
+                type: AstBuilder.TYPE_NESTED_BLOCK,
+                indent: "  ",
+                marker: "js",
+                markerAftermath: "",
+                lineSep: "\n",
+                endIndent: "",
+                endMarker: "es",
+                endMarkerAftermath: "kop",
+                endLineSep: "\r\n",
+                children: [
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        indent: "",
+                        marker: "js",
+                        markerAftermath: ":dk",
+                        lineSep: "\r\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "1",
+                        lineSep: "\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "2",
+                        lineSep: "\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "33",
+                        lineSep: "\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        indent: " ",
+                        marker: "g:",
+                        markerAftermath: "dkdl",
+                        lineSep: "\r\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        indent: " ",
+                        marker: "a8",
+                        markerAftermath: "p0",
+                        lineSep: "\r\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "o",
+                        lineSep: "\r\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                        markerAftermath: "oods",
+                        indent: "",
+                        marker: "g8",
+                        lineSep: "\n",
+                        endIndent: "\t",
+                        endMarker: "p",
+                        endLineSep: "\r\n",
+                        children: []
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        indent: "",
+                        marker: "g:",
+                        markerAftermath: "oods",
+                        lineSep: "\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "larop",
+                        lineSep: "\r\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                        markerAftermath: "u",
+                        indent: "",
+                        marker: "g:",
+                        lineSep: "\n",
+                        endIndent: "",
+                        endMarker: "gof",
+                        endLineSep: "\n",
+                        children: []
+                    }
+                ]
+            };
+            const parentNode: SourceCodeAst | NestedBlockAstNode = {
+                type: AstBuilder.TYPE_SOURCE_CODE,
+                children: [
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "",
+                        lineSep: "\n"
+                    },
+                    childNode1,
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "j>",
+                        markerAftermath: "",
+                        indent: "",
+                        lineSep: "\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "i",
+                        lineSep: "\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "p",
+                        lineSep: "\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                        markerAftermath: "",
+                        indent: "",
+                        marker: "g8",
+                        lineSep: "\n",
+                        endIndent: "",
+                        endMarker: "p8",
+                        endLineSep: "\n",
+                        children: [
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: "ef",
+                                lineSep: "\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: "cd",
+                                lineSep: "\n"
+                            }
+                        ]
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "ooods",
+                        lineSep: "\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        indent: "",
+                        marker: "g:",
+                        markerAftermath: "",
+                        lineSep: "\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        indent: " ",
+                        marker: "js",
+                        markerAftermath: "",
+                        lineSep: "\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        indent: " ",
+                        marker: "a:",
+                        markerAftermath: "",
+                        lineSep: "\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "ooods",
+                        lineSep: "\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        indent: " ",
+                        marker: "a8",
+                        markerAftermath: "",
+                        lineSep: "\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        indent: " ",
+                        marker: "j>",
+                        markerAftermath: "",
+                        lineSep: "\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        indent: "",
+                        marker: "g:",
+                        markerAftermath: "",
+                        lineSep: "\n"
+                    },
+                ]
+            };
+            const augCode: any = {
+                parentNode: parentNode,
+                idxInParentNode: 1,
+                nestedBlockUsed: true,
+                argsExclEndIdxInParentNode: 2,
+                endArgsExclEndIdxInParentNode: 3,
+                children: [{
+                    parentNode: childNode1,
+                    idxInParentNode: 0,
+                    nestedBlockUsed: false,
+                    argsExclEndIdxInParentNode: 1,
+                    endArgsExclEndIdxInParentNode: -1
+                }, {
+                    parentNode: childNode1,
+                    idxInParentNode: 5,
+                    nestedBlockUsed: false,
+                    argsExclEndIdxInParentNode: 6,
+                    endArgsExclEndIdxInParentNode: -1
+                }]
+            };
+            let expected = [
+                {
+                    parentNode: childNode1,
+                    idxInParentNode: 8,
+                    nestedBlockUsed: false
+                },
+                {
+                    parentNode: childNode1,
+                    idxInParentNode: 10,
+                    nestedBlockUsed: true
+                },
+                {
+                    parentNode: parentNode,
+                    idxInParentNode: 5,
+                    nestedBlockUsed: true
+                }
+            ];
+            const instance = new DefaultAstTransformer();
+            instance.augCodeMarkers = ["a8", "js"];
+            instance.augCodeJsonArgMarkers = ["j>"];
+            instance.augCodeArgSepMarkers = [];
+            instance.augCodeArgMarkers = ["a:"];
+            instance.genCodeMarkers = ["g8", "g:"];
+            let actual = instance.extractGenCodeSections(augCode);
+            assert.deepEqual(actual, expected);
+
+            expected = [
+                {
+                    parentNode: childNode1,
+                    idxInParentNode: 4,
+                    nestedBlockUsed: false
+                }
+            ];
+            actual = instance.extractGenCodeSections(augCode.children[0]);
+            assert.deepEqual(actual, expected);
+
+            expected = [
+                {
+                    parentNode: childNode1,
+                    idxInParentNode: 7,
+                    nestedBlockUsed: true
+                }
+            ];
+            actual = instance.extractGenCodeSections(augCode.children[1]);
+            assert.deepEqual(actual, expected);
+
+            const augCodeWithoutGenCode = {
+                parentNode: parentNode,
+                idxInParentNode: 9,
+                nestedBlockUsed: false,
+                argsExclEndIdxInParentNode: 11,
+                endArgsExclEndIdxInParentNode: -1
+            } as any;
+            expected = [];
+            actual = instance.extractAugCodes(augCodeWithoutGenCode);
+            assert.deepEqual(actual, expected);
         });
     });
 

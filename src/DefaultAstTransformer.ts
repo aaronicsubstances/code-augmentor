@@ -224,12 +224,12 @@ export default class DefaultAstTransformer {
             defaultLineSep: string,
             genCodes: GeneratedCode[],
             genCodeSections: GeneratedCodeDescriptor[],
-            genCodeTransforms: Array<GeneratedCodeSectionTransform | null>) {
+            dest: Array<GeneratedCodeSectionTransform | null>) {
         let minCodeSectionsToDealWith = Math.min(genCodes.length, genCodeSections.length);
         for (let i = 0; i < minCodeSectionsToDealWith; i++) {
             const genCode = genCodes[i];
             if (!genCode) {
-                genCodeTransforms.push(null);
+                dest.push(null);
                 continue;
             }
             const transform: GeneratedCodeSectionTransform = {
@@ -251,12 +251,12 @@ export default class DefaultAstTransformer {
                     genCodeSection, genCodeIndent, genCodeLineSep);
                 transform.node = node;
             }
-            genCodeTransforms.push(transform);
+            dest.push(transform);
         }
         for (let i = minCodeSectionsToDealWith; i < genCodes.length; i++) {
             const genCode = genCodes[i];
             if (!genCode) {
-                genCodeTransforms.push(null);
+                dest.push(null);
                 continue;
             }
             const transform: GeneratedCodeSectionTransform = {
@@ -272,7 +272,7 @@ export default class DefaultAstTransformer {
                     null, defaultIndent, defaultLineSep);
                 transform.node = node;
             }
-            genCodeTransforms.push(transform);
+            dest.push(transform);
         }
     }
 
@@ -289,7 +289,7 @@ export default class DefaultAstTransformer {
     }
 
     private _addNestedGenCodeSections(augCode: AugmentingCodeDescriptor,
-            genCodeSections: GeneratedCodeDescriptor[]) {
+            dest: GeneratedCodeDescriptor[]) {
         // get all gen code nodes except those functioning as
         // last gen code sections for child aug codes.
         const exemptions = augCode.children
@@ -314,9 +314,9 @@ export default class DefaultAstTransformer {
                     const genCodeSection: GeneratedCodeDescriptor = {
                         parentNode: augCodeNode,
                         idxInParentNode: i,
-                        nestedBlockUsed: n.type === AstBuilder.TYPE_NESTED_BLOCK
+                        nestedBlockUsed: n.type === AstBuilder.TYPE_ESCAPED_BLOCK
                     };
-                    genCodeSections.push(genCodeSection);
+                    dest.push(genCodeSection);
                 }
             }
         }
@@ -339,7 +339,7 @@ export default class DefaultAstTransformer {
                     break;
                 }
             }
-            // look for aug code arg markers.
+            // look for aug code arg markers too.
             if (n.type === AstBuilder.TYPE_DECORATED_LINE) {
                 const typedNode = n as DecoratedLineAstNode;
                 if (findMarkerMatch(this.augCodeJsonArgMarkers, typedNode.marker) ||
@@ -356,7 +356,7 @@ export default class DefaultAstTransformer {
                     const genCodeSection: GeneratedCodeDescriptor = {
                         parentNode: augCode.parentNode,
                         idxInParentNode: i,
-                        nestedBlockUsed: n.type === AstBuilder.TYPE_NESTED_BLOCK
+                        nestedBlockUsed: n.type === AstBuilder.TYPE_ESCAPED_BLOCK
                     };
                     return genCodeSection;
                 }
