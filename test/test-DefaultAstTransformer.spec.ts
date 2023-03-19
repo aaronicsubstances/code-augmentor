@@ -38,6 +38,7 @@ function determineAstNodeSubpath(parent: { children: any[] }, n: any,
         const currLen = dest.length;
         determineAstNodeSubpath(candidate, n, dest);
         if (dest.length > currLen) {
+            dest.splice(currLen, 0, i);
             break;
         }
     }
@@ -328,6 +329,280 @@ describe("DefaultAstTransformer", function() {
                     endArgs: null,
                     endArgsExclEndIdxInParentNode: -1,
                     parentIndex: null,
+                    childIndices: []
+                }
+            ];
+            const actual = instance.extractAugCodes(parentNode);
+            const actualFlattened = flattenAugCodeTrees(parentNode, actual);
+            assert.deepEqual(actualFlattened, expected);
+        });
+
+        it("should pass with input 2", function() {
+            const instance = new DefaultAstTransformer();
+            instance.augCodeMarkers = ["indu", "beig"];
+            instance.augCodeJsonArgMarkers = ["notation"];
+            instance.augCodeArgSepMarkers = ["sep,,"];
+            instance.augCodeArgMarkers = ["input_arg"];
+            instance.genCodeMarkers = ["[[!", "{{"];
+            const parentNode = {
+                type: AstBuilder.TYPE_SOURCE_CODE,
+                children: [
+                    {
+                        type: AstBuilder.TYPE_NESTED_BLOCK,
+                        indent: "  ",
+                        marker: "beig",
+                        markerAftermath: "",
+                        lineSep: "\n",
+                        endIndent: "",
+                        endMarker: "es",
+                        endMarkerAftermath: "kop",
+                        endLineSep: "\r\n",
+                        children: [
+                            {
+                                type: AstBuilder.TYPE_DECORATED_LINE,
+                                indent: "",
+                                marker: "beig",
+                                markerAftermath: "0",
+                                lineSep: "\r\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: "c::",
+                                lineSep: "\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_DECORATED_LINE,
+                                indent: "\t",
+                                marker: "notation",
+                                markerAftermath: "2",
+                                lineSep: "\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: "ad",
+                                lineSep: "\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_DECORATED_LINE,
+                                indent: " ",
+                                marker: "[[!",
+                                markerAftermath: "4",
+                                lineSep: "\r\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_DECORATED_LINE,
+                                indent: " ",
+                                marker: "indu",
+                                markerAftermath: "5",
+                                lineSep: "\r\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: "o",
+                                lineSep: "\r\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_DECORATED_LINE,
+                                indent: "",
+                                marker: "input_arg",
+                                markerAftermath: "7",
+                                lineSep: "\r\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                                markerAftermath: "8",
+                                indent: "",
+                                marker: "{{",
+                                lineSep: "\n",
+                                endIndent: "\t",
+                                endMarker: "p",
+                                endLineSep: "\r\n",
+                                children: []
+                            },
+                            {
+                                type: AstBuilder.TYPE_DECORATED_LINE,
+                                indent: "",
+                                marker: "beig",
+                                markerAftermath: "9",
+                                lineSep: "\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: "larop",
+                                lineSep: "\r\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_DECORATED_LINE,
+                                indent: "\t\t",
+                                marker: "sep,,",
+                                markerAftermath: "11",
+                                lineSep: "\r\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                                markerAftermath: "12",
+                                indent: "",
+                                marker: "[[!",
+                                lineSep: "\n",
+                                endIndent: "",
+                                endMarker: "gof",
+                                endLineSep: "\n",
+                                children: []
+                            },
+                            {
+                                type: AstBuilder.TYPE_DECORATED_LINE,
+                                indent: "",
+                                marker: "indu",
+                                markerAftermath: "13",
+                                lineSep: "\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: "larop",
+                                lineSep: "\r\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_NESTED_BLOCK,
+                                markerAftermath: "15",
+                                endMarkerAftermath: "v",
+                                indent: "",
+                                marker: "indu",
+                                lineSep: "\n",
+                                endIndent: "",
+                                endMarker: "gof",
+                                endLineSep: "\n",
+                                children: [
+                                    {
+                                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                        text: "o",
+                                        lineSep: "\r\n"
+                                    },
+                                    {
+                                        type: AstBuilder.TYPE_DECORATED_LINE,
+                                        indent: " ",
+                                        marker: "indu",
+                                        markerAftermath: "1",
+                                        lineSep: "\r\n"
+                                    },
+                                    {
+                                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                        text: "o",
+                                        lineSep: "\r\n"
+                                    },
+                                    {
+                                        type: AstBuilder.TYPE_DECORATED_LINE,
+                                        indent: "",
+                                        marker: "{{",
+                                        markerAftermath: "3",
+                                        lineSep: "\r\n"
+                                    },
+                                    {
+                                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                        text: "o",
+                                        lineSep: "\r\n"
+                                    }]
+                            },
+                            {
+                                type: AstBuilder.TYPE_DECORATED_LINE,
+                                indent: "",
+                                marker: "notation",
+                                markerAftermath: "16",
+                                lineSep: "\n"
+                            },
+                        ]
+                    }
+                ]
+            };
+            const expected: AugmentingCodeDescriptorClone[] = [
+                {
+                    nodePath: [0],
+                    nestedBlockUsed: true,
+                    lineNumber: 1,
+                    markerAftermath: "",
+                    args: [],
+                    argsExclEndIdxInParentNode: 0,
+                    endMarkerAftermath: "kop",
+                    endArgs: [],
+                    endArgsExclEndIdxInParentNode: 1,
+                    parentIndex: null,
+                    childIndices: [1, 2, 3, 4, 5]
+                },
+                {
+                    nodePath: [0, 0],
+                    nestedBlockUsed: false,
+                    lineNumber: 2,
+                    markerAftermath: "0",
+                    args: [],
+                    argsExclEndIdxInParentNode: 1,
+                    endMarkerAftermath: null,
+                    endArgs: null,
+                    endArgsExclEndIdxInParentNode: -1,
+                    parentIndex: 0,
+                    childIndices: []
+                },
+                {
+                    nodePath: [0, 5],
+                    nestedBlockUsed: false,
+                    lineNumber: 7,
+                    markerAftermath: "5",
+                    args: [],
+                    argsExclEndIdxInParentNode: 6,
+                    endMarkerAftermath: null,
+                    endArgs: null,
+                    endArgsExclEndIdxInParentNode: -1,
+                    parentIndex: 0,
+                    childIndices: []
+                },
+                {
+                    nodePath: [0, 9],
+                    nestedBlockUsed: false,
+                    lineNumber: 12,
+                    markerAftermath: "9",
+                    args: [],
+                    argsExclEndIdxInParentNode: 10,
+                    endMarkerAftermath: null,
+                    endArgs: null,
+                    endArgsExclEndIdxInParentNode: -1,
+                    parentIndex: 0,
+                    childIndices: []
+                },
+                {
+                    nodePath: [0, 13],
+                    nestedBlockUsed: false,
+                    lineNumber: 17,
+                    markerAftermath: "13",
+                    args: [],
+                    argsExclEndIdxInParentNode: 14,
+                    endMarkerAftermath: null,
+                    endArgs: null,
+                    endArgsExclEndIdxInParentNode: -1,
+                    parentIndex: 0,
+                    childIndices: []
+                },
+                {
+                    nodePath: [0, 15],
+                    nestedBlockUsed: true,
+                    lineNumber: 19,
+                    markerAftermath: "15",
+                    args: [],
+                    argsExclEndIdxInParentNode: 0,
+                    endMarkerAftermath: "v",
+                    endArgs: [16],
+                    endArgsExclEndIdxInParentNode: 17,
+                    parentIndex: 0,
+                    childIndices: [6]
+                },
+                {
+                    nodePath: [0, 15, 1],
+                    nestedBlockUsed: false,
+                    lineNumber: 21,
+                    markerAftermath: "1",
+                    args: [],
+                    argsExclEndIdxInParentNode: 2,
+                    endMarkerAftermath: null,
+                    endArgs: null,
+                    endArgsExclEndIdxInParentNode: -1,
+                    parentIndex: 5,
                     childIndices: []
                 }
             ];
@@ -1000,263 +1275,6 @@ describe("DefaultAstTransformer", function() {
         });
     });
 
-    describe("#_getLastGenCodeSection", function() {
-        const parentNode = {
-            type: AstBuilder.TYPE_NESTED_BLOCK,
-            indent: "  ",
-            marker: "beig",
-            markerAftermath: "",
-            lineSep: "\n",
-            endIndent: "",
-            endMarker: "es",
-            endMarkerAftermath: "kop",
-            endLineSep: "\r\n",
-            children: [
-                {
-                    type: AstBuilder.TYPE_DECORATED_LINE,
-                    indent: "",
-                    marker: "beig",
-                    markerAftermath: "0",
-                    lineSep: "\r\n"
-                },
-                {
-                    type: AstBuilder.TYPE_UNDECORATED_LINE,
-                    text: "c::",
-                    lineSep: "\n"
-                },
-                {
-                    type: AstBuilder.TYPE_DECORATED_LINE,
-                    indent: "\t",
-                    marker: "notation",
-                    markerAftermath: "2",
-                    lineSep: "\n"
-                },
-                {
-                    type: AstBuilder.TYPE_UNDECORATED_LINE,
-                    text: "ad",
-                    lineSep: "\n"
-                },
-                {
-                    type: AstBuilder.TYPE_DECORATED_LINE,
-                    indent: " ",
-                    marker: "[[!",
-                    markerAftermath: "4",
-                    lineSep: "\r\n"
-                },
-                {
-                    type: AstBuilder.TYPE_DECORATED_LINE,
-                    indent: " ",
-                    marker: "indu",
-                    markerAftermath: "5",
-                    lineSep: "\r\n"
-                },
-                {
-                    type: AstBuilder.TYPE_UNDECORATED_LINE,
-                    text: "o",
-                    lineSep: "\r\n"
-                },
-                {
-                    type: AstBuilder.TYPE_DECORATED_LINE,
-                    indent: "",
-                    marker: "input_arg",
-                    markerAftermath: "7",
-                    lineSep: "\r\n"
-                },
-                {
-                    type: AstBuilder.TYPE_ESCAPED_BLOCK,
-                    markerAftermath: "8",
-                    indent: "",
-                    marker: "{{",
-                    lineSep: "\n",
-                    endIndent: "\t",
-                    endMarker: "p",
-                    endLineSep: "\r\n",
-                    children: []
-                },
-                {
-                    type: AstBuilder.TYPE_DECORATED_LINE,
-                    indent: "",
-                    marker: "beig",
-                    markerAftermath: "9",
-                    lineSep: "\n"
-                },
-                {
-                    type: AstBuilder.TYPE_UNDECORATED_LINE,
-                    text: "larop",
-                    lineSep: "\r\n"
-                },
-                {
-                    type: AstBuilder.TYPE_DECORATED_LINE,
-                    indent: "\t\t",
-                    marker: "sep,,",
-                    markerAftermath: "11",
-                    lineSep: "\r\n"
-                },
-                {
-                    type: AstBuilder.TYPE_ESCAPED_BLOCK,
-                    markerAftermath: "12",
-                    indent: "",
-                    marker: "[[!",
-                    lineSep: "\n",
-                    endIndent: "",
-                    endMarker: "gof",
-                    endLineSep: "\n",
-                    children: []
-                },
-                {
-                    type: AstBuilder.TYPE_DECORATED_LINE,
-                    indent: "",
-                    marker: "indu",
-                    markerAftermath: "13",
-                    lineSep: "\n"
-                },
-                {
-                    type: AstBuilder.TYPE_UNDECORATED_LINE,
-                    text: "larop",
-                    lineSep: "\r\n"
-                },
-                {
-                    type: AstBuilder.TYPE_NESTED_BLOCK,
-                    markerAftermath: "15",
-                    endMarkerAftermath: "v",
-                    indent: "",
-                    marker: "indu",
-                    lineSep: "\n",
-                    endIndent: "",
-                    endMarker: "gof",
-                    endLineSep: "\n",
-                    children: [
-                        {
-                            type: AstBuilder.TYPE_UNDECORATED_LINE,
-                            text: "o",
-                            lineSep: "\r\n"
-                        },
-                        {
-                            type: AstBuilder.TYPE_DECORATED_LINE,
-                            indent: " ",
-                            marker: "indu",
-                            markerAftermath: "1",
-                            lineSep: "\r\n"
-                        },
-                        {
-                            type: AstBuilder.TYPE_UNDECORATED_LINE,
-                            text: "o",
-                            lineSep: "\r\n"
-                        },
-                        {
-                            type: AstBuilder.TYPE_DECORATED_LINE,
-                            indent: "",
-                            marker: "{{",
-                            markerAftermath: "3",
-                            lineSep: "\r\n"
-                        },
-                        {
-                            type: AstBuilder.TYPE_UNDECORATED_LINE,
-                            text: "o",
-                            lineSep: "\r\n"
-                        }]
-                },
-                {
-                    type: AstBuilder.TYPE_ESCAPED_BLOCK,
-                    markerAftermath: "16",
-                    indent: "",
-                    marker: "[[!",
-                    lineSep: "\n",
-                    endIndent: "",
-                    endMarker: "gof",
-                    endLineSep: "\n",
-                    children: []
-                },
-            ]
-        };
-        const instance = new DefaultAstTransformer();
-        instance.augCodeMarkers = ["indu", "beig"];
-        instance.augCodeJsonArgMarkers = ["notation"];
-        instance.augCodeArgSepMarkers = ["sep,,"];
-        instance.augCodeArgMarkers = ["input_arg"];
-        instance.genCodeMarkers = ["[[!", "{{"];
-        it("should pass with input 0", function() {
-            const augCode: any = {
-                parentNode: parentNode,
-                idxInParentNode: 0,
-                nestedBlockUsed: false,
-                argsExclEndIdxInParentNode: 1,
-                endArgsExclEndIdxInParentNode: -1
-            };
-            const expected = null;
-            const actual = instance._getLastGenCodeSection(augCode);
-            assert.deepEqual(actual, expected);
-        });
-        it("should pass with input 1", function() {
-            const augCode: any = {
-                parentNode: parentNode,
-                idxInParentNode: 5,
-                nestedBlockUsed: false,
-                argsExclEndIdxInParentNode: 6,
-                endArgsExclEndIdxInParentNode: -1
-            };
-            const expected = null;
-            const actual = instance._getLastGenCodeSection(augCode);
-            assert.deepEqual(actual, expected);
-        });
-        it("should pass with input 2", function() {
-            const augCode: any = {
-                parentNode: parentNode,
-                idxInParentNode: 9,
-                nestedBlockUsed: false,
-                argsExclEndIdxInParentNode: 10,
-                endArgsExclEndIdxInParentNode: -1
-            };
-            const expected = null;
-            const actual = instance._getLastGenCodeSection(augCode);
-            assert.deepEqual(actual, expected);
-        });
-        it("should pass with input 3", function() {
-            const augCode: any = {
-                parentNode: parentNode,
-                idxInParentNode: 13,
-                nestedBlockUsed: false,
-                argsExclEndIdxInParentNode: 14,
-                endArgsExclEndIdxInParentNode: -1
-            };
-            const expected = null;
-            const actual = instance._getLastGenCodeSection(augCode);
-            assert.deepEqual(actual, expected);
-        });
-        it("should pass with input 4", function() {
-            const augCode: any = {
-                parentNode: parentNode,
-                idxInParentNode: 15,
-                nestedBlockUsed: true,
-                argsExclEndIdxInParentNode: 0,
-                endArgsExclEndIdxInParentNode: 16
-            };
-            const expected = {
-                parentNode: parentNode,
-                idxInParentNode: 16,
-                nestedBlockUsed: true
-            };
-            const actual = instance._getLastGenCodeSection(augCode);
-            assert.deepEqual(actual, expected);
-        });
-        it("should pass with input 5", function() {
-            const augCode: any = {
-                parentNode: parentNode.children[15],
-                idxInParentNode: 1,
-                nestedBlockUsed: false,
-                argsExclEndIdxInParentNode: 2,
-                endArgsExclEndIdxInParentNode: -1
-            };
-            const expected: any = {
-                parentNode: parentNode.children[15],
-                idxInParentNode: 3,
-                nestedBlockUsed: false
-            };
-            const actual = instance._getLastGenCodeSection(augCode);
-            assert.deepEqual(actual, expected);
-        });
-    });
-
     describe("#extractGenCodeSections", function() {
         it("should pass with input 0", function() {
             const parentNode: SourceCodeAst | NestedBlockAstNode = {
@@ -1696,6 +1714,263 @@ describe("DefaultAstTransformer", function() {
             } as any;
             expected = [];
             actual = instance.extractAugCodes(augCodeWithoutGenCode);
+            assert.deepEqual(actual, expected);
+        });
+    });
+
+    describe("#_getLastGenCodeSection", function() {
+        const parentNode = {
+            type: AstBuilder.TYPE_NESTED_BLOCK,
+            indent: "  ",
+            marker: "beig",
+            markerAftermath: "",
+            lineSep: "\n",
+            endIndent: "",
+            endMarker: "es",
+            endMarkerAftermath: "kop",
+            endLineSep: "\r\n",
+            children: [
+                {
+                    type: AstBuilder.TYPE_DECORATED_LINE,
+                    indent: "",
+                    marker: "beig",
+                    markerAftermath: "0",
+                    lineSep: "\r\n"
+                },
+                {
+                    type: AstBuilder.TYPE_UNDECORATED_LINE,
+                    text: "c::",
+                    lineSep: "\n"
+                },
+                {
+                    type: AstBuilder.TYPE_DECORATED_LINE,
+                    indent: "\t",
+                    marker: "notation",
+                    markerAftermath: "2",
+                    lineSep: "\n"
+                },
+                {
+                    type: AstBuilder.TYPE_UNDECORATED_LINE,
+                    text: "ad",
+                    lineSep: "\n"
+                },
+                {
+                    type: AstBuilder.TYPE_DECORATED_LINE,
+                    indent: " ",
+                    marker: "[[!",
+                    markerAftermath: "4",
+                    lineSep: "\r\n"
+                },
+                {
+                    type: AstBuilder.TYPE_DECORATED_LINE,
+                    indent: " ",
+                    marker: "indu",
+                    markerAftermath: "5",
+                    lineSep: "\r\n"
+                },
+                {
+                    type: AstBuilder.TYPE_UNDECORATED_LINE,
+                    text: "o",
+                    lineSep: "\r\n"
+                },
+                {
+                    type: AstBuilder.TYPE_DECORATED_LINE,
+                    indent: "",
+                    marker: "input_arg",
+                    markerAftermath: "7",
+                    lineSep: "\r\n"
+                },
+                {
+                    type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                    markerAftermath: "8",
+                    indent: "",
+                    marker: "{{",
+                    lineSep: "\n",
+                    endIndent: "\t",
+                    endMarker: "p",
+                    endLineSep: "\r\n",
+                    children: []
+                },
+                {
+                    type: AstBuilder.TYPE_DECORATED_LINE,
+                    indent: "",
+                    marker: "beig",
+                    markerAftermath: "9",
+                    lineSep: "\n"
+                },
+                {
+                    type: AstBuilder.TYPE_UNDECORATED_LINE,
+                    text: "larop",
+                    lineSep: "\r\n"
+                },
+                {
+                    type: AstBuilder.TYPE_DECORATED_LINE,
+                    indent: "\t\t",
+                    marker: "sep,,",
+                    markerAftermath: "11",
+                    lineSep: "\r\n"
+                },
+                {
+                    type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                    markerAftermath: "12",
+                    indent: "",
+                    marker: "[[!",
+                    lineSep: "\n",
+                    endIndent: "",
+                    endMarker: "gof",
+                    endLineSep: "\n",
+                    children: []
+                },
+                {
+                    type: AstBuilder.TYPE_DECORATED_LINE,
+                    indent: "",
+                    marker: "indu",
+                    markerAftermath: "13",
+                    lineSep: "\n"
+                },
+                {
+                    type: AstBuilder.TYPE_UNDECORATED_LINE,
+                    text: "larop",
+                    lineSep: "\r\n"
+                },
+                {
+                    type: AstBuilder.TYPE_NESTED_BLOCK,
+                    markerAftermath: "15",
+                    endMarkerAftermath: "v",
+                    indent: "",
+                    marker: "indu",
+                    lineSep: "\n",
+                    endIndent: "",
+                    endMarker: "gof",
+                    endLineSep: "\n",
+                    children: [
+                        {
+                            type: AstBuilder.TYPE_UNDECORATED_LINE,
+                            text: "o",
+                            lineSep: "\r\n"
+                        },
+                        {
+                            type: AstBuilder.TYPE_DECORATED_LINE,
+                            indent: " ",
+                            marker: "indu",
+                            markerAftermath: "1",
+                            lineSep: "\r\n"
+                        },
+                        {
+                            type: AstBuilder.TYPE_UNDECORATED_LINE,
+                            text: "o",
+                            lineSep: "\r\n"
+                        },
+                        {
+                            type: AstBuilder.TYPE_DECORATED_LINE,
+                            indent: "",
+                            marker: "{{",
+                            markerAftermath: "3",
+                            lineSep: "\r\n"
+                        },
+                        {
+                            type: AstBuilder.TYPE_UNDECORATED_LINE,
+                            text: "o",
+                            lineSep: "\r\n"
+                        }]
+                },
+                {
+                    type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                    markerAftermath: "16",
+                    indent: "",
+                    marker: "[[!",
+                    lineSep: "\n",
+                    endIndent: "",
+                    endMarker: "gof",
+                    endLineSep: "\n",
+                    children: []
+                },
+            ]
+        };
+        const instance = new DefaultAstTransformer();
+        instance.augCodeMarkers = ["indu", "beig"];
+        instance.augCodeJsonArgMarkers = ["notation"];
+        instance.augCodeArgSepMarkers = ["sep,,"];
+        instance.augCodeArgMarkers = ["input_arg"];
+        instance.genCodeMarkers = ["[[!", "{{"];
+        it("should pass with input 0", function() {
+            const augCode: any = {
+                parentNode: parentNode,
+                idxInParentNode: 0,
+                nestedBlockUsed: false,
+                argsExclEndIdxInParentNode: 1,
+                endArgsExclEndIdxInParentNode: -1
+            };
+            const expected = null;
+            const actual = instance._getLastGenCodeSection(augCode);
+            assert.deepEqual(actual, expected);
+        });
+        it("should pass with input 1", function() {
+            const augCode: any = {
+                parentNode: parentNode,
+                idxInParentNode: 5,
+                nestedBlockUsed: false,
+                argsExclEndIdxInParentNode: 6,
+                endArgsExclEndIdxInParentNode: -1
+            };
+            const expected = null;
+            const actual = instance._getLastGenCodeSection(augCode);
+            assert.deepEqual(actual, expected);
+        });
+        it("should pass with input 2", function() {
+            const augCode: any = {
+                parentNode: parentNode,
+                idxInParentNode: 9,
+                nestedBlockUsed: false,
+                argsExclEndIdxInParentNode: 10,
+                endArgsExclEndIdxInParentNode: -1
+            };
+            const expected = null;
+            const actual = instance._getLastGenCodeSection(augCode);
+            assert.deepEqual(actual, expected);
+        });
+        it("should pass with input 3", function() {
+            const augCode: any = {
+                parentNode: parentNode,
+                idxInParentNode: 13,
+                nestedBlockUsed: false,
+                argsExclEndIdxInParentNode: 14,
+                endArgsExclEndIdxInParentNode: -1
+            };
+            const expected = null;
+            const actual = instance._getLastGenCodeSection(augCode);
+            assert.deepEqual(actual, expected);
+        });
+        it("should pass with input 4", function() {
+            const augCode: any = {
+                parentNode: parentNode,
+                idxInParentNode: 15,
+                nestedBlockUsed: true,
+                argsExclEndIdxInParentNode: 0,
+                endArgsExclEndIdxInParentNode: 16
+            };
+            const expected = {
+                parentNode: parentNode,
+                idxInParentNode: 16,
+                nestedBlockUsed: true
+            };
+            const actual = instance._getLastGenCodeSection(augCode);
+            assert.deepEqual(actual, expected);
+        });
+        it("should pass with input 5", function() {
+            const augCode: any = {
+                parentNode: parentNode.children[15],
+                idxInParentNode: 1,
+                nestedBlockUsed: false,
+                argsExclEndIdxInParentNode: 2,
+                endArgsExclEndIdxInParentNode: -1
+            };
+            const expected: any = {
+                parentNode: parentNode.children[15],
+                idxInParentNode: 3,
+                nestedBlockUsed: false
+            };
+            const actual = instance._getLastGenCodeSection(augCode);
             assert.deepEqual(actual, expected);
         });
     });
