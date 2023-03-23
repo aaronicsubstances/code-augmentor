@@ -1,6 +1,6 @@
 {
   "name": "code-augmentor-support",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Provides markup language for typical source code language files, and demonstrates its potential to implement code generation with change detection",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
