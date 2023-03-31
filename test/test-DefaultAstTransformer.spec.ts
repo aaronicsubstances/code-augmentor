@@ -5,6 +5,7 @@ import DefaultAstTransformer from "../src/DefaultAstTransformer";
 import {
     AugmentingCodeDescriptor,
     DefaultAstTransformSpec,
+    GeneratedCode,
     GeneratedCodeDescriptor,
     GeneratedCodePart,
     GeneratedCodeSectionTransform,
@@ -787,13 +788,13 @@ describe("DefaultAstTransformer", function() {
     });
 
     describe("#_repairSplitCrLfs", function() {
-        it(`it should pass successfully with input 0`, function() {
+        it(`should pass successfully with input 0`, function() {
             const contentParts = new Array<GeneratedCodePart>();
             const expected = new Array<GeneratedCodePart>();
             DefaultAstTransformer._repairSplitCrLfs(contentParts);
             assert.deepEqual(contentParts, expected);
         });
-        it(`it should pass successfully with input 1`, function() {
+        it(`should pass successfully with input 1`, function() {
             const contentParts = [{
                 content: "",
                 exempt: false
@@ -805,7 +806,7 @@ describe("DefaultAstTransformer", function() {
             DefaultAstTransformer._repairSplitCrLfs(contentParts);
             assert.deepEqual(contentParts, expected);
         });
-        it(`it should pass successfully with input 2`, function() {
+        it(`should pass successfully with input 2`, function() {
             const contentParts = [{
                 content: "aab\r",
                 exempt: true
@@ -817,7 +818,7 @@ describe("DefaultAstTransformer", function() {
             DefaultAstTransformer._repairSplitCrLfs(contentParts);
             assert.deepEqual(contentParts, expected);
         });
-        it(`it should pass successfully with input 3`, function() {
+        it(`should pass successfully with input 3`, function() {
             const contentParts = [{
                 content: "aab\r",
                 exempt: true
@@ -835,7 +836,7 @@ describe("DefaultAstTransformer", function() {
             DefaultAstTransformer._repairSplitCrLfs(contentParts);
             assert.deepEqual(contentParts, expected);
         });
-        it(`it should pass successfully with input 4`, function() {
+        it(`should pass successfully with input 4`, function() {
             const contentParts = [{
                 content: "aab\r",
                 exempt: true
@@ -865,7 +866,7 @@ describe("DefaultAstTransformer", function() {
             DefaultAstTransformer._repairSplitCrLfs(contentParts);
             assert.deepEqual(contentParts, expected);
         });
-        it(`it should pass successfully with input 5`, function() {
+        it(`should pass successfully with input 5`, function() {
             const contentParts = [{
                 content: "aab\r",
                 exempt: true
@@ -2275,7 +2276,7 @@ describe("DefaultAstTransformer", function() {
     });
 
     describe("#computeAugCodeTransforms", function() {
-        it("it should pass for input 0", function() {
+        it("should pass for input 0", function() {
             const transformParentOfAugCodeNode = true;
             const targetNode: any = {
                 children: [
@@ -2300,7 +2301,8 @@ describe("DefaultAstTransformer", function() {
                 genCodeSections, genCodes, actual);
             assert.deepEqual(actual, expected);
         });
-        it("it should pass for input 1", function() {
+
+        it("should pass for input 1", function() {
             const transformParentOfAugCodeNode = true;
             const targetNode: any = {
                 children: [
@@ -2412,7 +2414,8 @@ describe("DefaultAstTransformer", function() {
                 genCodeSections, genCodes, actual);
             assert.deepEqual(actual, expected);
         });
-        it("it should pass for input 2", function() {
+
+        it("should pass for input 2", function() {
             const transformParentOfAugCodeNode = false;
             const targetNode: any = {
                 type: AstBuilder.TYPE_NESTED_BLOCK,
@@ -2553,7 +2556,8 @@ describe("DefaultAstTransformer", function() {
                 genCodeSections, genCodes, actual);
             assert.deepEqual(actual, expected);
         });
-        it("it should pass for input 3", function() {
+
+        it("should pass for input 3", function() {
             const transformParentOfAugCodeNode = false;
             const targetNode: any = {
                 type: AstBuilder.TYPE_NESTED_BLOCK,
@@ -2685,7 +2689,8 @@ describe("DefaultAstTransformer", function() {
                 genCodeSections, genCodes, actual);
             assert.deepEqual(actual, expected);
         });
-        it("it should pass for input 4", function() {
+
+        it("should pass for input 4", function() {
             const transformParentOfAugCodeNode = true;
             const targetNode: any = {
                 children: [
@@ -2762,7 +2767,8 @@ describe("DefaultAstTransformer", function() {
                 genCodeSections, genCodes, actual);
             assert.deepEqual(actual, expected);
         });
-        it("it should pass for input 5", function() {
+
+        it("should pass for input 5", function() {
             const transformParentOfAugCodeNode = true;
             const targetNode: any = {
                 children: [
@@ -2865,11 +2871,439 @@ describe("DefaultAstTransformer", function() {
         });
     });
 
+    describe("#_generateGenCodeTransforms", function() {
+        it("should pass with input 0", function() {
+            const instance = new DefaultAstTransformer();
+            instance.defaultGenCodeStartMarker = ":se:";
+            instance.defaultGenCodeEndMarker = ":ee:";
+            instance.defaultGenCodeInlineMarker = ":ise:";
+            const genCodeSections: Array<GeneratedCodeDescriptor> = [
+                {
+                    parentNode: {
+                        type: AstBuilder.TYPE_SOURCE_CODE,
+                        children: [                            
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: "dk",
+                                lineSep: "\r\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_DECORATED_LINE,
+                                indent: "\t", 
+                                marker: ":dl:",
+                                markerAftermath: "ul",
+                                lineSep: "\n"
+                            }
+                        ]
+                    },
+                    idxInParentNode: 1,
+                    nestedBlockUsed: false
+                }
+            ];
+            const genCodes: Array<GeneratedCode | null> = [
+                {
+                    contentParts: [
+                        {
+                            content: "te\ra",
+                            exempt: false
+                        }
+                    ],
+                    indent: " \t ",
+                    useInlineMarker: false,
+                    ignore: false,
+                    ignoreRemainder: true,
+                }
+            ];
+            const defaultIndent = " ";
+            const defaultLineSep = "\r\n";
+            const expected = [
+                {
+                    ignore: false,
+                    ignoreRemainder: true,
+                    node: {
+                        type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                        markerAftermath: "",
+                        indent: "\t",
+                        marker: ":se:",
+                        lineSep: "\n",
+                        endIndent: "\t",
+                        endMarker: ":ee:",
+                        endLineSep: "\n",
+                        children: [
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: " \t te",
+                                lineSep: "\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: " \t a",
+                                lineSep: "\n"
+                            }
+                        ]
+                    }
+                }
+            ];
+            const actual = instance._generateGenCodeTransforms(
+                defaultIndent, defaultLineSep, genCodes, genCodeSections);
+            assert.deepEqual(actual, expected);
+        });
+
+        it("should pass with input 1", function() {
+            const instance = new DefaultAstTransformer();
+            const genCodeSections: Array<GeneratedCodeDescriptor> = [
+                {
+                    parentNode: {
+                        type: AstBuilder.TYPE_SOURCE_CODE,
+                        children: [                            
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: "dk",
+                                lineSep: "\r\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_DECORATED_LINE,
+                                indent: "\t", 
+                                marker: ":dl:",
+                                markerAftermath: "ul",
+                                lineSep: "\n"
+                            }
+                        ]
+                    },
+                    idxInParentNode: 1,
+                    nestedBlockUsed: false
+                }
+            ];
+            const genCodes: Array<GeneratedCode | null> = [
+                {
+                    contentParts: [
+                        {
+                            content: "tera",
+                            exempt: false
+                        }
+                    ],
+                    indent: " ",
+                    useInlineMarker: true,
+                    ignore: false,
+                    ignoreRemainder: true,
+                }
+            ];
+            const defaultIndent = "\t\t";
+            const defaultLineSep = "\r\n";
+            const expected = [
+                {
+                    ignore: false,
+                    ignoreRemainder: true,
+                    node: {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        indent: "\t",
+                        marker: ":dl:",
+                        markerAftermath: " tera",
+                        lineSep: "\n",
+                    }
+                }
+            ];
+            const actual = instance._generateGenCodeTransforms(
+                defaultIndent, defaultLineSep, genCodes, genCodeSections);
+            assert.deepEqual(actual, expected);
+        });
+
+        it("should pass with input 2", function() {
+            const instance = new DefaultAstTransformer();
+            const sourceCode = {
+                type: AstBuilder.TYPE_NESTED_BLOCK,
+                children: [
+                    {
+                        type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                        markerAftermath: "-09",
+                        indent: "\t",
+                        marker: ":dl:",
+                        lineSep: "\n",
+                        endIndent: "\t\t", 
+                        endMarker: ":dul:",
+                        endLineSep: "\r\n",
+                        children: []
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "dk",
+                        lineSep: "\r\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        indent: "\t", 
+                        marker: ":i7e:",
+                        markerAftermath: "ul",
+                        lineSep: "\n"
+                    },
+                ]
+            };
+            // test ignoring of excess gen code sections.
+            const genCodeSections: Array<GeneratedCodeDescriptor> = [
+                {
+                    parentNode: sourceCode,
+                    idxInParentNode: 0,
+                    nestedBlockUsed: true
+                },
+                {
+                    parentNode: sourceCode,
+                    idxInParentNode: 2,
+                    nestedBlockUsed: false
+                }
+            ];
+            const genCodes: Array<GeneratedCode | null> = [
+                {
+                    ignore: false,
+                    ignoreRemainder: false,
+                    contentParts: [
+                        {
+                            content: "the\r",
+                            exempt: true
+                        },
+                        {
+                            content: "te\r:dul:-09",
+                            exempt: false
+                        }
+                    ],
+                    indent: "  ",
+                    useInlineMarker: false,
+                }
+            ];
+            const defaultIndent = "";
+            const defaultLineSep = "\r";
+            const expected = [
+                {
+                    ignore: false,
+                    ignoreRemainder: false,
+                    node: {
+                        type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                        markerAftermath: "-09-1",
+                        indent: "\t",
+                        marker: ":dl:",
+                        lineSep: "\n",
+                        endIndent: "\t\t",
+                        endMarker: ":dul:",
+                        endLineSep: "\r\n",
+                        children: [
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: "the",
+                                lineSep: "\r"
+                            },
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: "  te",
+                                lineSep: "\n"
+                            },
+                            {
+                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                text: "  :dul:-09",
+                                lineSep: "\n"
+                            }
+                        ]
+                    }
+                }
+            ];
+            const actual = instance._generateGenCodeTransforms(
+                defaultIndent, defaultLineSep, genCodes, genCodeSections);
+            assert.deepEqual(actual, expected);
+        });
+
+        it("should pass with input 3", function() {
+            const instance = new DefaultAstTransformer();
+            instance.defaultGenCodeStartMarker = ":s1e:";
+            instance.defaultGenCodeEndMarker = ":e2e:";
+            instance.defaultGenCodeInlineMarker = ":i7e:";
+            const sourceCode = {
+                type: AstBuilder.TYPE_SOURCE_CODE,
+                children: [
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        indent: "\t", 
+                        marker: ":dl:",
+                        markerAftermath: "ul",
+                        lineSep: "\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "dk",
+                        lineSep: "\r\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        indent: "\t", 
+                        marker: ":i7e:",
+                        markerAftermath: "ul",
+                        lineSep: "\n"
+                    },
+                ]
+            };
+            const genCodeSections: Array<GeneratedCodeDescriptor> = [
+                {
+                    parentNode: sourceCode,
+                    idxInParentNode: 0,
+                    nestedBlockUsed: false
+                },
+                {
+                    parentNode: sourceCode,
+                    idxInParentNode: 2,
+                    nestedBlockUsed: false
+                }
+            ];
+            const genCodes: Array<GeneratedCode | null> = [
+                null,
+                {
+                    ignore: true,
+                    ignoreRemainder: false,
+                    contentParts: null,
+                    indent: null,
+                    useInlineMarker: false,
+                },
+                null,
+                {
+                    ignore: true,
+                    ignoreRemainder: true,
+                    contentParts: [],
+                    indent: "",
+                    useInlineMarker: true,
+                },
+                {
+                    ignore: false,
+                    ignoreRemainder: false,
+                    contentParts: [
+                        {
+                            content: "te\ra",
+                            exempt: false
+                        }
+                    ],
+                    indent: " \t ",
+                    useInlineMarker: true,
+                }
+            ];
+            const defaultIndent = " ";
+            const defaultLineSep = "\r\n";
+            const expected = [
+                null,
+                {
+                    ignore: true,
+                    ignoreRemainder: false,
+                    node: null,
+                },
+                null,
+                {
+                    ignore: true,
+                    ignoreRemainder: true,
+                    node: null,
+                },
+                {
+                    ignore: false,
+                    ignoreRemainder: false,
+                    node: {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        indent: " ",
+                        marker: ":i7e:",
+                        markerAftermath: " \t te",
+                        lineSep: "\r\n",
+                    }
+                }
+            ];
+            const actual = instance._generateGenCodeTransforms(
+                defaultIndent, defaultLineSep, genCodes, genCodeSections);
+            assert.deepEqual(actual, expected);
+        });
+
+        it("should pass with input 4", function() {
+            const instance = new DefaultAstTransformer();
+            instance.defaultGenCodeStartMarker = ":s1e:";
+            instance.defaultGenCodeEndMarker = ":e2e:";
+            instance.defaultGenCodeInlineMarker = ":i7e:";
+            const sourceCode = {
+                type: AstBuilder.TYPE_SOURCE_CODE,
+                children: [
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        indent: "\t", 
+                        marker: ":dl:",
+                        markerAftermath: "ul",
+                        lineSep: "\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "dk",
+                        lineSep: "\r\n"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        indent: "\t", 
+                        marker: ":i7e:",
+                        markerAftermath: "ul",
+                        lineSep: "\n"
+                    },
+                ]
+            };
+            const genCodeSections = new Array<GeneratedCodeDescriptor>();
+            const genCodes: Array<GeneratedCode | null> = [
+                {
+                    ignore: false,
+                    ignoreRemainder: false,
+                    contentParts: [],
+                    indent: "",
+                    useInlineMarker: false,
+                },
+                {
+                    ignore: false,
+                    ignoreRemainder: false,
+                    contentParts: [
+                        {
+                            content: "te\ra",
+                            exempt: false
+                        }
+                    ],
+                    indent: " \t ",
+                    useInlineMarker: true,
+                }
+            ];
+            const defaultIndent = " ";
+            const defaultLineSep = "\r\n";
+            const expected = [
+                {
+                    ignore: false,
+                    ignoreRemainder: false,
+                    node: {
+                        type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                        markerAftermath: "",
+                        indent: " ",
+                        marker: ":s1e:",
+                        lineSep: "\r\n",
+                        endIndent: " ",
+                        endMarker: ":e2e:",
+                        endLineSep: "\r\n",
+                        children: []
+                    },
+                },
+                {
+                    ignore: false,
+                    ignoreRemainder: false,
+                    node: {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        indent: " ",
+                        marker: ":i7e:",
+                        markerAftermath: " \t te",
+                        lineSep: "\r\n",
+                    }
+                }
+            ];
+            const actual = instance._generateGenCodeTransforms(
+                defaultIndent, defaultLineSep, genCodes, genCodeSections);
+            assert.deepEqual(actual, expected);
+        });
+    });
+
     describe("#performTransformations", function() {
-        it("it should pass with empty input", function() {
+        it("should pass with empty input", function() {
             DefaultAstTransformer.performTransformations([]);
         });
-        it("it should pass with no additions", function() {
+        it("should pass with no additions", function() {
             const node1 = {
                 type: AstBuilder.TYPE_ESCAPED_BLOCK,
                 children: [
@@ -2982,7 +3416,7 @@ describe("DefaultAstTransformer", function() {
             DefaultAstTransformer.performTransformations(transformSpecs);
             assert.deepEqual(node1, expected);
         });
-        it("it should pass with some additions", function() {
+        it("should pass with some additions", function() {
             const node1 = {
                 type: AstBuilder.TYPE_ESCAPED_BLOCK,
                 children: [

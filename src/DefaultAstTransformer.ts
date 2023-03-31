@@ -177,7 +177,7 @@ export default class DefaultAstTransformer {
     }
 
     applyGeneratedCodes(augCode: AugmentingCodeDescriptor,
-            genCodes: GeneratedCode[]) {
+            genCodes: Array<GeneratedCode | null>) {
         const genCodeSections = this.extractGenCodeSections(augCode);
 
         const augCodeNode = augCode.parentNode.children[augCode.idxInParentNode] as 
@@ -187,7 +187,7 @@ export default class DefaultAstTransformer {
 
         const augCodeTransforms = new Array<DefaultAstTransformSpec>();
         if (augCode.nestedBlockUsed) {
-            // processing all but the last gen code first,
+            // process all but the last gen code first,
             // before processing the last gen code.
             let genCodeSectionReduction = 0;
             const lastGenCodeSection = getLast(genCodeSections);
@@ -224,14 +224,25 @@ export default class DefaultAstTransformer {
         DefaultAstTransformer.performTransformations(augCodeTransforms);
     }
 
-    _addAugCodeTransforms(
+    private _addAugCodeTransforms(
             augCode: AugmentingCodeDescriptor,
             transformParentOfAugCodeNode: boolean,
             defaultIndent: string,
             defaultLineSep: string,
-            genCodes: GeneratedCode[],
+            genCodes: Array<GeneratedCode | null>,
             genCodeSections: GeneratedCodeDescriptor[],
             dest: Array<DefaultAstTransformSpec>) {
+        const genCodeTransforms = this._generateGenCodeTransforms(
+            defaultIndent, defaultLineSep, genCodes, genCodeSections);
+        DefaultAstTransformer.computeAugCodeTransforms(augCode, transformParentOfAugCodeNode,
+            genCodeSections, genCodeTransforms, dest);
+    }
+
+    _generateGenCodeTransforms(
+            defaultIndent: string,
+            defaultLineSep: string,
+            genCodes: Array<GeneratedCode | null>,
+            genCodeSections: GeneratedCodeDescriptor[]) {
         const genCodeTransforms = new Array<GeneratedCodeSectionTransform | null>;
         let minCodeSectionsToDealWith = Math.min(genCodes.length, genCodeSections.length);
         for (let i = 0; i < minCodeSectionsToDealWith; i++) {
@@ -281,9 +292,7 @@ export default class DefaultAstTransformer {
             }
             genCodeTransforms.push(transform);
         }
-
-        DefaultAstTransformer.computeAugCodeTransforms(augCode, transformParentOfAugCodeNode,
-            genCodeSections, genCodeTransforms, dest);
+        return genCodeTransforms;
     }
 
     extractGenCodeSections(augCode: AugmentingCodeDescriptor) {

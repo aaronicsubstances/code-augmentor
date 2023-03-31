@@ -914,7 +914,7 @@ describe('AstBuilder', function() {
             },
         ];
         data.forEach(({ line, attrs, expected }, i) => {
-            it(`it should pass with input ${i}`, function() {
+            it(`should pass with input ${i}`, function() {
                 const actual = AstBuilder.createDecoratedLineNode(line, attrs);
                 assert.deepEqual(actual, expected);
             });
@@ -963,7 +963,7 @@ describe('AstBuilder', function() {
             }
         ];
         errorData.forEach(({ line, attrs, expected }, i) => {
-            it(`it should fail with input ${i}`, function() {
+            it(`should fail with input ${i}`, function() {
                 assert.throws(function() {
                     AstBuilder.createDecoratedLineNode(line, attrs)
                 }, expected);
@@ -1107,7 +1107,7 @@ describe('AstBuilder', function() {
             }
         ];
         data.forEach(({ lines, attrs, expected }, i) => {
-            it(`it should pass with input ${i}`, function() {
+            it(`should pass with input ${i}`, function() {
                 const actual = AstBuilder.createEscapedNode(lines, attrs);
                 assert.deepEqual(actual, expected);
             });
@@ -1192,7 +1192,7 @@ describe('AstBuilder', function() {
             }
         ];
         errorData.forEach(({ lines, attrs, expected }, i) => {
-            it(`it should fail with input ${i}`, function() {
+            it(`should fail with input ${i}`, function() {
                 assert.throws(function() {
                     AstBuilder.createEscapedNode(lines, attrs)
                 }, expected);
