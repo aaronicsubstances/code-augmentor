@@ -7,6 +7,7 @@ import {
     DefaultAstTransformSpec,
     GeneratedCodeDescriptor,
     GeneratedCodePart,
+    GeneratedCodeSectionTransform,
     NestedBlockAstNode,
     SourceCodeAst
 } from "../src/types";
@@ -2270,6 +2271,597 @@ describe("DefaultAstTransformer", function() {
                 instance._createGenCodeNode(genCodeLines, useInlineMarker,
                     genCodeSection, defaultIndent, defaultLineSep);
             }, "end marker");
+        });
+    });
+
+    describe("#computeAugCodeTransforms", function() {
+        it("it should pass for input 0", function() {
+            const transformParentOfAugCodeNode = true;
+            const targetNode: any = {
+                children: [
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "deo-0"
+                    }
+                ]
+            };
+            const augCode: any = {
+                parentNode: targetNode,
+                idxInParentNode: 0,
+                nestedBlockUsed: false,
+                argsExclEndIdxInParentNode: 1,
+                endArgsExclEndIdxInParentNode: -1
+            };
+            const genCodeSections = new Array<GeneratedCodeDescriptor>();
+            const genCodes = new Array<GeneratedCodeSectionTransform | null>();
+            const expected = new Array<DefaultAstTransformSpec>();
+            const actual = new Array<DefaultAstTransformSpec>();
+            DefaultAstTransformer.computeAugCodeTransforms(augCode, transformParentOfAugCodeNode,
+                genCodeSections, genCodes, actual);
+            assert.deepEqual(actual, expected);
+        });
+        it("it should pass for input 1", function() {
+            const transformParentOfAugCodeNode = true;
+            const targetNode: any = {
+                children: [
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "deo-0"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "deo-1"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "deo-2"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "deo-3"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "deo-4"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "deo-5"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "deo-6"
+                    }
+                ]
+            };
+            const augCode: any = {
+                parentNode: targetNode,
+                idxInParentNode: 0,
+                nestedBlockUsed: false,
+                argsExclEndIdxInParentNode: 1,
+                endArgsExclEndIdxInParentNode: -1
+            };
+            const genCodeSections: GeneratedCodeDescriptor[] = [
+                {
+                    parentNode: targetNode,
+                    idxInParentNode: 1,
+                    nestedBlockUsed: false
+                },
+                {
+                    parentNode: targetNode,
+                    idxInParentNode: 3,
+                    nestedBlockUsed: false
+                },
+                {
+                    parentNode: targetNode,
+                    idxInParentNode: 4,
+                    nestedBlockUsed: false
+                },
+                {
+                    parentNode: targetNode,
+                    idxInParentNode: 5,
+                    nestedBlockUsed: false
+                }
+            ];
+            const genCodes: Array<GeneratedCodeSectionTransform | null> = [
+                {
+                    node: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "1",
+                        lineSep: "\n"
+                    },
+                    ignore: false,
+                    ignoreRemainder: true // ensure that it is ignored
+                },
+                null,
+                {
+                    node: null,
+                    ignore: true,
+                    ignoreRemainder: false
+                }
+            ];
+            const expected: DefaultAstTransformSpec[] = [
+                {
+                    node: targetNode,
+                    childIndex: 1,
+                    replacementChild: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "1",
+                        lineSep: "\n"                        
+                    },
+                    performDeletion: false,
+                    childToInsert: null
+                },
+                {
+                    node: targetNode,
+                    childIndex: 3,
+                    replacementChild: null,
+                    performDeletion: true,
+                    childToInsert: null
+                },
+                {
+                    node: targetNode,
+                    childIndex: 5,
+                    replacementChild: null,
+                    performDeletion: true,
+                    childToInsert: null
+                }
+            ];
+            const actual = new Array<DefaultAstTransformSpec>();
+            DefaultAstTransformer.computeAugCodeTransforms(augCode, transformParentOfAugCodeNode,
+                genCodeSections, genCodes, actual);
+            assert.deepEqual(actual, expected);
+        });
+        it("it should pass for input 2", function() {
+            const transformParentOfAugCodeNode = false;
+            const targetNode: any = {
+                type: AstBuilder.TYPE_NESTED_BLOCK,
+                children: [
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "c0"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "c1"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "c2"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "c3"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "c4"
+                    }
+                ]
+            };
+            const augCode: any = {
+                parentNode: {
+                    children: [
+                        {
+                            type: AstBuilder.TYPE_DECORATED_LINE,
+                            marker: "deo-0"
+                        },
+                        targetNode,
+                        {
+                            type: AstBuilder.TYPE_DECORATED_LINE,
+                            marker: "deo-2"
+                        },
+                        {
+                            type: AstBuilder.TYPE_DECORATED_LINE,
+                            marker: "deo-3"
+                        }
+                    ]
+                },
+                idxInParentNode: 1,
+                nestedBlockUsed: true,
+                argsExclEndIdxInParentNode: 0,
+                endArgsExclEndIdxInParentNode: 3
+            };
+            const genCodeSections: any[] = [
+                {
+                    parentNode: targetNode,
+                    idxInParentNode: 0,
+                    nestedBlockUsed: false
+                },
+                {
+                    parentNode: targetNode,
+                    idxInParentNode: 1,
+                    nestedBlockUsed: false
+                },
+                {
+                    parentNode: targetNode,
+                    idxInParentNode: 3,
+                    nestedBlockUsed: false
+                },
+                {
+                    parentNode: targetNode,
+                    idxInParentNode: 4,
+                    nestedBlockUsed: false
+                }
+            ];
+            const genCodes: Array<GeneratedCodeSectionTransform | null> = [
+                {
+                    node: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "1",
+                        lineSep: "\n"
+                    },
+                    ignore: false,
+                    ignoreRemainder: false
+                },
+                {
+                    node: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "2",
+                        lineSep: "\n"
+                    },
+                    ignore: false,
+                    ignoreRemainder: false
+                },
+                {
+                    node: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "3",
+                        lineSep: "\n"
+                    },
+                    ignore: false,
+                    ignoreRemainder: true
+                }
+            ];
+            const expected: DefaultAstTransformSpec[] = [
+                {
+                    node: targetNode,
+                    childIndex: 0,
+                    replacementChild: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "1",
+                        lineSep: "\n"                        
+                    },
+                    performDeletion: false,
+                    childToInsert: null
+                },
+                {
+                    node: targetNode,
+                    childIndex: 1,
+                    replacementChild: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "2",
+                        lineSep: "\n"                        
+                    },
+                    performDeletion: false,
+                    childToInsert: null
+                },
+                {
+                    node: targetNode,
+                    childIndex: 3,
+                    replacementChild: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "3",
+                        lineSep: "\n"                        
+                    },
+                    performDeletion: false,
+                    childToInsert: null
+                }
+            ];
+            const actual = new Array<DefaultAstTransformSpec>();
+            DefaultAstTransformer.computeAugCodeTransforms(augCode, transformParentOfAugCodeNode,
+                genCodeSections, genCodes, actual);
+            assert.deepEqual(actual, expected);
+        });
+        it("it should pass for input 3", function() {
+            const transformParentOfAugCodeNode = false;
+            const targetNode: any = {
+                type: AstBuilder.TYPE_NESTED_BLOCK,
+                children: [
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "c0"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "c1"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "c2"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "c3"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "c4"
+                    }
+                ]
+            };
+            const augCode: any = {
+                parentNode: {
+                    children: [
+                        {
+                            type: AstBuilder.TYPE_DECORATED_LINE,
+                            marker: "deo-0"
+                        },
+                        targetNode,
+                        {
+                            type: AstBuilder.TYPE_DECORATED_LINE,
+                            marker: "deo-2"
+                        },
+                        {
+                            type: AstBuilder.TYPE_DECORATED_LINE,
+                            marker: "deo-3"
+                        }
+                    ]
+                },
+                idxInParentNode: 1,
+                nestedBlockUsed: true,
+                argsExclEndIdxInParentNode: 0,
+                endArgsExclEndIdxInParentNode: 3
+            };
+            const genCodeSections: any[] = [
+                {
+                    parentNode: targetNode,
+                    idxInParentNode: 1,
+                    nestedBlockUsed: false
+                }
+            ];
+            const genCodes: Array<GeneratedCodeSectionTransform | null> = [
+                {
+                    node: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "1",
+                        lineSep: "\n"
+                    },
+                    ignore: false,
+                    ignoreRemainder: false
+                },
+                {
+                    node: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "2",
+                        lineSep: "\n"
+                    },
+                    ignore: false,
+                    ignoreRemainder: false
+                },
+                null,
+                {
+                    node: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "3",
+                        lineSep: "\n"
+                    },
+                    ignore: false,
+                    ignoreRemainder: true
+                },
+                {
+                    node: null,
+                    ignore: true,
+                    ignoreRemainder: false
+                }
+            ];
+            const expected: DefaultAstTransformSpec[] = [
+                {
+                    node: targetNode,
+                    childIndex: 1,
+                    replacementChild: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "1",
+                        lineSep: "\n"                        
+                    },
+                    performDeletion: false,
+                    childToInsert: null
+                },
+                {
+                    node: targetNode,
+                    childIndex: 2,
+                    replacementChild: null,
+                    performDeletion: false,
+                    childToInsert: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "2",
+                        lineSep: "\n"                        
+                    }
+                },
+                {
+                    node: targetNode,
+                    childIndex: 2,
+                    replacementChild: null,
+                    performDeletion: false,
+                    childToInsert: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "3",
+                        lineSep: "\n"                        
+                    }
+                }
+            ];
+            const actual = new Array<DefaultAstTransformSpec>();
+            DefaultAstTransformer.computeAugCodeTransforms(augCode, transformParentOfAugCodeNode,
+                genCodeSections, genCodes, actual);
+            assert.deepEqual(actual, expected);
+        });
+        it("it should pass for input 4", function() {
+            const transformParentOfAugCodeNode = true;
+            const targetNode: any = {
+                children: [
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "deo-0"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "deo-1"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "deo-2"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "deo-3"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "deo-4"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "deo-5"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "deo-6"
+                    }
+                ]
+            };
+            const augCode: any = {
+                parentNode: targetNode,
+                idxInParentNode: 0,
+                nestedBlockUsed: false,
+                argsExclEndIdxInParentNode: 3,
+                endArgsExclEndIdxInParentNode: -1
+            };
+            const genCodeSections = new Array<GeneratedCodeDescriptor>();
+            const genCodes: Array<GeneratedCodeSectionTransform | null> = [
+                {
+                    node: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "1",
+                        lineSep: "\n"
+                    },
+                    ignore: false,
+                    ignoreRemainder: true // ensure that it is ignored
+                },
+                null,
+                {
+                    node: null,
+                    ignore: true,
+                    ignoreRemainder: false
+                }
+            ];
+            const expected: DefaultAstTransformSpec[] = [
+                {
+                    node: targetNode,
+                    childIndex: 3,
+                    replacementChild: null,
+                    performDeletion: false,
+                    childToInsert: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "1",
+                        lineSep: "\n"                        
+                    }
+                }
+            ];
+            const actual = new Array<DefaultAstTransformSpec>();
+            DefaultAstTransformer.computeAugCodeTransforms(augCode, transformParentOfAugCodeNode,
+                genCodeSections, genCodes, actual);
+            assert.deepEqual(actual, expected);
+        });
+        it("it should pass for input 5", function() {
+            const transformParentOfAugCodeNode = true;
+            const targetNode: any = {
+                children: [
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "deo-0"
+                    },
+                    {
+                        type: AstBuilder.TYPE_NESTED_BLOCK,
+                        children: [
+                            {
+                                type: AstBuilder.TYPE_DECORATED_LINE,
+                                marker: "c0"
+                            },
+                            {
+                                type: AstBuilder.TYPE_DECORATED_LINE,
+                                marker: "c1"
+                            },
+                            {
+                                type: AstBuilder.TYPE_DECORATED_LINE,
+                                marker: "c2"
+                            },
+                            {
+                                type: AstBuilder.TYPE_DECORATED_LINE,
+                                marker: "c3"
+                            },
+                            {
+                                type: AstBuilder.TYPE_DECORATED_LINE,
+                                marker: "c4"
+                            }
+                        ]
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "deo-2"
+                    },
+                    {
+                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        marker: "deo-3"
+                    }
+                ]
+            };
+            const augCode: any = {
+                parentNode: targetNode,
+                idxInParentNode: 1,
+                nestedBlockUsed: true,
+                argsExclEndIdxInParentNode: 1,
+                endArgsExclEndIdxInParentNode: 3
+            };
+            const genCodeSections = new Array<GeneratedCodeDescriptor>();
+            const genCodes: Array<GeneratedCodeSectionTransform | null> = [
+                null,
+                {
+                    node: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "1",
+                        lineSep: "\n"
+                    },
+                    ignore: false,
+                    ignoreRemainder: false
+                },
+                {
+                    node: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "2",
+                        lineSep: "\n"
+                    },
+                    ignore: false,
+                    ignoreRemainder: false
+                }
+            ];
+            const expected: DefaultAstTransformSpec[] = [
+                {
+                    node: targetNode,
+                    childIndex: 3,
+                    replacementChild: null,
+                    performDeletion: false,
+                    childToInsert: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "1",
+                        lineSep: "\n"                        
+                    }
+                },
+                {
+                    node: targetNode,
+                    childIndex: 3,
+                    replacementChild: null,
+                    performDeletion: false,
+                    childToInsert: {
+                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        text: "2",
+                        lineSep: "\n"                        
+                    }
+                }
+            ];
+            const actual = new Array<DefaultAstTransformSpec>();
+            DefaultAstTransformer.computeAugCodeTransforms(augCode, transformParentOfAugCodeNode,
+                genCodeSections, genCodes, actual);
+            assert.deepEqual(actual, expected);
         });
     });
 

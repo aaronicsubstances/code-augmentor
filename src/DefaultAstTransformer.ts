@@ -254,8 +254,7 @@ export default class DefaultAstTransformer {
                 const genCodeLines = DefaultAstTransformer.extractLinesAndTerminators(
                     genCode.contentParts,
                     genCode.indent, genCodeLineSep);
-                const node = this._createGenCodeNode(genCodeLines,
-                    genCode.useInlineMarker,
+                const node = this._createGenCodeNode(genCodeLines, genCode.useInlineMarker,
                     genCodeSection, genCodeIndent, genCodeLineSep);
                 transform.node = node;
             }
@@ -536,11 +535,9 @@ export default class DefaultAstTransformer {
         // if remainder of gen code sections are not to be ignored,
         // then deal with gen code sections which have to be deleted.
         let ignoreRemainder = false;
-        if (genCodes.length > 0 && genCodes.length < minCodeSectionsToDealWith) {
-            const g = getLast(genCodes);
-            if (g) {
-                ignoreRemainder = g.ignoreRemainder;
-            }
+        const lastGenCode = getLast(genCodes);
+        if (lastGenCode) {
+            ignoreRemainder = lastGenCode.ignoreRemainder;
         }
         if (!ignoreRemainder) {
             for (let i = minCodeSectionsToDealWith; i < genCodeSections.length; i++) {
@@ -557,30 +554,23 @@ export default class DefaultAstTransformer {
         }
 
         // deal with gen code sections which have to be appended.
-        let targetIndexForInsertions = -1;
+        let targetIndexForInsertions: number;
+        const lastGenCodeSection = getLast(genCodeSections);
+        if (lastGenCodeSection) {
+            targetIndexForInsertions = lastGenCodeSection.idxInParentNode + 1;                    
+        }
+        else {
+            if (augCode.nestedBlockUsed && transformParentOfAugCodeNode) {
+                targetIndexForInsertions = augCode.endArgsExclEndIdxInParentNode;
+            }
+            else {
+                targetIndexForInsertions = augCode.argsExclEndIdxInParentNode
+            }
+        }
         for (let i = minCodeSectionsToDealWith; i < genCodes.length; i++) {
             const genCode = genCodes[i];
             if (!genCode || genCode.ignore) {
                 continue;
-            }
-            if (targetIndexForInsertions == -1) {
-                const g = getLast(genCodeSections);
-                if (g) {
-                    targetIndexForInsertions = g.idxInParentNode + 1;                    
-                }
-                else {
-                    if (augCode.nestedBlockUsed) {
-                        if (targetNode === augCode.parentNode.children[augCode.idxInParentNode]) {
-                            targetIndexForInsertions = augCode.argsExclEndIdxInParentNode;
-                        }
-                        else {
-                            targetIndexForInsertions = augCode.endArgsExclEndIdxInParentNode;
-                        }
-                    }
-                    else {
-                        targetIndexForInsertions = augCode.argsExclEndIdxInParentNode
-                    }
-                }
             }
             const transformSpec: DefaultAstTransformSpec = {
                 node: targetNode,
