@@ -23,7 +23,9 @@ const CHANGE_SUMMARY_FILE_NAME = "CHANGE-SUMMARY.txt";
 const CHANGE_DETAILS_FILE_NAME = "CHANGE-DETAILS.txt";
 
 export default class CodeChangeDetective {
-    codeChangeSupplier: (() => Promise<SourceFileDescriptor | null>) | null = null;
+    codeChangeSupplier: AsyncIterable<SourceFileDescriptor>
+        | Iterable<SourceFileDescriptor>
+        | null = null;
     codeChangeProcessingErrorLog: ((e: any, m: string) => Promise<void>) | null = null;
     destDir = '';
     cleanDestDir = true;
@@ -91,11 +93,7 @@ export default class CodeChangeDetective {
 
             const destSubDirNameMap = new Map<string, string>();
             let itemIdx = -1; // let indices start from zero.
-            while (true) {
-                const sourceFileDescriptor = await codeChangeSupplier();
-                if (!sourceFileDescriptor) {
-                    break;
-                }
+            for await (const sourceFileDescriptor of codeChangeSupplier) {
                 itemIdx++;
                 try {
                     // validate srcPath and ensure it can be opened.
