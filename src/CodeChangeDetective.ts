@@ -37,13 +37,13 @@ export default class CodeChangeDetective {
         }
     }
 
-    async defaultSetup(destDir: string, cleanDestDir: boolean = true) {
-        if (!destDir) {
+    async defaultSetup(cleanDestDir: boolean = true) {
+        if (!this.destDir) {
             throw new Error("destDir argument is null or invalid directory name");
         }
         if (cleanDestDir) {
-            await fs.rm(destDir, { recursive: true, force: true });
-            await fs.mkdir(destDir, { recursive: true });
+            await fs.rm(this.destDir, { recursive: true, force: true });
+            await fs.mkdir(this.destDir, { recursive: true });
         }
         const appendFileNames = ["OUTPUT-SUMMARY.txt", "CHANGE-SUMMARY.txt",
             "CHANGE-DETAILS.txt"];
@@ -54,7 +54,7 @@ export default class CodeChangeDetective {
             disposables.push(disposable);
             const appendFunc = async (data: string) => {
                 if (!disposable.w) {
-                    disposable.w = await fs.open(path.join(destDir, f), "w");
+                    disposable.w = await fs.open(path.join(this.destDir, f), "w");
                 }
                 await disposable.w.write(data);
             };
@@ -76,20 +76,15 @@ export default class CodeChangeDetective {
     }
 
     async execute(): Promise<boolean> {
-        const srcFileDescriptors = this.srcFileDescriptors || [];
         const getFileContent = this.getFileContent || (() => {
             throw new Error("getFileContent property is not callable");
         });
-
-        const codeChangeDetectionEnabled = this.codeChangeDetectionEnabled;
-
-        const destDir = this.destDir;
 
         let codeChangeDetected = false;
 
         const destSubDirNameMap = new Map<string, string>();
         let itemIdx = -1; // let indices start from zero.
-        for await (const sourceFileDescriptor of srcFileDescriptors) {
+        for await (const sourceFileDescriptor of (this.srcFileDescriptors || [])) {
             itemIdx++;
             try {
                 // validate srcPath.
@@ -104,7 +99,7 @@ export default class CodeChangeDetective {
                 // always generate files if code change detection is disabled.
                 let srcFileUnchanged  = false;
                 let originalContent = '';
-                if (codeChangeDetectionEnabled) {
+                if (this.codeChangeDetectionEnabled) {
                     if (sourceFileDescriptor.binaryContent) {
                         const originalBinaryContent = await this.callAsyncFunc(getFileContent,
                             srcPath) as Buffer;
@@ -122,7 +117,7 @@ export default class CodeChangeDetective {
                 }
 
                 let destPath = '';
-                if (destDir && !srcFileUnchanged) {
+                if (this.destDir && !srcFileUnchanged) {
                     let destSubDirName = destSubDirNameMap.get(srcFileLoc.baseDir);
                     if (!destSubDirName) {
                         destSubDirName = myutils.generateValidFileName(srcFileLoc.baseDir);
@@ -131,7 +126,7 @@ export default class CodeChangeDetective {
                             destSubDirName);
                         destSubDirNameMap.set(srcFileLoc.baseDir, destSubDirName);
                     }
-                    destPath = path.join(destDir, destSubDirName,
+                    destPath = path.join(this.destDir, destSubDirName,
                         srcFileLoc.relativePath);
 
                     if (sourceFileDescriptor.binaryContent) {
@@ -177,8 +172,8 @@ export default class CodeChangeDetective {
             catch (e) {
                 const logger = this.reportError;
                 if (logger) {
-                    await this.callAsyncFunc(logger, e,
-                        "Error encountered during processing of item " + itemIdx);
+                    await this.callAsyncFunc(logger, e, itemIdx + ":" +
+                        "error encountered during processing of item");
                 }
                 else {
                     throw e;
