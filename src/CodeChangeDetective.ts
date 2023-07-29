@@ -4,7 +4,7 @@ import path from "path";
 
 import * as myutils from "./myutils";
 import {
-    SourceFileDescriptor
+    SourceFileDescriptor, SourceFileLocation
 } from "./types";
 
 export default class CodeChangeDetective {
@@ -18,7 +18,8 @@ export default class CodeChangeDetective {
     appendChangeDetails?: (data: string) => Promise<void>;
     reportError?: (e: any, m: string) => Promise<void>;
 
-    async getFileContent(p: string, encoding?: BufferEncoding) {
+    async getFileContent(loc: SourceFileLocation, encoding?: BufferEncoding) {
+        const p = path.join(loc.baseDir, loc.relativePath);
         if (encoding) {
             return await fs.readFile(p, encoding);
         }
@@ -27,7 +28,8 @@ export default class CodeChangeDetective {
         }
     }
 
-    async saveFileContent(p: string, data: string | Buffer, encoding?: BufferEncoding) {
+    async saveFileContent(loc: SourceFileLocation, data: string | Buffer, encoding?: BufferEncoding) {
+        const p = path.join(this.destDir || '', loc.baseDir, loc.relativePath);
         await fs.mkdir(path.dirname(p), { recursive: true });
         if (encoding) {
             await fs.writeFile(p, data, encoding);
@@ -38,12 +40,13 @@ export default class CodeChangeDetective {
     }
 
     async defaultSetup(cleanDestDir: boolean = true) {
-        if (!this.destDir) {
-            throw new Error("destDir argument is null or invalid directory name");
+        const destDir = this.destDir;
+        if (!destDir) {
+            throw new Error("destDir property is null or invalid directory name");
         }
         if (cleanDestDir) {
-            await fs.rm(this.destDir, { recursive: true, force: true });
-            await fs.mkdir(this.destDir, { recursive: true });
+            await fs.rm(destDir, { recursive: true, force: true });
+            await fs.mkdir(destDir, { recursive: true });
         }
         const appendFileNames = ["OUTPUT-SUMMARY.txt", "CHANGE-SUMMARY.txt",
             "CHANGE-DETAILS.txt"];
@@ -54,7 +57,11 @@ export default class CodeChangeDetective {
             disposables.push(disposable);
             const appendFunc = async (data: string) => {
                 if (!disposable.w) {
-                    disposable.w = await fs.open(path.join(this.destDir, f), "w");
+                    const destDir = this.destDir;
+                    if (!destDir) {
+                        throw new Error("destDir property is null or invalid directory name");
+                    }
+                    disposable.w = await fs.open(path.join(destDir, f), "w");
                 }
                 await disposable.w.write(data);
             };
@@ -75,6 +82,18 @@ export default class CodeChangeDetective {
         };
     }
 
+    normalizeSrcFileLoc(baseDir: string | null | undefined, relativePath: string) {
+        return myutils.normalizeSrcFileLoc(baseDir || null, relativePath);
+    }
+
+    stringifySrcFileLoc(loc: SourceFileLocation) {
+        return path.resolve(loc.baseDir, loc.relativePath);
+    }
+
+    stringifyDestFileLoc(loc: SourceFileLocation) {
+        return path.resolve(this.destDir || '', loc.baseDir, loc.relativePath);
+    }
+
     async execute(): Promise<boolean> {
         const getFileContent = this.getFileContent || (() => {
             throw new Error("getFileContent property is not callable");
@@ -88,36 +107,48 @@ export default class CodeChangeDetective {
             itemIdx++;
             try {
                 // validate srcPath.
-                const srcFileLoc = myutils.normalizeSrcFileLoc(
+                const srcFileLoc = this.normalizeSrcFileLoc(
                     sourceFileDescriptor.baseDir, sourceFileDescriptor.relativePath);
-                const srcPath = path.join(srcFileLoc.baseDir, srcFileLoc.relativePath);
+                const srcPath = this.stringifySrcFileLoc(srcFileLoc);
 
                 // determine encoding to use.
                 const srcFileEncoding =
                     sourceFileDescriptor.encoding || this.defaultEncoding || "utf8";
 
                 // always generate files if code change detection is disabled.
-                let srcFileUnchanged  = false;
+                let generateDestFile  = true;
                 let originalContent = '';
+                const revisedBinaryContent = sourceFileDescriptor.binaryContent;
+                const revisedContent = sourceFileDescriptor.content;
                 if (this.codeChangeDetectionEnabled) {
-                    if (sourceFileDescriptor.binaryContent) {
+                    if (revisedBinaryContent) {
                         const originalBinaryContent = await this.callAsyncFunc(getFileContent,
-                            srcPath) as Buffer;
-                        srcFileUnchanged = Buffer.compare(sourceFileDescriptor.binaryContent,
-                            originalBinaryContent) === 0;
+                            srcFileLoc) as Buffer;
+                        if (!originalBinaryContent) {
+                            generateDestFile = true;
+                        }
+                        else {
+                            generateDestFile = Buffer.compare(revisedBinaryContent,
+                                originalBinaryContent) !== 0;
+                        }
                     }
                     else {
                         originalContent = await this.callAsyncFunc(getFileContent,
-                            srcPath, srcFileEncoding) as string;
-                        srcFileUnchanged = sourceFileDescriptor.content === originalContent;
+                            srcFileLoc, srcFileEncoding) as string;
+                        if (!revisedContent && !originalContent) {
+                            generateDestFile = false;
+                        }
+                        else {
+                            generateDestFile = revisedContent !== originalContent;
+                        }
                     }
-                    if (!srcFileUnchanged) {
+                    if (generateDestFile) {
                         codeChangeDetected = true;
                     }
                 }
 
                 let destPath = '';
-                if (this.destDir && !srcFileUnchanged) {
+                if (generateDestFile) {
                     let destSubDirName = destSubDirNameMap.get(srcFileLoc.baseDir);
                     if (!destSubDirName) {
                         destSubDirName = myutils.generateValidFileName(srcFileLoc.baseDir);
@@ -126,16 +157,19 @@ export default class CodeChangeDetective {
                             destSubDirName);
                         destSubDirNameMap.set(srcFileLoc.baseDir, destSubDirName);
                     }
-                    destPath = path.join(this.destDir, destSubDirName,
-                        srcFileLoc.relativePath);
+                    const destFileLoc = {
+                        baseDir: destSubDirName,
+                        relativePath: srcFileLoc.relativePath
+                    };
+                    destPath = this.stringifyDestFileLoc(destFileLoc);
 
-                    if (sourceFileDescriptor.binaryContent) {
-                        await this.callAsyncFunc(this.saveFileContent, destPath,
-                            sourceFileDescriptor.binaryContent);
+                    if (revisedBinaryContent) {
+                        await this.callAsyncFunc(this.saveFileContent, destFileLoc,
+                            revisedBinaryContent);
                     }
                     else {
-                        await this.callAsyncFunc(this.saveFileContent, destPath,
-                            sourceFileDescriptor.content, srcFileEncoding);
+                        await this.callAsyncFunc(this.saveFileContent, destFileLoc,
+                            revisedContent, srcFileEncoding);
                     }
                 }
 
@@ -143,7 +177,7 @@ export default class CodeChangeDetective {
                 await this.callAsyncFunc(this.appendOutputSummary, srcPath + os.EOL +
                     destPath + os.EOL);
 
-                if (destPath) {
+                if (this.codeChangeDetectionEnabled && generateDestFile) {
                     // write out same info as output summary.
                     await this.callAsyncFunc(this.appendChangeSummary, srcPath + os.EOL +
                         destPath + os.EOL);
@@ -153,16 +187,22 @@ export default class CodeChangeDetective {
                         // write out Unix normal diff of code changes.
                         const changeDiff = [""];
                         changeDiff.push(`${os.EOL}--- ${srcPath}${os.EOL}+++ ${destPath}${os.EOL}`);
-                        if (sourceFileDescriptor.binaryContent) {
+                        if (revisedBinaryContent) {
                             changeDiff.push(os.EOL + "Binary files differ" + os.EOL);
                         }
                         else {
                             if (!originalContent) {
                                 originalContent = await this.callAsyncFunc(getFileContent,
-                                    srcPath, srcFileEncoding) as string;
+                                    srcFileLoc, srcFileEncoding) as string;
                             }
-                            const original = myutils.splitIntoLines(originalContent, false);
-                            const revised = myutils.splitIntoLines(sourceFileDescriptor.content, false);
+                            let original = new Array<string>();
+                            if (originalContent) {
+                                original = myutils.splitIntoLines(originalContent, false);
+                            }
+                            let revised = new Array<string>();
+                            if (revisedContent) {
+                                revised = myutils.splitIntoLines(revisedContent, false);
+                            }
                             changeDiff.push(myutils.printNormalDiff(original, revised));
                             await this.callAsyncFunc(appendChangeDetails, changeDiff.join(""));
                         }

@@ -89,9 +89,9 @@ export interface SourceFileLocation {
 }
 
 export interface SourceFileDescriptor {
-    baseDir: string | null;
+    baseDir?: string;
     relativePath: string;
-    content: string;
-    encoding: BufferEncoding | null;
-    binaryContent: Buffer | null;
+    content?: string;
+    encoding?: BufferEncoding;
+    binaryContent?: Buffer;
 }
