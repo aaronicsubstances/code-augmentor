@@ -94,4 +94,5 @@ export interface SourceFileDescriptor {
     content?: string;
     encoding?: BufferEncoding;
     binaryContent?: Buffer;
+    isBinary: boolean;
 }
