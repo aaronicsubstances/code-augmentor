@@ -96,3 +96,23 @@ export interface SourceFileDescriptor {
     binaryContent?: Buffer;
     isBinary: boolean;
 }
+
+export interface CodeChangeDetectiveConfig {
+    release(): Promise<void>;
+    getFileContent(loc: SourceFileLocation, isBinary: boolean,
+        encoding?: BufferEncoding): Promise<string | Buffer>;
+    saveFileContent(loc: SourceFileLocation, data: string | Buffer,
+        isBinary: boolean, encoding?: BufferEncoding): Promise<void>;
+    appendOutputSummary(data: string): Promise<void>;
+    appendChangeSummary(data: string): Promise<void>;
+    appendChangeDetails(data: string): Promise<void>;
+    normalizeSrcFileLoc(loc: SourceFileLocation): SourceFileLocation;
+    stringifySrcFileLoc(loc: SourceFileLocation): string;
+    stringifyDestFileLoc(loc: SourceFileLocation): string;
+    areFileContentsEqual(arg1: string | Buffer, arg2: string | Buffer, isBinary: boolean): boolean;
+    generateDestFileLoc(srcFileLoc: SourceFileLocation): SourceFileLocation;
+}
+
+export interface CodeChangeDetectiveConfigFactory {
+    create(): Promise<CodeChangeDetectiveConfig>;
+}

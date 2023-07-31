@@ -1,23 +1,202 @@
 import fs from "fs/promises";
-import os from "os"
 import path from "path";
+import os from "os";
 
 import * as myutils from "./myutils";
 import {
-    SourceFileDescriptor, SourceFileLocation
+    CodeChangeDetectiveConfig,
+    CodeChangeDetectiveConfigFactory,
+    SourceFileDescriptor,
+    SourceFileLocation
 } from "./types";
 
-export default class CodeChangeDetective {
-    private _destSubDirNameMap = new Map<string, string>();
-    destDir = '';
+export class CodeChangeDetective {
     codeChangeDetectionEnabled = true;
+    configFactory?: CodeChangeDetectiveConfigFactory;
     srcFileDescriptors?: AsyncIterable<SourceFileDescriptor>
         | Iterable<SourceFileDescriptor>;
     defaultEncoding?: BufferEncoding;
-    appendOutputSummary?: (data: string) => Promise<void>;
-    appendChangeSummary?: (data: string) => Promise<void>;
-    appendChangeDetails?: (data: string) => Promise<void>;
     reportError?: (e: any, m: string) => Promise<void>;
+
+    async execute(): Promise<boolean> {
+        let config;
+        try {
+            let codeChangeDetected = false;
+
+            let itemIdx = -1; // let indices start from zero.
+            for await (const sourceFileDescriptor of (this.srcFileDescriptors || [])) {
+                itemIdx++;
+                try {
+                    // validate srcPath.
+                    if (!config) {                        
+                        const configFactory = this.configFactory;
+                        if (!configFactory) {
+                            throw new Error("configFactory property is not set");
+                        }
+                        config = await configFactory.create();
+                    }
+                    const srcFileLoc = config.normalizeSrcFileLoc(
+                        sourceFileDescriptor as SourceFileLocation);
+                    const srcPath = config.stringifySrcFileLoc(srcFileLoc);
+
+                    // determine encoding to use.
+                    const srcFileEncoding =
+                        sourceFileDescriptor.encoding || this.defaultEncoding || "utf8";
+
+                    // always generate files if code change detection is disabled.
+                    let generateDestFile  = true;
+                    let originalContent: string | Buffer | undefined;
+                    const revisedContent = sourceFileDescriptor.content as string;
+                    const revisedBinaryContent = sourceFileDescriptor.binaryContent as Buffer;
+                    const isBinary = sourceFileDescriptor.isBinary;
+                    if (this.codeChangeDetectionEnabled) {
+                        if (isBinary) {
+                            const originalBinaryContent = await config.getFileContent(
+                                srcFileLoc, true);
+                            generateDestFile = !config.areFileContentsEqual(
+                                originalBinaryContent, revisedBinaryContent, true);
+                        }
+                        else {
+                            originalContent = await config.getFileContent(
+                                srcFileLoc, false, srcFileEncoding);
+                            generateDestFile = !config.areFileContentsEqual(
+                                originalContent, revisedContent, false);
+                        }
+                        if (generateDestFile) {
+                            codeChangeDetected = true;
+                        }
+                    }
+
+                    let destPath;
+                    if (generateDestFile) {
+                        const destFileLoc = config.generateDestFileLoc(srcFileLoc);
+                        destPath = config.stringifyDestFileLoc(destFileLoc);
+
+                        if (isBinary) {
+                            await config.saveFileContent(destFileLoc,
+                                revisedBinaryContent, true);
+                        }
+                        else {
+                            await config.saveFileContent(destFileLoc,
+                                revisedContent, false, srcFileEncoding);
+                        }
+                    }
+
+                    // write out possibly ungenerated destPath.
+                    await callFunc(config.appendOutputSummary, config, srcPath + os.EOL +
+                        destPath + os.EOL);
+
+                    if (this.codeChangeDetectionEnabled && generateDestFile) {
+                        // write out same info as output summary.
+                        await callFunc(config.appendChangeSummary, config, srcPath + os.EOL +
+                            destPath + os.EOL);
+
+                        const appendChangeDetails = config.appendChangeDetails;
+                        if (appendChangeDetails) {
+                            // write out Unix normal diff of code changes.
+                            const changeDiff = [""];
+                            changeDiff.push(`${os.EOL}--- ${srcPath}${os.EOL}+++ ${destPath}${os.EOL}`);
+                            if (isBinary) {
+                                changeDiff.push(os.EOL + "Binary files differ" + os.EOL);
+                            }
+                            else {
+                                const original = myutils.splitIntoLines('' + originalContent, false);
+                                const revised = myutils.splitIntoLines('' + revisedContent, false);
+                                changeDiff.push(myutils.printNormalDiff(original, revised));
+                                await callFunc(appendChangeDetails, config, changeDiff.join(""));
+                            }
+                        }
+                    }
+                }
+                catch (e) {
+                    const logger = this.reportError;
+                    if (logger) {
+                        await callFunc(logger, this, e, itemIdx + ":" +
+                            "error encountered during processing of item");
+                    }
+                    else {
+                        throw e;
+                    }
+                }
+            }
+
+            return codeChangeDetected;
+        }
+        finally {
+            await callFunc(config?.release, config);
+        }
+    }
+}
+
+function callFunc(f: any, ...args: any) {
+    if (f) {
+        return f.call(...args);
+    }
+}
+
+export class DefaultCodeChangeDetectiveConfigFactory implements CodeChangeDetectiveConfigFactory {
+    destDir?: string;
+    cleanDestDir?: boolean;
+
+    async create() {
+        const destDir = this.destDir;
+        if (!destDir) {
+            throw new Error("destDir property is null or invalid directory name");
+        }
+        if (this.cleanDestDir) {
+            await fs.rm(destDir, { recursive: true, force: true });
+            await fs.mkdir(destDir, { recursive: true });
+        }
+
+        const config = new DefaultCodeChangeDetectiveConfig();
+        config.destDir = destDir;
+
+        const appendFileNames = ["OUTPUT-SUMMARY.txt", "CHANGE-SUMMARY.txt",
+            "CHANGE-DETAILS.txt"];
+        const appendFuncs = new Array<any>();
+        const disposables = new Array<any>();
+        for (const f of appendFileNames) {
+            const disposable: any = {};
+            disposables.push(disposable);
+            const appendFunc = async (data: string) => {
+                if (!disposable.w) {
+                    disposable.w = await fs.open(path.join(destDir, f), "w");
+                }
+                await disposable.w.write(data);
+            };
+            appendFuncs.push(appendFunc);
+        }
+        config.appendOutputSummary = appendFuncs[0];
+        config.appendChangeSummary = appendFuncs[1];
+        config.appendChangeDetails = appendFuncs[2];
+        config.release = async () => {
+            for (const disposable of disposables) {
+                if (disposable.w) {
+                    await disposable.w.close();
+                }
+            }
+        };
+        return config;
+    }
+}
+
+export class DefaultCodeChangeDetectiveConfig implements CodeChangeDetectiveConfig {
+    destSubDirNameMap = new Map<string, string>();
+    destDir = '';
+
+    release() {
+        return null as any;
+    }
+    
+    appendOutputSummary(data: string) {
+        return null as any;
+    }
+    appendChangeSummary(data: string) {
+        return null as any;
+    }
+    appendChangeDetails(data: string) {
+        return null as any;
+    }
 
     async getFileContent(loc: SourceFileLocation, isBinary: boolean, encoding?: BufferEncoding) {
         const p = path.join(loc.baseDir, loc.relativePath);
@@ -31,7 +210,7 @@ export default class CodeChangeDetective {
 
     async saveFileContent(loc: SourceFileLocation, data: string | Buffer,
             isBinary: boolean, encoding?: BufferEncoding) {
-        const p = path.join(this.destDir || '', loc.baseDir, loc.relativePath);
+        const p = path.join(this.destDir, loc.baseDir, loc.relativePath);
         await fs.mkdir(path.dirname(p), { recursive: true });
         if (isBinary) {
             await fs.writeFile(p, data);
@@ -41,55 +220,8 @@ export default class CodeChangeDetective {
         }
     }
 
-    async defaultSetup(cleanDestDir: boolean = true) {
-        const destDir = this.destDir;
-        if (!destDir) {
-            throw new Error("destDir property is null or invalid directory name");
-        }
-        if (cleanDestDir) {
-            await fs.rm(destDir, { recursive: true, force: true });
-            await fs.mkdir(destDir, { recursive: true });
-        }
-
-        // reset
-        this._destSubDirNameMap = new Map<string, string>();
-
-        const appendFileNames = ["OUTPUT-SUMMARY.txt", "CHANGE-SUMMARY.txt",
-            "CHANGE-DETAILS.txt"];
-        const appendFuncs = new Array<any>();
-        const disposables = new Array<any>();
-        for (const f of appendFileNames) {
-            const disposable: any = {};
-            disposables.push(disposable);
-            const appendFunc = async (data: string) => {
-                if (!disposable.w) {
-                    const destDir = this.destDir;
-                    if (!destDir) {
-                        throw new Error("destDir property is null or invalid directory name");
-                    }
-                    disposable.w = await fs.open(path.join(destDir, f), "w");
-                }
-                await disposable.w.write(data);
-            };
-            appendFuncs.push(appendFunc);
-        }
-        this.appendOutputSummary = appendFuncs[0];
-        this.appendChangeSummary = appendFuncs[1];
-        this.appendChangeDetails = appendFuncs[2];
-        return async () => {
-            this.appendOutputSummary = undefined;
-            this.appendChangeSummary = undefined;
-            this.appendChangeDetails = undefined;
-            for (const disposable of disposables) {
-                if (disposable.w) {
-                    await disposable.w.close();
-                }
-            }
-        };
-    }
-
-    normalizeSrcFileLoc(baseDir: string | null | undefined, relativePath: string) {
-        return myutils.normalizeSrcFileLoc(baseDir || null, relativePath);
+    normalizeSrcFileLoc(loc: SourceFileLocation) {
+        return myutils.normalizeSrcFileLoc(loc.baseDir, loc.relativePath);
     }
 
     stringifySrcFileLoc(loc: SourceFileLocation) {
@@ -97,150 +229,31 @@ export default class CodeChangeDetective {
     }
 
     stringifyDestFileLoc(loc: SourceFileLocation) {
-        return path.resolve(this.destDir || '', loc.baseDir, loc.relativePath);
+        return path.resolve(this.destDir, loc.baseDir, loc.relativePath);
     }
 
-    areFileContentsEqual(arg1: any, arg2: any, isBinary: boolean) {
-        if (!arg1 && !arg2) {
-            return true;
-        }
-        if ((arg1 && !arg2) || (!arg1 && arg2)) {
-            return false;
-        }
+    areFileContentsEqual(arg1: string | Buffer, arg2: string | Buffer, isBinary: boolean) {
         if (isBinary) {
-            return Buffer.compare(arg1, arg2) === 0;
+            return Buffer.compare(arg1 as Buffer, arg2 as Buffer) === 0;
         }
         else {
             return arg1 === arg2;
         }
     }
 
-    generateDestFileLoc(srcFileLoc: SourceFileLocation) {
-        if (!srcFileLoc) {
-            return null;
+    generateDestFileLoc(srcFileLoc: SourceFileLocation): SourceFileLocation {
+        let destSubDirName = this.destSubDirNameMap.get(srcFileLoc.baseDir);
+        if (!destSubDirName) {
+            destSubDirName = myutils.generateValidFileName(srcFileLoc.baseDir);
+            destSubDirName = myutils.modifyNameToBeAbsent(
+                Array.from(this.destSubDirNameMap.values()),
+                destSubDirName);
+            this.destSubDirNameMap.set(srcFileLoc.baseDir, destSubDirName);
         }
         const destFileLoc = {
+            baseDir: destSubDirName,
             relativePath: srcFileLoc.relativePath
-        } as SourceFileLocation;
-        const srcBaseDir = '' + srcFileLoc.baseDir;
-        let destSubDirName = this._destSubDirNameMap.get(srcBaseDir);
-        if (!destSubDirName) {
-            destSubDirName = myutils.generateValidFileName(srcBaseDir);
-            destSubDirName = myutils.modifyNameToBeAbsent(
-                Array.from(this._destSubDirNameMap.values()),
-                destSubDirName);
-            this._destSubDirNameMap.set(srcBaseDir, destSubDirName);
-        }
-        destFileLoc.baseDir = destSubDirName;
+        };
         return destFileLoc;
-    }
-
-    async execute(): Promise<boolean> {
-        const getFileContent = this.getFileContent || (() => {
-            throw new Error("getFileContent property is not callable");
-        });
-
-        let codeChangeDetected = false;
-
-        // reset
-        this._destSubDirNameMap = new Map<string, string>();
-
-        let itemIdx = -1; // let indices start from zero.
-        for await (const sourceFileDescriptor of (this.srcFileDescriptors || [])) {
-            itemIdx++;
-            try {
-                // validate srcPath.
-                const srcFileLoc = this.callFunc(this.normalizeSrcFileLoc,
-                    sourceFileDescriptor.baseDir, sourceFileDescriptor.relativePath);
-                const srcPath = this.callFunc(this.stringifySrcFileLoc, srcFileLoc);
-
-                // determine encoding to use.
-                const srcFileEncoding =
-                    sourceFileDescriptor.encoding || this.defaultEncoding || "utf8";
-
-                // always generate files if code change detection is disabled.
-                let generateDestFile  = true;
-                let originalContent = '';
-                const revisedContent = sourceFileDescriptor.content;
-                const revisedBinaryContent = sourceFileDescriptor.binaryContent;
-                const isBinary = sourceFileDescriptor.isBinary;
-                if (this.codeChangeDetectionEnabled) {
-                    if (isBinary) {
-                        const originalBinaryContent = await this.callFunc(getFileContent,
-                            srcFileLoc, true, null);
-                        generateDestFile = !this.callFunc(this.areFileContentsEqual,
-                            this, originalBinaryContent, revisedBinaryContent, true);
-                    }
-                    else {
-                        originalContent = await this.callFunc(getFileContent,
-                            srcFileLoc, false, srcFileEncoding);
-                        generateDestFile = !this.callFunc(this.areFileContentsEqual,
-                            this, originalContent, revisedContent, false);
-                    }
-                    if (generateDestFile) {
-                        codeChangeDetected = true;
-                    }
-                }
-
-                let destPath;
-                if (generateDestFile) {
-                    const destFileLoc = this.callFunc(this.generateDestFileLoc, srcFileLoc);
-                    destPath = this.callFunc(this.stringifyDestFileLoc, destFileLoc);
-
-                    if (isBinary) {
-                        await this.callFunc(this.saveFileContent, destFileLoc,
-                            revisedBinaryContent, true);
-                    }
-                    else {
-                        await this.callFunc(this.saveFileContent, destFileLoc,
-                            revisedContent, false, srcFileEncoding);
-                    }
-                }
-
-                // write out possibly ungenerated destPath.
-                await this.callFunc(this.appendOutputSummary, srcPath + os.EOL +
-                    destPath + os.EOL);
-
-                if (this.codeChangeDetectionEnabled && generateDestFile) {
-                    // write out same info as output summary.
-                    await this.callFunc(this.appendChangeSummary, srcPath + os.EOL +
-                        destPath + os.EOL);
-
-                    const appendChangeDetails = this.appendChangeDetails;
-                    if (appendChangeDetails) {
-                        // write out Unix normal diff of code changes.
-                        const changeDiff = [""];
-                        changeDiff.push(`${os.EOL}--- ${srcPath}${os.EOL}+++ ${destPath}${os.EOL}`);
-                        if (isBinary) {
-                            changeDiff.push(os.EOL + "Binary files differ" + os.EOL);
-                        }
-                        else {
-                            const original = myutils.splitIntoLines('' + originalContent, false);
-                            const revised = myutils.splitIntoLines('' + revisedContent, false);
-                            changeDiff.push(myutils.printNormalDiff(original, revised));
-                            await this.callFunc(appendChangeDetails, changeDiff.join(""));
-                        }
-                    }
-                }
-            }
-            catch (e) {
-                const logger = this.reportError;
-                if (logger) {
-                    await this.callFunc(logger, e, itemIdx + ":" +
-                        "error encountered during processing of item");
-                }
-                else {
-                    throw e;
-                }
-            }
-        }
-
-        return codeChangeDetected;
-    }
-
-    private callFunc(f: any, ...args: any) {
-        if (f) {
-            return f.call(this, ...args);
-        }
     }
 }

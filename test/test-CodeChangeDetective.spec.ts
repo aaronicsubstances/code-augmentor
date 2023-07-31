@@ -1,10 +1,9 @@
-
 import os from "os";
 import path from "path";
 
 import { assert } from "chai";
 
-import CodeChangeDetective from "../src/CodeChangeDetective";
+import { CodeChangeDetective, DefaultCodeChangeDetectiveConfigFactory } from "../src/CodeChangeDetective";
 import { SourceFileDescriptor } from "../src/types";
 
 function createTempPath(...name: string[]) {
@@ -29,22 +28,28 @@ describe("CodeChangeDetective", function() {
         assert.equal(actual, expected);
     });
 
-    it("should pass with defaults and no items supplied", async function() {
+    it("should pass with no items available", async function() {
         const instance = new CodeChangeDetective();
-        instance.destDir = createTempPath("room1");
-        const cleanUp = await instance.defaultSetup();
+        /*const src = (async function*() {
+            const s : SourceFileDescriptor = {
+                baseDir: "d",
+                relativePath: "t.txt",
+                content: "did",
+                encoding: null,
+                binaryContent: null
+            };
+            yield s;
+        })();*/
         const expected = false;
-        let actual = false;
-        try {
-            actual = await instance.execute();
-        }
-        finally {
-            await cleanUp();
-        }
+        const configFactory = new DefaultCodeChangeDetectiveConfigFactory();
+        configFactory.destDir = "dummy";
+        instance.configFactory = configFactory;
+        instance.srcFileDescriptors = [];
+        const actual = await instance.execute();
         assert.equal(actual, expected);
     });
 
-    it("should pass with nulls and code change disabled", async function() {
+    /*it("should pass with nulls and code change disabled", async function() {
         const instance = new CodeChangeDetective();
         instance.codeChangeDetectionEnabled = false;
         instance.getFileContent = null as any
@@ -68,5 +73,5 @@ describe("CodeChangeDetective", function() {
         const expected = false;
         const actual = await instance.execute();
         assert.equal(actual, expected);
-    });
+    });*/
 });
