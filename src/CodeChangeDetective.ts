@@ -26,17 +26,19 @@ export class CodeChangeDetective {
             let itemIdx = -1; // let indices start from zero.
             for await (const sourceFileDescriptor of (this.srcFileDescriptors || [])) {
                 itemIdx++;
+                if (!sourceFileDescriptor) {
+                    continue;
+                }
+                if (!config) {
+                    const configFactory = this.configFactory;
+                    if (!configFactory) {
+                        throw new Error("configFactory property is not set");
+                    }
+                    config = await configFactory.create();
+                }
                 try {
                     // validate srcPath.
-                    if (!config) {                        
-                        const configFactory = this.configFactory;
-                        if (!configFactory) {
-                            throw new Error("configFactory property is not set");
-                        }
-                        config = await configFactory.create();
-                    }
-                    const srcFileLoc = config.normalizeSrcFileLoc(
-                        sourceFileDescriptor as SourceFileLocation);
+                    const srcFileLoc = config.normalizeSrcFileLoc(sourceFileDescriptor);
                     const srcPath = config.stringifySrcFileLoc(srcFileLoc);
 
                     // determine encoding to use.
@@ -184,18 +186,14 @@ export class DefaultCodeChangeDetectiveConfig implements CodeChangeDetectiveConf
     destSubDirNameMap = new Map<string, string>();
     destDir = '';
 
-    release() {
-        return null as any;
+    release(): any {
     }
     
-    appendOutputSummary(data: string) {
-        return null as any;
+    appendOutputSummary(data: string): any {
     }
-    appendChangeSummary(data: string) {
-        return null as any;
+    appendChangeSummary(data: string): any {
     }
-    appendChangeDetails(data: string) {
-        return null as any;
+    appendChangeDetails(data: string): any {
     }
 
     async getFileContent(loc: SourceFileLocation, isBinary: boolean, encoding?: BufferEncoding) {
@@ -220,8 +218,9 @@ export class DefaultCodeChangeDetectiveConfig implements CodeChangeDetectiveConf
         }
     }
 
-    normalizeSrcFileLoc(loc: SourceFileLocation) {
-        return myutils.normalizeSrcFileLoc(loc.baseDir, loc.relativePath);
+    normalizeSrcFileLoc(srcFileDescriptor: SourceFileDescriptor) {
+        return myutils.normalizeSrcFileLoc(srcFileDescriptor.baseDir as any,
+            srcFileDescriptor.relativePath);
     }
 
     stringifySrcFileLoc(loc: SourceFileLocation) {
@@ -232,9 +231,9 @@ export class DefaultCodeChangeDetectiveConfig implements CodeChangeDetectiveConf
         return path.resolve(this.destDir, loc.baseDir, loc.relativePath);
     }
 
-    areFileContentsEqual(arg1: string | Buffer, arg2: string | Buffer, isBinary: boolean) {
+    areFileContentsEqual(arg1: any, arg2: any, isBinary: boolean) {
         if (isBinary) {
-            return Buffer.compare(arg1 as Buffer, arg2 as Buffer) === 0;
+            return Buffer.compare(arg1, arg2) === 0;
         }
         else {
             return arg1 === arg2;
