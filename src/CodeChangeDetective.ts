@@ -12,7 +12,7 @@ import {
 
 export class CodeChangeDetective {
     codeChangeDetectionEnabled = true;
-    configFactory?: CodeChangeDetectiveConfigFactory;
+    configFactory?: CodeChangeDetectiveConfigFactory = new DefaultCodeChangeDetectiveConfigFactory()
     srcFileDescriptors?: AsyncIterable<SourceFileDescriptor>
         | Iterable<SourceFileDescriptor>;
     defaultEncoding?: BufferEncoding;
@@ -87,23 +87,29 @@ export class CodeChangeDetective {
                         }
                     }
 
-                    await callFunc(config.appendOutputSummary, config, srcPath + os.EOL +
-                        destPath + os.EOL);
+                    // write out possibly ungenerated destPath.
+                    await callFunc(config.appendOutputSummary, config,
+                        srcPath + os.EOL + destPath + os.EOL);
 
-                    const appendChangeDetails = config.appendChangeDetails;
-                    if (this.codeChangeDetectionEnabled && generateDestFile &&
-                            appendChangeDetails) {
-                        // write out Unix normal diff of code changes.
-                        const changeDiff = [""];
-                        changeDiff.push(`${os.EOL}--- ${srcPath}${os.EOL}+++ ${destPath}${os.EOL}`);
-                        if (isBinary) {
-                            changeDiff.push(os.EOL + "Binary files differ" + os.EOL);
-                        }
-                        else {
-                            const original = myutils.splitIntoLines('' + originalContent, false);
-                            const revised = myutils.splitIntoLines('' + revisedContent, false);
-                            changeDiff.push(myutils.printNormalDiff(original, revised));
-                            await callFunc(appendChangeDetails, config, changeDiff.join(""));
+                    if (this.codeChangeDetectionEnabled && generateDestFile) {
+                        // write out same info as output summary into change summary.
+                        await callFunc(config.appendChangeSummary, config,
+                            srcPath + os.EOL + destPath + os.EOL);
+
+                        const appendChangeDiff = config.appendChangeDiff;
+                        if (appendChangeDiff) {
+                            // write out Unix normal diff of code changes.
+                            const changeDiff = [""];
+                            changeDiff.push(`${os.EOL}--- ${srcPath}${os.EOL}+++ ${destPath}${os.EOL}`);
+                            if (isBinary) {
+                                changeDiff.push(os.EOL + "Binary files differ" + os.EOL);
+                            }
+                            else {
+                                const original = myutils.splitIntoLines('' + originalContent, false);
+                                const revised = myutils.splitIntoLines('' + revisedContent, false);
+                                changeDiff.push(myutils.printNormalDiff(original, revised));
+                            }
+                            await callFunc(appendChangeDiff, config, changeDiff.join(""));
                         }
                     }
                 }
@@ -150,7 +156,8 @@ export class DefaultCodeChangeDetectiveConfigFactory implements CodeChangeDetect
         const config = new DefaultCodeChangeDetectiveConfig();
         config.destDir = destDir;
 
-        const appendFileNames = ["OUTPUT-SUMMARY.txt", "CHANGE-DETAILS.txt"];
+        const appendFileNames = ["OUTPUT-SUMMARY.txt",
+            "CHANGE-SUMMARY.txt", "CHANGE-DETAILS.txt"];
         const appendFuncs = new Array<any>();
         const disposables = new Array<any>();
         for (const f of appendFileNames) {
@@ -165,7 +172,8 @@ export class DefaultCodeChangeDetectiveConfigFactory implements CodeChangeDetect
             appendFuncs.push(appendFunc);
         }
         config.appendOutputSummary = appendFuncs[0];
-        config.appendChangeDetails = appendFuncs[1];
+        config.appendChangeSummary = appendFuncs[1];
+        config.appendChangeDiff = appendFuncs[2];
         config.release = async () => {
             for (const disposable of disposables) {
                 if (disposable.w) {
@@ -186,7 +194,9 @@ export class DefaultCodeChangeDetectiveConfig implements CodeChangeDetectiveConf
     
     appendOutputSummary(data: string): any {
     }
-    appendChangeDetails(data: string): any {
+    appendChangeSummary(data: string): any {
+    }
+    appendChangeDiff(data: string): any {
     }
 
     async getFileContent(loc: SourceFileLocation, isBinary: boolean, encoding?: BufferEncoding) {

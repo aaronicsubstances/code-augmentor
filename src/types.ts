@@ -104,7 +104,8 @@ export interface CodeChangeDetectiveConfig {
     saveFileContent(loc: SourceFileLocation, data: string | Buffer,
         isBinary: boolean, encoding?: BufferEncoding): Promise<void>;
     appendOutputSummary(data: string): Promise<void>;
-    appendChangeDetails(data: string): Promise<void>;
+    appendChangeSummary(data: string): Promise<void>;
+    appendChangeDiff(data: string): Promise<void>;
     normalizeSrcFileLoc(srcFileDescriptor: SourceFileDescriptor): SourceFileLocation;
     stringifySrcFileLoc(loc: SourceFileLocation): string;
     stringifyDestFileLoc(loc: SourceFileLocation): string;

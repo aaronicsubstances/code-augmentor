@@ -3,8 +3,15 @@ import path from "path";
 
 import { assert } from "chai";
 
-import { CodeChangeDetective, DefaultCodeChangeDetectiveConfigFactory } from "../src/CodeChangeDetective";
-import { CodeChangeDetectiveConfig, CodeChangeDetectiveConfigFactory, SourceFileDescriptor, SourceFileLocation } from "../src/types";
+import {
+    CodeChangeDetective
+} from "../src/CodeChangeDetective";
+import {
+    CodeChangeDetectiveConfig,
+    CodeChangeDetectiveConfigFactory,
+    SourceFileDescriptor,
+    SourceFileLocation
+} from "../src/types";
 
 function generateHex(s: string, encoding?: BufferEncoding): string {
     return Buffer.from(s, encoding || "utf8").toString('hex');
@@ -29,7 +36,8 @@ function toObject(map: any): any {
 class TestCodeChangeDetectiveConfig implements CodeChangeDetectiveConfig {
     releaseCalled = false;
     outputSummaryLogs = new Array<string>();
-    changeDetailsLogs = new Array<string>();
+    changeSummaryLogs = new Array<string>();
+    changeDiffLogs = new Array<string>();
     fileContent = new Map<string, string>();
     _seed = 0;
 
@@ -69,8 +77,12 @@ class TestCodeChangeDetectiveConfig implements CodeChangeDetectiveConfig {
         this.outputSummaryLogs.push(data);
     }
 
-    async appendChangeDetails(data: string) {
-        this.changeDetailsLogs.push(data);
+    async appendChangeSummary(data: string) {
+        this.changeSummaryLogs.push(data);
+    }
+
+    async appendChangeDiff(data: string) {
+        this.changeDiffLogs.push(data);
     }
 
     normalizeSrcFileLoc(srcFileDescriptor: SourceFileDescriptor) {
@@ -114,42 +126,10 @@ class TestCodeChangeDetectiveConfigFactory implements CodeChangeDetectiveConfigF
 };
 
 describe("CodeChangeDetective", function() {
-    it("should pass with no props set", async function() {
-        const instance = new CodeChangeDetective();
-        /*const src = (async function*() {
-            const s : SourceFileDescriptor = {
-                baseDir: "d",
-                relativePath: "t.txt",
-                content: "did",
-                encoding: null,
-                binaryContent: null
-            };
-            yield s;
-        })();*/
-        const expected = false;
-        const actual = await instance.execute();
-        assert.equal(actual, expected);
-    });
-
     it("should pass with no items available", async function() {
         const instance = new CodeChangeDetective();
-        /*const src = (async function*() {
-            const s : SourceFileDescriptor = {
-                baseDir: "d",
-                relativePath: "t.txt",
-                content: "did",
-                encoding: null,
-                binaryContent: null
-            };
-            yield s;
-        })();*/
-        const expected = false;
-        const configFactory = new DefaultCodeChangeDetectiveConfigFactory();
-        configFactory.destDir = "dummy";
-        instance.configFactory = configFactory;
-        instance.srcFileDescriptors = [];
         const actual = await instance.execute();
-        assert.equal(actual, expected);
+        assert.isFalse(actual);
     });
 
     it("should pass with code change disabled (1)", async function() {
@@ -165,8 +145,11 @@ describe("CodeChangeDetective", function() {
         config.areFileContentsEqual = () => {
             throw new Error("areFileContentsEqual should not be called");
         };
-        config.appendChangeDetails = () => {
-            throw new Error("appendChangeDetails should not be called");
+        config.appendChangeSummary = () => {
+            throw new Error("appendChangeSummary should not be called");
+        };
+        config.appendChangeDiff = () => {
+            throw new Error("appendChangeDiff should not be called");
         };
         config.fileContent.set("room1", generateHex("drink"));
         config.fileContent.set("2", generateHex("hello"));
@@ -204,7 +187,6 @@ describe("CodeChangeDetective", function() {
         instance.codeChangeDetectionEnabled = false;
         instance.defaultEncoding = "ascii"
         instance.reportError = undefined;
-        const expected = false;
         const expectedFileContent = Object.assign({
             '1-room1': generateHex('drink'),
             '2-sea\\2': generateHex('hello'),
@@ -221,11 +203,240 @@ describe("CodeChangeDetective", function() {
         const actual = await instance.execute();
 
         // assert
-        assert.equal(actual, expected);
+        assert.isFalse(actual);
         assert.isTrue(config.releaseCalled);
         assert.deepEqual(config.outputSummaryLogs, expectedOutputSummaryLogs);
-        assert.isEmpty(config.changeDetailsLogs);
+        assert.isEmpty(config.changeDiffLogs);
         assert.deepEqual(toObject(config.fileContent), expectedFileContent);
     });
-});
 
+    it("should pass with code change enabled (1)", async function() {
+        // arrange
+        const instance = new CodeChangeDetective();
+        const configFactory = new TestCodeChangeDetectiveConfigFactory();
+        instance.configFactory = configFactory;
+        const config = new TestCodeChangeDetectiveConfig();
+        configFactory.config = config;
+        config.appendChangeDiff = () => {
+            throw new Error("appendChangeDiff should not be called");
+        };
+        config.fileContent.set("room1", generateHex("drink"));
+        config.fileContent.set("sea\\2", generateHex("hello"));
+        config.fileContent.set("rty", generateHex("world"));
+        const src: SourceFileDescriptor[] = [
+            {
+                baseDir: "room",
+                relativePath: "1",
+                content: 'drink',
+                isBinary: false
+            },
+            {
+                baseDir: "sea\\",
+                relativePath: "2",
+                binaryContent: Buffer.from("hello"),
+                isBinary: true
+            },
+            {
+                relativePath: "rty",
+                binaryContent: Buffer.from("world"),
+                isBinary: true
+            }
+        ];
+        instance.srcFileDescriptors = src;
+        instance.reportError = null as any;
+        const expectedFileContent = toObject(config.fileContent);
+        const expectedOutputSummaryLogs = [
+            `room1${os.EOL}${os.EOL}`,
+            `sea\\2${os.EOL}${os.EOL}`,
+            `rty${os.EOL}${os.EOL}`];
+        const expectedChangeSummaryLogs = [];
+
+        // act
+        const actual = await instance.execute();
+
+        // assert
+        assert.isFalse(actual);
+        assert.isTrue(config.releaseCalled);
+        assert.deepEqual(config.outputSummaryLogs, expectedOutputSummaryLogs);
+        assert.deepEqual(config.changeSummaryLogs, expectedChangeSummaryLogs);
+        assert.deepEqual(toObject(config.fileContent), expectedFileContent);
+    });
+
+    it("should pass with code change enabled (2)", async function() {
+        // arrange
+        const instance = new CodeChangeDetective();
+        const configFactory = new TestCodeChangeDetectiveConfigFactory();
+        instance.configFactory = configFactory;
+        const config = new TestCodeChangeDetectiveConfig();
+        configFactory.config = config;
+        config.appendChangeDiff = null as any;
+        config.fileContent.set("room1", generateHex("drink"));
+        config.fileContent.set("sea\\2", generateHex("hello"));
+        config.fileContent.set("rty", generateHex("world"));
+        const colaTextInHex = generateHex("cola", "utf16le");
+        config.fileContent.set("drinks/local", colaTextInHex);
+        const src: SourceFileDescriptor[] = [
+            {
+                baseDir: "room",
+                relativePath: "1",
+                content: 'drink',
+                isBinary: false
+            },
+            null as any,
+            {
+                baseDir: "sea\\",
+                relativePath: "2",
+                binaryContent: Buffer.from("ello"),
+                isBinary: true
+            },
+            {
+                relativePath: "rty",
+                binaryContent: Buffer.from("worlds"),
+                isBinary: true
+            },
+            {
+                baseDir: "drinks/",
+                relativePath: "local",
+                content: 'cola',
+                encoding: "utf16le",
+                isBinary: false
+            },
+        ];
+        instance.srcFileDescriptors = src;
+        instance.codeChangeDetectionEnabled = true;
+        instance.reportError = undefined;
+        const expectedFileContent = Object.assign({
+            '1-sea\\2': generateHex('ello'),
+            '2-rty': generateHex('worlds')
+        }, toObject(config.fileContent));
+        const expectedOutputSummaryLogs = [
+            `room1${os.EOL}${os.EOL}`,
+            `sea\\2${os.EOL}1-sea\\2${os.EOL}`,
+            `rty${os.EOL}2-rty${os.EOL}`,
+            `drinks/local${os.EOL}${os.EOL}`];
+        const expectedChangeSummaryLogs = [
+            `sea\\2${os.EOL}1-sea\\2${os.EOL}`,
+            `rty${os.EOL}2-rty${os.EOL}`];
+
+        // act
+        const actual = await instance.execute();
+
+        // assert
+        assert.isTrue(actual);
+        assert.isTrue(config.releaseCalled);
+        assert.deepEqual(config.outputSummaryLogs, expectedOutputSummaryLogs);
+        assert.deepEqual(config.changeSummaryLogs, expectedChangeSummaryLogs);
+        assert.deepEqual(toObject(config.fileContent), expectedFileContent);
+    });
+
+    it("should pass with error report enabled", async function() {
+        // arrange
+        const instance = new CodeChangeDetective();
+        const configFactory = new TestCodeChangeDetectiveConfigFactory();
+        instance.configFactory = configFactory;
+        const config = new TestCodeChangeDetectiveConfig();
+        configFactory.config = config;
+        const src: SourceFileDescriptor[] = [
+            {
+                baseDir: "room",
+                relativePath: "1",
+                content: 'drink',
+                isBinary: false
+            }
+        ];
+        instance.srcFileDescriptors = src;
+        let reportedError, reportedErrorMessage;
+        instance.reportError = async (e, m) => {
+            reportedError = e;
+            reportedErrorMessage = m;
+        };
+
+        // act
+        const actual = await instance.execute();
+
+        // assert
+        assert.isFalse(actual);
+        assert.isTrue(config.releaseCalled);
+        assert.isEmpty(config.outputSummaryLogs);
+        assert.isEmpty(config.changeSummaryLogs);
+        assert.isEmpty(config.changeDiffLogs);
+        assert.include(reportedErrorMessage, "0:");
+        assert.include(reportedError.message, "room1");
+    });
+
+    it("should fail with error report disabled", async function() {
+        // arrange
+        const instance = new CodeChangeDetective();
+        const configFactory = new TestCodeChangeDetectiveConfigFactory();
+        instance.configFactory = configFactory;
+        const config = new TestCodeChangeDetectiveConfig();
+        configFactory.config = config;
+        const src: SourceFileDescriptor[] = [
+            {
+                baseDir: "room",
+                relativePath: "1",
+                content: 'drink',
+                isBinary: false
+            }
+        ];
+        instance.srcFileDescriptors = src;
+
+        // act and assert
+        try {
+            await instance.execute();
+            assert.fail("expected an error about not being able to get file room1")
+        }
+        catch (e) {
+            assert.include(e.message, "room1");
+        }
+    });
+
+    it("should fail with config factory not set", async function() {
+        // arrange
+        const instance = new CodeChangeDetective();
+        instance.configFactory = null as any;
+        const src: SourceFileDescriptor[] = [
+            {
+                baseDir: "room",
+                relativePath: "1",
+                content: 'drink',
+                isBinary: false
+            }
+        ];
+        instance.srcFileDescriptors = src;
+
+        // act and assert
+        try {
+            await instance.execute();
+            assert.fail("expected an error about not being able to get file room1")
+        }
+        catch (e) {
+            assert.include(e.message, "configFactory");
+            assert.include(e.message, "not set");
+        }
+    });
+
+    it("should fail with finding null config", async function() {
+        // arrange
+        const instance = new CodeChangeDetective();
+        instance.configFactory = new TestCodeChangeDetectiveConfigFactory()
+        const src: SourceFileDescriptor[] = [
+            {
+                baseDir: "room",
+                relativePath: "1",
+                content: 'drink',
+                isBinary: false
+            }
+        ];
+        instance.srcFileDescriptors = src;
+
+        // act and assert
+        try {
+            await instance.execute();
+            assert.fail("expected an error about not being able to get file room1")
+        }
+        catch (e) {
+            assert.include(e.message, "null config");
+        }
+    });
+});
