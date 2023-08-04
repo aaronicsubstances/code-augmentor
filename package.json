@@ -26,8 +26,8 @@
   ],
   "author": "Aaron Baffour-Awuah <aaronbaffourawuah@gmail.com> (https://github.com/aaronicsubstances)",
   "license": "MPL-2.0",
-  "bugs": "https://github.com/aaronicsubstances/code-augmentor-nodejs/issues",
-  "homepage": "https://github.com/aaronicsubstances/code-augmentor-nodejs#readme",
+  "bugs": "https://github.com/aaronicsubstances/code-augmentor/issues",
+  "homepage": "https://github.com/aaronicsubstances/code-augmentor#readme",
   "devDependencies": {
     "@babel/cli": "^7.21.0",
     "@babel/core": "^7.21.0",
