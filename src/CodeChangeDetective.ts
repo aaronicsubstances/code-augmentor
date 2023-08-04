@@ -12,7 +12,7 @@ import {
 
 export class CodeChangeDetective {
     codeChangeDetectionEnabled = true;
-    configFactory?: CodeChangeDetectiveConfigFactory = new DefaultCodeChangeDetectiveConfigFactory()
+    configFactory?: CodeChangeDetectiveConfigFactory
     srcFileDescriptors?: AsyncIterable<SourceFileDescriptor>
         | Iterable<SourceFileDescriptor>;
     defaultEncoding?: BufferEncoding;
@@ -146,7 +146,7 @@ export class DefaultCodeChangeDetectiveConfigFactory implements CodeChangeDetect
     async create() {
         const destDir = this.destDir;
         if (!destDir) {
-            throw new Error("destDir property is null or invalid directory name");
+            throw new Error("destDir property is not set");
         }
         if (this.cleanDestDir) {
             await myutils.cleanDir(destDir)
@@ -164,49 +164,31 @@ export class DefaultCodeChangeDetectiveConfig implements CodeChangeDetectiveConf
     private _outputSummaryFileHandle?: fs.FileHandle;
     private _changeSummaryFileHandle?: fs.FileHandle;
     private _changeDiffFileHandle?: fs.FileHandle;
-    private _released = false;
 
     async release(): Promise<void> {
-        this._released = true;
+        // ensure each append file are truncated if they are never
+        // handled, unless corresponding append function was nullified.
+        await callFunc(this.appendOutputSummary, this, "");
         await this._outputSummaryFileHandle?.close();
+        await callFunc(this.appendChangeSummary, this, "");
         await this._changeSummaryFileHandle?.close();
+        await callFunc(this.appendChangeDiff, this, "");
         await this._changeDiffFileHandle?.close();
     }
     
     async appendOutputSummary(data: string): Promise<void> {
-        if (this._released) {
-            throw new Error("config has been released")
-        }
-        let writer = this._outputSummaryFileHandle;
-        if (!writer) {
-            writer = await fs.open(path.join(this.destDir, "output-summary.txt"), "w");
-            this._outputSummaryFileHandle = writer;
-        }
-        await writer.write(data);
+        await appendForConfig(this, "_outputSummaryFileHandle",
+            "output-summary.txt", data);
     }
 
     async appendChangeSummary(data: string): Promise<void> {
-        if (this._released) {
-            throw new Error("config has been released")
-        }
-        let writer = this._changeSummaryFileHandle;
-        if (!writer) {
-            writer = await fs.open(path.join(this.destDir, "change-summary.txt"), "w");
-            this._changeSummaryFileHandle = writer;
-        }
-        await writer.write(data);
+        await appendForConfig(this, "_changeSummaryFileHandle",
+            "change-summary.txt", data);
     }
 
     async appendChangeDiff(data: string): Promise<void> {
-        if (this._released) {
-            throw new Error("config has been released")
-        }
-        let writer = this._changeDiffFileHandle;
-        if (!writer) {
-            writer = await fs.open(path.join(this.destDir, "change-diff.txt"), "w");
-            this._changeDiffFileHandle = writer;
-        }
-        await writer.write(data);
+        await appendForConfig(this, "_changeDiffFileHandle",
+            "change-diff.txt", data);
     }
 
     async getFileContent(loc: SourceFileLocation, isBinary: boolean, encoding?: BufferEncoding) {
@@ -268,4 +250,18 @@ export class DefaultCodeChangeDetectiveConfig implements CodeChangeDetectiveConf
         };
         return destFileLoc;
     }
+}
+
+async function appendForConfig(config: any, field: string, fileName: string,
+        data: string) {
+    let writer = config[field] as fs.FileHandle;
+    if (!writer) {
+        const destDir = config.destDir;
+        if (!destDir) {
+            throw new Error("destDir property is not set");
+        }
+        writer = await fs.open(path.join(destDir, fileName), "w");
+        config[field] = writer;
+    }
+    await writer.write(data, undefined, "utf8");
 }

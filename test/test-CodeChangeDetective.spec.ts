@@ -1,10 +1,13 @@
+import fs from "fs/promises";
 import os from "os";
 import path from "path";
 
 import { assert } from "chai";
 
 import {
-    CodeChangeDetective, DefaultCodeChangeDetectiveConfig
+    CodeChangeDetective,
+    DefaultCodeChangeDetectiveConfig,
+    DefaultCodeChangeDetectiveConfigFactory
 } from "../src/CodeChangeDetective";
 import * as myutils from "../src/myutils";
 import {
@@ -18,8 +21,12 @@ function generateHex(s: string, encoding?: BufferEncoding): string {
     return Buffer.from(s, encoding || "utf8").toString('hex');
 }
 
-function decodeHex(s: string): string {
-    return Buffer.from(s, "hex").toString('utf8');
+async function getUtf8FileContent(destDir: string, relativePath: string) {
+    return await fs.readFile(path.join(destDir, relativePath), "utf8");
+}
+
+async function saveUtf8File(destDir: string, relativePath: string, content: string) {
+    return await fs.writeFile(path.join(destDir, relativePath), content, "utf8");
 }
 
 function getTempPath(...names: string[]) {
@@ -403,6 +410,133 @@ describe("CodeChangeDetective", function() {
         assert.deepEqual(toObject(config.fileContent), expectedFileContent);
     });
 
+    it("should pass with code change enabled (4)", async function() {
+        // arrange
+        const srcDir = getTempPath('CodeChangeDetective',
+            'test-code-change-enabled-4')
+        await myutils.cleanDir(srcDir);
+        await fs.mkdir(`${srcDir}${path.sep}room`);
+        await saveUtf8File(srcDir, `room${path.sep}1`, "drink");
+        await fs.mkdir(`${srcDir}${path.sep}sea`);
+        await saveUtf8File(srcDir, `sea${path.sep}2`, "hello");
+        await fs.mkdir(`${srcDir}${path.sep}3`);
+        await saveUtf8File(srcDir, `3${path.sep}rty`, "world\n");
+        const instance = new CodeChangeDetective();
+        const srcGenerator = function*(contentPrefix: string) {
+            yield {
+                baseDir: srcDir,
+                relativePath: "room/1",
+                content: contentPrefix + 'drink',
+                isBinary: false
+            };
+            yield {
+                baseDir: `${srcDir}\\sea\\`,
+                relativePath: "2",
+                binaryContent: Buffer.from(contentPrefix + "ello"),
+                isBinary: true
+            }
+            yield {
+                relativePath: `${srcDir}/3/rty`,
+                content: contentPrefix + "worlds\n",
+                isBinary: false
+            }
+        };
+        instance.srcFileDescriptors = srcGenerator("");
+        const destDir = getTempPath(srcDir, "dest")
+        const configFactory = new DefaultCodeChangeDetectiveConfigFactory()
+        configFactory.destDir = destDir;
+        instance.configFactory = configFactory
+        let expectedOutputSummary =
+            `${srcDir}${path.sep}room${path.sep}1${os.EOL}` +
+            `${os.EOL}` +
+            `${srcDir}${path.sep}sea${path.sep}2${os.EOL}` +
+            `${destDir}${path.sep}sea${path.sep}2${os.EOL}` +
+            `${srcDir}${path.sep}3${path.sep}rty${os.EOL}` +
+            `${destDir}${path.sep}3${path.sep}rty${os.EOL}`;
+        const expectedChangeSummary =
+            `${srcDir}${path.sep}sea${path.sep}2${os.EOL}` +
+            `${destDir}${path.sep}sea${path.sep}2${os.EOL}` +
+            `${srcDir}${path.sep}3${path.sep}rty${os.EOL}` +
+            `${destDir}${path.sep}3${path.sep}rty${os.EOL}`;
+        const expectedChangeDiff =
+            `${os.EOL}` +
+            `--- ${srcDir}${path.sep}sea${path.sep}2${os.EOL}` +
+            `+++ ${destDir}${path.sep}sea${path.sep}2${os.EOL}` +
+            `${os.EOL}` +
+            `Binary files differ${os.EOL}` +
+            `${os.EOL}` +
+            `--- ${srcDir}${path.sep}3${path.sep}rty${os.EOL}` +
+            `+++ ${destDir}${path.sep}3${path.sep}rty${os.EOL}` +
+            `1c1${os.EOL}` +
+            `< world${os.EOL}` +
+            `---${os.EOL}` +
+            `> worlds${os.EOL}`;
+
+        // act
+        let actual = await instance.execute();
+
+        // assert
+        assert.isTrue(actual);
+
+        // assert appended files.
+        let actualOutputSummary = await getUtf8FileContent(
+            destDir, "output-summary.txt");
+        assert.equal(actualOutputSummary, expectedOutputSummary);
+        let actualChangeSummary = await getUtf8FileContent(
+            destDir, "change-summary.txt");
+        assert.equal(actualChangeSummary, expectedChangeSummary);
+        let actualChangeDiff = await getUtf8FileContent(
+            destDir, "change-diff.txt");
+        assert.equal(actualChangeDiff, expectedChangeDiff);
+
+        // assert changed files.
+        let fileOneContents = await getUtf8FileContent(
+            destDir, `sea${path.sep}2`);
+        assert.equal(fileOneContents, "ello");
+        let fileTwoContents = await getUtf8FileContent(
+            destDir, `3${path.sep}rty`);
+        assert.equal(fileTwoContents, "worlds\n");
+
+        // test skipping of cleaning of dest files.
+        configFactory.cleanDestDir = false;
+        instance.srcFileDescriptors = srcGenerator("n");
+        await saveUtf8File(srcDir, `room${path.sep}1`, "ndrink");
+        await saveUtf8File(srcDir, `sea${path.sep}2`, "nello");
+        await saveUtf8File(srcDir, `3${path.sep}rty`, "nworlds\n");
+        expectedOutputSummary =
+            `${srcDir}${path.sep}room${path.sep}1${os.EOL}` +
+            `${os.EOL}` +
+            `${srcDir}${path.sep}sea${path.sep}2${os.EOL}` +
+            `${os.EOL}` +
+            `${srcDir}${path.sep}3${path.sep}rty${os.EOL}` +
+            `${os.EOL}`;
+        
+        // act again
+        actual = await instance.execute();
+
+        // assert
+        assert.isFalse(actual);
+
+        // assert appended files.
+        actualOutputSummary = await getUtf8FileContent(
+            destDir, "output-summary.txt");
+        assert.equal(actualOutputSummary, expectedOutputSummary);
+        actualChangeSummary = await getUtf8FileContent(
+            destDir, "change-summary.txt");
+        assert.isEmpty(actualChangeSummary);
+        actualChangeDiff = await getUtf8FileContent(
+            destDir, "change-diff.txt");
+        assert.isEmpty(actualChangeDiff);
+
+        // assert changed files from previous execution still lie around.
+        fileOneContents = await getUtf8FileContent(
+            destDir, `sea${path.sep}2`);
+        assert.equal(fileOneContents, "ello");
+        fileTwoContents = await getUtf8FileContent(
+            destDir, `3${path.sep}rty`);
+        assert.equal(fileTwoContents, "worlds\n");
+    });
+
     it("should pass with error report enabled", async function() {
         // arrange
         const instance = new CodeChangeDetective();
@@ -544,16 +678,64 @@ describe("CodeChangeDetective", function() {
         assert.isOk(actualError);
         assert.include(actualError.message, "null config");
     });
+
+    it("should fail if dest dir was not set on default config factory", async function() {
+        // arrange
+        const instance = new DefaultCodeChangeDetectiveConfigFactory()
+        instance.cleanDestDir = false;
+
+        // act and assert
+        let actualError: any;
+        try {
+            await instance.create();
+        }
+        catch (e) {
+            actualError = e;
+        }
+        assert.isOk(actualError);
+        assert.include(actualError.message, "destDir property");
+        assert.include(actualError.message, "not set");
+    });
 });
 
 describe("DefaultCodeChangeDetectiveConfig", function() {
     describe("#release", function() {
-        it(`should pass if no appending was done`, async function() {
+        it(`should pass without touching file system if appending is disabled`, async function() {
             // arrange
             const instance = new DefaultCodeChangeDetectiveConfig();
+            instance.appendOutputSummary = null as any;
+            instance.appendChangeSummary = null as any;
+            instance.appendChangeDiff = null as any;
+
+            // act
+            await instance.release();
+        })
+        it(`should pass by truncating if no appending was done`, async function() {
+            // arrange
+            const instance = new DefaultCodeChangeDetectiveConfig();
+            instance.destDir = getTempPath("DefaultCodeChangeDetectiveConfig",
+                "testReleaseWithoutAppending");
+            await myutils.cleanDir(instance.destDir);
             
             // act
             await instance.release();
+
+            // assert
+            const actualOutputSummary = await instance.getFileContent({
+                baseDir: instance.destDir,
+                relativePath: "output-summary.txt"
+            }, false, "utf8");
+            assert.isEmpty(actualOutputSummary);
+            const actualChangeSummary = await instance.getFileContent({
+                baseDir: instance.destDir,
+                relativePath: "change-summary.txt"
+            }, false, "utf8");
+            assert.isEmpty(actualChangeSummary);
+            const actualChangeDiff = await instance.getFileContent({
+                baseDir: instance.destDir,
+                relativePath: "change-diff.txt"
+            }, false, "utf8");
+            assert.isEmpty(actualChangeDiff);
 
             // assert error in appending after releasing.
             let actualError: any;
