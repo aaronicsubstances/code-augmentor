@@ -18,9 +18,9 @@ export default class AstBuilder {
     escapedBlockEndMarkers: string[] | null = null;
     nestedBlockStartMarkers :string[] | null = null;
     nestedBlockEndMarkers: string[] | null = null;
-    _nodes = new Array<any>();
-    _peekIdx = -1;
-    _srcPath: string | null = null;
+    private _nodes = new Array<any>();
+    private _peekIdx = -1;
+    private _srcPath: string | null = null;
 
     static TYPE_SOURCE_CODE = 1;
     static TYPE_UNDECORATED_LINE = 2;

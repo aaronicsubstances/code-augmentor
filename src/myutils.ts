@@ -1,3 +1,4 @@
+import fs from "fs/promises";
 import os from "os";
 import path from "path";
 import { SourceFileLocation } from "./types";
@@ -205,6 +206,11 @@ export function _splitFilePath(fullPath: string, baseDir: string | null) {
         };
         return ret;
     }
+}
+
+export async function cleanDir(d: string) {
+    await fs.rm(d, { recursive: true, force: true });
+    await fs.mkdir(d, { recursive: true });
 }
 
 /**

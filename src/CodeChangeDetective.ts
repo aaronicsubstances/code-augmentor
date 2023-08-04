@@ -149,8 +149,7 @@ export class DefaultCodeChangeDetectiveConfigFactory implements CodeChangeDetect
             throw new Error("destDir property is null or invalid directory name");
         }
         if (this.cleanDestDir) {
-            await fs.rm(destDir, { recursive: true, force: true });
-            await fs.mkdir(destDir, { recursive: true });
+            await myutils.cleanDir(destDir)
         }
 
         const config = new DefaultCodeChangeDetectiveConfig();
@@ -161,18 +160,23 @@ export class DefaultCodeChangeDetectiveConfigFactory implements CodeChangeDetect
 
 export class DefaultCodeChangeDetectiveConfig implements CodeChangeDetectiveConfig {
     destDir = '';
-    _destSubDirNameMap = new Map<string, string>();
-    _outputSummaryFileHandle?: fs.FileHandle;
-    _changeSummaryFileHandle?: fs.FileHandle;
-    _changeDiffFileHandle?: fs.FileHandle;
+    private _destSubDirNameMap = new Map<string, string>();
+    private _outputSummaryFileHandle?: fs.FileHandle;
+    private _changeSummaryFileHandle?: fs.FileHandle;
+    private _changeDiffFileHandle?: fs.FileHandle;
+    private _released = false;
 
     async release(): Promise<void> {
+        this._released = true;
         await this._outputSummaryFileHandle?.close();
         await this._changeSummaryFileHandle?.close();
         await this._changeDiffFileHandle?.close();
     }
     
     async appendOutputSummary(data: string): Promise<void> {
+        if (this._released) {
+            throw new Error("config has been released")
+        }
         let writer = this._outputSummaryFileHandle;
         if (!writer) {
             writer = await fs.open(path.join(this.destDir, "output-summary.txt"), "w");
@@ -182,6 +186,9 @@ export class DefaultCodeChangeDetectiveConfig implements CodeChangeDetectiveConf
     }
 
     async appendChangeSummary(data: string): Promise<void> {
+        if (this._released) {
+            throw new Error("config has been released")
+        }
         let writer = this._changeSummaryFileHandle;
         if (!writer) {
             writer = await fs.open(path.join(this.destDir, "change-summary.txt"), "w");
@@ -191,6 +198,9 @@ export class DefaultCodeChangeDetectiveConfig implements CodeChangeDetectiveConf
     }
 
     async appendChangeDiff(data: string): Promise<void> {
+        if (this._released) {
+            throw new Error("config has been released")
+        }
         let writer = this._changeDiffFileHandle;
         if (!writer) {
             writer = await fs.open(path.join(this.destDir, "change-diff.txt"), "w");

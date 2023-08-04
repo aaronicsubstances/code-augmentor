@@ -1,11 +1,12 @@
 import os from "os";
-import path, { relative } from "path";
+import path from "path";
 
 import { assert } from "chai";
 
 import {
     CodeChangeDetective, DefaultCodeChangeDetectiveConfig
 } from "../src/CodeChangeDetective";
+import * as myutils from "../src/myutils";
 import {
     CodeChangeDetectiveConfig,
     CodeChangeDetectiveConfigFactory,
@@ -481,13 +482,14 @@ describe("CodeChangeDetective", function() {
         instance.srcFileDescriptors = src;
 
         // act and assert
+        let actualError: any;
         try {
             await instance.execute();
-            assert.fail("expected an error about not being able to get file room1")
         }
         catch (e) {
-            assert.include(e.message, "room1");
+            actualError = e;
         }
+        assert.include(actualError.message, "room1");
     });
 
     it("should fail with config factory not set", async function() {
@@ -505,14 +507,16 @@ describe("CodeChangeDetective", function() {
         instance.srcFileDescriptors = src;
 
         // act and assert
+        let actualError: any;
         try {
             await instance.execute();
-            assert.fail("expected an error about not being able to get file room1")
         }
         catch (e) {
-            assert.include(e.message, "configFactory");
-            assert.include(e.message, "not set");
+            actualError = e;
         }
+        assert.isOk(actualError);
+        assert.include(actualError.message, "configFactory");
+        assert.include(actualError.message, "not set");
     });
 
     it("should fail with finding null config", async function() {
@@ -530,17 +534,117 @@ describe("CodeChangeDetective", function() {
         instance.srcFileDescriptors = src;
 
         // act and assert
+        let actualError: any;
         try {
             await instance.execute();
-            assert.fail("expected an error about not being able to get file room1")
         }
         catch (e) {
-            assert.include(e.message, "null config");
+            actualError = e;
         }
+        assert.isOk(actualError);
+        assert.include(actualError.message, "null config");
     });
 });
 
 describe("DefaultCodeChangeDetectiveConfig", function() {
+    describe("#release", function() {
+        it(`should pass if no appending was done`, async function() {
+            // arrange
+            const instance = new DefaultCodeChangeDetectiveConfig();
+            
+            // act
+            await instance.release();
+
+            // assert error in appending after releasing.
+            let actualError: any;
+            try {
+                await instance.appendOutputSummary("data")
+            }
+            catch (e) {
+                actualError = e;
+            }
+            assert.isOk(actualError);
+
+            actualError = null;
+            try {
+                await instance.appendChangeSummary("portion")
+            }
+            catch (e) {
+                actualError = e;
+            }
+            assert.isOk(actualError);
+
+            actualError = null;
+            try {
+                await instance.appendChangeDiff("ample")
+            }
+            catch (e) {
+                actualError = e;
+            }
+            assert.isOk(actualError);
+        })
+        it (`should pass after appending`, async function () {
+            // arrange
+            const instance = new DefaultCodeChangeDetectiveConfig();
+            instance.destDir = getTempPath("DefaultCodeChangeDetectiveConfig",
+                "testReleaseAfterAppending");
+            await myutils.cleanDir(instance.destDir);
+            const expectedOutputSummary = "\u0186d\u0254";
+            const expectedChangeSummary = "Y\u0190";
+            const expectedChangeDiff = "ade\u025b a ehia";
+
+            // act
+            await instance.appendOutputSummary(expectedOutputSummary)
+            await instance.appendChangeSummary(expectedChangeSummary)
+            await instance.appendChangeDiff(expectedChangeDiff)
+            await instance.release();
+
+            // assert
+            const actualOutputSummary = await instance.getFileContent({
+                baseDir: instance.destDir,
+                relativePath: "output-summary.txt"
+            }, false, "utf8");
+            assert.equal(actualOutputSummary, expectedOutputSummary);
+            const actualChangeSummary = await instance.getFileContent({
+                baseDir: instance.destDir,
+                relativePath: "change-summary.txt"
+            }, false, "utf8");
+            assert.equal(actualChangeSummary, expectedChangeSummary);
+            const actualChangeDiff = await instance.getFileContent({
+                baseDir: instance.destDir,
+                relativePath: "change-diff.txt"
+            }, false, "utf8");
+            assert.equal(actualChangeDiff, expectedChangeDiff);
+
+            // assert error in appending after releasing.
+            let actualError: any;
+            try {
+                await instance.appendOutputSummary("data")
+            }
+            catch (e) {
+                actualError = e;
+            }
+            assert.isOk(actualError);
+
+            actualError = null;
+            try {
+                await instance.appendChangeSummary("portion")
+            }
+            catch (e) {
+                actualError = e;
+            }
+            assert.isOk(actualError);
+
+            actualError = null;
+            try {
+                await instance.appendChangeDiff("ample")
+            }
+            catch (e) {
+                actualError = e;
+            }
+            assert.isOk(actualError);
+        })
+    });
     describe("#normalizeSrcFileLoc", function() {
         it('should pass with baseDir set', function() {
             const instance = new DefaultCodeChangeDetectiveConfig();
