@@ -1,10 +1,10 @@
 import os from "os";
-import path from "path";
+import path, { relative } from "path";
 
 import { assert } from "chai";
 
 import {
-    CodeChangeDetective
+    CodeChangeDetective, DefaultCodeChangeDetectiveConfig
 } from "../src/CodeChangeDetective";
 import {
     CodeChangeDetectiveConfig,
@@ -21,7 +21,7 @@ function decodeHex(s: string): string {
     return Buffer.from(s, "hex").toString('utf8');
 }
 
-function createTempPath(...names: string[]) {
+function getTempPath(...names: string[]) {
     return path.resolve(os.tmpdir(), "code-augmentor-nodejs", ...names);
 }
 
@@ -206,6 +206,7 @@ describe("CodeChangeDetective", function() {
         assert.isFalse(actual);
         assert.isTrue(config.releaseCalled);
         assert.deepEqual(config.outputSummaryLogs, expectedOutputSummaryLogs);
+        assert.isEmpty(config.changeSummaryLogs);
         assert.isEmpty(config.changeDiffLogs);
         assert.deepEqual(toObject(config.fileContent), expectedFileContent);
     });
@@ -249,7 +250,6 @@ describe("CodeChangeDetective", function() {
             `room1${os.EOL}${os.EOL}`,
             `sea\\2${os.EOL}${os.EOL}`,
             `rty${os.EOL}${os.EOL}`];
-        const expectedChangeSummaryLogs = [];
 
         // act
         const actual = await instance.execute();
@@ -258,7 +258,8 @@ describe("CodeChangeDetective", function() {
         assert.isFalse(actual);
         assert.isTrue(config.releaseCalled);
         assert.deepEqual(config.outputSummaryLogs, expectedOutputSummaryLogs);
-        assert.deepEqual(config.changeSummaryLogs, expectedChangeSummaryLogs);
+        assert.isEmpty(config.changeSummaryLogs);
+        assert.isEmpty(config.changeDiffLogs);
         assert.deepEqual(toObject(config.fileContent), expectedFileContent);
     });
 
@@ -326,6 +327,78 @@ describe("CodeChangeDetective", function() {
         assert.isTrue(config.releaseCalled);
         assert.deepEqual(config.outputSummaryLogs, expectedOutputSummaryLogs);
         assert.deepEqual(config.changeSummaryLogs, expectedChangeSummaryLogs);
+        assert.isEmpty(config.changeDiffLogs);
+        assert.deepEqual(toObject(config.fileContent), expectedFileContent);
+    });
+
+    it("should pass with code change enabled (3)", async function() {
+        // arrange
+        const instance = new CodeChangeDetective();
+        const configFactory = new TestCodeChangeDetectiveConfigFactory();
+        instance.configFactory = configFactory;
+        const config = new TestCodeChangeDetectiveConfig();
+        configFactory.config = config;
+        config.fileContent.set("room1", generateHex("drink"));
+        config.fileContent.set("sea\\2", generateHex("hello"));
+        config.fileContent.set("rty", generateHex("world\n"));
+        const colaTextInHex = generateHex("cola", "utf16le");
+        config.fileContent.set("drinks/local", colaTextInHex);
+        const src: SourceFileDescriptor[] = [
+            {
+                baseDir: "room",
+                relativePath: "1",
+                content: 'drink',
+                isBinary: false
+            },
+            null as any,
+            {
+                baseDir: "sea\\",
+                relativePath: "2",
+                binaryContent: Buffer.from("ello"),
+                isBinary: true
+            },
+            {
+                relativePath: "rty",
+                content: "worlds\n",
+                isBinary: false
+            },
+            {
+                baseDir: "drinks/",
+                relativePath: "local",
+                content: 'cola',
+                encoding: "utf16le",
+                isBinary: false
+            },
+        ];
+        instance.srcFileDescriptors = src;
+        const expectedFileContent = Object.assign({
+            '1-sea\\2': generateHex('ello'),
+            '2-rty': generateHex('worlds\n')
+        }, toObject(config.fileContent));
+        const expectedOutputSummaryLogs = [
+            `room1${os.EOL}${os.EOL}`,
+            `sea\\2${os.EOL}1-sea\\2${os.EOL}`,
+            `rty${os.EOL}2-rty${os.EOL}`,
+            `drinks/local${os.EOL}${os.EOL}`];
+        const expectedChangeSummaryLogs = [
+            `sea\\2${os.EOL}1-sea\\2${os.EOL}`,
+            `rty${os.EOL}2-rty${os.EOL}`];
+        const expectedChangeDiffLogs = [
+            `${os.EOL}--- sea\\2${os.EOL}+++ 1-sea\\2${os.EOL}` +
+                `${os.EOL}Binary files differ${os.EOL}`,
+            `${os.EOL}--- rty${os.EOL}+++ 2-rty${os.EOL}` +
+                `1c1${os.EOL}< world${os.EOL}---${os.EOL}> worlds${os.EOL}`
+        ];
+
+        // act
+        const actual = await instance.execute();
+
+        // assert
+        assert.isTrue(actual);
+        assert.isTrue(config.releaseCalled);
+        assert.deepEqual(config.outputSummaryLogs, expectedOutputSummaryLogs);
+        assert.deepEqual(config.changeSummaryLogs, expectedChangeSummaryLogs);
+        assert.deepEqual(config.changeDiffLogs, expectedChangeDiffLogs);
         assert.deepEqual(toObject(config.fileContent), expectedFileContent);
     });
 
@@ -336,20 +409,39 @@ describe("CodeChangeDetective", function() {
         instance.configFactory = configFactory;
         const config = new TestCodeChangeDetectiveConfig();
         configFactory.config = config;
+        config.fileContent.set("room\\A", generateHex("water"));
         const src: SourceFileDescriptor[] = [
             {
                 baseDir: "room",
                 relativePath: "1",
                 content: 'drink',
                 isBinary: false
+            },
+            {
+                baseDir: "room\\",
+                relativePath: "A",
+                content: 'water',
+                isBinary: false
+            },
+            {
+                baseDir: "office",
+                relativePath: "6",
+                content: 'drinks',
+                isBinary: false
             }
         ];
         instance.srcFileDescriptors = src;
-        let reportedError, reportedErrorMessage;
+        instance.codeChangeDetectionEnabled = true;
+        const reportedErrors = new Array<any>();
+        const reportedErrorMessages = new Array<string>();
         instance.reportError = async (e, m) => {
-            reportedError = e;
-            reportedErrorMessage = m;
+            reportedErrors.push(e);
+            reportedErrorMessages.push(m);
         };
+        const expectedOutputSummaryLogs = [
+            `room\\A${os.EOL}${os.EOL}`
+        ];
+        const expectedFileContent = toObject(config.fileContent);
 
         // act
         const actual = await instance.execute();
@@ -357,11 +449,18 @@ describe("CodeChangeDetective", function() {
         // assert
         assert.isFalse(actual);
         assert.isTrue(config.releaseCalled);
-        assert.isEmpty(config.outputSummaryLogs);
+        assert.deepEqual(config.outputSummaryLogs, expectedOutputSummaryLogs);
         assert.isEmpty(config.changeSummaryLogs);
         assert.isEmpty(config.changeDiffLogs);
-        assert.include(reportedErrorMessage, "0:");
-        assert.include(reportedError.message, "room1");
+        assert.deepEqual(toObject(config.fileContent), expectedFileContent);
+
+        // assert reported errors
+        assert.equal(reportedErrorMessages.length, 2);
+        assert.include(reportedErrorMessages[0], "0:");
+        assert.include(reportedErrorMessages[1], "2:");
+        assert.equal(reportedErrors.length, 2);
+        assert.include(reportedErrors[0].message, "room1");
+        assert.include(reportedErrors[1].message, "office6");
     });
 
     it("should fail with error report disabled", async function() {
@@ -439,4 +538,145 @@ describe("CodeChangeDetective", function() {
             assert.include(e.message, "null config");
         }
     });
+});
+
+describe("DefaultCodeChangeDetectiveConfig", function() {
+    describe("#normalizeSrcFileLoc", function() {
+        it('should pass with baseDir set', function() {
+            const instance = new DefaultCodeChangeDetectiveConfig();
+            const tempPath = getTempPath("normalizeSrcFileLoc1");
+            const srcFileDescriptor = {
+                baseDir: tempPath,
+                relativePath: "specific1"
+            } as SourceFileDescriptor;
+            const expected: SourceFileLocation = {
+                baseDir: tempPath,
+                relativePath: "specific1"
+            }
+            const actual = instance.normalizeSrcFileLoc(srcFileDescriptor);
+            assert.deepEqual(actual, expected);
+        })
+        it('should pass without baseDir set', function() {
+            const instance = new DefaultCodeChangeDetectiveConfig();
+            const tempPath = getTempPath("normalizeSrcFileLoc2");
+            const srcFileDescriptor = {
+                relativePath: tempPath + path.sep + "actual2"
+            } as SourceFileDescriptor;
+            const expected: SourceFileLocation = {
+                baseDir: tempPath + path.sep,
+                relativePath: "actual2"
+            }
+            const actual = instance.normalizeSrcFileLoc(srcFileDescriptor);
+            assert.deepEqual(actual, expected);
+        })
+    })
+
+    describe("#stringifySrcFileLoc", function() {
+        it('should pass', function() {
+            const instance = new DefaultCodeChangeDetectiveConfig();
+            const tempPath = getTempPath("stringifySrcFileLoc");
+            const loc: SourceFileLocation = {
+                baseDir: tempPath,
+                relativePath: "specific"
+            }
+            const expected = loc.baseDir + path.sep + loc.relativePath; 
+            const actual = instance.stringifySrcFileLoc(loc);
+            assert.equal(actual, expected);
+        })
+    })
+
+    describe("#stringifyDestFileLoc", function() {
+        it('should pass', function() {
+            const instance = new DefaultCodeChangeDetectiveConfig();
+            instance.destDir = getTempPath("stringifyDestFileLoc");
+            const loc: SourceFileLocation = {
+                baseDir: "broom",
+                relativePath: "specific"
+            }
+            const expected = instance.destDir + path.sep +
+                loc.baseDir + path.sep + loc.relativePath; 
+            const actual = instance.stringifyDestFileLoc(loc);
+            assert.equal(actual, expected);
+        })
+    })
+
+    describe("#areFileContentsEqual", function() {
+        let data = [
+            { arg1: "", arg2: "", isBinary: false, expected: true },
+            { arg1: "apple", arg2: "apple", isBinary: false, expected: true },
+            { arg1: "apple", arg2: "Apple", isBinary: false, expected: false },
+            { arg1: "apple", arg2: "banana", isBinary: false, expected: false },
+            { arg1: Buffer.from("apple"), arg2: Buffer.from("apple"),
+                isBinary: true, expected: true },
+            { arg1: Buffer.from("apple"), arg2: Buffer.from("banana"),
+                isBinary: true, expected: false },
+        ];
+        data.forEach(({arg1, arg2, isBinary, expected}, i) => {
+            it(`should pass with input ${i}`, function() {
+                const instance = new DefaultCodeChangeDetectiveConfig();
+                const actual = instance.areFileContentsEqual(arg1, arg2, isBinary);
+                assert.equal(actual, expected);
+            })
+        })
+    })
+
+    describe("#generateDestFileLoc", function() {
+        let data = [
+            {
+                srcFileLoc: { baseDir: 'c:\\', relativePath: 'barbecue\\hot'},
+                expected: { baseDir: 'c', relativePath: 'barbecue\\hot'},
+            },
+            {
+                srcFileLoc: { baseDir: 'd:\\', relativePath: 'barbecue\\hot'},
+                expected: { baseDir: 'c-1', relativePath: 'barbecue\\hot'},
+            },
+            {
+                srcFileLoc: { baseDir: 'd:\\barbecue', relativePath: 'hot'},
+                expected: { baseDir: 'barbecue', relativePath: 'hot'},
+            },
+            {
+                srcFileLoc: { baseDir: '/', relativePath: ''},
+                expected: { baseDir: 'c-2', relativePath: ''},
+            },
+            {
+                srcFileLoc: { baseDir: '/barbecue', relativePath: 'really/hot'},
+                expected: { baseDir: 'barbecue-1', relativePath: 'really/hot'},
+            },
+            {
+                srcFileLoc: { baseDir: 'dog', relativePath: 'bull/run'},
+                expected: { baseDir: 'dog', relativePath: 'bull/run'},
+            },
+            {
+                srcFileLoc: { baseDir: 'dog', relativePath: 'bull'},
+                expected: { baseDir: 'dog', relativePath: 'bull'},
+            },
+            {
+                srcFileLoc: { baseDir: 'my/dog', relativePath: 'bull'},
+                expected: { baseDir: 'dog-1', relativePath: 'bull'},
+            },
+            {
+                srcFileLoc: { baseDir: 'my/dog', relativePath: 'cat'},
+                expected: { baseDir: 'dog-1', relativePath: 'cat'},
+            },
+            {
+                srcFileLoc: { baseDir: 'his/dog', relativePath: 'trim'},
+                expected: { baseDir: 'dog-2', relativePath: 'trim'},
+            },
+            {
+                srcFileLoc: { baseDir: 'his/dog', relativePath: 'train'},
+                expected: { baseDir: 'dog-2', relativePath: 'train'},
+            },
+            {
+                srcFileLoc: { baseDir: 'hisdog', relativePath: 'trim'},
+                expected: { baseDir: 'hisdog', relativePath: 'trim'},
+            }
+        ]
+        const instance = new DefaultCodeChangeDetectiveConfig();
+        data.forEach(({srcFileLoc, expected}, i) => {
+            it(`should pass with input ${i}`, function() {
+                const actual = instance.generateDestFileLoc(srcFileLoc);
+                assert.deepEqual(actual, expected);
+            })
+        })
+    })
 });

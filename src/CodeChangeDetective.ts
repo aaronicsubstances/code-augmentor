@@ -102,7 +102,7 @@ export class CodeChangeDetective {
                             const changeDiff = [""];
                             changeDiff.push(`${os.EOL}--- ${srcPath}${os.EOL}+++ ${destPath}${os.EOL}`);
                             if (isBinary) {
-                                changeDiff.push(os.EOL + "Binary files differ" + os.EOL);
+                                changeDiff.push(`${os.EOL}Binary files differ${os.EOL}`);
                             }
                             else {
                                 const original = myutils.splitIntoLines('' + originalContent, false);
@@ -140,8 +140,8 @@ function callFunc(f: any, ...args: any) {
 }
 
 export class DefaultCodeChangeDetectiveConfigFactory implements CodeChangeDetectiveConfigFactory {
-    destDir?: string;
-    cleanDestDir?: boolean;
+    destDir: string = '';
+    cleanDestDir: boolean = true;
 
     async create() {
         const destDir = this.destDir;
@@ -155,48 +155,48 @@ export class DefaultCodeChangeDetectiveConfigFactory implements CodeChangeDetect
 
         const config = new DefaultCodeChangeDetectiveConfig();
         config.destDir = destDir;
-
-        const appendFileNames = ["OUTPUT-SUMMARY.txt",
-            "CHANGE-SUMMARY.txt", "CHANGE-DETAILS.txt"];
-        const appendFuncs = new Array<any>();
-        const disposables = new Array<any>();
-        for (const f of appendFileNames) {
-            const disposable: any = {};
-            disposables.push(disposable);
-            const appendFunc = async (data: string) => {
-                if (!disposable.w) {
-                    disposable.w = await fs.open(path.join(destDir, f), "w");
-                }
-                await disposable.w.write(data);
-            };
-            appendFuncs.push(appendFunc);
-        }
-        config.appendOutputSummary = appendFuncs[0];
-        config.appendChangeSummary = appendFuncs[1];
-        config.appendChangeDiff = appendFuncs[2];
-        config.release = async () => {
-            for (const disposable of disposables) {
-                if (disposable.w) {
-                    await disposable.w.close();
-                }
-            }
-        };
         return config;
     }
 }
 
 export class DefaultCodeChangeDetectiveConfig implements CodeChangeDetectiveConfig {
-    destSubDirNameMap = new Map<string, string>();
     destDir = '';
+    _destSubDirNameMap = new Map<string, string>();
+    _outputSummaryFileHandle?: fs.FileHandle;
+    _changeSummaryFileHandle?: fs.FileHandle;
+    _changeDiffFileHandle?: fs.FileHandle;
 
-    release(): any {
+    async release(): Promise<void> {
+        await this._outputSummaryFileHandle?.close();
+        await this._changeSummaryFileHandle?.close();
+        await this._changeDiffFileHandle?.close();
     }
     
-    appendOutputSummary(data: string): any {
+    async appendOutputSummary(data: string): Promise<void> {
+        let writer = this._outputSummaryFileHandle;
+        if (!writer) {
+            writer = await fs.open(path.join(this.destDir, "output-summary.txt"), "w");
+            this._outputSummaryFileHandle = writer;
+        }
+        await writer.write(data);
     }
-    appendChangeSummary(data: string): any {
+
+    async appendChangeSummary(data: string): Promise<void> {
+        let writer = this._changeSummaryFileHandle;
+        if (!writer) {
+            writer = await fs.open(path.join(this.destDir, "change-summary.txt"), "w");
+            this._changeSummaryFileHandle = writer;
+        }
+        await writer.write(data);
     }
-    appendChangeDiff(data: string): any {
+
+    async appendChangeDiff(data: string): Promise<void> {
+        let writer = this._changeDiffFileHandle;
+        if (!writer) {
+            writer = await fs.open(path.join(this.destDir, "change-diff.txt"), "w");
+            this._changeDiffFileHandle = writer;
+        }
+        await writer.write(data);
     }
 
     async getFileContent(loc: SourceFileLocation, isBinary: boolean, encoding?: BufferEncoding) {
@@ -244,13 +244,13 @@ export class DefaultCodeChangeDetectiveConfig implements CodeChangeDetectiveConf
     }
 
     generateDestFileLoc(srcFileLoc: SourceFileLocation): SourceFileLocation {
-        let destSubDirName = this.destSubDirNameMap.get(srcFileLoc.baseDir);
+        let destSubDirName = this._destSubDirNameMap.get(srcFileLoc.baseDir);
         if (!destSubDirName) {
             destSubDirName = myutils.generateValidFileName(srcFileLoc.baseDir);
             destSubDirName = myutils.modifyNameToBeAbsent(
-                Array.from(this.destSubDirNameMap.values()),
+                Array.from(this._destSubDirNameMap.values()),
                 destSubDirName);
-            this.destSubDirNameMap.set(srcFileLoc.baseDir, destSubDirName);
+            this._destSubDirNameMap.set(srcFileLoc.baseDir, destSubDirName);
         }
         const destFileLoc = {
             baseDir: destSubDirName,
