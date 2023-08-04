@@ -1,4 +1,4 @@
-import AstBuilder from "./AstBuilder";
+import { AstBuilder } from "./AstBuilder";
 import {
     AugmentingCodeDescriptor,
     DecoratedLineAstNode,
@@ -12,9 +12,9 @@ import {
     SourceCodeAst,
     SourceCodeAstNode
 } from "./types";
-import * as myutils from "./myutils";
+import * as myutils from "./helperUtils";
 
-export default class DefaultAstTransformer {
+export class DefaultAstTransformer {
     augCodeMarkers: string[] | null = null;
     augCodeArgMarkers: string[] | null = null;
     augCodeJsonArgMarkers: string[] | null = null;

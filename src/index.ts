@@ -1,17 +1,17 @@
-import AstBuilder from "./AstBuilder";
-import AstFormatter from "./AstFormatter";
-import {
-    CodeChangeDetective,
-    DefaultCodeChangeDetectiveConfig,
-    DefaultCodeChangeDetectiveConfigFactory
-} from "./CodeChangeDetective";
-import DefaultAstTransformer from "./DefaultAstTransformer";
+export * from "./AstBuilder";
+export * from "./AstFormatter";
+export * from "./CodeChangeDetective";
+export * from "./DefaultAstTransformer";
+export * from "./types";
 
-export {
-    AstBuilder,
-    AstFormatter,
-    CodeChangeDetective,
-    DefaultCodeChangeDetectiveConfig,
-    DefaultCodeChangeDetectiveConfigFactory,
-    DefaultAstTransformer
+import * as myutils from "./helperUtils";
+export const helperUtils = {
+    splitIntoLines: myutils.splitIntoLines,
+    isBlank: myutils.isBlank,
+    cleanDir: myutils.cleanDir,
+    determineIndent: myutils.determineIndent,
+    modifyNameToBeAbsent: myutils.modifyNameToBeAbsent,
+    modifyTextToBeAbsent: myutils.modifyTextToBeAbsent,
+    normalizeSrcFileLoc: myutils.normalizeSrcFileLoc,
+    printNormalDiff: myutils.printNormalDiff
 };

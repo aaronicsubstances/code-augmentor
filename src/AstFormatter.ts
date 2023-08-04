@@ -1,4 +1,4 @@
-import AstBuilder from "./AstBuilder";
+import { AstBuilder } from "./AstBuilder";
 import {
     DecoratedLineAstNode,
     EscapedBlockAstNode,
@@ -86,6 +86,6 @@ function printNestedBlock(n: NestedBlockAstNode, out: string[]) {
     out.push(n.endLineSep);
 }
 
-export default {
+export const AstFormatter = {
     stringify
 }

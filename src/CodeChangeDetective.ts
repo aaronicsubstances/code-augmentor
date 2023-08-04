@@ -2,7 +2,7 @@ import fs from "fs/promises";
 import path from "path";
 import os from "os";
 
-import * as myutils from "./myutils";
+import * as myutils from "./helperUtils";
 import {
     CodeChangeDetectiveConfig,
     CodeChangeDetectiveConfigFactory,
@@ -238,7 +238,7 @@ export class DefaultCodeChangeDetectiveConfig implements CodeChangeDetectiveConf
     generateDestFileLoc(srcFileLoc: SourceFileLocation): SourceFileLocation {
         let destSubDirName = this._destSubDirNameMap.get(srcFileLoc.baseDir);
         if (!destSubDirName) {
-            destSubDirName = myutils.generateValidFileName(srcFileLoc.baseDir);
+            destSubDirName = myutils._generateValidFileName(srcFileLoc.baseDir);
             destSubDirName = myutils.modifyNameToBeAbsent(
                 Array.from(this._destSubDirNameMap.values()),
                 destSubDirName);

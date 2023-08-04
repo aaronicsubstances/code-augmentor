@@ -1,6 +1,6 @@
 import os from "os";
 
-import * as myutils from "./myutils";
+import * as myutils from "./helperUtils";
 import {
     SourceCodeAst,
     DecoratedLineAstNode,
@@ -12,7 +12,7 @@ import {
 const MARKER_SUITABILITY_REGEX = new RegExp(/^\s|\r|\n/);
 const UNNEEDED_MATCH_DETAILS_RESULT = new Array<string>();
 
-export default class AstBuilder {
+export class AstBuilder {
     decoratedLineMarkers: string[] | null = null;
     escapedBlockStartMarkers: string[] | null = null;
     escapedBlockEndMarkers: string[] | null = null;

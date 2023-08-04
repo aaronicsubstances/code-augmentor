@@ -1,7 +1,7 @@
 import { assert } from "chai";
-import AstBuilder from "../src/AstBuilder";
+import { AstBuilder } from "../src/AstBuilder";
 
-import DefaultAstTransformer from "../src/DefaultAstTransformer";
+import { DefaultAstTransformer } from "../src/DefaultAstTransformer";
 import {
     AugmentingCodeDescriptor,
     DefaultAstTransformSpec,

@@ -3,7 +3,7 @@ import path from "path";
 
 import { assert } from "chai";
 
-import * as myutils from "../src/myutils";
+import * as myutils from "../src/helperUtils";
 
 describe('myutils', function() {
 
@@ -143,7 +143,7 @@ describe('myutils', function() {
         ];
         data.forEach(({ p, expected }, i) => {
             it(`should pass with input ${i}`, function() {
-                const actual = myutils.generateValidFileName(p);
+                const actual = myutils._generateValidFileName(p);
                 assert.deepEqual(actual, expected);
             });
         });

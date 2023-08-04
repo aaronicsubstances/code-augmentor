@@ -9,7 +9,7 @@ import {
     DefaultCodeChangeDetectiveConfig,
     DefaultCodeChangeDetectiveConfigFactory
 } from "../src/CodeChangeDetective";
-import * as myutils from "../src/myutils";
+import * as myutils from "../src/helperUtils";
 import {
     CodeChangeDetectiveConfig,
     CodeChangeDetectiveConfigFactory,

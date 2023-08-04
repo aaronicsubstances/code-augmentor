@@ -10,7 +10,11 @@ Code Augmentor is library that provides
 
 The [AstBuilder](https://github.com/aaronicsubstances/code-augmentor-nodejs/blob/master/src/AstBuilder.ts) and [AstFormatter](https://github.com/aaronicsubstances/code-augmentor-nodejs/blob/master/src/AstFormatter.ts) modules are responsible for providing parsing and formatting functionality of the markup language provided by this library.
 
-## Code Generation with Change Detection
+## Code Transformation
+
+The [DefaultAstTransformer](https://github.com/aaronicsubstances/code-augmentor-nodejs/blob/master/src/DefaultAstTransformer.ts) module provides a suggested way of transforming files written in the markup language provided by this library.
+
+## Code Generation and Change Detection
 
 The [CodeChangeDetective](https://github.com/aaronicsubstances/code-augmentor-nodejs/blob/master/src/CodeChangeDetective.ts) module provides the functionality of synchronizing the content of a pair of files (actually any pair of texts or binary blobs) to be equal.
 

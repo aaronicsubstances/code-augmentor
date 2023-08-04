@@ -142,7 +142,10 @@ function getRndInteger(min: number, max: number) {
     return Math.floor(Math.random() * (max - min) ) + min;
 }
 
-export function generateValidFileName(p: string) {
+/**
+ * NB: exported for internal use only.
+ */
+export function _generateValidFileName(p: string) {
     let trimmed = "";
     if (p) {
         // use last path segment
@@ -172,9 +175,6 @@ export function normalizeSrcFileLoc(baseDir: string | null, relativePath: string
 
 /**
  * NB: exported for testing only.
- * @param fullPath 
- * @param baseDir 
- * @returns 
  */
 export function _splitFilePath(fullPath: string, baseDir: string | null) {
     // ensure prescence of file separator.

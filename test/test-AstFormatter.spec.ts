@@ -1,7 +1,7 @@
 import { assert } from "chai";
 
-import AstBuilder from "../src/AstBuilder";
-import AstFormatter from "../src/AstFormatter";
+import { AstBuilder } from "../src/AstBuilder";
+import { AstFormatter } from "../src/AstFormatter";
 import { SourceCodeAst, UndecoratedLineAstNode } from "../src/types";
 
 describe('AstFormatter', function() {

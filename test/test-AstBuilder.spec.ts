@@ -2,7 +2,7 @@ import os from "os";
 
 import { assert } from "chai";
 
-import AstBuilder from "../src/AstBuilder";
+import { AstBuilder } from "../src/AstBuilder";
 import { SourceCodeAst } from "../src/types";
 
 describe('AstBuilder', function() {
