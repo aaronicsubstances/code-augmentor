@@ -6,7 +6,8 @@ import {
     DecoratedLineAstNode,
     EscapedBlockAstNode,
     NestedBlockAstNode,
-    SourceCodeAstNode
+    SourceCodeAstNode,
+    UndecoratedLineAstNode
 } from "./types";
 
 const MARKER_SUITABILITY_REGEX = new RegExp(/^\s|\r|\n/);
@@ -27,6 +28,10 @@ export class AstBuilder {
     static TYPE_DECORATED_LINE = 3;
     static TYPE_ESCAPED_BLOCK = 4;
     static TYPE_NESTED_BLOCK = 5;
+    static TYPE_ESCAPED_BLOCK_START = 6;
+    static TYPE_ESCAPED_BLOCK_END = 7;
+    static TYPE_NESTED_BLOCK_START = 8;
+    static TYPE_NESTED_BLOCK_END = 9;
 
     static isMarkerSuitable(marker: string | null) {
         return marker && !MARKER_SUITABILITY_REGEX.exec(marker);
@@ -245,61 +250,6 @@ export class AstBuilder {
         typedNode.marker = m[0];
         typedNode.markerAftermath = m[1];
         return typedNode;
-    }
-
-    escapeText(s: string, attrs: any, forceEscapedNodeCreation: boolean) {
-        const nodes = [];
-        const splitSource = myutils.splitIntoLines(s, true);
-        if (!forceEscapedNodeCreation) {
-            for (let i = 0; i < splitSource.length; i+=2) {
-                const line = splitSource[i];
-                const terminator = splitSource[i + 1];
-                const indent = myutils.determineIndent(line);
-                const n: any = {
-                    type: AstBuilder.TYPE_UNDECORATED_LINE,
-                    text: line,
-                    lineSep: terminator,
-                    indent
-                };
-                nodes.push(n);
-            }
-
-            forceEscapedNodeCreation = nodes.some(n => {
-                return AstBuilder._findMarkerMatch(this.decoratedLineMarkers, n, true) ||
-                    AstBuilder._findMarkerMatch(this.escapedBlockStartMarkers, n, true) ||
-                    AstBuilder._findMarkerMatch(this.escapedBlockEndMarkers, n, true) ||
-                    AstBuilder._findMarkerMatch(this.nestedBlockStartMarkers, n, true) ||
-                    AstBuilder._findMarkerMatch(this.nestedBlockEndMarkers, n, true);
-            });
-        }
-
-        // make new copy of attrs for use in setting defaults for lineSeps.
-        attrs = Object.assign({}, attrs);
-        if (forceEscapedNodeCreation) {
-            if (!attrs.lineSep) {
-                attrs.lineSep = os.EOL;
-            }
-            if (!attrs.endLineSep) {
-                attrs.endLineSep = os.EOL;
-            }
-            const dest = new Array<SourceCodeAstNode>();
-            dest.push(AstBuilder.createEscapedNode(splitSource, attrs));
-            return dest;
-        }
-        else {
-            for (const n of nodes) {
-                // dispose off indent used to determine whether to
-                // forcefully create an escaped node.
-                delete n.indent;
-                if (!n.lineSep && attrs.lineSep) {
-                    n.lineSep = attrs.lineSep;
-                    if (n.lineSep !== '\r' && n.lineSep !== '\n' && n.lineSep !== '\r\n') {
-                        throw new Error("received invalid lineSep: " + n.lineSep);
-                    }
-                }
-            }
-            return nodes as SourceCodeAstNode[];
-        }
     }
 
     static createDecoratedLineNode(line: string, attrs: any) {

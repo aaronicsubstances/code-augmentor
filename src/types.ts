@@ -33,9 +33,10 @@ export type SourceCodeAstNode =
     | UndecoratedLineAstNode
     | DecoratedLineAstNode
     | EscapedBlockAstNode
-    | NestedBlockAstNode;
+    | NestedBlockAstNode
+    | SourceCodeAst;
 
-export interface AugmentingCodeDescriptor {
+export interface AugmentingCodeDescriptor2 { // remove
     parentNode: SourceCodeAst | NestedBlockAstNode;
     idxInParentNode: number;
     nestedBlockUsed: boolean;
@@ -46,14 +47,30 @@ export interface AugmentingCodeDescriptor {
     endMarkerAftermath: string | null;
     endArgs: any[] | null;
     endArgsExclEndIdxInParentNode: number;
-    parent: AugmentingCodeDescriptor | null;
-    children: AugmentingCodeDescriptor[];
+    parent: AugmentingCodeDescriptor2 | null;
+    children: AugmentingCodeDescriptor2[];
 }
 
-export interface GeneratedCodeDescriptor {
+export interface GeneratedCodeDescriptor { // remove
     parentNode: SourceCodeAst | NestedBlockAstNode;
     idxInParentNode: number;
     nestedBlockUsed: boolean;
+}
+
+export interface AugmentingCodeDescriptor {
+    startIdx: number;
+    exclEndIdx: number;
+    lineObj: LineObj;
+    node: DecoratedLineAstNode;
+    args: any[];
+}
+
+export interface LineObj {
+    node: SourceCodeAstNode;
+    lineNumber: number;
+    type: number;
+    arg?: any;
+    updates?: SourceCodeAstNode[];
 }
 
 export interface GeneratedCodePart {
@@ -64,18 +81,20 @@ export interface GeneratedCodePart {
 export interface GeneratedCode {
     contentParts: GeneratedCodePart[] | null;
     indent: string | null;
-    useInlineMarker: boolean;
+    useInlineMarker: boolean; // remove.
     ignore: boolean;
+    ignoreRemainder: boolean;
+    lineSep?: string;
+    markerType?: number;
+}
+
+export interface GeneratedCodeSectionTransform { // internal
+    ignore?: boolean; // remove
+    node: SourceCodeAstNode | null; // null means ignore
     ignoreRemainder: boolean;
 }
 
-export interface GeneratedCodeSectionTransform {
-    node: SourceCodeAstNode | null;
-    ignore: boolean;
-    ignoreRemainder: boolean;
-}
-
-export interface DefaultAstTransformSpec {
+export interface DefaultAstTransformSpec { // remove
     node: SourceCodeAst | EscapedBlockAstNode | NestedBlockAstNode;
     childIndex: number;
     childToInsert: SourceCodeAstNode | null;
