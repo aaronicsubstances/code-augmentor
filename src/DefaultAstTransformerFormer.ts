@@ -14,7 +14,7 @@ import {
 } from "./types";
 import * as myutils from "./helperUtils";
 
-export class DefaultAstTransformer {
+export class DefaultAstTransformerFormer {
     augCodeMarkers: string[] | null = null;
     augCodeArgMarkers: string[] | null = null;
     augCodeJsonArgMarkers: string[] | null = null;
@@ -130,7 +130,7 @@ export class DefaultAstTransformer {
                 break;
             }
         }
-        args = DefaultAstTransformer._consolidateAugCodeArgs(args);
+        args = DefaultAstTransformerFormer._consolidateAugCodeArgs(args);
         return {
             exclEndIdx: i,
             args: args
@@ -221,7 +221,7 @@ export class DefaultAstTransformer {
                 augCodeTransforms);
         }
 
-        DefaultAstTransformer.performTransformations(augCodeTransforms);
+        DefaultAstTransformerFormer.performTransformations(augCodeTransforms);
     }
 
     private _addAugCodeTransforms(
@@ -234,7 +234,7 @@ export class DefaultAstTransformer {
             dest: Array<DefaultAstTransformSpec>) {
         const genCodeTransforms = this._generateGenCodeTransforms(
             defaultIndent, defaultLineSep, genCodes, genCodeSections);
-        DefaultAstTransformer.computeAugCodeTransforms(augCode, transformParentOfAugCodeNode,
+        DefaultAstTransformerFormer.computeAugCodeTransforms(augCode, transformParentOfAugCodeNode,
             genCodeSections, genCodeTransforms, dest);
     }
 
@@ -262,8 +262,8 @@ export class DefaultAstTransformer {
                     genCodeSection.idxInParentNode] as (EscapedBlockAstNode | DecoratedLineAstNode);
                 let genCodeIndent = genCodeSectionNode.indent;
                 let genCodeLineSep = genCodeSectionNode.lineSep;
-                const genCodeLines = DefaultAstTransformer.extractLinesAndTerminators(
-                    genCode.contentParts,
+                const genCodeLines = DefaultAstTransformerFormer.extractLinesAndTerminators(
+                    genCode.contentParts as any,
                     genCode.indent, genCodeLineSep);
                 const node = this._createGenCodeNode(genCodeLines, genCode.useInlineMarker,
                     genCodeSection, genCodeIndent, genCodeLineSep);
@@ -283,8 +283,8 @@ export class DefaultAstTransformer {
                 node: null
             };
             if (!transform.ignore) {
-                const genCodeLines = DefaultAstTransformer.extractLinesAndTerminators(
-                    genCode.contentParts,
+                const genCodeLines = DefaultAstTransformerFormer.extractLinesAndTerminators(
+                    genCode.contentParts as any,
                     genCode.indent, defaultLineSep);
                 const node = this._createGenCodeNode(genCodeLines, genCode.useInlineMarker,
                     null, defaultIndent, defaultLineSep);
@@ -391,7 +391,7 @@ export class DefaultAstTransformer {
         if (!contentParts) {
             return [];
         }
-        DefaultAstTransformer._repairSplitCrLfs(contentParts);
+        DefaultAstTransformerFormer._repairSplitCrLfs(contentParts);
 
         const allLines = new Array<string>();
         let lastPartIsExemptAndEmpty = false;

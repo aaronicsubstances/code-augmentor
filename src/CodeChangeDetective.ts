@@ -2,7 +2,7 @@ import fs from "fs/promises";
 import path from "path";
 import os from "os";
 
-import * as myutils from "./helperUtils";
+import * as helperUtils from "./helperUtils";
 import {
     CodeChangeDetectiveConfig,
     CodeChangeDetectiveConfigFactory,
@@ -19,10 +19,9 @@ export class CodeChangeDetective {
     reportError?: (e: any, m: string) => Promise<void>;
 
     async execute(): Promise<boolean> {
+        let codeChangeDetected = false;
         let config;
         try {
-            let codeChangeDetected = false;
-
             let itemIdx = -1; // let indices start from zero.
             for await (const sourceFileDescriptor of (this.srcFileDescriptors || [])) {
                 itemIdx++;
@@ -105,9 +104,9 @@ export class CodeChangeDetective {
                                 changeDiff.push(`${os.EOL}Binary files differ${os.EOL}`);
                             }
                             else {
-                                const original = myutils.splitIntoLines('' + originalContent, false);
-                                const revised = myutils.splitIntoLines('' + revisedContent, false);
-                                changeDiff.push(myutils.printNormalDiff(original, revised));
+                                const original = helperUtils.splitIntoLines('' + originalContent, false);
+                                const revised = helperUtils.splitIntoLines('' + revisedContent, false);
+                                changeDiff.push(helperUtils.printNormalDiff(original, revised));
                             }
                             await callFunc(appendChangeDiff, config, changeDiff.join(""));
                         }
@@ -124,12 +123,22 @@ export class CodeChangeDetective {
                     }
                 }
             }
-
-            return codeChangeDetected;
+        }
+        catch (e) {
+            const logger = this.reportError;
+            if (logger) {
+                await callFunc(logger, this, e,
+                    "error encountered during processing of items");
+            }
+            else {
+                throw e;
+            }
         }
         finally {
             await callFunc(config?.release, config);
         }
+
+        return codeChangeDetected;
     }
 }
 
@@ -149,7 +158,7 @@ export class DefaultCodeChangeDetectiveConfigFactory implements CodeChangeDetect
             throw new Error("destDir property is not set");
         }
         if (this.cleanDestDir) {
-            await myutils.cleanDir(destDir)
+            await helperUtils.cleanDir(destDir)
         }
 
         const config = new DefaultCodeChangeDetectiveConfig();
@@ -214,7 +223,7 @@ export class DefaultCodeChangeDetectiveConfig implements CodeChangeDetectiveConf
     }
 
     normalizeSrcFileLoc(srcFileDescriptor: SourceFileDescriptor) {
-        return myutils.normalizeSrcFileLoc(srcFileDescriptor.baseDir as any,
+        return helperUtils.normalizeSrcFileLoc(srcFileDescriptor.baseDir as any,
             srcFileDescriptor.relativePath);
     }
 
@@ -238,8 +247,8 @@ export class DefaultCodeChangeDetectiveConfig implements CodeChangeDetectiveConf
     generateDestFileLoc(srcFileLoc: SourceFileLocation): SourceFileLocation {
         let destSubDirName = this._destSubDirNameMap.get(srcFileLoc.baseDir);
         if (!destSubDirName) {
-            destSubDirName = myutils._generateValidFileName(srcFileLoc.baseDir);
-            destSubDirName = myutils.modifyNameToBeAbsent(
+            destSubDirName = helperUtils._generateValidFileName(srcFileLoc.baseDir);
+            destSubDirName = helperUtils.modifyNameToBeAbsent(
                 Array.from(this._destSubDirNameMap.values()),
                 destSubDirName);
             this._destSubDirNameMap.set(srcFileLoc.baseDir, destSubDirName);

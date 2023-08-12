@@ -2,7 +2,7 @@ import { assert } from "chai";
 
 import { AstBuilder } from "../src/AstBuilder";
 import { AstFormatter } from "../src/AstFormatter";
-import { SourceCodeAst, UndecoratedLineAstNode } from "../src/types";
+import { DecoratedLineAstNode, SourceCodeAst, UndecoratedLineAstNode } from "../src/types";
 
 describe('AstFormatter', function() {
 
@@ -544,6 +544,66 @@ describe('AstFormatter', function() {
                 "    2d:6\n" +
                 " k-age\n" +
                 "e->\r";
+            const actual = AstFormatter.stringify(ast);
+            assert.deepEqual(actual, expected);
+        });
+        it(`should pass with input 5`, function() {
+            const ast: DecoratedLineAstNode = {
+                type: AstBuilder.TYPE_DECORATED_LINE,
+                indent: " ",
+                marker: "m",
+                markerAftermath: ":",
+                lineSep: "\n"
+            };
+            const expected = " m:\n";
+            const actual = AstFormatter.stringify(ast);
+            assert.deepEqual(actual, expected);
+        });
+        it(`should pass with input 6`, function() {
+            const ast: DecoratedLineAstNode = {
+                type: AstBuilder.TYPE_NESTED_BLOCK_START,
+                indent: " ",
+                marker: "m",
+                markerAftermath: ":",
+                lineSep: null as any
+            };
+            const expected = " m:";
+            const actual = AstFormatter.stringify(ast);
+            assert.deepEqual(actual, expected);
+        });
+        it(`should pass with input 7`, function() {
+            const ast: DecoratedLineAstNode = {
+                type: AstBuilder.TYPE_NESTED_BLOCK_END,
+                indent: "c", // test that invalid is simply printed
+                marker: "m",
+                markerAftermath: ":",
+                lineSep: "p"
+            };
+            const expected = "cm:p";
+            const actual = AstFormatter.stringify(ast);
+            assert.deepEqual(actual, expected);
+        });
+        it(`should pass with input 8`, function() {
+            const ast: DecoratedLineAstNode = {
+                type: AstBuilder.TYPE_ESCAPED_BLOCK_START,
+                indent: " ",
+                marker: "m",
+                markerAftermath: ":",
+                lineSep: "\r\n"
+            };
+            const expected = " m:\r\n";
+            const actual = AstFormatter.stringify(ast);
+            assert.deepEqual(actual, expected);
+        });
+        it(`should pass with input 9`, function() {
+            const ast: DecoratedLineAstNode = {
+                type: AstBuilder.TYPE_ESCAPED_BLOCK_END,
+                indent: "c", // test that invalid is simply printed
+                marker: "x",
+                markerAftermath: ":",
+                lineSep: "p"
+            };
+            const expected = "cx:p";
             const actual = AstFormatter.stringify(ast);
             assert.deepEqual(actual, expected);
         });

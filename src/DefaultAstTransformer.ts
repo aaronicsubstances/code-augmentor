@@ -1,19 +1,20 @@
 import { AstBuilder } from "./AstBuilder";
+import { AstFormatter } from "./AstFormatter";
+import * as helperUtils from "./helperUtils";
 import {
+    AugmentedSourceCode,
+    AugmentedSourceCodePart,
     AugmentingCodeDescriptor,
     DecoratedLineAstNode,
     EscapedBlockAstNode,
     GeneratedCode,
     GeneratedCodePart,
     GeneratedCodeSectionTransform,
-    LineObj,
     NestedBlockAstNode,
     SourceCodeAst,
     SourceCodeAstNode,
     UndecoratedLineAstNode
 } from "./types";
-import * as myutils from "./helperUtils";
-import { AstFormatter } from "./AstFormatter";
 
 function findMarkerMatch(markers: string[] | null, marker: any) {
     if (markers) {
@@ -36,106 +37,42 @@ function getLast<T>(a: T[] | null) {
     return null;
 }
 
-function flattenTree(n: SourceCodeAstNode, collector: Array<LineObj>,
-        counter: { lineNumber: number }) {
-    if (n.type === AstBuilder.TYPE_DECORATED_LINE ||
-            n.type === AstBuilder.TYPE_UNDECORATED_LINE) {
-        collector.push({
-            node: n,
-            type: DefaultAstTransformer.TYPE_OTHER,
-            lineNumber: counter.lineNumber++
-        });
-    }
-    else if (n.type === AstBuilder.TYPE_ESCAPED_BLOCK) {
-        const typedNode = n as EscapedBlockAstNode;
-        const children = typedNode.children
-        if (children) {
-            for (const child of children) {
-                // validate type
-                if (child.type !== AstBuilder.TYPE_UNDECORATED_LINE) {
-                    throw new Error("unexpected child node type for escaped block " +
-                        `at line ${counter.lineNumber}: ${child.type}`);
-                }
-            }
-        }
-        collector.push({
-            node: n,
-            type: DefaultAstTransformer.TYPE_OTHER,
-            lineNumber: counter.lineNumber
-        });
-        counter.lineNumber += 2 + (children || []).length;
-    }
-    else if (n.type === AstBuilder.TYPE_NESTED_BLOCK) {
-        const typedNode = n as NestedBlockAstNode;
-        collector.push({
-            node: {
-                type: AstBuilder.TYPE_NESTED_BLOCK_START,
-                marker: typedNode.marker,
-                markerAftermath: typedNode.markerAftermath,
-                lineSep: typedNode.lineSep,
-                indent: typedNode.indent
-            } as DecoratedLineAstNode,
-            type: DefaultAstTransformer.TYPE_OTHER,
-            lineNumber: counter.lineNumber++
-        });
-        const children = typedNode.children
-        if (children) {
-            for (const child of children) {
-                flattenTree(child, collector, counter);
-            }
-        }
-        collector.push({
-            node: {
-                type: AstBuilder.TYPE_NESTED_BLOCK_END,
-                marker: typedNode.endMarker,
-                markerAftermath: typedNode.endMarkerAftermath,
-                lineSep: typedNode.endLineSep,
-                indent: typedNode.endIndent
-            } as DecoratedLineAstNode,
-            type: DefaultAstTransformer.TYPE_OTHER,
-            lineNumber: counter.lineNumber++
-        });
-    }
-    else {
-        throw new Error("unexpected node type " +
-            `at line ${counter.lineNumber}: ${n.type}`);
-    }
-}
-
 export class DefaultAstTransformer {
     augCodeMarkers: string[] | null = null;
     augCodeArgMarkers: string[] | null = null;
-    augCodeJsonArgMarkers: string[] | null = null;
     genCodeMarkers: string[] | null = null;
-    defaultGenCodeMarker: string | null = null;
 
-    static TYPE_OTHER = 0;
+    defaultGenCodeInlineMarker: string | null = null;
+    defaultGenCodeStartMarker: string | null = null;
+    defaultGenCodeEndMarker: string | null = null;
+
     static TYPE_AUG_CODE = 1;
     static TYPE_AUG_CODE_ARG = 2;
     static TYPE_GEN_CODE = 3;
 
-    extractAugCodes(parentNode: SourceCodeAst, firstLineNumber = 1) {
+    extractAugmentedSourceCode(parentNode: { children: SourceCodeAstNode[] },
+            firstLineNumber = 1) {
         const augCodes = new Array<AugmentingCodeDescriptor>();
-        const lineObjects = new Array<LineObj>();
-        if (parentNode.children) {
-            for (const n of parentNode.children) {
-                flattenTree(n, lineObjects, { lineNumber: firstLineNumber });
-            }
+        const parts = new Array<AugmentedSourceCodePart>();
+        const lineCounter = { lineNumber: firstLineNumber };
+        for (const n of (parentNode.children || [])) {
+            DefaultAstTransformer._addSourceCodeParts(n, parts,
+                lineCounter);
         }
         let i = 0;
-        while (i < lineObjects.length) {
-            const lineObj = lineObjects[i];
-            const n = lineObj.node;
+        while (i < parts.length) {
+            const p = parts[i];
+            let n = p.node;
 
             // find start of aug code section
             let augCodeMarkerFound = false;
-            if (n.type === AstBuilder.TYPE_DECORATED_LINE) {
-                const typedNode = n as DecoratedLineAstNode;
+            if (n.type === AstBuilder.TYPE_DECORATED_LINE ||
+                    n.type === AstBuilder.TYPE_ESCAPED_BLOCK) {
+                const typedNode = n as (DecoratedLineAstNode | EscapedBlockAstNode);
                 if (findMarkerMatch(this.augCodeMarkers, typedNode.marker)) {
                     augCodeMarkerFound = true;
                 }
             }
-
             if (!augCodeMarkerFound) {
                 i++;
                 continue;
@@ -145,13 +82,15 @@ export class DefaultAstTransformer {
             const startIdx = i++;
 
             // find end of aug code section
-            while (i < lineObjects.length) {
+            while (i < parts.length) {
+                n = parts[i].node;
                 if (n.type === AstBuilder.TYPE_NESTED_BLOCK_START ||
                     n.type === AstBuilder.TYPE_NESTED_BLOCK_END) {
                     break;
                 }
-                if (n.type === AstBuilder.TYPE_DECORATED_LINE) {
-                    const typedNode = n as DecoratedLineAstNode;
+                if (n.type === AstBuilder.TYPE_DECORATED_LINE ||
+                        n.type === AstBuilder.TYPE_ESCAPED_BLOCK) {
+                    const typedNode = n as (DecoratedLineAstNode | EscapedBlockAstNode);
                     if (findMarkerMatch(this.augCodeMarkers, typedNode.marker)) {
                         break;
                     }
@@ -159,148 +98,183 @@ export class DefaultAstTransformer {
                 i++;
             }
 
-            augCodes.push(this._createAugCode(lineObjects, startIdx, i))
+            augCodes.push(this._createAugCode(parts, startIdx, i))
         }
-        return {
-            lineObjects,
+        const sourceCode: AugmentedSourceCode = {
+            parts,
             augCodes
+        };
+        return sourceCode;
+    }
+
+    static _addSourceCodeParts(n: SourceCodeAstNode,
+            collector: Array<AugmentedSourceCodePart>,
+            counter: { lineNumber: number }) {
+        if (n.type === AstBuilder.TYPE_DECORATED_LINE ||
+                n.type === AstBuilder.TYPE_UNDECORATED_LINE) {
+            collector.push({
+                node: n,
+                lineNumber: counter.lineNumber++
+            });
+        }
+        else if (n.type === AstBuilder.TYPE_ESCAPED_BLOCK) {
+            collector.push({
+                node: n,
+                lineNumber: counter.lineNumber++
+            });
+            const typedNode = n as EscapedBlockAstNode;
+            for (const child of (typedNode.children || [])) {
+                // validate type
+                if (child.type !== AstBuilder.TYPE_UNDECORATED_LINE) {
+                    throw new Error("unexpected child node type for escaped block " +
+                        `at line ${counter.lineNumber}: ${child.type}`);
+                }
+                counter.lineNumber++;
+            }
+            counter.lineNumber++; // for the end of escape block.
+        }
+        else if (n.type === AstBuilder.TYPE_NESTED_BLOCK) {
+            const typedNode = n as NestedBlockAstNode;
+            collector.push({
+                node: {
+                    type: AstBuilder.TYPE_NESTED_BLOCK_START,
+                    marker: typedNode.marker,
+                    markerAftermath: typedNode.markerAftermath,
+                    lineSep: typedNode.lineSep,
+                    indent: typedNode.indent
+                } as DecoratedLineAstNode,
+                lineNumber: counter.lineNumber++
+            });
+            for (const child of (typedNode.children || [])) {
+                DefaultAstTransformer._addSourceCodeParts(child, collector, counter);
+            }
+            collector.push({
+                node: {
+                    type: AstBuilder.TYPE_NESTED_BLOCK_END,
+                    marker: typedNode.endMarker,
+                    markerAftermath: typedNode.endMarkerAftermath,
+                    lineSep: typedNode.endLineSep,
+                    indent: typedNode.endIndent
+                } as DecoratedLineAstNode,
+                lineNumber: counter.lineNumber++
+            });
+        }
+        else {
+            throw new Error("unexpected node type " +
+                `at line ${counter.lineNumber}: ${n.type}`);
         }
     }
 
-    private _createAugCode(lineObjects: Array<LineObj>,
+    _createAugCode(sourceCodeParts: Array<AugmentedSourceCodePart>,
             startIdx: number, exclEndIdx: number) {
-        const firstLineObj = lineObjects[startIdx];
-        firstLineObj.type = DefaultAstTransformer.TYPE_AUG_CODE;
-        const augCodeArgs = [] as any[];
+        const leadPart = sourceCodeParts[startIdx];
+        const augCodeData = new Array<string>();
         const augCode : AugmentingCodeDescriptor = {
-            startIdx: startIdx,
-            exclEndIdx: exclEndIdx,
-            lineObj: firstLineObj,
-            node: firstLineObj.node as DecoratedLineAstNode,
-            args: augCodeArgs,
+            leadPartIdx: startIdx,
+            partCount: exclEndIdx - startIdx,
+            leadPart,
+            leadNode: leadPart.node as (DecoratedLineAstNode | EscapedBlockAstNode),
+            data: augCodeData,
         };
+
+        // add first data item
+        if (augCode.leadNode.type === AstBuilder.TYPE_ESCAPED_BLOCK) {
+            const data = this._extractAugCodeArg(
+                augCode.leadNode as EscapedBlockAstNode);
+            augCodeData.push(data);
+        }
+        else {
+            augCodeData.push(augCode.leadNode.markerAftermath);
+        }
+
+        // set leadPart props
+        leadPart.augCode = augCode;
+        leadPart.type = DefaultAstTransformer.TYPE_AUG_CODE;
+        leadPart.data  = augCodeData[0];
+
         for (let i = startIdx + 1; i < exclEndIdx; i++) {
-            const lineObj = lineObjects[i];
-            const n = lineObj.node;
+            const p = sourceCodeParts[i];
+            const n = p.node;
             if (n.type !== AstBuilder.TYPE_DECORATED_LINE &&
                     n.type !== AstBuilder.TYPE_ESCAPED_BLOCK) {
                 continue;
             }
             const typedNode = n as (DecoratedLineAstNode | EscapedBlockAstNode);
-            let parseArgAsJson = false;
             if (findMarkerMatch(this.genCodeMarkers, typedNode.marker)) {
-                lineObj.type = DefaultAstTransformer.TYPE_GEN_CODE;
-            }
-            else if (findMarkerMatch(this.augCodeJsonArgMarkers, typedNode.marker)) {
-                lineObj.type = DefaultAstTransformer.TYPE_AUG_CODE_ARG;
-                parseArgAsJson = true;
+                p.type = DefaultAstTransformer.TYPE_GEN_CODE;
             }
             else if (findMarkerMatch(this.augCodeArgMarkers, typedNode.marker)) {
-                lineObj.type = DefaultAstTransformer.TYPE_AUG_CODE;
+                p.type = DefaultAstTransformer.TYPE_AUG_CODE_ARG;
             }
             else {
                 continue;
             }
-            if (lineObj.type === DefaultAstTransformer.TYPE_AUG_CODE_ARG) {
-                let children;
-                if (n.type === AstBuilder.TYPE_ESCAPED_BLOCK) {
-                    children = (n as EscapedBlockAstNode).children;
+            if (p.type === DefaultAstTransformer.TYPE_AUG_CODE_ARG) {
+                let data = '';
+                if (typedNode.type === AstBuilder.TYPE_ESCAPED_BLOCK) {
+                    data = this._extractAugCodeArg(
+                        typedNode as EscapedBlockAstNode);
                 }
                 else {
-                    children = [n];
+                    data = typedNode.markerAftermath;
                 }
-                const consolidated = AstFormatter.stringify({
-                    type: AstBuilder.TYPE_SOURCE_CODE,
-                    children
-                });
-                if (parseArgAsJson) {
-                    lineObj.arg = JSON.parse(consolidated);
-                }
-                else {
-                    lineObj.arg = consolidated;
-                }
-                augCodeArgs.push(lineObj.arg);
+                p.data = data;
+                augCodeData.push(data);
             }
         }
         return augCode;
     }
 
-    applyGeneratedCodes(augCode: AugmentingCodeDescriptor,
-            lineObjects: LineObj[],
-            genCodes: any) {
-        genCodes = DefaultAstTransformer._cleanGenCodeList(genCodes);
+    _extractAugCodeArg(node: EscapedBlockAstNode) {
+        const source = AstFormatter.stringify({
+            type: AstBuilder.TYPE_SOURCE_CODE,
+            children: node.children
+        });
+        const builder = new AstBuilder()
+        builder.decoratedLineMarkers = this.augCodeArgMarkers
+        const sourceNode = builder.parse(source)
+        // ensure each line is a decorated
+        for (const c of sourceNode.children) {
+            if (c.type !== AstBuilder.TYPE_DECORATED_LINE) {
+                throw new Error("invalid aug code argument. " +
+                    "escaped block must consist of only decorated lines marked by " +
+                    "the aug code arg markers supplied to an instance of this class");
+            }
+        }
+        return sourceNode.children.map((v, i) => {
+            const n = v as DecoratedLineAstNode;
+            let includeTerminator = false;
+            if (i < sourceNode.children.length - 1) {
+                includeTerminator = true;
+            }
+            return n.markerAftermath + (includeTerminator ?
+                n.lineSep : "");
+        }).join("");
+    }
 
-        const genCodeSections = lineObjects
-            .slice(augCode.startIdx, augCode.exclEndIdx)
-            .filter(x => x.type === DefaultAstTransformer.TYPE_GEN_CODE);
-        let defaultIndent = augCode.node.indent;
-        let defaultLineSep = augCode.node.lineSep;
+    insertGeneratedCode(augmentedSourceCode: AugmentedSourceCode,
+            augCode: AugmentingCodeDescriptor,
+            genCodes: Array<GeneratedCode | null>) {
+        const genCodeSections = augmentedSourceCode.parts
+            .filter((x, i) =>
+                i >= augCode.leadPartIdx &&
+                i < augCode.leadPartIdx + augCode.partCount &&
+                x.type === DefaultAstTransformer.TYPE_GEN_CODE);
+        let defaultIndent = augCode.leadNode.indent;
+        let defaultLineSep = augCode.leadNode.lineSep;
 
         const genCodeTransforms = this._generateGenCodeTransforms(
-            defaultIndent, defaultLineSep, genCodes, genCodeSections);
-        DefaultAstTransformer._computeAugCodeTransforms(augCode,
-            lineObjects, genCodeSections, genCodeTransforms);
-    }
-
-    static _cleanGenCodeList(result: any): Array<GeneratedCode | null> {
-        const converted = new Array<GeneratedCode | null>();
-        if (Array.isArray(result)) {
-            for (const item of result) {
-                const genCode = DefaultAstTransformer._convertGenCode(item);
-                converted.push(genCode);
-            }
-        }
-        else {
-            const genCode = DefaultAstTransformer._convertGenCode(result);
-            converted.push(genCode);
-        }
-        return converted;
-    }
-
-    static _convertGenCode(item: any): GeneratedCode | null {
-        if (item === null || typeof item === 'undefined') {
-            return null;
-        }
-        if (item.contentParts !== null && typeof item.contentParts !== 'undefined') {
-            const contentParts = []
-            for (const contentPart of item.contentParts) {
-                const elem = DefaultAstTransformer._convertGenCodePart(
-                    contentPart);
-                if (elem) {
-                    contentParts.push(elem);
-                }
-            }
-            return {
-                ...item,
-                contentParts
-            } as GeneratedCode;
-        }
-        item = DefaultAstTransformer._convertGenCodePart(item);
-        return {
-            contentParts: item ? [ item ] : null
-        } as GeneratedCode;
-    }
-
-    static _convertGenCodePart(item: any) {
-        if (item === null || typeof item === 'undefined') {
-            return null;
-        }
-        if (item.content !== null && typeof item.content !== 'undefined') {
-            return {
-                ...item,
-                content: `${item.content}`
-            } as GeneratedCodePart;
-        }
-        return {
-            content: `${item}`
-        } as GeneratedCodePart;
+            genCodes, genCodeSections, defaultIndent, defaultLineSep);
+        DefaultAstTransformer._applyGenCodeTransforms(
+            genCodeTransforms, genCodeSections,
+            augCode, augmentedSourceCode.parts);
     }
 
     _generateGenCodeTransforms(
-            defaultIndent: string,
-            defaultLineSep: string,
             genCodes: Array<GeneratedCode | null>,
-            genCodeSections: LineObj[]) {
+            genCodeSections: AugmentedSourceCodePart[],
+            defaultIndent: string,
+            defaultLineSep: string) {
         const genCodeTransforms = new Array<GeneratedCodeSectionTransform | null>;
         let minCodeSectionsToDealWith = Math.min(genCodes.length, genCodeSections.length);
         for (let i = 0; i < minCodeSectionsToDealWith; i++) {
@@ -318,9 +292,9 @@ export class DefaultAstTransformer {
                 const genCodeSectionNode = genCodeSection.node as (EscapedBlockAstNode | DecoratedLineAstNode);
                 let genCodeIndent = genCodeSectionNode.indent;
                 let genCodeLineSep = genCodeSectionNode.lineSep;
-                const genCodeLines = DefaultAstTransformer._extractLinesAndTerminators(
-                    genCode.contentParts,
-                    genCode.indent, genCode.lineSep || genCodeLineSep);
+                const genCodeLines = DefaultAstTransformer.extractLinesAndTerminators(
+                    genCode.contentParts, genCode.indent,
+                    genCode.lineSep || genCodeLineSep);
                 const node = this._createGenCodeNode(genCodeLines, genCode,
                     genCodeSection, genCodeIndent, genCodeLineSep);
                 transform.node = node;
@@ -338,9 +312,9 @@ export class DefaultAstTransformer {
                 node: null
             };
             if (!genCode.ignore) {
-                const genCodeLines = DefaultAstTransformer._extractLinesAndTerminators(
-                    genCode.contentParts,
-                    genCode.indent, genCode.lineSep || defaultLineSep);
+                const genCodeLines = DefaultAstTransformer.extractLinesAndTerminators(
+                    genCode.contentParts, genCode.indent,
+                    genCode.lineSep || defaultLineSep);
                 const node = this._createGenCodeNode(genCodeLines, genCode,
                     null, defaultIndent, defaultLineSep);
                 transform.node = node;
@@ -350,8 +324,8 @@ export class DefaultAstTransformer {
         return genCodeTransforms;
     }
 
-    static _extractLinesAndTerminators(
-            contentParts: GeneratedCodePart[] | null,
+    static extractLinesAndTerminators(
+            contentParts: Array<GeneratedCodePart | null> | null,
             indent: string | null,
             lineSeparator: string | null) {
         if (!contentParts) {
@@ -375,7 +349,7 @@ export class DefaultAstTransformer {
                 }
                 continue;
             }
-            const splitCode = myutils.splitIntoLines(part.content, true);
+            const splitCode = helperUtils.splitIntoLines(part.content, true);
             for (let j = 0; j < splitCode.length; j+=2) {
                 const line = splitCode[j];
                 let terminator = splitCode[j + 1];
@@ -387,8 +361,8 @@ export class DefaultAstTransformer {
                     // as a policy don't indent blank lines, similar
                     // to what IDEs do.
                     let effectiveIndent = "";
-                    if (!(!indent || part.exempt || lastPartIsExemptAndEmpty ||
-                            myutils.isBlank(line))) {
+                    if (indent && !(part.exempt || lastPartIsExemptAndEmpty ||
+                            helperUtils.isBlank(line))) {
                         effectiveIndent = indent;
                     }
 
@@ -423,7 +397,7 @@ export class DefaultAstTransformer {
      * 
      * @param contentParts content parts to be modified.
      */
-    static _repairSplitCrLfs(contentParts: GeneratedCodePart[]) {
+    static _repairSplitCrLfs(contentParts: Array<GeneratedCodePart | null>) {
         for (let i = 0; i < contentParts.length - 1; i++) {
             const curr = contentParts[i];
             if (!curr || !curr.content) {
@@ -442,79 +416,86 @@ export class DefaultAstTransformer {
 
     _createGenCodeNode(genCodeLines: string[],
             genCode: GeneratedCode,
-            genCodeSection: LineObj | null,
+            genCodeSection: AugmentedSourceCodePart | null,
             defaultIndent: string | null,
             defaultLineSep: string | null): SourceCodeAstNode {
+        if (!genCode.markerType || genCode.markerType === AstBuilder.TYPE_ESCAPED_BLOCK) {
+            if (genCodeSection && genCodeSection.node.type === genCode.markerType) {
+                return AstBuilder.createEscapedNode(genCodeLines, genCodeSection.node);
+            }
+            if (!this.defaultGenCodeStartMarker) {
+                throw new Error("default gen code start marker not set");
+            }
+            if (!this.defaultGenCodeEndMarker) {
+                throw new Error("default gen code end marker not set");
+            }
+            const attrs: any = {
+                indent: defaultIndent,
+                lineSep: defaultLineSep,
+                marker: this.defaultGenCodeStartMarker,
+                endIndent: defaultIndent,
+                endLineSep: defaultLineSep,
+                endMarker: this.defaultGenCodeEndMarker,
+            };
+            return AstBuilder.createEscapedNode(genCodeLines, attrs);
+        }
         if (genCode.markerType === AstBuilder.TYPE_DECORATED_LINE) {
             if (genCodeSection && genCodeSection.node.type === genCode.markerType) {
                 return AstBuilder.createDecoratedLineNode(
                     genCodeLines.join(""), genCodeSection.node);
             }
-            if (!this.defaultGenCodeMarker) {
-                throw new Error("default gen code marker not set");
+            if (!this.defaultGenCodeInlineMarker) {
+                throw new Error("default gen code inline marker not set");
             }
             const attrs = {
                 indent: defaultIndent,
                 lineSep: defaultLineSep,
-                marker: this.defaultGenCodeMarker
+                marker: this.defaultGenCodeInlineMarker
             };
             return AstBuilder.createDecoratedLineNode(
                 genCodeLines.join(""), attrs);
         }
-        if (genCode.markerType === AstBuilder.TYPE_ESCAPED_BLOCK) {
-            if (genCodeSection && genCodeSection.node.type === genCode.markerType) {
-                return AstBuilder.createEscapedNode(genCodeLines, genCodeSection.node);
-            }
-            if (!this.defaultGenCodeMarker) {
-                throw new Error("default gen code marker not set");
-            }
-            const attrs: any = {
-                indent: defaultIndent,
-                lineSep: defaultLineSep,
-                marker: this.defaultGenCodeMarker,
-                endIndent: defaultIndent,
-                endLineSep: defaultLineSep,
-                endMarker: this.defaultGenCodeMarker,
+        if (genCode.markerType === AstBuilder.TYPE_SOURCE_CODE) {
+            const unescapedNode: SourceCodeAst = {
+                type: AstBuilder.TYPE_SOURCE_CODE,
+                children: [],
             };
-            return AstBuilder.createEscapedNode(genCodeLines, attrs);
+            for (let i = 0; i < genCodeLines.length; i+=2) {
+                const line = genCodeLines[i];
+                const terminator = genCodeLines[i + 1];
+                const n: UndecoratedLineAstNode = {
+                    type: AstBuilder.TYPE_UNDECORATED_LINE,
+                    text: line,
+                    lineSep: terminator
+                };
+                unescapedNode.children.push(n);
+            }
+            return unescapedNode;
         }
-        const unescapedNode: SourceCodeAst = {
-            type: AstBuilder.TYPE_SOURCE_CODE,
-            children: [],
-        };
-        for (let i = 0; i < genCodeLines.length; i+=2) {
-            const line = genCodeLines[i];
-            const terminator = genCodeLines[i + 1];
-            const n: UndecoratedLineAstNode = {
-                type: AstBuilder.TYPE_UNDECORATED_LINE,
-                text: line,
-                lineSep: terminator
-            };
-            unescapedNode.children.push(n);
-        }
-        return unescapedNode;
+        throw new Error(`invalid gen code marker type: ${genCode.markerType}`);
     }
 
-    static _computeAugCodeTransforms(
+    static _applyGenCodeTransforms(
+            genCodes: Array<GeneratedCodeSectionTransform | null>,
+            genCodeSections: Array<AugmentedSourceCodePart>,
             augCode: AugmentingCodeDescriptor,
-            lineObjects: Array<LineObj>,
-            genCodeSections: Array<LineObj>,
-            genCodes: Array<GeneratedCodeSectionTransform | null>) {
+            sourceCodeParts: Array<AugmentedSourceCodePart>) {
 
-        const minCodeSectionsToDealWith = Math.min(genCodes.length, genCodeSections.length);
+        const minCodeSectionsToDealWith = Math.min(genCodes.length,
+            genCodeSections.length);
 
         // deal with gen code sections which have to be updated.
         for (let i = 0; i < minCodeSectionsToDealWith; i++) {
             const genCode = genCodes[i];
-            const lineObj = genCodeSections[i];
+            const sourceCodePart = genCodeSections[i];
             // update or delete.
             if (!genCode) {
                 // delete.
-                lineObj.updates = [];
+                sourceCodePart.updates = [];
             }
             else if (genCode.node) {
                 // update.
-                lineObj.updates = [genCode.node];
+                sourceCodePart.updates = [genCode.node];
             }
         }
 
@@ -527,44 +508,58 @@ export class DefaultAstTransformer {
         }
         if (!ignoreRemainder) {
             for (let i = minCodeSectionsToDealWith; i < genCodeSections.length; i++) {
-                const lineObj = genCodeSections[i];
-                lineObj.updates = [];
+                const sourceCodePart = genCodeSections[i];
+                sourceCodePart.updates = [];
             }
         }
 
         // deal with gen code sections which have to be appended.
-        // either use the last gen code section or the last line object
-        // in aug code.
-        let lineObjForAppends = getLast(genCodeSections);
-        if (!lineObjForAppends) {
-            lineObjForAppends = lineObjects[augCode.exclEndIdx - 1];                    
+        // either use the last gen code section or the last source code
+        // part with aug code data within the aug code range.
+        let sourceCodePartForAppends = getLast(genCodeSections);
+        if (!sourceCodePartForAppends) {
+            sourceCodePartForAppends = augCode.leadPart;
+            for (let i = augCode.leadPartIdx + augCode.partCount - 1;
+                    i > augCode.leadPartIdx; i--) {
+                const p = sourceCodeParts[i]
+                if (p.type === DefaultAstTransformer.TYPE_AUG_CODE_ARG) {
+                    sourceCodePartForAppends = p
+                    break
+                }
+            }
         }
         for (let i = minCodeSectionsToDealWith; i < genCodes.length; i++) {
             const genCode = genCodes[i];
             if (!genCode || !genCode.node) {
                 continue;
             }
-            if (!lineObjForAppends.updates) {
-                lineObjForAppends.updates = [lineObjForAppends.node];
+            if (!sourceCodePartForAppends.updates) {
+                sourceCodePartForAppends.updates = [sourceCodePartForAppends.node];
             }
-            lineObjForAppends.updates.push(genCode.node);
+            sourceCodePartForAppends.updates.push(genCode.node);
         }
     }
 
     /**
-     * Applies insert/update/delete operations to line objects as
-     * determined by LineObj.updates property. Contents of LineObj.updates
-     * property must be valid nodes acceptable by AstFormatter.stringify
+     * Uses AugmentedSourceCodePart.updates property to convert list of
+     * AugmentedSourceCodePart objects to string. Items in
+     * AugmentedSourceCodePart.updates property must be valid nodes acceptable by
+     * AstFormatter.stringify() function.
+     * To print a source part out without any
+     * updates, the updates property should be set to undefined or anything other
+     * than an array.
+     * To delete a source part, set updates property to an empty
+     * array.
      */
-    static performTransformations(lineObjects: LineObj[]) {
+    static serializeSourceCodeParts(sourceCodeParts: AugmentedSourceCodePart[]) {
         const children = []
-        for (const lineObj of lineObjects) {
-            const updates = lineObj.updates;
-            if (updates === null || typeof updates === "undefined") {
-                children.push(lineObj.node)
+        for (const p of sourceCodeParts) {
+            const updates = p.updates;
+            if (Array.isArray(updates)) {
+                children.push(...updates)
             }
             else {
-                children.push(...updates)
+                children.push(p.node)
             }
         }
         return AstFormatter.stringify({

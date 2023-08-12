@@ -9,7 +9,7 @@ import {
     DefaultCodeChangeDetectiveConfig,
     DefaultCodeChangeDetectiveConfigFactory
 } from "../src/CodeChangeDetective";
-import * as myutils from "../src/helperUtils";
+import * as helperUtils from "../src/helperUtils";
 import {
     CodeChangeDetectiveConfig,
     CodeChangeDetectiveConfigFactory,
@@ -414,7 +414,7 @@ describe("CodeChangeDetective", function() {
         // arrange
         const srcDir = getTempPath('CodeChangeDetective',
             'test-code-change-enabled-4')
-        await myutils.cleanDir(srcDir);
+        await helperUtils.cleanDir(srcDir);
         await fs.mkdir(`${srcDir}${path.sep}room`);
         await saveUtf8File(srcDir, `room${path.sep}1`, "drink");
         await fs.mkdir(`${srcDir}${path.sep}sea`);
@@ -715,7 +715,7 @@ describe("DefaultCodeChangeDetectiveConfig", function() {
             const instance = new DefaultCodeChangeDetectiveConfig();
             instance.destDir = getTempPath("DefaultCodeChangeDetectiveConfig",
                 "testReleaseWithoutAppending");
-            await myutils.cleanDir(instance.destDir);
+            await helperUtils.cleanDir(instance.destDir);
             
             // act
             await instance.release();
@@ -770,7 +770,7 @@ describe("DefaultCodeChangeDetectiveConfig", function() {
             const instance = new DefaultCodeChangeDetectiveConfig();
             instance.destDir = getTempPath("DefaultCodeChangeDetectiveConfig",
                 "testReleaseAfterAppending");
-            await myutils.cleanDir(instance.destDir);
+            await helperUtils.cleanDir(instance.destDir);
             const expectedOutputSummary = "\u0186d\u0254";
             const expectedChangeSummary = "Y\u0190";
             const expectedChangeDiff = "ade\u025b a ehia";

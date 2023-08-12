@@ -1,23 +1,8 @@
-const path = require('path')
-const {
-    AstBuilder,
-    DefaultAstTransformer
-} = require("code-augmentor-support")
-const OtherFunctions = require('./OtherFunctions')
+const path = require('path');
 
-function removeAugCodeParts(augCode, context) {
-    for (const p of context.getParts(augCode)) {
-        if (p.type === DefaultAstTransformer.TYPE_AUG_CODE ||
-                p.type === DefaultAstTransformer.TYPE_AUG_CODE_ARG) {
-            p.updates = (p.updates || []).filter(v => v !== p.node)
-        }
-    }
-}
+const OtherFunctions = require('./OtherFunctions');
 
 exports.theClassProps = function(augCode, context) {
-    if (context.fileScope.generatedCodeInserted) {
-        return removeAugCodeParts(augCode, context)
-    }
     context.fileScope.genCodes = (function*() {
         //const defaultIndent = context.globalScope['code_indent'];
         const augCodeNode = augCode.leadNode;
@@ -32,20 +17,15 @@ exports.theClassProps = function(augCode, context) {
             out += lineSeparator
         }
         const g = {
-            markerType: AstBuilder.TYPE_SOURCE_CODE,
             contentParts: [],
             indent
         }
         g.contentParts.push({ content: out })
         yield g
     })()
-    return true
 }
 
 exports.generateClassProps = function(augCode, context) {
-    if (context.fileScope.generatedCodeInserted) {
-        return removeAugCodeParts(augCode, context)
-    }
     const defaultIndent = context.globalScope['code_indent'];
     const augCodeNode = augCode.leadNode;
     const indent = augCodeNode.indent;
@@ -67,22 +47,17 @@ exports.generateClassProps = function(augCode, context) {
         out += lineSeparator
     }
     const g = {
-        markerType: AstBuilder.TYPE_SOURCE_CODE,
         contentParts: [],
         indent: indent
     };
     g.contentParts.push({ content: out })
     context.fileScope.genCodes = g
-    return true
 }
 
 exports.generateEqualsAndHashCode = function(augCode, context) {
     // don't override if empty.
     if (context.fileScope.theClassProps.length == 0) {
         return;
-    }
-    if (context.fileScope.generatedCodeInserted) {
-        return removeAugCodeParts(augCode, context)
     }
 
     const defaultIndent = context.globalScope['code_indent'];
@@ -155,19 +130,14 @@ exports.generateEqualsAndHashCode = function(augCode, context) {
     out += '}'
     out += lineSeparator
     const g = {
-        markerType: AstBuilder.TYPE_SOURCE_CODE,
         contentParts: [],
         indent
     };
     g.contentParts.push({ content: out })
     context.fileScope.genCodes.push(g)
-    return true
 }
 
 exports.generateToString = function(augCode, context) {
-    if (context.fileScope.generatedCodeInserted) {
-        return removeAugCodeParts(augCode, context)
-    }
     const defaultIndent = context.globalScope['code_indent'];
     const augCodeNode = augCode.leadNode;
     const indent = augCodeNode.indent;
@@ -190,7 +160,6 @@ exports.generateToString = function(augCode, context) {
     }
     exactOut += '}"'
     const g = {
-        markerType: AstBuilder.TYPE_SOURCE_CODE,
         contentParts: [],
         indent: indent
     };
@@ -209,5 +178,4 @@ exports.generateToString = function(augCode, context) {
     out += lineSeparator
     g.contentParts.push({ content: out })
     context.fileScope.genCodes.push(g)
-    return true
 }

@@ -9,6 +9,9 @@ import {
 } from "./types";
 
 function stringify(n: SourceCodeAstNode) {
+    if (!n) {
+        throw new Error("received null argument");
+    }
     const out = new Array<string>();
     formatAny(n, out);
     return out.join("");

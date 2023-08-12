@@ -13,26 +13,26 @@ const CustomCodeGeneration = require("./CustomCodeGeneration")
 // index 1 is for path to main.js file
 //const srcDir = process.argv[2]
 //const destDir = process.argv[3]
-const srcDir = path.join(path.dirname(__dirname), "src")
+const srcDir = path.join(path.dirname(__dirname), "src", "tempSrc")
 console.log(srcDir)
 const destDir = path.join(__dirname, "generated")
 console.log(destDir)
 
 const parser = new AstBuilder()
-parser.decoratedLineMarkers = ["//:AUG_CODE:"]
-parser.escapedBlockStartMarkers = ["//:JSON:"]
-parser.escapedBlockEndMarkers = ["//:JSON:"]
-parser.nestedBlockStartMarkers = ["", ""]
-parser.nestedBlockEndMarkers = ["", ""]
+parser.decoratedLineMarkers = ["//:AUG_CODE:", "", ""]
+parser.escapedBlockStartMarkers = ["", "//:JSON:", "//:GEN_CODE:"]
+parser.escapedBlockEndMarkers = ["", "//:JSON:", "//:GEN_CODE:"]
+parser.nestedBlockStartMarkers = []
+parser.nestedBlockEndMarkers = []
 
 const transformer = new DefaultAstTransformer()
 transformer.augCodeMarkers = ["//:AUG_CODE:"] // decoratedLine or escapedBlockStart
 transformer.augCodeArgMarkers = ["//:JSON:"] // decoratedLine or escapedBlockStart
-transformer.genCodeMarkers = ["", ""] // decoratedLine or escapedBlockStart
+transformer.genCodeMarkers = ["//:GEN_CODE:"] // decoratedLine or escapedBlockStart
 
 transformer.defaultGenCodeInlineMarker = ""
-transformer.defaultGenCodeStartMarker = ""
-transformer.defaultGenCodeEndMarker = ""
+transformer.defaultGenCodeStartMarker = "//:GEN_CODE:"
+transformer.defaultGenCodeEndMarker = "//:GEN_CODE:"
 
 const codeGenStrategy = new DefaultCodeGenerationStrategy()
 codeGenStrategy.parser = parser
@@ -51,13 +51,18 @@ const codeChangeDetective = new CodeChangeDetective()
 codeChangeDetective.configFactory = configFactory
 codeChangeDetective.srcFileDescriptors = codeGenStrategy.generateSrcFileDescriptors(
     files, srcDir)
-codeChangeDetective.codeChangeDetectionEnabled = false
 codeChangeDetective.reportError = function(cause, message) {
     throw codeGenStrategy.wrapError(cause, message)
 }
 
+async function main() {
+    const codeChanged = await codeChangeDetective.execute()
+    if (codeChanged) {
+        console.log(`Code changes detected. See ${destDir} for details.`)    }
+    else {
+        console.log("No code changes detected")
+    }
+}
+
 // start execution
-/*(async function() {
-    await codeChangeDetective.execute()
-})()*/
-codeChangeDetective.execute()
+main()

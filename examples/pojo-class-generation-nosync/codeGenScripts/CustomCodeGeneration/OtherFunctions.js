@@ -8,7 +8,3 @@ exports.capitalize = function(s) {
 exports.isUpperCase = function(c) {
     return c == c.toUpperCase();
 }
-
-exports.getAugCodeNodeStart = function(augCode) {
-    return augCode.parentNode.children[augCode.idxInParentNode]
-}

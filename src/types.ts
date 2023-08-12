@@ -58,19 +58,25 @@ export interface GeneratedCodeDescriptor { // remove
 }
 
 export interface AugmentingCodeDescriptor {
-    startIdx: number;
-    exclEndIdx: number;
-    lineObj: LineObj;
-    node: DecoratedLineAstNode;
-    args: any[];
+    leadPartIdx: number;
+    partCount: number;
+    leadPart: AugmentedSourceCodePart;
+    leadNode: DecoratedLineAstNode | EscapedBlockAstNode;
+    data: string[];
 }
 
-export interface LineObj {
+export interface AugmentedSourceCodePart {
     node: SourceCodeAstNode;
     lineNumber: number;
-    type: number;
-    arg?: any;
+    type?: number;
+    augCode?: AugmentingCodeDescriptor;
+    data?: string;
     updates?: SourceCodeAstNode[];
+}
+
+export interface AugmentedSourceCode {
+    parts: AugmentedSourceCodePart[];
+    augCodes: AugmentingCodeDescriptor[];
 }
 
 export interface GeneratedCodePart {
@@ -79,7 +85,7 @@ export interface GeneratedCodePart {
 }
 
 export interface GeneratedCode {
-    contentParts: GeneratedCodePart[] | null;
+    contentParts: Array<GeneratedCodePart | null> | null;
     indent: string | null;
     useInlineMarker: boolean; // remove.
     ignore: boolean;

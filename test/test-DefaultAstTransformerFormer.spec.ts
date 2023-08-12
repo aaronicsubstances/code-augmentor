@@ -1,9 +1,9 @@
 import { assert } from "chai";
 import { AstBuilder } from "../src/AstBuilder";
 
-import { DefaultAstTransformer } from "../src/DefaultAstTransformer";
+import { DefaultAstTransformerFormer } from "../src/DefaultAstTransformerFormer";
 import {
-    AugmentingCodeDescriptor,
+    AugmentingCodeDescriptor2,
     DefaultAstTransformSpec,
     GeneratedCode,
     GeneratedCodeDescriptor,
@@ -61,8 +61,8 @@ interface AugmentingCodeDescriptorClone {
 }
 
 function flattenAugCodeTrees(rootNode: SourceCodeAst,
-        augCodes: AugmentingCodeDescriptor[]) {
-    const flattened = new Array<AugmentingCodeDescriptor>();
+        augCodes: AugmentingCodeDescriptor2[]) {
+    const flattened = new Array<AugmentingCodeDescriptor2>();
     for (const augCode of augCodes) {
         flattenAugCodeTree(augCode, flattened);
     }
@@ -102,19 +102,19 @@ function flattenAugCodeTrees(rootNode: SourceCodeAst,
     return clones;
 }
 
-function flattenAugCodeTree(augCode: AugmentingCodeDescriptor,
-        dest: AugmentingCodeDescriptor[]) {
+function flattenAugCodeTree(augCode: AugmentingCodeDescriptor2,
+        dest: AugmentingCodeDescriptor2[]) {
     dest.push(augCode);
     if (augCode.children) {
         augCode.children.forEach(a => flattenAugCodeTree(a, dest));
     }
 }
 
-describe("DefaultAstTransformer", function() {
+describe("DefaultAstTransformerFormer", function() {
 
     describe("#extractAugCodes", function() {
         it("should pass with input 0", function() {
-            const instance = new DefaultAstTransformer();
+            const instance = new DefaultAstTransformerFormer();
             instance.augCodeArgMarkers = ["D"];
             instance.augCodeJsonArgMarkers = ["J"];
             instance.augCodeArgSepMarkers = [",", ";"];
@@ -128,7 +128,7 @@ describe("DefaultAstTransformer", function() {
         });
 
         it("should pass with input 1", function() {
-            const instance = new DefaultAstTransformer();
+            const instance = new DefaultAstTransformerFormer();
             instance.augCodeMarkers = ["A:", "A*"];
             instance.augCodeArgMarkers = ["D-"];
             instance.augCodeJsonArgMarkers = ["J>"];
@@ -340,7 +340,7 @@ describe("DefaultAstTransformer", function() {
         });
 
         it("should pass with input 2", function() {
-            const instance = new DefaultAstTransformer();
+            const instance = new DefaultAstTransformerFormer();
             instance.augCodeMarkers = ["indu", "beig"];
             instance.augCodeJsonArgMarkers = ["notation"];
             instance.augCodeArgSepMarkers = ["sep,,"];
@@ -616,7 +616,7 @@ describe("DefaultAstTransformer", function() {
 
     describe("#_extractAugCodeArgs", function() {
         it("should pass with input 0", function() {
-            const instance = new DefaultAstTransformer();
+            const instance = new DefaultAstTransformerFormer();
             const parentNode = {
                 type: AstBuilder.TYPE_SOURCE_CODE,
                 children: []
@@ -631,7 +631,7 @@ describe("DefaultAstTransformer", function() {
         });
 
         it("should pass with input 1", function() {
-            const instance = new DefaultAstTransformer();
+            const instance = new DefaultAstTransformerFormer();
             const parentNode: any = {
                 type: AstBuilder.TYPE_SOURCE_CODE,
                 children: null
@@ -646,7 +646,7 @@ describe("DefaultAstTransformer", function() {
         });
 
         it("should pass with input 2", function() {
-            const instance = new DefaultAstTransformer();
+            const instance = new DefaultAstTransformerFormer();
             instance.augCodeArgMarkers = ["D"];
             instance.augCodeJsonArgMarkers = ["J"];
             instance.augCodeArgSepMarkers = [",", ";"];
@@ -684,7 +684,7 @@ describe("DefaultAstTransformer", function() {
         });
 
         it("should pass with input 3", function() {
-            const instance = new DefaultAstTransformer();
+            const instance = new DefaultAstTransformerFormer();
             instance.augCodeArgMarkers = ["J", ",", "D", ";"];
             instance.augCodeJsonArgMarkers = ["J"];
             instance.augCodeArgSepMarkers = [",", ";"];
@@ -736,7 +736,7 @@ describe("DefaultAstTransformer", function() {
         });
 
         it("should pass with input 4", function() {
-            const instance = new DefaultAstTransformer();
+            const instance = new DefaultAstTransformerFormer();
             instance.augCodeArgMarkers = ["D", "J"];
             instance.augCodeArgSepMarkers = [",", ";"];
             const parentNode = {
@@ -791,7 +791,7 @@ describe("DefaultAstTransformer", function() {
         it(`should pass successfully with input 0`, function() {
             const contentParts = new Array<GeneratedCodePart>();
             const expected = new Array<GeneratedCodePart>();
-            DefaultAstTransformer._repairSplitCrLfs(contentParts);
+            DefaultAstTransformerFormer._repairSplitCrLfs(contentParts);
             assert.deepEqual(contentParts, expected);
         });
         it(`should pass successfully with input 1`, function() {
@@ -803,7 +803,7 @@ describe("DefaultAstTransformer", function() {
                 content: "",
                 exempt: false
             }];
-            DefaultAstTransformer._repairSplitCrLfs(contentParts);
+            DefaultAstTransformerFormer._repairSplitCrLfs(contentParts);
             assert.deepEqual(contentParts, expected);
         });
         it(`should pass successfully with input 2`, function() {
@@ -815,7 +815,7 @@ describe("DefaultAstTransformer", function() {
                 content: "aab\r",
                 exempt: true
             }];
-            DefaultAstTransformer._repairSplitCrLfs(contentParts);
+            DefaultAstTransformerFormer._repairSplitCrLfs(contentParts);
             assert.deepEqual(contentParts, expected);
         });
         it(`should pass successfully with input 3`, function() {
@@ -833,7 +833,7 @@ describe("DefaultAstTransformer", function() {
                 content: "cd",
                 exempt: false
             }];
-            DefaultAstTransformer._repairSplitCrLfs(contentParts);
+            DefaultAstTransformerFormer._repairSplitCrLfs(contentParts);
             assert.deepEqual(contentParts, expected);
         });
         it(`should pass successfully with input 4`, function() {
@@ -863,7 +863,7 @@ describe("DefaultAstTransformer", function() {
                 content: "end",
                 exempt: false
             }];
-            DefaultAstTransformer._repairSplitCrLfs(contentParts);
+            DefaultAstTransformerFormer._repairSplitCrLfs(contentParts);
             assert.deepEqual(contentParts, expected);
         });
         it(`should pass successfully with input 5`, function() {
@@ -893,7 +893,7 @@ describe("DefaultAstTransformer", function() {
                 content: "\rend",
                 exempt: false
             }];
-            DefaultAstTransformer._repairSplitCrLfs(contentParts);
+            DefaultAstTransformerFormer._repairSplitCrLfs(contentParts);
             assert.deepEqual(contentParts, expected);
         });
         it(`it should pass successfully with input 6`, function() {
@@ -909,7 +909,7 @@ describe("DefaultAstTransformer", function() {
                 content: "\ncd",
                 exempt: false
             }];
-            DefaultAstTransformer._repairSplitCrLfs(contentParts);
+            DefaultAstTransformerFormer._repairSplitCrLfs(contentParts);
             assert.deepEqual(contentParts, expected);
         });
     });
@@ -942,7 +942,7 @@ describe("DefaultAstTransformer", function() {
                 "", "\n",
                 " gh", "\n",
                 "i", ""];
-            const actual = DefaultAstTransformer.extractLinesAndTerminators(contentParts,
+            const actual = DefaultAstTransformerFormer.extractLinesAndTerminators(contentParts,
                 indent, lineSeparator);
             assert.deepEqual(actual, expected);
         });
@@ -957,7 +957,7 @@ describe("DefaultAstTransformer", function() {
                 "", "\r\n",
                 " abcd", "\r\n",
                 " efgh", "\r\n"];
-            const actual = DefaultAstTransformer.extractLinesAndTerminators(contentParts,
+            const actual = DefaultAstTransformerFormer.extractLinesAndTerminators(contentParts,
                 indent, lineSeparator);
             assert.deepEqual(actual, expected);
         });
@@ -978,7 +978,7 @@ describe("DefaultAstTransformer", function() {
                 "abcde", "\r\n",
                 "fg", "\r",
                 "h", ""];
-            const actual = DefaultAstTransformer.extractLinesAndTerminators(contentParts,
+            const actual = DefaultAstTransformerFormer.extractLinesAndTerminators(contentParts,
                 indent, lineSeparator);
             assert.deepEqual(actual, expected);
         });
@@ -999,7 +999,7 @@ describe("DefaultAstTransformer", function() {
                 "  abcde", "\r\n",
                 "fg", "\r",
                 "h", ""];
-            const actual = DefaultAstTransformer.extractLinesAndTerminators(contentParts,
+            const actual = DefaultAstTransformerFormer.extractLinesAndTerminators(contentParts,
                 indent, lineSeparator);
             assert.deepEqual(actual, expected);
         });
@@ -1026,7 +1026,7 @@ describe("DefaultAstTransformer", function() {
                 "  abcde", "\r\n",
                 "fg", "\r",
                 "h", ""];
-            const actual = DefaultAstTransformer.extractLinesAndTerminators(contentParts,
+            const actual = DefaultAstTransformerFormer.extractLinesAndTerminators(contentParts,
                 indent, lineSeparator);
             assert.deepEqual(actual, expected);
         });
@@ -1049,7 +1049,7 @@ describe("DefaultAstTransformer", function() {
                 "", "\n",
                 "", "\r\n",
                 "", "\r\n"];
-            const actual = DefaultAstTransformer.extractLinesAndTerminators(contentParts,
+            const actual = DefaultAstTransformerFormer.extractLinesAndTerminators(contentParts,
                 indent, lineSeparator);
             assert.deepEqual(actual, expected);
         });
@@ -1081,7 +1081,7 @@ describe("DefaultAstTransformer", function() {
                 "", "\n",
                 "\t gh", "\n",
                 "\ti", ""];
-            const actual = DefaultAstTransformer.extractLinesAndTerminators(contentParts,
+            const actual = DefaultAstTransformerFormer.extractLinesAndTerminators(contentParts,
                 indent, lineSeparator);
             assert.deepEqual(actual, expected);
         });
@@ -1113,7 +1113,7 @@ describe("DefaultAstTransformer", function() {
                 "", "\n",
                 " gh", "\n",
                 "i", ""];
-            const actual = DefaultAstTransformer.extractLinesAndTerminators(contentParts,
+            const actual = DefaultAstTransformerFormer.extractLinesAndTerminators(contentParts,
                 indent, lineSeparator);
             assert.deepEqual(actual, expected);
         });
@@ -1122,7 +1122,7 @@ describe("DefaultAstTransformer", function() {
             const lineSeparator = "";
             const contentParts = [];
             const expected = [];
-            const actual = DefaultAstTransformer.extractLinesAndTerminators(contentParts,
+            const actual = DefaultAstTransformerFormer.extractLinesAndTerminators(contentParts,
                 indent, lineSeparator);
             assert.deepEqual(actual, expected);
         });
@@ -1134,7 +1134,7 @@ describe("DefaultAstTransformer", function() {
                 exempt: true
             }];
             const expected = ["", ""];
-            const actual = DefaultAstTransformer.extractLinesAndTerminators(contentParts,
+            const actual = DefaultAstTransformerFormer.extractLinesAndTerminators(contentParts,
                 indent, lineSeparator);
             assert.deepEqual(actual, expected);
         });
@@ -1143,7 +1143,7 @@ describe("DefaultAstTransformer", function() {
             const lineSeparator = "\n";
             const contentParts = null;
             const expected = [];
-            const actual = DefaultAstTransformer.extractLinesAndTerminators(contentParts,
+            const actual = DefaultAstTransformerFormer.extractLinesAndTerminators(contentParts,
                 indent, lineSeparator);
             assert.deepEqual(actual, expected);
         });
@@ -1155,7 +1155,7 @@ describe("DefaultAstTransformer", function() {
                 exempt: true
             }, null];
             const expected = ["", ''];
-            const actual = DefaultAstTransformer.extractLinesAndTerminators(contentParts,
+            const actual = DefaultAstTransformerFormer.extractLinesAndTerminators(contentParts,
                 indent, lineSeparator);
             assert.deepEqual(actual, expected);
         });
@@ -1176,7 +1176,7 @@ describe("DefaultAstTransformer", function() {
                 "  abcde", "\n",
                 "  fg", "\n",
                 "  h", "\n"];
-            const actual = DefaultAstTransformer.extractLinesAndTerminators(contentParts,
+            const actual = DefaultAstTransformerFormer.extractLinesAndTerminators(contentParts,
                 indent, lineSeparator);
             assert.deepEqual(actual, expected);
         });
@@ -1197,7 +1197,7 @@ describe("DefaultAstTransformer", function() {
                 "abcde", "\r\n",
                 "fg", "\r",
                 "h", "\n"];
-            const actual = DefaultAstTransformer.extractLinesAndTerminators(contentParts,
+            const actual = DefaultAstTransformerFormer.extractLinesAndTerminators(contentParts,
                 indent, lineSeparator);
             assert.deepEqual(actual, expected);
         });
@@ -1218,7 +1218,7 @@ describe("DefaultAstTransformer", function() {
                 "abcde", "\n",
                 "fg", "\n",
                 "h", "\n"];
-            const actual = DefaultAstTransformer.extractLinesAndTerminators(contentParts,
+            const actual = DefaultAstTransformerFormer.extractLinesAndTerminators(contentParts,
                 indent, lineSeparator);
             assert.deepEqual(actual, expected);
         });
@@ -1228,14 +1228,14 @@ describe("DefaultAstTransformer", function() {
         it("should pass with input 0", function() {
             const args = [];
             const expected = [];
-            const actual = DefaultAstTransformer._consolidateAugCodeArgs(args);
+            const actual = DefaultAstTransformerFormer._consolidateAugCodeArgs(args);
             assert.deepEqual(actual, expected);
         });
         it("should pass with input 1", function() {
             const args = ["", "\n", false,
                 "56", "\r\n", false];
             const expected = ["\n56"];
-            const actual = DefaultAstTransformer._consolidateAugCodeArgs(args);
+            const actual = DefaultAstTransformerFormer._consolidateAugCodeArgs(args);
             assert.deepEqual(actual, expected);
         });
         it("should pass with input 2", function() {
@@ -1245,7 +1245,7 @@ describe("DefaultAstTransformer", function() {
                 null,
                 " c ", "\r\n", false];
             const expected = [null, " c "];
-            const actual = DefaultAstTransformer._consolidateAugCodeArgs(args);
+            const actual = DefaultAstTransformerFormer._consolidateAugCodeArgs(args);
             assert.deepEqual(actual, expected);
         });
         it("should pass with input 3", function() {
@@ -1265,14 +1265,14 @@ describe("DefaultAstTransformer", function() {
                 [ 4.0, { k: "see" }, true ],
                 { data: null }
             ];
-            const actual = DefaultAstTransformer._consolidateAugCodeArgs(args);
+            const actual = DefaultAstTransformerFormer._consolidateAugCodeArgs(args);
             assert.deepEqual(actual, expected);
         });
         it("should fail", function() {
             const args = ["", "\n", true,
                 "  ", "\r\n", true];
             assert.throws(function() {
-                DefaultAstTransformer._consolidateAugCodeArgs(args);
+                DefaultAstTransformerFormer._consolidateAugCodeArgs(args);
             });
         });
     });
@@ -1297,7 +1297,7 @@ describe("DefaultAstTransformer", function() {
                 endArgsExclEndIdxInParentNode: -1
             };
             const expected = [];
-            const instance = new DefaultAstTransformer();
+            const instance = new DefaultAstTransformerFormer();
             const actual = instance.extractGenCodeSections(augCode);
             assert.deepEqual(actual, expected);
         });
@@ -1331,7 +1331,7 @@ describe("DefaultAstTransformer", function() {
                 idxInParentNode: 1,
                 nestedBlockUsed: false
             }];
-            const instance = new DefaultAstTransformer();
+            const instance = new DefaultAstTransformerFormer();
             instance.genCodeMarkers = ["g:"];
             const actual = instance.extractGenCodeSections(augCode);
             assert.deepEqual(actual, expected);
@@ -1368,7 +1368,7 @@ describe("DefaultAstTransformer", function() {
                 endArgsExclEndIdxInParentNode: -1
             };
             const expected = [];
-            const instance = new DefaultAstTransformer();
+            const instance = new DefaultAstTransformerFormer();
             instance.augCodeMarkers = ["a8"];
             instance.augCodeJsonArgMarkers = ["j>"];
             instance.augCodeArgSepMarkers = ["g:"];
@@ -1440,7 +1440,7 @@ describe("DefaultAstTransformer", function() {
                 idxInParentNode: 3,
                 nestedBlockUsed: true
             }];
-            const instance = new DefaultAstTransformer();
+            const instance = new DefaultAstTransformerFormer();
             instance.augCodeMarkers = ["js"];
             instance.augCodeJsonArgMarkers = ["j>"];
             instance.augCodeArgSepMarkers = ["g:"];
@@ -1678,7 +1678,7 @@ describe("DefaultAstTransformer", function() {
                     nestedBlockUsed: true
                 }
             ];
-            const instance = new DefaultAstTransformer();
+            const instance = new DefaultAstTransformerFormer();
             instance.augCodeMarkers = ["a8", "js"];
             instance.augCodeJsonArgMarkers = ["j>"];
             instance.augCodeArgSepMarkers = [];
@@ -1889,7 +1889,7 @@ describe("DefaultAstTransformer", function() {
                 },
             ]
         };
-        const instance = new DefaultAstTransformer();
+        const instance = new DefaultAstTransformerFormer();
         instance.augCodeMarkers = ["indu", "beig"];
         instance.augCodeJsonArgMarkers = ["notation"];
         instance.augCodeArgSepMarkers = ["sep,,"];
@@ -1979,7 +1979,7 @@ describe("DefaultAstTransformer", function() {
 
     describe("#_createGenCodeNode", function() {
         it("should pass with input 0", function() {
-            const instance = new DefaultAstTransformer();
+            const instance = new DefaultAstTransformerFormer();
             instance.defaultGenCodeInlineMarker = "g_inline";
             instance.defaultGenCodeStartMarker = "g_start:";
             instance.defaultGenCodeEndMarker = "g_end:";
@@ -2025,7 +2025,7 @@ describe("DefaultAstTransformer", function() {
         });
 
         it("should pass with input 1", function() {
-            const instance = new DefaultAstTransformer();
+            const instance = new DefaultAstTransformerFormer();
             instance.defaultGenCodeStartMarker = "_start:";
             instance.defaultGenCodeEndMarker = "_end:";
             const genCodeLines: string[] = [
@@ -2072,7 +2072,7 @@ describe("DefaultAstTransformer", function() {
         });
 
         it("should pass with input 2", function() {
-            const instance = new DefaultAstTransformer();
+            const instance = new DefaultAstTransformerFormer();
             instance.defaultGenCodeInlineMarker = "g_inline";
             const genCodeLines = ["in", "\n"];
             const useInlineMarker = true;
@@ -2092,7 +2092,7 @@ describe("DefaultAstTransformer", function() {
         });
 
         it("should pass with input 3", function() {
-            const instance = new DefaultAstTransformer();
+            const instance = new DefaultAstTransformerFormer();
             instance.defaultGenCodeInlineMarker = "_inline";
             instance.defaultGenCodeStartMarker = "_start:";
             instance.defaultGenCodeEndMarker = "_end:";
@@ -2120,7 +2120,7 @@ describe("DefaultAstTransformer", function() {
         });
 
         it("should pass with input 4", function() {
-            const instance = new DefaultAstTransformer();
+            const instance = new DefaultAstTransformerFormer();
             const genCodeLines= new Array<string>();
             const useInlineMarker = true;
             const genCodeSection: GeneratedCodeDescriptor = {
@@ -2154,7 +2154,7 @@ describe("DefaultAstTransformer", function() {
         });
 
         it("should pass with input 5", function() {
-            const instance = new DefaultAstTransformer();
+            const instance = new DefaultAstTransformerFormer();
             const genCodeLines = [
                 "in", "\n",
                 " the ", "\r\n",
@@ -2222,7 +2222,7 @@ describe("DefaultAstTransformer", function() {
         });
 
         it("should fail due to missing default inline marker", function() {
-            const instance = new DefaultAstTransformer();
+            const instance = new DefaultAstTransformerFormer();
             instance.defaultGenCodeStartMarker = "8";
             instance.defaultGenCodeEndMarker = "d";
             const genCodeLines = [];
@@ -2237,7 +2237,7 @@ describe("DefaultAstTransformer", function() {
         });
 
         it("should fail due to missing default start marker", function() {
-            const instance = new DefaultAstTransformer();
+            const instance = new DefaultAstTransformerFormer();
             instance.defaultGenCodeInlineMarker = "d";
             instance.defaultGenCodeEndMarker = "8";
             const genCodeLines = [
@@ -2256,7 +2256,7 @@ describe("DefaultAstTransformer", function() {
         });
 
         it("should fail due to missing default end marker", function() {
-            const instance = new DefaultAstTransformer();
+            const instance = new DefaultAstTransformerFormer();
             instance.defaultGenCodeInlineMarker = "d";
             instance.defaultGenCodeStartMarker = "8";
             const genCodeLines = [
@@ -2297,7 +2297,7 @@ describe("DefaultAstTransformer", function() {
             const genCodes = new Array<GeneratedCodeSectionTransform | null>();
             const expected = new Array<DefaultAstTransformSpec>();
             const actual = new Array<DefaultAstTransformSpec>();
-            DefaultAstTransformer.computeAugCodeTransforms(augCode, transformParentOfAugCodeNode,
+            DefaultAstTransformerFormer.computeAugCodeTransforms(augCode, transformParentOfAugCodeNode,
                 genCodeSections, genCodes, actual);
             assert.deepEqual(actual, expected);
         });
@@ -2410,7 +2410,7 @@ describe("DefaultAstTransformer", function() {
                 }
             ];
             const actual = new Array<DefaultAstTransformSpec>();
-            DefaultAstTransformer.computeAugCodeTransforms(augCode, transformParentOfAugCodeNode,
+            DefaultAstTransformerFormer.computeAugCodeTransforms(augCode, transformParentOfAugCodeNode,
                 genCodeSections, genCodes, actual);
             assert.deepEqual(actual, expected);
         });
@@ -2552,7 +2552,7 @@ describe("DefaultAstTransformer", function() {
                 }
             ];
             const actual = new Array<DefaultAstTransformSpec>();
-            DefaultAstTransformer.computeAugCodeTransforms(augCode, transformParentOfAugCodeNode,
+            DefaultAstTransformerFormer.computeAugCodeTransforms(augCode, transformParentOfAugCodeNode,
                 genCodeSections, genCodes, actual);
             assert.deepEqual(actual, expected);
         });
@@ -2685,7 +2685,7 @@ describe("DefaultAstTransformer", function() {
                 }
             ];
             const actual = new Array<DefaultAstTransformSpec>();
-            DefaultAstTransformer.computeAugCodeTransforms(augCode, transformParentOfAugCodeNode,
+            DefaultAstTransformerFormer.computeAugCodeTransforms(augCode, transformParentOfAugCodeNode,
                 genCodeSections, genCodes, actual);
             assert.deepEqual(actual, expected);
         });
@@ -2763,7 +2763,7 @@ describe("DefaultAstTransformer", function() {
                 }
             ];
             const actual = new Array<DefaultAstTransformSpec>();
-            DefaultAstTransformer.computeAugCodeTransforms(augCode, transformParentOfAugCodeNode,
+            DefaultAstTransformerFormer.computeAugCodeTransforms(augCode, transformParentOfAugCodeNode,
                 genCodeSections, genCodes, actual);
             assert.deepEqual(actual, expected);
         });
@@ -2865,7 +2865,7 @@ describe("DefaultAstTransformer", function() {
                 }
             ];
             const actual = new Array<DefaultAstTransformSpec>();
-            DefaultAstTransformer.computeAugCodeTransforms(augCode, transformParentOfAugCodeNode,
+            DefaultAstTransformerFormer.computeAugCodeTransforms(augCode, transformParentOfAugCodeNode,
                 genCodeSections, genCodes, actual);
             assert.deepEqual(actual, expected);
         });
@@ -2873,7 +2873,7 @@ describe("DefaultAstTransformer", function() {
 
     describe("#_generateGenCodeTransforms", function() {
         it("should pass with input 0", function() {
-            const instance = new DefaultAstTransformer();
+            const instance = new DefaultAstTransformerFormer();
             instance.defaultGenCodeStartMarker = ":se:";
             instance.defaultGenCodeEndMarker = ":ee:";
             instance.defaultGenCodeInlineMarker = ":ise:";
@@ -2950,7 +2950,7 @@ describe("DefaultAstTransformer", function() {
         });
 
         it("should pass with input 1", function() {
-            const instance = new DefaultAstTransformer();
+            const instance = new DefaultAstTransformerFormer();
             const genCodeSections: Array<GeneratedCodeDescriptor> = [
                 {
                     parentNode: {
@@ -3009,7 +3009,7 @@ describe("DefaultAstTransformer", function() {
         });
 
         it("should pass with input 2", function() {
-            const instance = new DefaultAstTransformer();
+            const instance = new DefaultAstTransformerFormer();
             const sourceCode = {
                 type: AstBuilder.TYPE_NESTED_BLOCK,
                 children: [
@@ -3110,7 +3110,7 @@ describe("DefaultAstTransformer", function() {
         });
 
         it("should pass with input 3", function() {
-            const instance = new DefaultAstTransformer();
+            const instance = new DefaultAstTransformerFormer();
             instance.defaultGenCodeStartMarker = ":s1e:";
             instance.defaultGenCodeEndMarker = ":e2e:";
             instance.defaultGenCodeInlineMarker = ":i7e:";
@@ -3213,7 +3213,7 @@ describe("DefaultAstTransformer", function() {
         });
 
         it("should pass with input 4", function() {
-            const instance = new DefaultAstTransformer();
+            const instance = new DefaultAstTransformerFormer();
             instance.defaultGenCodeStartMarker = ":s1e:";
             instance.defaultGenCodeEndMarker = ":e2e:";
             instance.defaultGenCodeInlineMarker = ":i7e:";
@@ -3301,7 +3301,7 @@ describe("DefaultAstTransformer", function() {
 
     describe("#performTransformations", function() {
         it("should pass with empty input", function() {
-            DefaultAstTransformer.performTransformations([]);
+            DefaultAstTransformerFormer.performTransformations([]);
         });
         it("should pass with no additions", function() {
             const node1 = {
@@ -3413,7 +3413,7 @@ describe("DefaultAstTransformer", function() {
                     }
                 ]
             };
-            DefaultAstTransformer.performTransformations(transformSpecs);
+            DefaultAstTransformerFormer.performTransformations(transformSpecs);
             assert.deepEqual(node1, expected);
         });
         it("should pass with some additions", function() {
@@ -3582,7 +3582,7 @@ describe("DefaultAstTransformer", function() {
                     },
                 ]
             };
-            DefaultAstTransformer.performTransformations(transformSpecs);
+            DefaultAstTransformerFormer.performTransformations(transformSpecs);
             assert.deepEqual(node1, expected1);
             assert.deepEqual(node2, expected2);
         });

@@ -2,6 +2,7 @@ export * from "./AstBuilder";
 export * from "./AstFormatter";
 export * from "./CodeChangeDetective";
 export * from "./DefaultAstTransformer";
+export * from "./DefaultCodeGenerationStrategy";
 export * from "./types";
 
 import * as myutils from "./helperUtils";

@@ -1,6 +1,4 @@
-import os from "os";
-
-import * as myutils from "./helperUtils";
+import * as helperUtils from "./helperUtils";
 import {
     SourceCodeAst,
     DecoratedLineAstNode,
@@ -84,11 +82,11 @@ export class AstBuilder {
         this._nodes = [];
         this._peekIdx = 0;
 
-        const splitSource = myutils.splitIntoLines(source, true);
+        const splitSource = helperUtils.splitIntoLines(source, true);
         for (let i = 0; i < splitSource.length; i+=2) {
             const line = splitSource[i];
             const terminator = splitSource[i + 1];
-            const indent = myutils.determineIndent(line);
+            const indent = helperUtils.determineIndent(line);
             const n = {
                 type: AstBuilder.TYPE_UNDECORATED_LINE,
                 text: line,
@@ -142,14 +140,7 @@ export class AstBuilder {
         if (!n) {
             return null;
         }
-        if (AstBuilder._findMarkerMatch(this.nestedBlockEndMarkers, n)) {
-            throw this._abort(this._peekIdx + 1, "encountered nested block end line without " +
-                "matching start line");
-        }
-        if (AstBuilder._findMarkerMatch(this.escapedBlockEndMarkers, n)) {
-            throw this._abort(this._peekIdx + 1, "encountered escaped block end line without " +
-                "matching start line");
-        }
+        const originalNode = n;
         n = this._matchNestedBlock();
         if (!n) {
             n = this._matchEscapedBlock();
@@ -158,6 +149,14 @@ export class AstBuilder {
             n = this._matchDecoratedLine();
         }
         if (!n) {
+            if (AstBuilder._findMarkerMatch(this.nestedBlockEndMarkers, originalNode)) {
+                throw this._abort(this._peekIdx + 1, "encountered nested block end line without " +
+                    "matching start line");
+            }
+            if (AstBuilder._findMarkerMatch(this.escapedBlockEndMarkers, originalNode)) {
+                throw this._abort(this._peekIdx + 1, "encountered escaped block end line without " +
+                    "matching start line");
+            }
             n = this._consumeAsUndecoratedLine();
         }
         return n;
@@ -225,8 +224,15 @@ export class AstBuilder {
                 break;
             }
             else {
-                this._consumeAsUndecoratedLine();
-                parent.children.push(n);
+                m = AstBuilder._findMarkerMatch(this.escapedBlockStartMarkers, n);
+                if (m && m[1] === parent.markerAftermath) {
+                    throw new Error("encountered another escaped block start line while " +
+                        "looking for escaped block end line");
+                }
+                else {
+                    this._consumeAsUndecoratedLine();
+                    parent.children.push(n);
+                }
             }
         }
         if (!n) {
@@ -268,7 +274,7 @@ export class AstBuilder {
         }
 
         // validate indent and lineSep
-        if (!myutils.isBlank(n.indent)) {
+        if (!helperUtils.isBlank(n.indent)) {
             throw new Error("received non-blank indent: " + n.indent);
         }
         if (n.lineSep !== '\r' && n.lineSep !== '\n' && n.lineSep !== '\r\n') {
@@ -289,9 +295,14 @@ export class AstBuilder {
             throw new Error("received unsuitable end marker: " + attrs.endMarker);
         }
         let markerAftermath = attrs.markerAftermath || "";
-        const uniqueEndMarkerPlus = myutils.modifyTextToBeAbsent(
+        let uniqueEndMarkerPlus = helperUtils.modifyTextToBeAbsent(
             lines, attrs.endMarker + markerAftermath);
         markerAftermath = uniqueEndMarkerPlus.substring(attrs.endMarker.length);
+        if (attrs.marker !== attrs.endMarker) {
+            uniqueEndMarkerPlus = helperUtils.modifyTextToBeAbsent(
+                lines, attrs.marker + markerAftermath);
+            markerAftermath = uniqueEndMarkerPlus.substring(attrs.marker.length);
+        }
 
         const n: any = {
             type: AstBuilder.TYPE_ESCAPED_BLOCK,
@@ -306,10 +317,10 @@ export class AstBuilder {
         };
 
         // validate indents and lineSeps
-        if (!myutils.isBlank(n.indent)) {
+        if (!helperUtils.isBlank(n.indent)) {
             throw new Error("received non-blank indent: " + n.indent);
         }
-        if (!myutils.isBlank(n.endIndent)) {
+        if (!helperUtils.isBlank(n.endIndent)) {
             throw new Error("received non-blank end indent: " + n.endIndent);
         }
         if (n.lineSep !== '\r' && n.lineSep !== '\n' && n.lineSep !== '\r\n') {

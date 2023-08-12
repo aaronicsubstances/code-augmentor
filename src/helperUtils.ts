@@ -131,6 +131,13 @@ export function modifyTextToBeAbsent(target: string[], originalText: string) {
     return modifiedName;
 }
 
+export function _requiresForAwaitIteration(obj: any) {
+    if (!obj || Array.isArray(obj)) {
+        return false;
+    }
+    return !!obj[Symbol.asyncIterator]
+}
+
 /**
  * This JavaScript function always returns a random number between min (included) and max (excluded).
  * (copied from https://www.w3schools.com/js/js_random.asp).
