@@ -2,7 +2,7 @@
 
 Code Augmentor is library that provides
 
-1. a markup language for text files, especially programming language source files.
+1. a markup language for text files which already have their own syntax, especially programming language source files.
 2. a way to insert generated code into source code files in a way that makes it easy to detect tampering with the generated code.
 3. a way to detect and record changes between a list of files and their corresponding dynamically specified content.
 
@@ -30,8 +30,43 @@ The [CodeChangeDetective](https://github.com/aaronicsubstances/code-augmentor-no
 
 ## Usage
 
-See [Examples](https://github.com/aaronicsubstances/code-augmentor/tree/master/examples) folder for example projects demonstrating how to use the library. The pojo-class-generation-with-sync example folder requires some prior setup of copying the contents of the src folder into a child tempSrc folder (see the src/README.txt file for details). Each example is launched with `node main.js` from the child codeGenScripts folder (may have to run `npm install` first).
+See [Examples](https://github.com/aaronicsubstances/code-augmentor/tree/master/examples) folder for example projects demonstrating how to use the library.
 
-The library comes with an `effect-changes` script (available from node_modules/.bin folder for WIndows Powershell and Bash). The script is meant to accept through standard input a *changes-summary.txt* file, which is created in the codeGenScripts\generated folder when the example projects are run.
+Each example is launched with `node main.js` from the child codeGenScripts folder (may have to run `npm install` first).
 
-The main option is running with `effect-changes -f`, which will update the files in source folder (src or tempSrc folders of the examples) with the corresponding changed files listed in the changes-summary.txt file. Can run with `effect-changes -h` to see all the available options.
+The [pojo-class-generation-with-sync](https://github.com/aaronicsubstances/code-augmentor/tree/master/examples/pojo-class-generation-with-sync) example requires further explanation:
+
+   * It requires some little prior setup (see https://github.com/aaronicsubstances/code-augmentor/blob/master/examples/pojo-class-generation-with-sync/src/README.txt for details).
+
+The library provides the `node_modules/.bin/effect-changes-*` scripts (`effect-changes-win` for Windows Powershell and `effect-changes-nix` for Bash). The scripts are meant to accept 
+through standard input a *changes-summary.txt* file, which is created in the codeGenScripts/generated folder when the example projects are run.
+
+Either run library tool on \*nix systems with
+
+```
+node_modules/.bin/effect-changes-nix -f < changes-summary.txt
+```
+
+or run on Windows Powershell with
+
+```
+Get-Content changes-summary.txt | node_modules/.bin/effect-changes-win -f
+```
+
+Both will update the files in source folder for the case were code change detection is enabled, like the pojo-class-generation-with-sync example. Its
+src\tempSrc folder will be updated as determined by the contents of the changes-summary.txt file.
+
+   * Can run the library tool with `-h` option to see all the available options.
+
+NB: On Windows one may face issues with Powershell scripts being restricted from running. To ease the restrictions, one can run Powershell as Administrator, and then if running
+
+```
+Get-ExecutionPolicy
+```
+
+gives value of "Restricted", one can change to a more permissive option such as "RemoteSigned" by running
+
+```
+Set-ExecutionPolicy RemoteSigned
+```
+

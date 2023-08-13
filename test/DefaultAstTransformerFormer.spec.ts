@@ -11,7 +11,7 @@ import {
     NestedBlockAstNode,
     SourceCodeAst,
     SourceCodeAstNode
-} from "./types";
+} from "./types.spec";
 import * as myutils from "../src/helperUtils";
 
 export class DefaultAstTransformerFormer {

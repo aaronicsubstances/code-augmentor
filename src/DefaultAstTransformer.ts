@@ -9,7 +9,7 @@ import {
     DecoratedLineAstNode,
     EscapedBlockAstNode,
     GeneratedCode,
-    GeneratedCodePart,
+    GeneratedCodeOptions,
     NestedBlockAstNode,
     SourceCodeAst,
     SourceCodeAstNode,
@@ -230,9 +230,9 @@ export class DefaultAstTransformer {
             type: AstBuilder.TYPE_SOURCE_CODE,
             children: node.children
         });
-        const builder = new AstBuilder()
-        builder.decoratedLineMarkers = this.augCodeArgMarkers
-        const sourceNode = builder.parse(source)
+        const builder = new AstBuilder();
+        builder.decoratedLineMarkers = this.augCodeArgMarkers;
+        const sourceNode = builder.parse(source);
         return sourceNode.children.map((v, i) => {
             let prefix = '', suffix = '';
             if (v.type === AstBuilder.TYPE_DECORATED_LINE) {
@@ -289,7 +289,8 @@ export class DefaultAstTransformer {
                 let genCodeIndent = genCodeSectionNode.indent;
                 let genCodeLineSep = genCodeSectionNode.lineSep;
                 const genCodeLines = DefaultAstTransformer.extractLinesAndTerminators(
-                    genCode.contentParts, genCode.indent,
+                    genCode.contentParts,
+                    genCode.indent || genCodeIndent,
                     genCode.lineSep || genCodeLineSep);
                 const node = this._createGenCodeNode(genCodeLines, genCode,
                     genCodeSection, genCodeIndent, genCodeLineSep);
@@ -309,7 +310,8 @@ export class DefaultAstTransformer {
             };
             if (!genCode.ignore) {
                 const genCodeLines = DefaultAstTransformer.extractLinesAndTerminators(
-                    genCode.contentParts, genCode.indent,
+                    genCode.contentParts,
+                    genCode.indent || defaultIndent,
                     genCode.lineSep || defaultLineSep);
                 const node = this._createGenCodeNode(genCodeLines, genCode,
                     null, defaultIndent, defaultLineSep);
@@ -321,93 +323,91 @@ export class DefaultAstTransformer {
     }
 
     static extractLinesAndTerminators(
-            contentParts: Array<GeneratedCodePart | null> | null,
-            indent: string | null,
-            lineSeparator: string | null) {
+            contentParts: Array<string | GeneratedCodeOptions | null> | null,
+            defaultIndent: string | null,
+            defautLineSep: string | null) {
         if (!contentParts) {
             return [];
         }
-        DefaultAstTransformer._repairSplitCrLfs(contentParts);
 
-        const allLines = new Array<string>();
-        let lastPartIsExemptAndEmpty = false;
-        let lastPartEndedWithLineSep = true;
-        for (const part of contentParts) {
-            if (!part) {
+        const indentedParts = new Array<string>();
+        const defaultOptions: GeneratedCodeOptions = {
+            exempt: false,
+            indent: defaultIndent,
+            lineSep: defautLineSep
+        };
+
+        for (let i = 0; i < contentParts.length; i++) {
+            const part = contentParts[i];
+            let content = '';
+            if (typeof part === "string") {
+                content = part;
+            }
+            else {
                 continue;
             }
-            if (!part.content) {
-                if (part.exempt) {
-                    lastPartIsExemptAndEmpty = true;
+            let effectiveOptions = defaultOptions;
+            let effectiveIndentOptionWasExplicitlyGiven = false;
+            if (i > 0) {
+                const previousPart = contentParts[i -1];
+                if (typeof previousPart !== "string" && previousPart) {
+                    effectiveOptions = {
+                        exempt: !!previousPart.exempt,
+                        indent: defaultOptions.indent,
+                        lineSep: defaultOptions.lineSep
+                    };
+                    if (previousPart.indent || previousPart.indent === "") {
+                        effectiveOptions.indent = previousPart.indent;
+                        effectiveIndentOptionWasExplicitlyGiven = true;
+                    }
+                    if (previousPart.lineSep || previousPart.lineSep === "") {
+                        effectiveOptions.lineSep = previousPart.lineSep;
+                    }
                 }
-                else {
-                    // pass through value of previous lastPartEndedWithLineSep
-                }
+            }
+            if (effectiveOptions.exempt) {
+                indentedParts.push(content);
                 continue;
             }
-            const splitCode = helperUtils.splitIntoLines(part.content, true);
+            const isLastContentPart = i === contentParts.length - 1;
+            let splitCode = ["", ""];
+            if (content) {
+                splitCode = helperUtils.splitIntoLines(content, true);
+            }
             for (let j = 0; j < splitCode.length; j+=2) {
-                const line = splitCode[j];
+                const linePortion = splitCode[j];
                 let terminator = splitCode[j + 1];
-                if (terminator && lineSeparator && !part.exempt) {
-                    terminator = lineSeparator;
-                }
-                if (j > 0 || lastPartEndedWithLineSep) {
-                    // determine indent to apply.
-                    // as a policy don't indent blank lines, similar
-                    // to what IDEs do.
-                    let effectiveIndent = "";
-                    if (indent && !(part.exempt || lastPartIsExemptAndEmpty ||
-                            helperUtils.isBlank(line))) {
-                        effectiveIndent = indent;
-                    }
 
-                    // apply indent and add terminator.
-                    allLines.push(effectiveIndent + line);
-                    allLines.push(terminator);
-                }
-                else {
-                    // don't apply any indent, but rather append to last line,
-                    // and replace the empty terminator.
-                    if (allLines[allLines.length - 1]) {
-                        throw new Error("algorithm failed. expected empty terminator here");
+                // determine indent to apply.
+                if (effectiveOptions.indent) {
+                    if (effectiveIndentOptionWasExplicitlyGiven) {
+                        indentedParts.push(effectiveOptions.indent);
                     }
-                    allLines[allLines.length - 2] += line;
-                    allLines[allLines.length - 1] = terminator;
+                    else {
+                        // try not to indent portions of lines ending on line terminators
+                        // or end of input,
+                        // similar to what IDEs do by not indenting blank lines.
+                        // But let any explicit option override this.
+                        if (terminator || isLastContentPart) {
+                            if (!helperUtils.isBlank(linePortion)) {
+                                indentedParts.push(effectiveOptions.indent);
+                            }
+                        }
+                        else {
+                            indentedParts.push(effectiveOptions.indent);
+                        }
+                    }
                 }
-            }
-            lastPartIsExemptAndEmpty = false;
-            lastPartEndedWithLineSep = !!allLines[allLines.length - 1];
-        }
-        return allLines;
-    }
 
-    /**
-     * Modifies content parts to remove split CR-LFs, that is, a sequence of 
-     * carriage return and line feed which are split across content parts, so
-     * that the carriage return character ends a content part, and the following content part
-     * starts with the line feed character. 
-     * <p>
-     * The extractLinesAndTerminators method depend on the absence of
-     * split CR-LFs.
-     * 
-     * @param contentParts content parts to be modified.
-     */
-    static _repairSplitCrLfs(contentParts: Array<GeneratedCodePart | null>) {
-        for (let i = 0; i < contentParts.length - 1; i++) {
-            const curr = contentParts[i];
-            if (!curr || !curr.content) {
-                continue;
-            }
-            if (curr.content.endsWith("\r")) {
-                const next = contentParts[i + 1];
-                if (next && next.content && next.content.startsWith("\n")) {
-                    // move the \n from next to curr
-                    curr.content = curr.content + "\n";
-                    next.content = next.content.substring(1);
+                indentedParts.push(linePortion);
+
+                // determine terminator to use.
+                if (terminator) {
+                    indentedParts.push(effectiveOptions.lineSep ?? terminator);
                 }
             }
         }
+        return helperUtils.splitIntoLines(indentedParts.join(""), true);
     }
 
     _createGenCodeNode(genCodeLines: string[],
@@ -476,7 +476,6 @@ export class DefaultAstTransformer {
             genCodeSections: Array<AugmentedSourceCodePart>,
             augCode: AugmentingCodeDescriptor,
             sourceCodeParts: Array<AugmentedSourceCodePart>) {
-
         const minCodeSectionsToDealWith = Math.min(genCodes.length,
             genCodeSections.length);
 

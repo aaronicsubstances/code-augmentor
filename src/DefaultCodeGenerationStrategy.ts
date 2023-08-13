@@ -6,11 +6,10 @@ import {
     AugmentedSourceCode,
     AugmentingCodeDescriptor,
     GeneratedCode,
-    GeneratedCodePart,
+    GeneratedCodeOptions,
     SourceCodeAst,
     SourceFileDescriptor
 } from "./types"
-import * as helperUtils from "./helperUtils"
 
 export class DefaultCodeGenerationStrategy {
     verbose: boolean = true
@@ -25,7 +24,8 @@ export class DefaultCodeGenerationStrategy {
         srcAst: SourceCodeAst,
         augSourceCode: AugmentedSourceCode,
         augCodeIndex: number,
-        genCodes: Array<GeneratedCode>,
+        genCodeList: Array<GeneratedCode>,
+        genCodes: Array<string | GeneratedCodeOptions | null>,
         generatedCodeInserted: boolean
     }
 
@@ -38,6 +38,7 @@ export class DefaultCodeGenerationStrategy {
             srcAst: { type: AstBuilder.TYPE_SOURCE_CODE, children: [] },
             augSourceCode: { augCodes: [], parts: [] },
             augCodeIndex: 0,
+            genCodeList: [],
             genCodes: [],
             generatedCodeInserted: false
         }
@@ -89,7 +90,7 @@ export class DefaultCodeGenerationStrategy {
         }
     }
 
-    getParts(augCode: AugmentingCodeDescriptor) {
+    getSourceCodeParts(augCode: AugmentingCodeDescriptor) {
         const parts = this.fileScope.augSourceCode.parts;
         return parts.slice(augCode.leadPartIdx,
             augCode.leadPartIdx + augCode.partCount)
@@ -107,6 +108,7 @@ export class DefaultCodeGenerationStrategy {
             srcAst,
             augSourceCode: { augCodes: [], parts: [] },
             augCodeIndex: 0,
+            genCodeList: [],
             genCodes: [],
             generatedCodeInserted: false
         }
@@ -127,6 +129,7 @@ export class DefaultCodeGenerationStrategy {
         const callComputeGenCodesAgainLog = new Array<boolean>()
         for (let i = 0; i < augCodes.length; i++) {
             context.augCodeIndex = i
+            context.genCodeList = [] // reset
             context.genCodes = [] // reset
             const augCode = augCodes[i]
 
@@ -136,7 +139,23 @@ export class DefaultCodeGenerationStrategy {
             }
             const callComputeGenCodesAgain = await codeGenerator(augCode, this)
             const genCodes = await DefaultCodeGenerationStrategy.cleanGenCodeList(
-                context.genCodes)
+                context.genCodeList)
+            const extraGenCode = (await DefaultCodeGenerationStrategy.cleanGenCodeList({
+                contentParts: context.genCodes
+            }))[0] as GeneratedCode
+            if (extraGenCode.contentParts && extraGenCode.contentParts.length > 0) {
+                let foundGenCodeForAppending = false
+                if (genCodes.length > 0) {
+                    const lastGenCode = genCodes[genCodes.length - 1]
+                    if (lastGenCode && !lastGenCode.contentParts) {
+                        lastGenCode.contentParts = extraGenCode.contentParts
+                        foundGenCodeForAppending = true
+                    }
+                }
+                if (!foundGenCodeForAppending) {
+                    genCodes.push(extraGenCode)
+                }
+            }
             transformer.insertGeneratedCode(augSourceCode, augCode,  genCodes)
             callComputeGenCodesAgainLog.push(!!callComputeGenCodesAgain)
         }
@@ -165,7 +184,7 @@ export class DefaultCodeGenerationStrategy {
             return DefaultCodeGenerationStrategy._cleanGenCodeListAsync(result)
         }
         const converted = new Array<GeneratedCode | null>()
-        if (Array.isArray(result) || result[Symbol.iterator]) {
+        if (Array.isArray(result) || (result && result[Symbol.iterator])) {
             for (const item of result) {
                 const genCode = DefaultCodeGenerationStrategy._convertGenCode(item)
                 converted.push(genCode)
@@ -191,8 +210,8 @@ export class DefaultCodeGenerationStrategy {
         if (item === null || typeof item === 'undefined') {
             return null
         }
-        if (Array.isArray(item.contentParts) || item.contentParts[Symbol.iterator]) {
-            const contentParts = new Array<GeneratedCodePart | null>()
+        if (item.contentParts) {
+            const contentParts = new Array<string | GeneratedCodeOptions | null>()
             for (const contentPart of item.contentParts) {
                 contentParts.push(DefaultCodeGenerationStrategy._convertGenCodePart(
                     contentPart))
@@ -209,20 +228,14 @@ export class DefaultCodeGenerationStrategy {
         } as GeneratedCode
     }
 
-    static _convertGenCodePart(item: any): GeneratedCodePart | null {
+    static _convertGenCodePart(item: any): string | GeneratedCodeOptions | null {
         if (item === null || typeof item === 'undefined') {
             return null
         }
-        if (item.content !== null && typeof item.content !== 'undefined') {
-            return {
-                ...item,
-                content: `${item.content}`
-            } as GeneratedCodePart
+        if (["string", "number", "boolean"].includes(typeof item)) {
+            return `${item}`
         }
-        return {
-            ...item,
-            content: `${item}`
-        } as GeneratedCodePart
+        return item as GeneratedCodeOptions
     }
 
     wrapError(cause: any, message?: string) {

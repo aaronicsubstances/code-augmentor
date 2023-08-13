@@ -57,6 +57,15 @@ if ($arbitraryCommand -eq "-h" -and !$reverseFileNames)
     PrintHelp
     exit
 }
+
+if ($confirmed)
+{
+}
+elseif (!$arbitraryCommand)
+{
+    PrintHelp
+}
+
 $counter = 0
 foreach ($line in $input)
 {
@@ -110,8 +119,4 @@ if ($confirmed)
 {
     echo ""
     echo "Done"
-}
-elseif (!$arbitraryCommand)
-{
-    PrintHelp
 }

@@ -1,181 +1,145 @@
-const path = require('path');
+const path = require('path')
 
-const OtherFunctions = require('./OtherFunctions');
+const OtherFunctions = require('./OtherFunctions')
 
 exports.theClassProps = function(augCode, context) {
     context.fileScope.genCodes = (function*() {
         //const defaultIndent = context.globalScope['code_indent'];
-        const augCodeNode = augCode.leadNode;
-        const indent = augCodeNode.indent;
-        const lineSeparator = augCodeNode.lineSep;
+        //const augCodeNode = augCode.leadNode;
+        //const indent = augCodeNode.indent;
+        //const lineSeparator = augCodeNode.lineSep;
     
         context.fileScope.theClassProps = JSON.parse(augCode.data[1])
         context.fileScope.theClassName = path.basename(context.fileScope.srcPath, '.java')
-        let out = ''
         for (propSpec of context.fileScope.theClassProps) {
-            out += `private ${propSpec.type} ${propSpec.name};`
-            out += lineSeparator
+            yield `private ${propSpec.type} ${propSpec.name};\n`
         }
-        const g = {
-            contentParts: [],
-            indent
-        }
-        g.contentParts.push({ content: out })
-        yield g
     })()
 }
 
 exports.generateClassProps = function(augCode, context) {
-    const defaultIndent = context.globalScope['code_indent'];
-    const augCodeNode = augCode.leadNode;
-    const indent = augCodeNode.indent;
-    const lineSeparator = augCodeNode.lineSep;
-
-    let out = ''
-    for (propSpec of context.fileScope.theClassProps) {
-        const capitalized = OtherFunctions.capitalize(propSpec.name);
-        out += `public ${propSpec.type} get${capitalized}() {`
-        out += lineSeparator
-        out += `${defaultIndent}return ${propSpec.name};`
-        out += lineSeparator
-        out += `}${lineSeparator}`
-        out += `public void set${capitalized}(${propSpec.type} ${propSpec.name}) {`
-        out += lineSeparator
-        out += `${defaultIndent}this.${propSpec.name} = ${propSpec.name};`
-        out += lineSeparator
-        out += `}${lineSeparator}`
-        out += lineSeparator
-    }
-    const g = {
-        contentParts: [],
-        indent: indent
-    };
-    g.contentParts.push({ content: out })
-    context.fileScope.genCodes = g
+    context.fileScope.genCodes = (function*() {
+        for (propSpec of context.fileScope.theClassProps) {
+            const capitalized = OtherFunctions.capitalize(propSpec.name)
+            yield `public ${propSpec.type} get${capitalized}() {\n`
+            yield "" // apply indent
+            yield `return ${propSpec.name};\n`
+            yield '}\n'
+            yield `public void set${capitalized}(${propSpec.type} ${propSpec.name}) {\n`
+            yield "" // apply indent
+            yield `this.${propSpec.name} = ${propSpec.name};\n`
+            yield '}\n'
+            yield "\n"
+        }
+    })()
 }
 
 exports.generateEqualsAndHashCode = function(augCode, context) {
-    // don't override if empty.
-    if (context.fileScope.theClassProps.length == 0) {
-        return;
-    }
+    context.fileScope.genCodes = (function*() {
+        // don't override if empty.
+        if (context.fileScope.theClassProps.length == 0) {
+            return;
+        }
 
-    const defaultIndent = context.globalScope['code_indent'];
-    const augCodeNode = augCode.leadNode;
-    const indent = augCodeNode.indent;
-    const lineSeparator = augCodeNode.lineSep;
-    
-    let out = '';
-
-    // generate equals() override
-    out += `@Override${lineSeparator}`
-    out += `public boolean equals(Object obj) {`
-    out += lineSeparator
-    out += `${defaultIndent}if (!(obj instanceof ${context.fileScope.theClassName})) {`
-    out += lineSeparator
-    out += `${defaultIndent}${defaultIndent}return false;`
-    out += lineSeparator
-    out += `${defaultIndent}` + '}'
-    out += lineSeparator
-    out += `${defaultIndent}${context.fileScope.theClassName} other = (${context.fileScope.theClassName}) obj;`
-    out += lineSeparator
-    
-    for (propSpec of context.fileScope.theClassProps) {
-        if (OtherFunctions.isUpperCase(propSpec.type[0])) {
-            out += defaultIndent
-            out += 'if (!Objects.equals(this.'
-            out += propSpec.name;
-            out += ', other.' 
-            out += propSpec.name
-            out += ')) {'
+        // generate equals() override
+        yield `@Override\n`
+        yield `public boolean equals(Object obj) {\n`
+        yield "" // apply indent
+        yield `if (!(obj instanceof ${context.fileScope.theClassName})) {\n`
+        yield "" // apply indent
+        yield "" // apply indent
+        yield `return false;\n`
+        yield "" // apply indent
+        yield '}\n'
+        yield "" // apply indent
+        yield `${context.fileScope.theClassName} other = (${context.fileScope.theClassName}) obj;\n`
+        
+        for (propSpec of context.fileScope.theClassProps) {
+            if (OtherFunctions.isUpperCase(propSpec.type[0])) {
+                yield "" // apply indent
+                yield `if (!Objects.equals(this.${propSpec.name}, other.${propSpec.name})) {`
+            }
+            else {
+                yield "" // apply indent
+                yield `if (this.${propSpec.name} != other.${propSpec.name}) {`
+            }
+            yield "\n"
+            yield "" // apply indent
+            yield "" // apply indent
+            yield 'return false;\n'
+            yield "" // apply indent
+            yield '}\n'
+        }
+        
+        yield "" // apply indent
+        yield 'return true;\n'
+        yield '}\n\n'
+        
+        // generate hashCode() override with Objects.hashCode()
+        yield `@Override\n`
+        yield `public int hashCode() {\n`
+        if (context.fileScope.theClassProps.length == 1) {
+            yield "" // apply indent
+            yield 'return Objects.hashCode('
+            yield { exempt: true } // don't touch next item
+            yield context.fileScope.theClassProps[0].name
         }
         else {
-            out += defaultIndent
-            out += 'if (this.'
-            out += propSpec.name;
-            out += ' != other.' 
-            out += propSpec.name
-            out += ') {'
-        }
-        out += lineSeparator
-        out += `${defaultIndent}${defaultIndent}return false;`
-        out += lineSeparator
-        out += defaultIndent + '}'
-        out += lineSeparator
-    }
-    
-    out += `${defaultIndent}return true;${lineSeparator}`
-    out += '}'
-    out += lineSeparator
-    out += lineSeparator
-    
-    // generate hashCode() override with Objects.hashCode()
-    out += `@Override${lineSeparator}`
-    out += `public int hashCode() {`
-    out += lineSeparator
-    if (context.fileScope.theClassProps.length == 1) {
-        out += `${defaultIndent}return Objects.hashCode(`
-        out += context.fileScope.theClassProps[0].name
-    }
-    else {
-        out += `${defaultIndent}return Objects.hash(`
-        for (let i = 0; i < context.fileScope.theClassProps.length; i++) {
-            if (i > 0) {
-                out += ', '
+            yield "" // apply indent
+            yield 'return Objects.hash('
+            for (let i = 0; i < context.fileScope.theClassProps.length; i++) {
+                if (i > 0) {
+                    yield { exempt: true } // don't touch next item
+                    yield ", "
+                }
+                yield { exempt: true } // don't touch next item
+                yield context.fileScope.theClassProps[i].name
             }
-            out += context.fileScope.theClassProps[i].name
         }
-    }
-    out += `);${lineSeparator}`
-    out += '}'
-    out += lineSeparator
-    const g = {
-        contentParts: [],
-        indent
-    };
-    g.contentParts.push({ content: out })
-    context.fileScope.genCodes.push(g)
+        yield { indent: '' } // don't indent next item
+        yield ');\n'
+        yield '}\n'
+    })()
 }
 
 exports.generateToString = function(augCode, context) {
-    const defaultIndent = context.globalScope['code_indent'];
-    const augCodeNode = augCode.leadNode;
-    const indent = augCodeNode.indent;
-    const lineSeparator = augCodeNode.lineSep;
-
-    let out = '';
-    out += `@Override${lineSeparator}`
-    out += `public String toString() {`
-    out += lineSeparator
-    out += `${defaultIndent}return String.format(getClass().getSimpleName() + `
-    let exactOut = `"{`;
-    let outArgs = '';
+    let out = []
+    out.push('@Override\n')
+    out.push('public String toString() {\n')
+    out.push("")
+    out.push('return String.format(getClass().getSimpleName() + ')
+    let exactOut = ['"{']
+    let outArgs = []
     for (let i = 0; i < context.fileScope.theClassProps.length; i++) {
         if (i > 0) {
-            exactOut += ', '
-            outArgs += ', '
+            exactOut.push(', ')
+            outArgs.push({ indent: '' }) // don't indent next item
+            outArgs.push(', ')
         }
-        exactOut += context.fileScope.theClassProps[i].name + '=%s'
-        outArgs += context.fileScope.theClassProps[i].name
+        exactOut.push(context.fileScope.theClassProps[i].name)
+        exactOut.push('=%s')
+        outArgs.push({ indent: '' }) // don't indent next item
+        outArgs.push(context.fileScope.theClassProps[i].name)
     }
-    exactOut += '}"'
+    exactOut.push('}"')
     const g = {
-        contentParts: [],
-        indent: indent
+        contentParts: []
     };
-    g.contentParts.push({ content: out });
-    g.contentParts.push({ content: exactOut, exempt: true });
-    out = '' // reset
-    if (outArgs) {
-        out += ",";
-        out += lineSeparator;
-        out += defaultIndent;
-        out += defaultIndent;
+    g.contentParts.push(...out);
+    g.contentParts.push({ exempt: true }) // don't touch next item
+    g.contentParts.push(exactOut.join(""))
+    out = [] // reset
+    if (outArgs.length > 0) {
+        out.push({ indent: '' }) // don't indent next item
+        out.push(",\n")
+        out.push("") // apply indent
+        out.push("") // apply indent
+        out.push("") // apply indent
     }
-    out += outArgs
-    out += `);${lineSeparator}`
-    out += '}'
-    out += lineSeparator
-    g.contentParts.push({ content: out })
-    context.fileScope.genCodes.push(g)
+    out.push(...outArgs)
+    out.push({ indent: '' }) // don't indent next item
+    out.push(');\n')
+    out.push('}\n')
+    g.contentParts.push(...out)
+    context.fileScope.genCodeList.push(g)
 }

@@ -58,16 +58,17 @@ export interface AugmentedSourceCode {
     augCodes: AugmentingCodeDescriptor[];
 }
 
-export interface GeneratedCodePart {
-    content: string | null;
+export interface GeneratedCodeOptions {
+    lineSep: string | null;
+    indent: string | null;
     exempt: boolean;
 }
 
 export interface GeneratedCode {
-    contentParts: Array<GeneratedCodePart | null> | null;
+    contentParts: Array<string | GeneratedCodeOptions | null> | null;
     indent: string | null;
-    lineSep?: string;
-    markerType?: number;
+    lineSep: string | null;
+    markerType: number | null;
     ignore: boolean;
     ignoreRemainder: boolean;
 }

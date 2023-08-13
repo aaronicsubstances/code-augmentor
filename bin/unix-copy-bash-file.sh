@@ -61,6 +61,12 @@ if [ "$arbitraryCommand" == "-f" ] && [ -z "$reverseFileNames" ]; then
     confirmed=1
 fi
 
+if [ -n "$confirmed" ]; then
+    
+elif [ -z "$arbitraryCommand" ]; then
+    printHelp
+fi
+
 while IFS= read -r line
 do
     if [ -n "$a" ]
@@ -100,6 +106,4 @@ done < "/dev/stdin"
 if [ -n "$confirmed" ]; then
     echo
     echo "Done"
-elif [ -z "$arbitraryCommand" ]; then
-    printHelp
 fi
