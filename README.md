@@ -38,35 +38,18 @@ The [pojo-class-generation-with-sync](https://github.com/aaronicsubstances/code-
 
    * It requires some little prior setup (see https://github.com/aaronicsubstances/code-augmentor/blob/master/examples/pojo-class-generation-with-sync/src/README.txt for details).
 
-The library provides the `node_modules/.bin/effect-changes-*` scripts (`effect-changes-win` for Windows Powershell and `effect-changes-nix` for Bash). The scripts are meant to accept 
+The library provides the `node_modules/.bin/effect-changes-nix` script for Bash (usable with Git Bash on Windows). The script is meant meant to accept 
 through standard input a *changes-summary.txt* file, which is created in the codeGenScripts/generated folder when the example projects are run.
 
-Either run library tool on \*nix systems with
+Run library tool with
 
 ```
 node_modules/.bin/effect-changes-nix -f < changes-summary.txt
 ```
 
-or run on Windows Powershell with
-
-```
-Get-Content changes-summary.txt | node_modules/.bin/effect-changes-win -f
-```
-
-Both will update the files in source folder for the case were code change detection is enabled, like the pojo-class-generation-with-sync example. Its
+to update the files in source folder for the case were code change detection is enabled, like the pojo-class-generation-with-sync example. Its
 src\tempSrc folder will be updated as determined by the contents of the changes-summary.txt file.
 
    * Can run the library tool with `-h` option to see all the available options.
 
-NB: On Windows one may face issues with Powershell scripts being restricted from running. To ease the restrictions, one can run Powershell as Administrator, and then if running
-
-```
-Get-ExecutionPolicy
-```
-
-gives value of "Restricted", one can change to a more permissive option such as "RemoteSigned" by running
-
-```
-Set-ExecutionPolicy RemoteSigned
-```
 

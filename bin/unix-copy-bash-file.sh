@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
-CMDNAME=`basename $0`
-
+#CMDNAME=`basename $0`
+CMDNAME=effect-changes-nix
 printHelp() {
     echo
     echo "Usage: $CMDNAME [-f | -h | [--rev] <arbitraryCommandWithArgs>]"
@@ -61,9 +61,7 @@ if [ "$arbitraryCommand" == "-f" ] && [ -z "$reverseFileNames" ]; then
     confirmed=1
 fi
 
-if [ -n "$confirmed" ]; then
-    
-elif [ -z "$arbitraryCommand" ]; then
+if [ -z "$confirmed" ] && [ -z "$arbitraryCommand" ]; then
     printHelp
 fi
 
