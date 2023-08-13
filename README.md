@@ -30,7 +30,7 @@ The [CodeChangeDetective](https://github.com/aaronicsubstances/code-augmentor-no
 
 ## Usage
 
-See [Examples](https://github.com/aaronicsubstances/code-augmentor-nodejs/tree/main/examples) folder for example projects demonstrating how to use the library. The pojo-class-generation-with-sync example folder requires some prior setup of copying the contents of the src folder into a child tempSrc folder (see the src/README.txt file for details). Each example is launched with `node main.js` from the child codeGenScripts folder (may have to run `npm init` first).
+See [Examples](https://github.com/aaronicsubstances/code-augmentor/tree/master/examples) folder for example projects demonstrating how to use the library. The pojo-class-generation-with-sync example folder requires some prior setup of copying the contents of the src folder into a child tempSrc folder (see the src/README.txt file for details). Each example is launched with `node main.js` from the child codeGenScripts folder (may have to run `npm install` first).
 
 The library comes with an `effect-changes` script (available from node_modules/.bin folder for WIndows Powershell and Bash). The script is meant to accept through standard input a *changes-summary.txt* file, which is created in the codeGenScripts\generated folder when the example projects are run.
 
