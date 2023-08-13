@@ -161,7 +161,7 @@ export class DefaultCodeGenerationStrategy {
 
     static cleanGenCodeList(result: any):
             Array<GeneratedCode | null> | Promise<Array<GeneratedCode | null>> {
-        if (helperUtils._requiresForAwaitIteration(result)) {
+        if (result && result[Symbol.asyncIterator]) {
             return DefaultCodeGenerationStrategy._cleanGenCodeListAsync(result)
         }
         const converted = new Array<GeneratedCode | null>()

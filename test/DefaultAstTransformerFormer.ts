@@ -1,4 +1,4 @@
-import { AstBuilder } from "./AstBuilder";
+import { AstBuilder } from "../src/AstBuilder";
 import {
     AugmentingCodeDescriptor2,
     DecoratedLineAstNode,
@@ -12,7 +12,7 @@ import {
     SourceCodeAst,
     SourceCodeAstNode
 } from "./types";
-import * as myutils from "./helperUtils";
+import * as myutils from "../src/helperUtils";
 
 export class DefaultAstTransformerFormer {
     augCodeMarkers: string[] | null = null;
@@ -263,7 +263,7 @@ export class DefaultAstTransformerFormer {
                 let genCodeIndent = genCodeSectionNode.indent;
                 let genCodeLineSep = genCodeSectionNode.lineSep;
                 const genCodeLines = DefaultAstTransformerFormer.extractLinesAndTerminators(
-                    genCode.contentParts as any,
+                    genCode.contentParts,
                     genCode.indent, genCodeLineSep);
                 const node = this._createGenCodeNode(genCodeLines, genCode.useInlineMarker,
                     genCodeSection, genCodeIndent, genCodeLineSep);
@@ -284,7 +284,7 @@ export class DefaultAstTransformerFormer {
             };
             if (!transform.ignore) {
                 const genCodeLines = DefaultAstTransformerFormer.extractLinesAndTerminators(
-                    genCode.contentParts as any,
+                    genCode.contentParts,
                     genCode.indent, defaultLineSep);
                 const node = this._createGenCodeNode(genCodeLines, genCode.useInlineMarker,
                     null, defaultIndent, defaultLineSep);

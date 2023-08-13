@@ -1,7 +1,7 @@
 import { assert } from "chai";
 import { AstBuilder } from "../src/AstBuilder";
 
-import { DefaultAstTransformerFormer } from "../src/DefaultAstTransformerFormer";
+import { DefaultAstTransformerFormer } from "./DefaultAstTransformerFormer";
 import {
     AugmentingCodeDescriptor2,
     DefaultAstTransformSpec,
@@ -11,7 +11,7 @@ import {
     GeneratedCodeSectionTransform,
     NestedBlockAstNode,
     SourceCodeAst
-} from "../src/types";
+} from "./types";
 
 function determineAstNodePath(root: { children: any[] }, n: any) {
     if (root === n) {

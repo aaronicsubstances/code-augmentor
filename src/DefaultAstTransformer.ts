@@ -1,6 +1,7 @@
 import { AstBuilder } from "./AstBuilder";
 import { AstFormatter } from "./AstFormatter";
 import * as helperUtils from "./helperUtils";
+import { GeneratedCodeSectionTransform } from "./internal";
 import {
     AugmentedSourceCode,
     AugmentedSourceCodePart,
@@ -9,7 +10,6 @@ import {
     EscapedBlockAstNode,
     GeneratedCode,
     GeneratedCodePart,
-    GeneratedCodeSectionTransform,
     NestedBlockAstNode,
     SourceCodeAst,
     SourceCodeAstNode,
@@ -233,22 +233,18 @@ export class DefaultAstTransformer {
         const builder = new AstBuilder()
         builder.decoratedLineMarkers = this.augCodeArgMarkers
         const sourceNode = builder.parse(source)
-        // ensure each line is a decorated
-        for (const c of sourceNode.children) {
-            if (c.type !== AstBuilder.TYPE_DECORATED_LINE) {
-                throw new Error("invalid aug code argument. " +
-                    "escaped block must consist of only decorated lines marked by " +
-                    "the aug code arg markers supplied to an instance of this class");
-            }
-        }
         return sourceNode.children.map((v, i) => {
-            const n = v as DecoratedLineAstNode;
-            let includeTerminator = false;
-            if (i < sourceNode.children.length - 1) {
-                includeTerminator = true;
+            let prefix = '', suffix = '';
+            if (v.type === AstBuilder.TYPE_DECORATED_LINE) {
+                prefix = (v as DecoratedLineAstNode).markerAftermath;
             }
-            return n.markerAftermath + (includeTerminator ?
-                n.lineSep : "");
+            else {
+                prefix = (v as UndecoratedLineAstNode).text;
+            }
+            if (i < sourceNode.children.length - 1) {
+                suffix = (v as DecoratedLineAstNode | UndecoratedLineAstNode).lineSep;
+            }
+            return prefix + suffix;
         }).join("");
     }
 

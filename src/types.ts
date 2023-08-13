@@ -36,27 +36,6 @@ export type SourceCodeAstNode =
     | NestedBlockAstNode
     | SourceCodeAst;
 
-export interface AugmentingCodeDescriptor2 { // remove
-    parentNode: SourceCodeAst | NestedBlockAstNode;
-    idxInParentNode: number;
-    nestedBlockUsed: boolean;
-    lineNumber: number;
-    markerAftermath: string;
-    args: any[];
-    argsExclEndIdxInParentNode: number;
-    endMarkerAftermath: string | null;
-    endArgs: any[] | null;
-    endArgsExclEndIdxInParentNode: number;
-    parent: AugmentingCodeDescriptor2 | null;
-    children: AugmentingCodeDescriptor2[];
-}
-
-export interface GeneratedCodeDescriptor { // remove
-    parentNode: SourceCodeAst | NestedBlockAstNode;
-    idxInParentNode: number;
-    nestedBlockUsed: boolean;
-}
-
 export interface AugmentingCodeDescriptor {
     leadPartIdx: number;
     partCount: number;
@@ -87,25 +66,10 @@ export interface GeneratedCodePart {
 export interface GeneratedCode {
     contentParts: Array<GeneratedCodePart | null> | null;
     indent: string | null;
-    useInlineMarker: boolean; // remove.
-    ignore: boolean;
-    ignoreRemainder: boolean;
     lineSep?: string;
     markerType?: number;
-}
-
-export interface GeneratedCodeSectionTransform { // internal
-    ignore?: boolean; // remove
-    node: SourceCodeAstNode | null; // null means ignore
+    ignore: boolean;
     ignoreRemainder: boolean;
-}
-
-export interface DefaultAstTransformSpec { // remove
-    node: SourceCodeAst | EscapedBlockAstNode | NestedBlockAstNode;
-    childIndex: number;
-    childToInsert: SourceCodeAstNode | null;
-    replacementChild: SourceCodeAstNode | null;
-    performDeletion: boolean;
 }
 
 export interface SourceFileLocation {
