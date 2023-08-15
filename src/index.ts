@@ -1,7 +1,7 @@
-export * from "./AstBuilder";
+export * from "./AstParser";
 export * from "./AstFormatter";
 export * from "./CodeChangeDetective";
-export * from "./DefaultAstTransformer";
+export { DefaultAstTransformer } from "./DefaultAstTransformer";
 export * from "./DefaultCodeGenerationStrategy";
 export * from "./types";
 

@@ -1,8 +1,6 @@
-import os from "os";
-
 import { assert } from "chai";
 
-import { AstBuilder } from "../src/AstBuilder";
+import { AstParser } from "../src/AstParser";
 import { SourceCodeAst } from "../src/types";
 
 describe('AstBuilder', function() {
@@ -20,7 +18,7 @@ describe('AstBuilder', function() {
         ];
         data.forEach(({ marker, expected }, i) => {
             it(`should pass with input ${i}`, function() {
-                const actual = AstBuilder.isMarkerSuitable(marker);
+                const actual = AstParser.isMarkerSuitable(marker);
                 assert.equal(actual, expected);
             });
         });
@@ -39,7 +37,7 @@ describe('AstBuilder', function() {
         ];
         data.forEach(({ markers, n, expected }, i) => {
             it(`should pass with match details requested, and with input ${i}`, function() {
-                const actual = AstBuilder._findMarkerMatch(markers, n);
+                const actual = AstParser._findMarkerMatch(markers, n);
                 assert.deepEqual(actual, expected);
             });
         });
@@ -55,7 +53,7 @@ describe('AstBuilder', function() {
         ];
         data.forEach(({ markers, n, expected }, i) => {
             it(`should pass with match details ignored, and with input ${i}`, function() {
-                const actual = AstBuilder._findMarkerMatch(markers, n, true);
+                const actual = AstParser._findMarkerMatch(markers, n, true);
                 assert.deepEqual(actual, expected);
             });
         });
@@ -65,10 +63,10 @@ describe('AstBuilder', function() {
         it(`should pass with input 0`, function() {
             const s = "";
             const expected = {
-                type: AstBuilder.TYPE_SOURCE_CODE,
+                type: AstParser.TYPE_SOURCE_CODE,
                 children: []
             };
-            const instance = new AstBuilder();
+            const instance = new AstParser();
             instance.decoratedLineMarkers = ["d:", "2d:"];
             instance.escapedBlockStartMarkers = ["g:"];
             instance.escapedBlockEndMarkers = ["k:"];
@@ -83,31 +81,31 @@ describe('AstBuilder', function() {
                 " d-ed f \n" +
                 "  k-hghi";
             const expected = {
-                type: AstBuilder.TYPE_SOURCE_CODE,
+                type: AstParser.TYPE_SOURCE_CODE,
                 children: [
                     {
-                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        type: AstParser.TYPE_UNDECORATED_LINE,
                         text: "d:abc",
                         lineSep: "\r"
                     },
                     {
-                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        type: AstParser.TYPE_UNDECORATED_LINE,
                         text: " k:de",
                         lineSep: "\r\n"
                     },
                     {
-                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        type: AstParser.TYPE_UNDECORATED_LINE,
                         text: " d-ed f ",
                         lineSep: "\n"
                     },
                     {
-                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        type: AstParser.TYPE_UNDECORATED_LINE,
                         text: "  k-hghi",
                         lineSep: ""
                     }
                 ]
             };
-            const instance = new AstBuilder();
+            const instance = new AstParser();
             const actual = instance.parse(s);
             assert.deepEqual(actual, expected);
         });
@@ -141,27 +139,27 @@ describe('AstBuilder', function() {
                 "    2d:6\n" +
                 " k-age\n";
             const expected: SourceCodeAst = {
-                type: AstBuilder.TYPE_SOURCE_CODE,
+                type: AstParser.TYPE_SOURCE_CODE,
                 children: [
                     {
-                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        type: AstParser.TYPE_UNDECORATED_LINE,
                         text: "abc",
                         lineSep: "\n"
                     },
                     {
-                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        type: AstParser.TYPE_UNDECORATED_LINE,
                         text: "de",
                         lineSep: "\r\n"
                     },
                     {
-                        type: AstBuilder.TYPE_DECORATED_LINE,
+                        type: AstParser.TYPE_DECORATED_LINE,
                         indent: " ",
                         marker: "d:",
                         markerAftermath: "oods",
                         lineSep: "\r\n"
                     },
                     {
-                        type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                        type: AstParser.TYPE_ESCAPED_BLOCK,
                         indent: " ",
                         marker: "g:",
                         markerAftermath: "oods",
@@ -172,7 +170,7 @@ describe('AstBuilder', function() {
                         children: [],
                     },
                     {
-                        type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                        type: AstParser.TYPE_ESCAPED_BLOCK,
                         indent: " ",
                         marker: "g:",
                         markerAftermath: "oods",
@@ -182,34 +180,34 @@ describe('AstBuilder', function() {
                         endLineSep: "\n",
                         children: [
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "g:0",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "k:1",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "2",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "3",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "4",
                                 lineSep: "\n"
                             }
                         ]
                     },
                     {
-                        type: AstBuilder.TYPE_NESTED_BLOCK,
+                        type: AstParser.TYPE_NESTED_BLOCK,
                         indent: "",
                         marker: "d-",
                         markerAftermath: "oes",
@@ -220,60 +218,60 @@ describe('AstBuilder', function() {
                         endLineSep: "\n",
                         children: [
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "0",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "1",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "2",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "3",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "4",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_DECORATED_LINE,
+                                type: AstParser.TYPE_DECORATED_LINE,
                                 indent: "",
                                 marker: "d:",
                                 markerAftermath: "12",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_DECORATED_LINE,
+                                type: AstParser.TYPE_DECORATED_LINE,
                                 indent: " ",
                                 marker: "2d:",
                                 markerAftermath: "32",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_DECORATED_LINE,
+                                type: AstParser.TYPE_DECORATED_LINE,
                                 indent: "  ",
                                 marker: "d:",
                                 markerAftermath: "4",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_DECORATED_LINE,
+                                type: AstParser.TYPE_DECORATED_LINE,
                                 indent: "   ",
                                 marker: "d:",
                                 markerAftermath: "5",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_NESTED_BLOCK,
+                                type: AstParser.TYPE_NESTED_BLOCK,
                                 indent: " ",
                                 marker: "d-",
                                 markerAftermath: "",
@@ -283,13 +281,13 @@ describe('AstBuilder', function() {
                                 endLineSep: "\n",
                                 endMarkerAftermath: "ds",
                                 children: [{
-                                    type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                    type: AstParser.TYPE_UNDECORATED_LINE,
                                     text: " :2d",
                                     lineSep: "\r\n"
                                 }]
                             },
                             {
-                                type: AstBuilder.TYPE_DECORATED_LINE,
+                                type: AstParser.TYPE_DECORATED_LINE,
                                 indent: "    ",
                                 marker: "2d:",
                                 markerAftermath: "6",
@@ -299,7 +297,7 @@ describe('AstBuilder', function() {
                     }
                 ]
             };
-            const instance = new AstBuilder();
+            const instance = new AstParser();
             instance.decoratedLineMarkers = ["d:", "2d:"];
             instance.escapedBlockStartMarkers = ["g:"];
             instance.escapedBlockEndMarkers = ["k:"];
@@ -335,25 +333,25 @@ describe('AstBuilder', function() {
                 "    2d:6\n" +
                 " >.oes\n";
             const expected = {
-                type: AstBuilder.TYPE_SOURCE_CODE,
+                type: AstParser.TYPE_SOURCE_CODE,
                 children: [
                     {
-                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        type: AstParser.TYPE_UNDECORATED_LINE,
                         text: "abc",
                         lineSep: "\n"
                     },
                     {
-                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        type: AstParser.TYPE_UNDECORATED_LINE,
                         text: "de",
                         lineSep: "\r\n"
                     },
                     {
-                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        type: AstParser.TYPE_UNDECORATED_LINE,
                         text: " d:oods",
                         lineSep: "\r\n"
                     },
                     {
-                        type: AstBuilder.TYPE_NESTED_BLOCK,
+                        type: AstParser.TYPE_NESTED_BLOCK,
                         indent: " ",
                         marker: "(-",
                         markerAftermath: "ds",
@@ -365,7 +363,7 @@ describe('AstBuilder', function() {
                         children: []
                     },
                     {
-                        type: AstBuilder.TYPE_NESTED_BLOCK,
+                        type: AstParser.TYPE_NESTED_BLOCK,
                         indent: " ",
                         marker: "(:",
                         markerAftermath: "oods",
@@ -376,34 +374,34 @@ describe('AstBuilder', function() {
                         endMarkerAftermath: "age",
                         children: [
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "0",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "1",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "2",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "3",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "4",
                                 lineSep: "\n"
                             }
                         ]
                     },
                     {
-                        type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                        type: AstParser.TYPE_ESCAPED_BLOCK,
                         indent: "",
                         marker: "<.",
                         markerAftermath: "oes",
@@ -413,52 +411,52 @@ describe('AstBuilder', function() {
                         endLineSep: "\n",
                         children: [
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "0",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "1",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "2",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "3",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "4",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "d:12",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: " 2d:32",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "  d:4",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "   d:5",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "    2d:6",
                                 lineSep: "\n"
                             }
@@ -466,7 +464,7 @@ describe('AstBuilder', function() {
                     }
                 ]
             };
-            const instance = new AstBuilder();
+            const instance = new AstParser();
             instance.escapedBlockStartMarkers = ["<."];
             instance.escapedBlockEndMarkers = [">."];
             instance.nestedBlockStartMarkers = ["(-", "(:"];
@@ -501,25 +499,25 @@ describe('AstBuilder', function() {
                 "    2d:6\n" +
                 " <.oes\n";
             const expected = {
-                type: AstBuilder.TYPE_SOURCE_CODE,
+                type: AstParser.TYPE_SOURCE_CODE,
                 children: [
                     {
-                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        type: AstParser.TYPE_UNDECORATED_LINE,
                         text: "abc",
                         lineSep: "\n"
                     },
                     {
-                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        type: AstParser.TYPE_UNDECORATED_LINE,
                         text: "de",
                         lineSep: "\r\n"
                     },
                     {
-                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        type: AstParser.TYPE_UNDECORATED_LINE,
                         text: " d:oods",
                         lineSep: "\r\n"
                     },
                     {
-                        type: AstBuilder.TYPE_NESTED_BLOCK,
+                        type: AstParser.TYPE_NESTED_BLOCK,
                         indent: " ",
                         marker: "(-",
                         markerAftermath: "ds",
@@ -531,7 +529,7 @@ describe('AstBuilder', function() {
                         children: []
                     },
                     {
-                        type: AstBuilder.TYPE_NESTED_BLOCK,
+                        type: AstParser.TYPE_NESTED_BLOCK,
                         indent: " ",
                         marker: "(:",
                         markerAftermath: "oods",
@@ -542,34 +540,34 @@ describe('AstBuilder', function() {
                         endMarkerAftermath: "age",
                         children: [
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "0",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "1",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "2",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "3",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "4",
                                 lineSep: "\n"
                             }
                         ]
                     },
                     {
-                        type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                        type: AstParser.TYPE_ESCAPED_BLOCK,
                         indent: "",
                         marker: "<.",
                         markerAftermath: "oes",
@@ -579,52 +577,52 @@ describe('AstBuilder', function() {
                         endLineSep: "\n",
                         children: [
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "0",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "1",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "2",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "3",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "4",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "d:12",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: " 2d:32",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "  d:4",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "   d:5",
                                 lineSep: "\n"
                             },
                             {
-                                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                                type: AstParser.TYPE_UNDECORATED_LINE,
                                 text: "    2d:6",
                                 lineSep: "\n"
                             }
@@ -632,7 +630,7 @@ describe('AstBuilder', function() {
                     }
                 ]
             };
-            const instance = new AstBuilder();
+            const instance = new AstParser();
             instance.escapedBlockStartMarkers = ["<."];
             instance.escapedBlockEndMarkers = ["<."];
             instance.nestedBlockStartMarkers = ["(-", "(:"];
@@ -652,7 +650,7 @@ describe('AstBuilder', function() {
                     lineSep: "\n"
                 },
                 expected: {
-                    type: AstBuilder.TYPE_DECORATED_LINE,
+                    type: AstParser.TYPE_DECORATED_LINE,
                     indent: "",
                     marker: "ode",
                     markerAftermath: "",
@@ -667,7 +665,7 @@ describe('AstBuilder', function() {
                     lineSep: "\r\n"
                 },
                 expected: {
-                    type: AstBuilder.TYPE_DECORATED_LINE,
+                    type: AstParser.TYPE_DECORATED_LINE,
                     indent: "  ",
                     marker: "deo",
                     markerAftermath: "xor",
@@ -682,7 +680,7 @@ describe('AstBuilder', function() {
                     lineSep: "\r"
                 },
                 expected: {
-                    type: AstBuilder.TYPE_DECORATED_LINE,
+                    type: AstParser.TYPE_DECORATED_LINE,
                     indent: null,
                     marker: "e",
                     markerAftermath: '',
@@ -692,7 +690,7 @@ describe('AstBuilder', function() {
         ];
         data.forEach(({ line, attrs, expected }, i) => {
             it(`should pass with input ${i}`, function() {
-                const actual = AstBuilder.createDecoratedLineNode(line, attrs);
+                const actual = AstParser.createDecoratedLineNode(line, attrs);
                 assert.deepEqual(actual, expected);
             });
         });
@@ -742,7 +740,7 @@ describe('AstBuilder', function() {
         errorData.forEach(({ line, attrs, expected }, i) => {
             it(`should fail with input ${i}`, function() {
                 assert.throws(function() {
-                    AstBuilder.createDecoratedLineNode(line, attrs)
+                    AstParser.createDecoratedLineNode(line, attrs)
                 }, expected);
             });
         });
@@ -761,7 +759,7 @@ describe('AstBuilder', function() {
                     endLineSep: "\n",
                 },
                 expected: {
-                    type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                    type: AstParser.TYPE_ESCAPED_BLOCK,
                     markerAftermath: "",
                     indent: "   ",
                     marker: "ab",
@@ -771,7 +769,7 @@ describe('AstBuilder', function() {
                     endLineSep: "\n",
                     children: [
                         {
-                            type: AstBuilder.TYPE_UNDECORATED_LINE,
+                            type: AstParser.TYPE_UNDECORATED_LINE,
                             text: "c",
                             lineSep: "\r\n"
                         }
@@ -790,7 +788,7 @@ describe('AstBuilder', function() {
                     endLineSep: "\r\n"
                 },
                 expected: {
-                    type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                    type: AstParser.TYPE_ESCAPED_BLOCK,
                     markerAftermath: "shoe",
                     indent: " \t ",
                     marker: "the ",
@@ -800,12 +798,12 @@ describe('AstBuilder', function() {
                     endLineSep: "\r\n",
                     children: [
                         {
-                            type: AstBuilder.TYPE_UNDECORATED_LINE,
+                            type: AstParser.TYPE_UNDECORATED_LINE,
                             text: " socks ",
                             lineSep: "\n"
                         },
                         {
-                            type: AstBuilder.TYPE_UNDECORATED_LINE,
+                            type: AstParser.TYPE_UNDECORATED_LINE,
                             text: "j p sav",
                             lineSep: "\r"
                         }
@@ -824,7 +822,7 @@ describe('AstBuilder', function() {
                     endLineSep: "\r\n",
                 },
                 expected: {
-                    type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                    type: AstParser.TYPE_ESCAPED_BLOCK,
                     markerAftermath: "tea",
                     indent: null,
                     marker: "e",
@@ -847,7 +845,7 @@ describe('AstBuilder', function() {
                     endLineSep: "\r\n",
                 },
                 expected: {
-                    type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                    type: AstParser.TYPE_ESCAPED_BLOCK,
                     markerAftermath: "-1",
                     indent: null,
                     marker: "moo",
@@ -856,7 +854,7 @@ describe('AstBuilder', function() {
                     endMarker: "too",
                     endLineSep: "\r\n",
                     children: [{
-                        type: AstBuilder.TYPE_UNDECORATED_LINE,
+                        type: AstParser.TYPE_UNDECORATED_LINE,
                         text: "moo",
                         lineSep: "\n"
                     }]
@@ -877,7 +875,7 @@ describe('AstBuilder', function() {
                     endLineSep: "\r\n",
                 },
                 expected: {
-                    type: AstBuilder.TYPE_ESCAPED_BLOCK,
+                    type: AstParser.TYPE_ESCAPED_BLOCK,
                     markerAftermath: "tea-1",
                     indent: " ",
                     marker: "s:",
@@ -887,22 +885,22 @@ describe('AstBuilder', function() {
                     endLineSep: "\r\n",
                     children: [
                         {
-                            type: AstBuilder.TYPE_UNDECORATED_LINE,
+                            type: AstParser.TYPE_UNDECORATED_LINE,
                             text: "no",
                             lineSep: "\n"
                         },
                         {
-                            type: AstBuilder.TYPE_UNDECORATED_LINE,
+                            type: AstParser.TYPE_UNDECORATED_LINE,
                             text: "yes",
                             lineSep: "\n"
                         },
                         {
-                            type: AstBuilder.TYPE_UNDECORATED_LINE,
+                            type: AstParser.TYPE_UNDECORATED_LINE,
                             text: "e:tea cup",
                             lineSep: "\r\n"
                         },
                         {
-                            type: AstBuilder.TYPE_UNDECORATED_LINE,
+                            type: AstParser.TYPE_UNDECORATED_LINE,
                             text: "\tsunshine",
                             lineSep: "\r"
                         }
@@ -912,7 +910,7 @@ describe('AstBuilder', function() {
         ];
         data.forEach(({ lines, attrs, expected }, i) => {
             it(`should pass with input ${i}`, function() {
-                const actual = AstBuilder.createEscapedNode(lines, attrs);
+                const actual = AstParser.createEscapedNode(lines, attrs);
                 assert.deepEqual(actual, expected);
             });
         });
@@ -998,7 +996,7 @@ describe('AstBuilder', function() {
         errorData.forEach(({ lines, attrs, expected }, i) => {
             it(`should fail with input ${i}`, function() {
                 assert.throws(function() {
-                    AstBuilder.createEscapedNode(lines, attrs)
+                    AstParser.createEscapedNode(lines, attrs)
                 }, expected);
             });
         });

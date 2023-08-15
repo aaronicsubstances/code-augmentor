@@ -6,7 +6,9 @@ class SimplePerson {
     //:JSON:
     //:JSON: [
     //:JSON:  { "name": "name", "type": "String" },
+
     //:JSON:  { "name": "age", "type": "int" },
+
     //:JSON:  { "name": "email", "type": "String" }
     //:JSON: ]
     //:JSON:

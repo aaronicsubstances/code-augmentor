@@ -2,7 +2,7 @@
   "name": "codeGenScripts",
   "version": "0.1.0",
   "dependencies": {
-    "code-augmentor-support": "latest",
+    "code-augmentor-support": "^4.4.0",
     "glob": "^10.3.3"
   }
 }

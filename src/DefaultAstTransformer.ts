@@ -1,7 +1,6 @@
-import { AstBuilder } from "./AstBuilder";
+import { AstParser } from "./AstParser";
 import { AstFormatter } from "./AstFormatter";
 import * as helperUtils from "./helperUtils";
-import { GeneratedCodeSectionTransform } from "./internal";
 import {
     AugmentedSourceCode,
     AugmentedSourceCodePart,
@@ -15,6 +14,11 @@ import {
     SourceCodeAstNode,
     UndecoratedLineAstNode
 } from "./types";
+
+export interface GeneratedCodeSectionTransform { // internally exposed for testing
+    node: SourceCodeAstNode | null; // null means ignore
+    ignoreRemainder: boolean;
+}
 
 function findMarkerMatch(markers: string[] | null, marker: any) {
     if (markers) {
@@ -66,8 +70,8 @@ export class DefaultAstTransformer {
 
             // find start of aug code section
             let augCodeMarkerFound = false;
-            if (n.type === AstBuilder.TYPE_DECORATED_LINE ||
-                    n.type === AstBuilder.TYPE_ESCAPED_BLOCK) {
+            if (n.type === AstParser.TYPE_DECORATED_LINE ||
+                    n.type === AstParser.TYPE_ESCAPED_BLOCK) {
                 const typedNode = n as (DecoratedLineAstNode | EscapedBlockAstNode);
                 if (findMarkerMatch(this.augCodeMarkers, typedNode.marker)) {
                     augCodeMarkerFound = true;
@@ -84,12 +88,12 @@ export class DefaultAstTransformer {
             // find end of aug code section
             while (i < parts.length) {
                 n = parts[i].node;
-                if (n.type === AstBuilder.TYPE_NESTED_BLOCK_START ||
-                    n.type === AstBuilder.TYPE_NESTED_BLOCK_END) {
+                if (n.type === AstParser.TYPE_NESTED_BLOCK_START ||
+                        n.type === AstParser.TYPE_NESTED_BLOCK_END) {
                     break;
                 }
-                if (n.type === AstBuilder.TYPE_DECORATED_LINE ||
-                        n.type === AstBuilder.TYPE_ESCAPED_BLOCK) {
+                if (n.type === AstParser.TYPE_DECORATED_LINE ||
+                        n.type === AstParser.TYPE_ESCAPED_BLOCK) {
                     const typedNode = n as (DecoratedLineAstNode | EscapedBlockAstNode);
                     if (findMarkerMatch(this.augCodeMarkers, typedNode.marker)) {
                         break;
@@ -110,14 +114,14 @@ export class DefaultAstTransformer {
     static _addSourceCodeParts(n: SourceCodeAstNode,
             collector: Array<AugmentedSourceCodePart>,
             counter: { lineNumber: number }) {
-        if (n.type === AstBuilder.TYPE_DECORATED_LINE ||
-                n.type === AstBuilder.TYPE_UNDECORATED_LINE) {
+        if (n.type === AstParser.TYPE_DECORATED_LINE ||
+                n.type === AstParser.TYPE_UNDECORATED_LINE) {
             collector.push({
                 node: n,
                 lineNumber: counter.lineNumber++
             });
         }
-        else if (n.type === AstBuilder.TYPE_ESCAPED_BLOCK) {
+        else if (n.type === AstParser.TYPE_ESCAPED_BLOCK) {
             collector.push({
                 node: n,
                 lineNumber: counter.lineNumber++
@@ -125,7 +129,7 @@ export class DefaultAstTransformer {
             const typedNode = n as EscapedBlockAstNode;
             for (const child of (typedNode.children || [])) {
                 // validate type
-                if (child.type !== AstBuilder.TYPE_UNDECORATED_LINE) {
+                if (child.type !== AstParser.TYPE_UNDECORATED_LINE) {
                     throw new Error("unexpected child node type for escaped block " +
                         `at line ${counter.lineNumber}: ${child.type}`);
                 }
@@ -133,11 +137,11 @@ export class DefaultAstTransformer {
             }
             counter.lineNumber++; // for the end of escape block.
         }
-        else if (n.type === AstBuilder.TYPE_NESTED_BLOCK) {
+        else if (n.type === AstParser.TYPE_NESTED_BLOCK) {
             const typedNode = n as NestedBlockAstNode;
             collector.push({
                 node: {
-                    type: AstBuilder.TYPE_NESTED_BLOCK_START,
+                    type: AstParser.TYPE_NESTED_BLOCK_START,
                     marker: typedNode.marker,
                     markerAftermath: typedNode.markerAftermath,
                     lineSep: typedNode.lineSep,
@@ -150,7 +154,7 @@ export class DefaultAstTransformer {
             }
             collector.push({
                 node: {
-                    type: AstBuilder.TYPE_NESTED_BLOCK_END,
+                    type: AstParser.TYPE_NESTED_BLOCK_END,
                     marker: typedNode.endMarker,
                     markerAftermath: typedNode.endMarkerAftermath,
                     lineSep: typedNode.endLineSep,
@@ -167,51 +171,44 @@ export class DefaultAstTransformer {
 
     _createAugCode(sourceCodeParts: Array<AugmentedSourceCodePart>,
             startIdx: number, exclEndIdx: number) {
-        const leadPart = sourceCodeParts[startIdx];
         const augCodeData = new Array<string>();
         const augCode : AugmentingCodeDescriptor = {
             leadPartIdx: startIdx,
             partCount: exclEndIdx - startIdx,
-            leadPart,
-            leadNode: leadPart.node as (DecoratedLineAstNode | EscapedBlockAstNode),
+            leadPart: null as any,
+            leadNode: null as any,
             data: augCodeData,
         };
 
-        // add first data item
-        if (augCode.leadNode.type === AstBuilder.TYPE_ESCAPED_BLOCK) {
-            const data = this._extractAugCodeArg(
-                augCode.leadNode as EscapedBlockAstNode);
-            augCodeData.push(data);
-        }
-        else {
-            augCodeData.push(augCode.leadNode.markerAftermath);
-        }
-
-        // set leadPart props
-        leadPart.augCode = augCode;
-        leadPart.type = DefaultAstTransformer.TYPE_AUG_CODE;
-        leadPart.data  = augCodeData[0];
-
-        for (let i = startIdx + 1; i < exclEndIdx; i++) {
+        for (let i = startIdx; i < exclEndIdx; i++) {
             const p = sourceCodeParts[i];
             const n = p.node;
-            if (n.type !== AstBuilder.TYPE_DECORATED_LINE &&
-                    n.type !== AstBuilder.TYPE_ESCAPED_BLOCK) {
+            if (n.type !== AstParser.TYPE_DECORATED_LINE &&
+                    n.type !== AstParser.TYPE_ESCAPED_BLOCK) {
                 continue;
             }
             const typedNode = n as (DecoratedLineAstNode | EscapedBlockAstNode);
-            if (findMarkerMatch(this.genCodeMarkers, typedNode.marker)) {
-                p.type = DefaultAstTransformer.TYPE_GEN_CODE;
-            }
-            else if (findMarkerMatch(this.augCodeArgMarkers, typedNode.marker)) {
-                p.type = DefaultAstTransformer.TYPE_AUG_CODE_ARG;
+            if (i > startIdx) {
+                if (findMarkerMatch(this.genCodeMarkers, typedNode.marker)) {
+                    p.type = DefaultAstTransformer.TYPE_GEN_CODE;
+                }
+                else if (findMarkerMatch(this.augCodeArgMarkers, typedNode.marker)) {
+                    p.type = DefaultAstTransformer.TYPE_AUG_CODE_ARG;
+                }
+                else {
+                    continue;
+                }
             }
             else {
-                continue;
+                p.type = DefaultAstTransformer.TYPE_AUG_CODE;
+                p.augCode = augCode;
+                augCode.leadPart = p;
+                augCode.leadNode = p.node as (DecoratedLineAstNode | EscapedBlockAstNode);
             }
-            if (p.type === DefaultAstTransformer.TYPE_AUG_CODE_ARG) {
+            if (p.type === DefaultAstTransformer.TYPE_AUG_CODE ||
+                    p.type === DefaultAstTransformer.TYPE_AUG_CODE_ARG) {
                 let data = '';
-                if (typedNode.type === AstBuilder.TYPE_ESCAPED_BLOCK) {
+                if (typedNode.type === AstParser.TYPE_ESCAPED_BLOCK) {
                     data = this._extractAugCodeArg(
                         typedNode as EscapedBlockAstNode);
                 }
@@ -227,15 +224,15 @@ export class DefaultAstTransformer {
 
     _extractAugCodeArg(node: EscapedBlockAstNode) {
         const source = AstFormatter.stringify({
-            type: AstBuilder.TYPE_SOURCE_CODE,
+            type: AstParser.TYPE_SOURCE_CODE,
             children: node.children
         });
-        const builder = new AstBuilder();
+        const builder = new AstParser();
         builder.decoratedLineMarkers = this.augCodeArgMarkers;
         const sourceNode = builder.parse(source);
         return sourceNode.children.map((v, i) => {
             let prefix = '', suffix = '';
-            if (v.type === AstBuilder.TYPE_DECORATED_LINE) {
+            if (v.type === AstParser.TYPE_DECORATED_LINE) {
                 prefix = (v as DecoratedLineAstNode).markerAftermath;
             }
             else {
@@ -415,9 +412,9 @@ export class DefaultAstTransformer {
             genCodeSection: AugmentedSourceCodePart | null,
             defaultIndent: string | null,
             defaultLineSep: string | null): SourceCodeAstNode {
-        if (!genCode.markerType || genCode.markerType === AstBuilder.TYPE_ESCAPED_BLOCK) {
+        if (!genCode.markerType || genCode.markerType === AstParser.TYPE_ESCAPED_BLOCK) {
             if (genCodeSection && genCodeSection.node.type === genCode.markerType) {
-                return AstBuilder.createEscapedNode(genCodeLines, genCodeSection.node);
+                return AstParser.createEscapedNode(genCodeLines, genCodeSection.node);
             }
             if (!this.defaultGenCodeStartMarker) {
                 throw new Error("default gen code start marker not set");
@@ -433,11 +430,11 @@ export class DefaultAstTransformer {
                 endLineSep: defaultLineSep,
                 endMarker: this.defaultGenCodeEndMarker,
             };
-            return AstBuilder.createEscapedNode(genCodeLines, attrs);
+            return AstParser.createEscapedNode(genCodeLines, attrs);
         }
-        if (genCode.markerType === AstBuilder.TYPE_DECORATED_LINE) {
+        if (genCode.markerType === AstParser.TYPE_DECORATED_LINE) {
             if (genCodeSection && genCodeSection.node.type === genCode.markerType) {
-                return AstBuilder.createDecoratedLineNode(
+                return AstParser.createDecoratedLineNode(
                     genCodeLines.join(""), genCodeSection.node);
             }
             if (!this.defaultGenCodeInlineMarker) {
@@ -448,19 +445,19 @@ export class DefaultAstTransformer {
                 lineSep: defaultLineSep,
                 marker: this.defaultGenCodeInlineMarker
             };
-            return AstBuilder.createDecoratedLineNode(
+            return AstParser.createDecoratedLineNode(
                 genCodeLines.join(""), attrs);
         }
-        if (genCode.markerType === AstBuilder.TYPE_SOURCE_CODE) {
+        if (genCode.markerType === AstParser.TYPE_SOURCE_CODE) {
             const unescapedNode: SourceCodeAst = {
-                type: AstBuilder.TYPE_SOURCE_CODE,
+                type: AstParser.TYPE_SOURCE_CODE,
                 children: [],
             };
             for (let i = 0; i < genCodeLines.length; i+=2) {
                 const line = genCodeLines[i];
                 const terminator = genCodeLines[i + 1];
                 const n: UndecoratedLineAstNode = {
-                    type: AstBuilder.TYPE_UNDECORATED_LINE,
+                    type: AstParser.TYPE_UNDECORATED_LINE,
                     text: line,
                     lineSep: terminator
                 };
@@ -558,7 +555,7 @@ export class DefaultAstTransformer {
             }
         }
         return AstFormatter.stringify({
-            type: AstBuilder.TYPE_SOURCE_CODE,
+            type: AstParser.TYPE_SOURCE_CODE,
             children
         });
     }

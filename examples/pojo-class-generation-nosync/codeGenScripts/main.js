@@ -1,7 +1,7 @@
 const path = require("path")
 const { globIterate }  = require("glob")
 const {
-    AstBuilder,
+    AstParser,
     CodeChangeDetective,
     DefaultAstTransformer,
     DefaultCodeChangeDetectiveConfigFactory,
@@ -18,7 +18,7 @@ console.log(srcDir)
 const destDir = path.join(__dirname, "generated")
 console.log(destDir)
 
-const parser = new AstBuilder()
+const parser = new AstParser()
 parser.decoratedLineMarkers = ["//:AUG_CODE:"]
 parser.escapedBlockStartMarkers = ["//:JSON:"]
 parser.escapedBlockEndMarkers = ["//:JSON:"]

@@ -1,4 +1,4 @@
-import { AstBuilder } from "./AstBuilder";
+import { AstParser } from "./AstParser";
 import {
     DecoratedLineAstNode,
     EscapedBlockAstNode,
@@ -22,26 +22,26 @@ function formatAny(n: any, out: string[]) {
         return;
     }
     switch (n.type) {
-        case AstBuilder.TYPE_SOURCE_CODE:
+        case AstParser.TYPE_SOURCE_CODE:
             const typedNode = n as SourceCodeAst;
             if (typedNode.children) {
                 typedNode.children.forEach(x => formatAny(x, out));
             }
             break;
-        case AstBuilder.TYPE_UNDECORATED_LINE:
+        case AstParser.TYPE_UNDECORATED_LINE:
             printUndecoratedLine(n as UndecoratedLineAstNode, out);
             break;
-        case AstBuilder.TYPE_DECORATED_LINE:
-        case AstBuilder.TYPE_NESTED_BLOCK_START:
-        case AstBuilder.TYPE_NESTED_BLOCK_END:
-        case AstBuilder.TYPE_ESCAPED_BLOCK_START:
-        case AstBuilder.TYPE_ESCAPED_BLOCK_END:
+        case AstParser.TYPE_DECORATED_LINE:
+        case AstParser.TYPE_NESTED_BLOCK_START:
+        case AstParser.TYPE_NESTED_BLOCK_END:
+        case AstParser.TYPE_ESCAPED_BLOCK_START:
+        case AstParser.TYPE_ESCAPED_BLOCK_END:
             printDecoratedLine(n as DecoratedLineAstNode, out);
             break;
-        case AstBuilder.TYPE_ESCAPED_BLOCK:
+        case AstParser.TYPE_ESCAPED_BLOCK:
             printEscapedBlock(n as EscapedBlockAstNode, out);
             break;
-        case AstBuilder.TYPE_NESTED_BLOCK:
+        case AstParser.TYPE_NESTED_BLOCK:
             printNestedBlock(n as NestedBlockAstNode, out);
             break;
         default:

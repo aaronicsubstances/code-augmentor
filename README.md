@@ -8,7 +8,7 @@ Code Augmentor is library that provides
 
 ## Markup Language
 
-The [AstBuilder](https://github.com/aaronicsubstances/code-augmentor-nodejs/blob/master/src/AstBuilder.ts) and [AstFormatter](https://github.com/aaronicsubstances/code-augmentor-nodejs/blob/master/src/AstFormatter.ts) modules are responsible for providing parsing and formatting functionality of the markup language provided by this library.
+The [AstParser](https://github.com/aaronicsubstances/code-augmentor-nodejs/blob/master/src/AstParser.ts) and [AstFormatter](https://github.com/aaronicsubstances/code-augmentor-nodejs/blob/master/src/AstFormatter.ts) modules are responsible for providing parsing and formatting functionality of the markup language provided by this library.
 
 ## Code Transformation
 

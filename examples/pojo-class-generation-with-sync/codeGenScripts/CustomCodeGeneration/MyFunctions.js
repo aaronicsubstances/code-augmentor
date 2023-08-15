@@ -2,8 +2,8 @@ const path = require('path')
 
 const OtherFunctions = require('./OtherFunctions')
 
-exports.theClassProps = function(augCode, context) {
-    context.fileScope.genCodes = (function*() {
+exports.theClassProps = async function(augCode, context) {
+    context.fileScope.genCodes = (async function*() {
         //const defaultIndent = context.globalScope['code_indent'];
         //const augCodeNode = augCode.leadNode;
         //const indent = augCodeNode.indent;
@@ -18,6 +18,7 @@ exports.theClassProps = function(augCode, context) {
 }
 
 exports.generateClassProps = function(augCode, context) {
+    context.fileScope.genCodeList.push({})
     context.fileScope.genCodes = (function*() {
         for (propSpec of context.fileScope.theClassProps) {
             const capitalized = OtherFunctions.capitalize(propSpec.name)

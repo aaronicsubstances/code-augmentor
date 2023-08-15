@@ -3,15 +3,13 @@ import {
     SourceCodeAst,
     DecoratedLineAstNode,
     EscapedBlockAstNode,
-    NestedBlockAstNode,
-    SourceCodeAstNode,
-    UndecoratedLineAstNode
+    NestedBlockAstNode
 } from "./types";
 
 const MARKER_SUITABILITY_REGEX = new RegExp(/^\s|\r|\n/);
 const UNNEEDED_MATCH_DETAILS_RESULT = new Array<string>();
 
-export class AstBuilder {
+export class AstParser {
     decoratedLineMarkers: string[] | null = null;
     escapedBlockStartMarkers: string[] | null = null;
     escapedBlockEndMarkers: string[] | null = null;
@@ -88,7 +86,7 @@ export class AstBuilder {
             const terminator = splitSource[i + 1];
             const indent = helperUtils.determineIndent(line);
             const n = {
-                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                type: AstParser.TYPE_UNDECORATED_LINE,
                 text: line,
                 lineSep: terminator,
                 indent
@@ -96,7 +94,7 @@ export class AstBuilder {
             this._nodes.push(n);
         }
         const root: SourceCodeAst = {
-            type: AstBuilder.TYPE_SOURCE_CODE,
+            type: AstParser.TYPE_SOURCE_CODE,
             children: []
         };
         let child;
@@ -141,6 +139,10 @@ export class AstBuilder {
             return null;
         }
         const originalNode = n;
+        if (AstParser._findMarkerMatch(this.nestedBlockEndMarkers, originalNode)) {
+            throw this._abort(this._peekIdx + 1, "encountered nested block end line without " +
+                "matching start line");
+        }
         n = this._matchNestedBlock();
         if (!n) {
             n = this._matchEscapedBlock();
@@ -149,11 +151,7 @@ export class AstBuilder {
             n = this._matchDecoratedLine();
         }
         if (!n) {
-            if (AstBuilder._findMarkerMatch(this.nestedBlockEndMarkers, originalNode)) {
-                throw this._abort(this._peekIdx + 1, "encountered nested block end line without " +
-                    "matching start line");
-            }
-            if (AstBuilder._findMarkerMatch(this.escapedBlockEndMarkers, originalNode)) {
+            if (AstParser._findMarkerMatch(this.escapedBlockEndMarkers, originalNode)) {
                 throw this._abort(this._peekIdx + 1, "encountered escaped block end line without " +
                     "matching start line");
             }
@@ -164,19 +162,19 @@ export class AstBuilder {
 
     private _matchNestedBlock() {
         let n = this._peek();
-        let m = AstBuilder._findMarkerMatch(this.nestedBlockStartMarkers, n);
+        let m = AstParser._findMarkerMatch(this.nestedBlockStartMarkers, n);
         if (!m) {
             return null;
         }
         this._consumeAsDecoratedLine();
         const parentNodeLineNum = this._peekIdx;
         const parent = n as NestedBlockAstNode;
-        parent.type = AstBuilder.TYPE_NESTED_BLOCK;
+        parent.type = AstParser.TYPE_NESTED_BLOCK;
         parent.marker = m[0];
         parent.markerAftermath = m[1];
         parent.children = [];
         while (n = this._peek()) {
-            m = AstBuilder._findMarkerMatch(this.nestedBlockEndMarkers, n);
+            m = AstParser._findMarkerMatch(this.nestedBlockEndMarkers, n);
             if (m) {
                 if (!n.lineSep) {
                     throw new Error("any line other than undecorated lines must end with a line separator");
@@ -200,19 +198,19 @@ export class AstBuilder {
 
     private _matchEscapedBlock() {
         let n = this._peek();
-        let m = AstBuilder._findMarkerMatch(this.escapedBlockStartMarkers, n);
+        let m = AstParser._findMarkerMatch(this.escapedBlockStartMarkers, n);
         if (!m) {
             return null;
         }
         this._consumeAsDecoratedLine();
         const parentNodeLineNum = this._peekIdx;
         const parent = n as EscapedBlockAstNode;
-        parent.type = AstBuilder.TYPE_ESCAPED_BLOCK;
+        parent.type = AstParser.TYPE_ESCAPED_BLOCK;
         parent.marker = m[0];
         parent.markerAftermath = m[1];
         parent.children = [];
         while (n = this._peek()) {
-            m = AstBuilder._findMarkerMatch(this.escapedBlockEndMarkers, n);
+            m = AstParser._findMarkerMatch(this.escapedBlockEndMarkers, n);
             if (m && m[1] === parent.markerAftermath) {
                 if (!n.lineSep) {
                     throw new Error("any line other than undecorated lines must end with a line separator");
@@ -224,7 +222,7 @@ export class AstBuilder {
                 break;
             }
             else {
-                m = AstBuilder._findMarkerMatch(this.escapedBlockStartMarkers, n);
+                m = AstParser._findMarkerMatch(this.escapedBlockStartMarkers, n);
                 if (m && m[1] === parent.markerAftermath) {
                     throw new Error("encountered another escaped block start line while " +
                         "looking for escaped block end line");
@@ -243,7 +241,7 @@ export class AstBuilder {
 
     private _matchDecoratedLine() {
         const n = this._peek();
-        const m = AstBuilder._findMarkerMatch(this.decoratedLineMarkers, n);
+        const m = AstParser._findMarkerMatch(this.decoratedLineMarkers, n);
         if (!m) {
             return null;
         }
@@ -252,7 +250,7 @@ export class AstBuilder {
         }
         this._consumeAsDecoratedLine();
         const typedNode = n as DecoratedLineAstNode;
-        typedNode.type = AstBuilder.TYPE_DECORATED_LINE;
+        typedNode.type = AstParser.TYPE_DECORATED_LINE;
         typedNode.marker = m[0];
         typedNode.markerAftermath = m[1];
         return typedNode;
@@ -262,11 +260,11 @@ export class AstBuilder {
         if (!attrs) {
             attrs = {};
         }
-        if (!AstBuilder.isMarkerSuitable(attrs.marker)) {
+        if (!AstParser.isMarkerSuitable(attrs.marker)) {
             throw new Error("received unsuitable marker: " + attrs.marker);
         }
         const n: any = {
-            type: AstBuilder.TYPE_DECORATED_LINE,
+            type: AstParser.TYPE_DECORATED_LINE,
             marker: attrs.marker,
             markerAftermath: line,
             indent: attrs.indent,
@@ -288,10 +286,10 @@ export class AstBuilder {
         if (!attrs) {
             attrs = {};
         }
-        if (!AstBuilder.isMarkerSuitable(attrs.marker)) {
+        if (!AstParser.isMarkerSuitable(attrs.marker)) {
             throw new Error("received unsuitable start marker: " + attrs.marker);
         }
-        if (!AstBuilder.isMarkerSuitable(attrs.endMarker)) {
+        if (!AstParser.isMarkerSuitable(attrs.endMarker)) {
             throw new Error("received unsuitable end marker: " + attrs.endMarker);
         }
         let markerAftermath = attrs.markerAftermath || "";
@@ -305,7 +303,7 @@ export class AstBuilder {
         }
 
         const n: any = {
-            type: AstBuilder.TYPE_ESCAPED_BLOCK,
+            type: AstParser.TYPE_ESCAPED_BLOCK,
             marker: attrs.marker,
             endMarker: attrs.endMarker,
             markerAftermath,
@@ -335,7 +333,7 @@ export class AstBuilder {
             const terminator = lines[i + 1];
 
             n.children.push({
-                type: AstBuilder.TYPE_UNDECORATED_LINE,
+                type: AstParser.TYPE_UNDECORATED_LINE,
                 text: line,
                 lineSep: terminator || n.lineSep
             });

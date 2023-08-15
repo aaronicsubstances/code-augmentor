@@ -1,6 +1,6 @@
 const path = require('path')
 const {
-    AstBuilder,
+    AstParser,
     DefaultAstTransformer
 } = require("code-augmentor-support")
 const OtherFunctions = require('./OtherFunctions')
@@ -14,7 +14,7 @@ function removeAugCodeParts(augCode, context) {
     }
 }
 
-exports.theClassProps = function(augCode, context) {
+exports.theClassProps = async function(augCode, context) {
     if (context.fileScope.generatedCodeInserted) {
         return removeAugCodeParts(augCode, context)
     }
@@ -28,7 +28,7 @@ exports.theClassProps = function(augCode, context) {
         context.fileScope.theClassName = path.basename(context.fileScope.srcPath, '.java')
         const out = []
         const g = {
-            markerType: AstBuilder.TYPE_SOURCE_CODE,
+            markerType: AstParser.TYPE_SOURCE_CODE,
             contentParts: out
         }
         for (propSpec of context.fileScope.theClassProps) {
@@ -46,7 +46,7 @@ exports.generateClassProps = function(augCode, context) {
 
     const out = []
     const g = {
-        markerType: AstBuilder.TYPE_SOURCE_CODE,
+        markerType: AstParser.TYPE_SOURCE_CODE,
         contentParts: out
     }
     for (propSpec of context.fileScope.theClassProps) {
@@ -139,7 +139,7 @@ exports.generateEqualsAndHashCode = function(augCode, context) {
     out.push(');\n')
     out.push('}\n')
     const g = {
-        markerType: AstBuilder.TYPE_SOURCE_CODE,
+        markerType: AstParser.TYPE_SOURCE_CODE,
         contentParts: out
     };
     context.fileScope.genCodeList.push(g)
@@ -171,7 +171,7 @@ exports.generateToString = function(augCode, context) {
     }
     exactOut.push('}"')
     const g = {
-        markerType: AstBuilder.TYPE_SOURCE_CODE,
+        markerType: AstParser.TYPE_SOURCE_CODE,
         contentParts: []
     };
     g.contentParts.push(...out);
@@ -191,5 +191,9 @@ exports.generateToString = function(augCode, context) {
     out.push('}\n')
     g.contentParts.push(...out)
     context.fileScope.genCodeList.push(g)
+    context.fileScope.genCodeList.push(null)
+    context.fileScope.genCodeList.push({
+        ignore: true
+    })
     return true
 }

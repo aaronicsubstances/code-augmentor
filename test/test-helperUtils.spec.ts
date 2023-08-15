@@ -3,9 +3,9 @@ import path from "path";
 
 import { assert } from "chai";
 
-import * as myutils from "../src/helperUtils";
+import * as helperUtils from "../src/helperUtils";
 
-describe('myutils', function() {
+describe('helperUtils', function() {
 
     describe('#splitIntoLines', function() {
         let data = [
@@ -17,7 +17,7 @@ describe('myutils', function() {
         ];
         data.forEach(({ text, expected }, i) => {
             it(`should pass with separateTerminators and with input ${i}`, function() {
-                const actual = myutils.splitIntoLines(text, true);
+                const actual = helperUtils.splitIntoLines(text, true);
                 assert.deepEqual(actual, expected);
             });
         });
@@ -30,7 +30,7 @@ describe('myutils', function() {
         ];
         data.forEach(({ text, expected }, i) => {
             it(`should pass without separateTerminators and with input ${i}`, function() {
-                const actual = myutils.splitIntoLines(text, false);
+                const actual = helperUtils.splitIntoLines(text, false);
                 assert.deepEqual(actual, expected);
             });
         });
@@ -50,7 +50,7 @@ describe('myutils', function() {
         ];
         data.forEach(({ text, expected }, i) => {
             it(`should pass with input ${i}`, function() {
-                const actual = myutils.determineIndent(text);
+                const actual = helperUtils.determineIndent(text);
                 assert.deepEqual(actual, expected);
             });
         });
@@ -71,7 +71,7 @@ describe('myutils', function() {
         ];
         data.forEach(({ text, expected }, i) => {
             it(`should pass with input ${i}`, function() {
-                const actual = myutils.isBlank(text);
+                const actual = helperUtils.isBlank(text);
                 assert.deepEqual(actual, expected);
             });
         });
@@ -88,7 +88,7 @@ describe('myutils', function() {
         ];
         data.forEach(({ names, originalName, expected }, i) => {
             it(`should pass with input ${i}`, function() {
-                const actual = myutils.modifyNameToBeAbsent(names, originalName);
+                const actual = helperUtils.modifyNameToBeAbsent(names, originalName);
                 assert.deepEqual(actual, expected);
             });
         });
@@ -96,7 +96,7 @@ describe('myutils', function() {
             const names = ["n",
                 "n-1", "n-2", "n-3", "n-4", "n-5",
                 "n-6", "n-7", "n-8", "n-9"];
-            const actual = myutils.modifyNameToBeAbsent(names, "n");
+            const actual = helperUtils.modifyNameToBeAbsent(names, "n");
             assert.equal(actual.length, 10);
         });
     });
@@ -113,7 +113,7 @@ describe('myutils', function() {
         ];
         data.forEach(({ target, originalText, expected }, i) => {
             it(`should pass with input ${i}`, function() {
-                const actual = myutils.modifyTextToBeAbsent(target, originalText);
+                const actual = helperUtils.modifyTextToBeAbsent(target, originalText);
                 assert.deepEqual(actual, expected);
             });
         });
@@ -121,7 +121,7 @@ describe('myutils', function() {
             const target = ["n",
                 "n-1n-2n-3n-4n-5",
                 "n-6n-7n-8n-9"];
-            const actual = myutils.modifyTextToBeAbsent(target, "n");
+            const actual = helperUtils.modifyTextToBeAbsent(target, "n");
             assert.equal(actual.length, 10);
         });
     });
@@ -143,7 +143,7 @@ describe('myutils', function() {
         ];
         data.forEach(({ p, expected }, i) => {
             it(`should pass with input ${i}`, function() {
-                const actual = myutils._generateValidFileName(p);
+                const actual = helperUtils._generateValidFileName(p);
                 assert.deepEqual(actual, expected);
             });
         });
@@ -170,13 +170,13 @@ describe('myutils', function() {
         ];
         data.forEach(({ fullPath, baseDir, expected }, i) => {
             it(`should pass with input ${i}`, function() {
-                const actual = myutils._splitFilePath(fullPath, baseDir);
+                const actual = helperUtils._splitFilePath(fullPath, baseDir);
                 assert.deepEqual(actual, expected);
             });
         });
         it('should fail', function() {
             assert.throws(function() {
-                myutils._splitFilePath("dlll", "tea");
+                helperUtils._splitFilePath("dlll", "tea");
             });
         });
     });
@@ -195,7 +195,7 @@ describe('myutils', function() {
             const expectedBaseDir2 = expected.baseDir.replace(slashRegex, "\\");
             const expectedRelativePath1 = expected.relativePath.replace(slashRegex, "/");
             const expectedRelativePath2 = expected.relativePath.replace(slashRegex, "\\");
-            const actual = myutils.normalizeSrcFileLoc(baseDir, relativePath);
+            const actual = helperUtils.normalizeSrcFileLoc(baseDir, relativePath);
             assert.deepInclude([
                 { baseDir: expectedBaseDir1, relativePath: expectedRelativePath1 },
                 { baseDir: expectedBaseDir2, relativePath: expectedRelativePath2 }], actual);
@@ -217,7 +217,7 @@ describe('myutils', function() {
             const expectedBaseDir2 = expected.baseDir.replace(slashRegex, "\\");
             const expectedRelativePath1 = expected.relativePath.replace(slashRegex, "/");
             const expectedRelativePath2 = expected.relativePath.replace(slashRegex, "\\");
-            const actual = myutils.normalizeSrcFileLoc(baseDir, relativePath);
+            const actual = helperUtils.normalizeSrcFileLoc(baseDir, relativePath);
             assert.deepInclude([
                 { baseDir: expectedBaseDir1, relativePath: expectedRelativePath1 },
                 { baseDir: expectedBaseDir2, relativePath: expectedRelativePath2 }], actual);
@@ -229,21 +229,21 @@ describe('myutils', function() {
             const x = [""];
             const y = [""];
             const expected = "";
-            const actual = myutils.printNormalDiff(x, y);
+            const actual = helperUtils.printNormalDiff(x, y);
             assert.deepEqual(actual, expected);
         });
         it('should pass with input 1', function() {
             const x = ["my"];
             const y = ["my"];
             const expected = "";
-            const actual = myutils.printNormalDiff(x, y);
+            const actual = helperUtils.printNormalDiff(x, y);
             assert.deepEqual(actual, expected);
         });
         it('should pass with input 2', function() {
             const x = ["my\n", "o\n", "mine!\r\n"];
             const y = ["my\n", "o\n", "mine!\r\n"];
             const expected = "";
-            const actual = myutils.printNormalDiff(x, y);
+            const actual = helperUtils.printNormalDiff(x, y);
             assert.deepEqual(actual, expected);
         });
         it('should pass with input 3', function() {
@@ -328,7 +328,7 @@ describe('myutils', function() {
                 "> to this document.",
                 "\\ No newline at end of file",
                 ""].join(os.EOL);
-            const actual = myutils.printNormalDiff(x, y);
+            const actual = helperUtils.printNormalDiff(x, y);
             assert.deepEqual(actual, expected);
         });
         it('should pass with input 4', function() {
@@ -369,7 +369,7 @@ describe('myutils', function() {
                 "> Deeper and more profound,",
                 "> The door of all subtleties!",
                 ""].join(os.EOL);
-            const actual = myutils.printNormalDiff(x, y);
+            const actual = helperUtils.printNormalDiff(x, y);
             assert.deepEqual(actual, expected);
         });
     });

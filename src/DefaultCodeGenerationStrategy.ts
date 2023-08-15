@@ -1,6 +1,6 @@
 import fs from "fs/promises"
 import path from "path"
-import { AstBuilder } from "./AstBuilder"
+import { AstParser } from "./AstParser"
 import { DefaultAstTransformer } from "./DefaultAstTransformer"
 import {
     AugmentedSourceCode,
@@ -13,7 +13,7 @@ import {
 
 export class DefaultCodeGenerationStrategy {
     verbose: boolean = true
-    parser?: AstBuilder
+    parser?: AstParser
     transformer?: DefaultAstTransformer
     defaultFileEncoding?: BufferEncoding
     codeGenerator?: (augCode: AugmentingCodeDescriptor,
@@ -35,7 +35,7 @@ export class DefaultCodeGenerationStrategy {
         }
         this.fileScope = {
             srcPath: '',
-            srcAst: { type: AstBuilder.TYPE_SOURCE_CODE, children: [] },
+            srcAst: { type: AstParser.TYPE_SOURCE_CODE, children: [] },
             augSourceCode: { augCodes: [], parts: [] },
             augCodeIndex: 0,
             genCodeList: [],
@@ -143,11 +143,11 @@ export class DefaultCodeGenerationStrategy {
             const extraGenCode = (await DefaultCodeGenerationStrategy.cleanGenCodeList({
                 contentParts: context.genCodes
             }))[0] as GeneratedCode
-            if (extraGenCode.contentParts && extraGenCode.contentParts.length > 0) {
+            if (extraGenCode.contentParts!.length > 0) {
                 let foundGenCodeForAppending = false
                 if (genCodes.length > 0) {
                     const lastGenCode = genCodes[genCodes.length - 1]
-                    if (lastGenCode && !lastGenCode.contentParts) {
+                    if (lastGenCode && lastGenCode.contentParts!.length === 0) {
                         lastGenCode.contentParts = extraGenCode.contentParts
                         foundGenCodeForAppending = true
                     }
@@ -178,41 +178,31 @@ export class DefaultCodeGenerationStrategy {
         return DefaultAstTransformer.serializeSourceCodeParts(augSourceCode.parts)
     }
 
-    static cleanGenCodeList(result: any):
-            Array<GeneratedCode | null> | Promise<Array<GeneratedCode | null>> {
-        if (result && result[Symbol.asyncIterator]) {
-            return DefaultCodeGenerationStrategy._cleanGenCodeListAsync(result)
-        }
+    static async cleanGenCodeList(result: any): Promise<Array<GeneratedCode | null>> {
         const converted = new Array<GeneratedCode | null>()
-        if (Array.isArray(result) || (result && result[Symbol.iterator])) {
-            for (const item of result) {
-                const genCode = DefaultCodeGenerationStrategy._convertGenCode(item)
+        if (result === null || typeof result === 'undefined') {
+          return converted
+        }
+        if (result[Symbol.asyncIterator] || result[Symbol.iterator] || Array.isArray(result)) {
+            for await (const item of result) {
+                const genCode = await DefaultCodeGenerationStrategy._convertGenCode(item)
                 converted.push(genCode)
             }
         }
         else {
-            const genCode = DefaultCodeGenerationStrategy._convertGenCode(result)
+            const genCode = await DefaultCodeGenerationStrategy._convertGenCode(result)
             converted.push(genCode)
         }
         return converted
     }
 
-    static async _cleanGenCodeListAsync(result: any): Promise<Array<GeneratedCode | null>> {
-        const converted = new Array<GeneratedCode | null>()
-        for await (const item of result) {
-            const genCode = DefaultCodeGenerationStrategy._convertGenCode(item)
-            converted.push(genCode)
-        }
-        return converted
-    }
-
-    static _convertGenCode(item: any): GeneratedCode | null {
+    static async _convertGenCode(item: any): Promise<GeneratedCode | null> {
         if (item === null || typeof item === 'undefined') {
             return null
         }
         if (item.contentParts) {
             const contentParts = new Array<string | GeneratedCodeOptions | null>()
-            for (const contentPart of item.contentParts) {
+            for await (const contentPart of item.contentParts) {
                 contentParts.push(DefaultCodeGenerationStrategy._convertGenCodePart(
                     contentPart))
             }
