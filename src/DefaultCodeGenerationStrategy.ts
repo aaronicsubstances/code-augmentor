@@ -147,8 +147,7 @@ export class DefaultCodeGenerationStrategy {
                 let foundGenCodeForAppending = false
                 if (genCodes.length > 0) {
                     const lastGenCode = genCodes[genCodes.length - 1]
-                    if (lastGenCode && lastGenCode.contentParts &&
-                            !lastGenCode.contentParts.length) {
+                    if (lastGenCode && !lastGenCode.contentParts) {
                         lastGenCode.contentParts = extraGenCode.contentParts
                         foundGenCodeForAppending = true
                     }
