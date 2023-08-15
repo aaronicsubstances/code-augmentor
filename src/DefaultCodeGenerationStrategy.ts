@@ -143,11 +143,12 @@ export class DefaultCodeGenerationStrategy {
             const extraGenCode = (await DefaultCodeGenerationStrategy.cleanGenCodeList({
                 contentParts: context.genCodes
             }))[0] as GeneratedCode
-            if (extraGenCode.contentParts!.length > 0) {
+            if (extraGenCode.contentParts && extraGenCode.contentParts.length) {
                 let foundGenCodeForAppending = false
                 if (genCodes.length > 0) {
                     const lastGenCode = genCodes[genCodes.length - 1]
-                    if (lastGenCode && lastGenCode.contentParts!.length === 0) {
+                    if (lastGenCode && lastGenCode.contentParts &&
+                            !lastGenCode.contentParts.length) {
                         lastGenCode.contentParts = extraGenCode.contentParts
                         foundGenCodeForAppending = true
                     }
@@ -211,11 +212,7 @@ export class DefaultCodeGenerationStrategy {
                 contentParts
             } as GeneratedCode
         }
-        const part = DefaultCodeGenerationStrategy._convertGenCodePart(item)
-        return {
-            ...item,
-            contentParts: part ? [ part ] : null
-        } as GeneratedCode
+        return item as GeneratedCode
     }
 
     static _convertGenCodePart(item: any): string | GeneratedCodeOptions | null {
