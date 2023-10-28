@@ -1,6 +1,6 @@
 # code-augmentor-support
 
-Code Augmentor is library that provides
+Code Augmentor is not just a code generator, but also your comforter in times of waiting for a feature in your favourite framework. It achieves this by providing
 
 1. a markup language for text files which already have their own syntax, especially programming language source files.
 2. a way to insert generated code into source code files in a way that makes it easy to detect tampering with the generated code.
