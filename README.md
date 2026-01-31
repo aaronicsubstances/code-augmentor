@@ -1,4 +1,4 @@
-**NB: This project has been archived but is kept here as a reminder of inevitability of code duplication in the programming occupation. The use of ever-improving Continuous Integration checks is a better way to benefit from code duplication and also address its pitfalls.**
+**NB: This project has been archived but is kept here as a reminder of inevitability of code duplication in the programming occupation. The use of ever-improving continuous integration checks is a better way to benefit from code duplication and also address its pitfalls.**
 
 # code-augmentor-support
 
